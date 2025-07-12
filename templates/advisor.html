@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Financial Advisor</title>
+</head>
+<body>
+    <h2>Ask a question about your financial data</h2>
+    <form method="POST">
+        <input type="text" name="question" placeholder="e.g. What was my highest revenue month?" size="60" required>
+        <button type="submit">Ask</button>
+    </form>
+
+    {% if answer %}
+        <p><strong>Answer:</strong> {{ answer }}</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Comparison</title>
+</head>
+<body>
+    <h2>Comparison Between Two Financial Reports</h2>
+    <div>
+        {{ table_html | safe }}
+    </div>
+<div class="btn-group mt-3">
+    <a href="{{ url_for('download_comparison_csv') }}" class="btn btn-success">⬇ Download as CSV</a>
+    <a href="{{ url_for('download_comparison_pdf') }}" class="btn btn-primary">⬇ Download as PDF</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">⬅ Back to Dashboard</a>
+</div>
+</body>
+</html>

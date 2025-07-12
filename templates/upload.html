@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload and Compare Data Files</title>
+</head>
+<body>
+    <h2>Upload and Compare Company Financial Data</h2>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="files" multiple required><br><br>
+        <input type="submit" value="Upload and Compare">
+    </form>
+
+    <br>
+
+    <form action="/dashboard" method="GET">
+        <button type="submit">Back to Dashboard</button>
+    </form>
+
+    <script>
+        // Optional: Alert how many files are selected
+        document.querySelector('input[type="file"]').addEventListener('change', function () {
+            alert("You selected " + this.files.length + " file(s). Please make sure to select 2 files.");
+        });
+    </script>
+</body>
+</html>

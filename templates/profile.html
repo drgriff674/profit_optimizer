@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+
+    <h2>Welcome, {{ session['username'] }}!</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <hr>
+
+    <h3>Uploaded Files</h3>
+    {% if uploaded_files %}
+        <ul class="list-group">
+        {% for file in uploaded_files %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ file }}
+                <span>
+                    <a href="{{ url_for('view_file', filename=file) }}" class="btn btn-sm btn-info">View</a>
+                    <a href="{{ url_for('download_csv', filename=file) }}" class="btn btn-sm btn-success">Download</a>
+
+<!-- 🆕 This is the Delete button form -->
+    <form action="{{ url_for('delete_file', filename=file) }}"
+    method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    </form>
+
+<!-- Rename Input + Button -->
+  <form method="POST" action="{{ url_for('rename_file') }}" style="display:inline; margin-left: 10px;">
+    <input type="hidden" name="old_filename" value="{{ file }}">
+    <input type="text" name="new_filename" placeholder="New name.csv" required>
+    <button type="submit" class="btn btn-warning btn-sm">Rename</button>
+  </form>
+</li>
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No uploaded files yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+
+    <a href="{{ url_for('upload') }}" class="btn btn-primary mt-3">Upload New File</a>
+
+</body>
+</html>

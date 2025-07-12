@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<head>
+    <title>Financial Results</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; }
+        .chart-container { margin-top: 30px; }
+        .btn-group { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+    <h2>📊 Financial Summary</h2>
+    <div class="btn-group">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">⬅ Back to Dashboard</a>
+        <a href="{{ url_for('preview_file', filename=filename) }}"
+class="btn btn-info"> View Raw Data</a>
+        <a href="{{ url_for('download_excel',filename=filename) }}"
+class="btn btn-success"> Download Excel</a>
+        <a href="{{ url_for('download_csv',filename=filename) }}"
+class="btn-success"> Download Raw CSV</a>
+        <a href="{{ url_for('download_cleaned',filename=filename) }}"
+class="btn btn-success"> Download Cleaned CSV</a>
+        <a href="{{ url_for('download_raw_pdf', filename=filename) }}"
+class="btn btn-danger">Download Raw Data (PDF)</a>
+       <a href="{{ url_for('download_full_report') }}"
+class="btn btn-danger mt-3">Download Full Report</a>
+</div>
+<form action="{{ url_for('download_summary_txt') }}" method="post">
+    <input type="hidden" name="revenue" value="{{ revenue }}">
+    <input type="hidden" name="expenses" value="{{ expenses }}">
+    <input type="hidden" name="profit" value="{{ profit }}">
+    <input type="hidden" name="margin" value="{{ margin }}">
+    <input type="hidden" name="advice" value="{{ advice }}">
+    <button type="submit" class="btn btn-warning">📝 Download TXT Summary</button>
+</form>
+<form action="{{ url_for('send_summary') }}" method="POST" class="form-inline mt-3">
+    <input type="hidden" name="revenue" value="{{ revenue }}">
+    <input type="hidden" name="expenses" value="{{ expenses }}">
+    <input type="hidden" name="profit" value="{{ profit }}">
+    <input type="hidden" name="margin" value="{{ margin }}">
+    <input type="hidden" name="advice" value="{{ advice }}">
+
+    <div class="form-group mr-2">
+        <input type="email" name="email" class="form-control" placeholder="Enter email to send summary" required>
+    </div>
+    <button type="submit" class="btn btn-info">📧 Send Summary</button>
+</form>
+<form action="{{ url_for('download_report') }}" method="POST" style="display:inline;">
+    <input type="hidden" name="revenue" value="{{ revenue }}">
+    <input type="hidden" name="expenses" value="{{ expenses }}">
+    <input type="hidden" name="profit" value="{{ profit }}">
+    <input type="hidden" name="margin" value="{{ margin }}">
+    <input type="hidden" name="advice" value="{{ advice }}">
+    <button type="submit" class="btn btn-primary">⬇ Download PDF Report</button>
+</form>
+        
+    </div>
+
+    <p><strong>Total Revenue:</strong> ${{ revenue }}</p>
+    <p><strong>Total Expenses:</strong> ${{ expenses }}</p>
+    <p><strong>Profit:</strong> ${{ profit }}</p>
+    <p><strong>Profit Margin:</strong> {{ margin }}%</p>
+
+{% if categories %}
+<form method="get" class="mb-3">
+  <label for="category">Filter by Category:</label>
+  <select name="category" id="category" onchange="this.form.submit()">
+    <option value="">-- All --</option>
+    {% for cat in categories %}
+      <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+    {% endfor %}
+  </select>
+</form>
+{% endif %}
+
+<form method="get" action="">
+  <label for="category">Filter by Category:</label>
+  <select name="category" id="category" onchange="this.form.submit()">
+    <option value="">All</option>
+    <option value="Marketing">Marketing</option>
+    <option value="Sales">Sales</option>
+    <option value="Operations">Operations</option>
+    <option value="R&D">R&D</option>
+  </select>
+</form>
+
+<div class="card mt-3 p-3">
+  <h4>Summary Statistics</h4>
+  <ul>
+    <li><strong>Total Revenue:</strong> {{ revenue }}</li>
+    <li><strong>Total Expenses:</strong> {{ expenses }}</li>
+    <li><strong>Total Profit:</strong> {{ profit }}</li>
+    <li><strong>Profit Margin:</strong> {{ margin }}%</li>
+    <li><strong>Average Monthly Revenue:</strong> {{ avg_revenue }}</li>
+    <li><strong>Average Monthly Expenses:</strong> {{ avg_expenses }}</li>
+  </ul>
+</div>
+
+    <div class="chart-container">
+        <h4>📈 Monthly Comparison</h4>
+        {{ bar_chart | safe }}
+    </div>
+   <a href="{{ url_for('download_bar_chart') }}"
+class="btn btn-success mt-2">
+Download Bar Chart</a>
+</div>
+
+    <div class="chart-container">
+        <h4>📊 Profit vs Expenses</h4>
+        {{ pie_chart | safe }}
+    </div>
+   <href="{{ url_for('download_pie_chart') }}"
+class="btn btn-outline-secondary mt-2">
+Download Pie Chart</a>
+</div> 
+<div class="chart-container">
+    <h4>📊 Expenses by Category</h4>
+    {{ category_pie_chart | safe }}
+</div>
+
+<div class="chart-container">
+    <h4>📉 Trend Over Time</h4>
+    {{ line_chart | safe }}
+</div>
+  <href="{{ url_for('download_line_chart') }}" 
+class="btn btn-outline-secondary mt-2">
+Download Line Chart</a>
+</div>
+
+
+
+
+<form action="{{ url_for('send_report') }}" method="POST" class="mt-3">
+  <div class="form-group">
+    <label for="email">Send Report to Email:</label>
+    <input type="email" class="form-control" id="email" name="email" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">📩 Email Me Report</button>
+</form>
+
+    <div class="chart-container">
+        <h4>🧠 AI Advice</h4>
+        <div class="alert alert-info">{{ advice | safe }}</div>
+
+<hr>
+<h4>📊 Trend Insights</h4>
+<ul>
+  {% for insight in trend_insights %}
+    <li>{{ insight }}</li>
+  {% endfor %}
+</ul>
+
+<form action="{{ url_for('download_advice') }}" method="POST">
+    <input type="hidden" name="advice" value="{{ advice }}">
+    <button type="submit" class="btn btn-outline-info">💾 Download AI Advice (.txt)</button>
+</form>
+    </div>
+<hr>
+<h3>📄 Raw Data</h3>
+
+<form method="POST" action="{{url_for('view_file',filename=filename) }}">
+    <input type="text" name="search" placeholder="Search...">
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+<div class="table-responsive">
+    {{ table_html | safe }}
+</div>
+<!-- DataTables setup -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('table').DataTable();
+    });
+</script>
+
+<script>
+function downloadChart(chartId, filename) {
+    const chartElement = document.getElementById(chartId);
+    html2canvas(chartElement).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+</script>
+
+</body>
+</html>

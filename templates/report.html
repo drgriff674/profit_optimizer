@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Financial Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .metrics { margin-bottom: 20px; }
+        .advice { background: #f9f9f9; padding: 10px; border-left: 5px solid #4CAF50; }
+    </style>
+</head>
+<body>
+    <h1>Financial Report for {{ username }}</h1>
+
+    <div class="metrics">
+        <p><strong>Total Revenue:</strong> {{ metrics.revenue }}</p>
+        <p><strong>Total Expenses:</strong> {{ metrics.expenses }}</p>
+        <p><strong>Profit:</strong> {{ metrics.profit }}</p>
+        <p><strong>Profit Margin:</strong> {{ metrics.margin }}%</p>
+    </div>
+
+    <div class="advice">
+        <h2>AI Financial Advice</h2>
+        <p>{{ advice|safe }}</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Profit Optimizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logout-btn {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .logout-btn:hover {
+            background-color: #c9302c;
+        }
+        .notification {
+            background-color: #f0f8ff;
+            border: 1px solid #add8e6;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .upload-btn {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #0275d8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .upload-btn:hover {
+            background-color: #025aa5;
+        }
+    </style>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+    <div class="top-bar">
+        <h1>Welcome, {{ session['user'] }}</h1>
+        <!-- ✅ Logout Button -->
+        <form action="{{ url_for('logout') }}" method="get">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+
+    <!-- ✅ Smart Notifications (if any) -->
+    {% if notifications %}
+        <div class="notification">
+            <strong>Smart Notifications:</strong>
+            <ul>
+                {% for note in notifications %}
+                    <li>{{ note }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- ✅ Uploaded Files -->
+    <div class="file-list">
+        <h2>Your Uploaded Files:</h2>
+        {% if files %}
+            <ul>
+                {% for file in files %}
+                    <li><a href="{{ url_for('view_file', filename=file) }}">{{ file }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No files uploaded yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- ✅ Upload New CSV Button -->
+    <a href="{{ url_for('upload') }}" class="upload-btn">Upload New CSV</a>
+
+    <a href="{{ url_for('profile') }}" class="btn btn-info mt-2">My Profile</a>
+    <a href="{{ url_for('advisor') }}" class="btn btn-info">AI Chat
+    <Advisor</a>
+    
+
+</body>
+</html>

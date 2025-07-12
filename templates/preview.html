@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV Preview</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 20px; }
+    </style>
+</head>
+<body>
+    <h2>📄 Raw Data Preview</h2>
+    <a href="{{ url_for('view_file', filename=filename) }}" class="btn btn-secondary">⬅ Back to Analysis</a>
+    <div class="mt-4">
+        {{ table_html | safe }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compare Financials</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+    <h2>📊 Comparison of Financial Files</h2>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">⬅ Back to Dashboard</a>
+
+    <table class="table table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>File</th>
+                <th>Total Revenue</th>
+                <th>Total Expenses</th>
+                <th>Profit</th>
+                <th>Profit Margin (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in summaries %}
+                <tr>
+                    <td>{{ item.filename }}</td>
+                    {% if item.error %}
+                        <td colspan="4" class="text-danger">{{ item.error }}</td>
+                    {% else %}
+                        <td>${{ item.revenue }}</td>
+                        <td>${{ item.expenses }}</td>
+                        <td>${{ item.profit }}</td>
+                        <td>{{ item.margin }}%</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
