@@ -253,13 +253,11 @@ def view_file(filename):
         go.Bar(name='Expenses', x=df['Month'], y=df['Expenses'])
     ])
     bar_fig.update_layout(barmode='group', title='Monthly Revenue vs Expenses')
-    bar_fig.write_image("static/bar_chart.png")
     bar_chart = pyo.plot(bar_fig, output_type='div', include_plotlyjs=True)
 
     pie_fig = go.Figure(data=[
         go.Pie(labels=['Profit', 'Expenses'], values=[profit, total_expenses])
     ])
-    pie_fig.write_image("static/pie_chart.png")
     pie_chart = pyo.plot(pie_fig, output_type='div', include_plotlyjs=True)
 
     if 'Expense Category' in df.columns:
@@ -277,7 +275,6 @@ def view_file(filename):
     line_fig.add_trace(go.Scatter(x=df['Month'], y=df['Revenue'], mode='lines+markers', name='Revenue'))
     line_fig.add_trace(go.Scatter(x=df['Month'], y=df['Expenses'], mode='lines+markers', name='Expenses'))
     line_fig.update_layout(title='📉 Trend Over Time', xaxis_title='Month', yaxis_title='Amount')
-    line_fig.write_image("static/line_chart.png")
     line_chart = pyo.plot(line_fig, output_type='div', include_plotlyjs=True)
 
     
