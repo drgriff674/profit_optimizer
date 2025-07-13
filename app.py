@@ -929,5 +929,33 @@ def advisor():
                 answer = "Sorry, I didn't understand the question."
 
     return render_template('advisor.html', answer=answer)
+
+@app.route('/add_entry/<filename>', methods=['GET', 'POST'])
+def add_entry(filename):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    filepath = os.path.join(user_folder, filename)
+
+    if not os.path.exists(filepath):
+        return "CSV file not found.", 404
+
+    if request.method == 'POST':
+        # Get form values
+        month = request.form['month']
+        revenue = request.form['revenue']
+        expenses = request.form['expenses']
+        description = request.form['description']  # optional
+
+        # Append new row to CSV
+        with open(filepath, 'a') as f:
+            line = f"{month},{revenue},{expenses},{description}\n"
+            f.write(line)
+
+        return redirect(url_for('view_file', filename=filename))
+
+    return render_template('add_entry.html', filename=filename)
+
 if __name__ == '__main__':
     app.run(debug=True)
