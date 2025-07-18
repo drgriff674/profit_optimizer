@@ -204,7 +204,12 @@ def view_file(filename):
     if not os.path.exists(filepath):
         return "File not found", 404
 
-    df = pd.read_csv(filepath)
+    if filepath.endswith('.csv'):
+        df = pd.read_csv(filepath)
+    elif filepath.endswith('.xls') or filepath.endswith('.xlsx'):
+        df = pd.read_excel(filepath)
+    else:
+        return "Unsupported file format"
 
     # Example keyword-based categorization
     def categorize(description):
