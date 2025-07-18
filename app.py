@@ -205,7 +205,7 @@ def view_file(filename):
         return "File not found", 404
 
     if filepath.endswith('.csv'):
-        df = pd.read_csv(filepath)
+        df = pd.read_csv(filepath, on_bad_lines='skip')
     elif filepath.endswith('.xls') or filepath.endswith('.xlsx'):
         df = pd.read_excel(filepath)
     else:
