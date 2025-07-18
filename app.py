@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 import os
+import openai
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
@@ -12,6 +13,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import smtplib
 from flask_mail import Mail, Message
+from dotev import load_dotenv
+
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -961,6 +966,24 @@ def add_entry(filename):
         return redirect(url_for('view_file', filename=filename))
 
     return render_template('add_entry.html', filename=filename)
+
+@app.route('/ask', methods=['POST'])
+def ask():
+    user_question = request.form.get('question')
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # or gpt-4 if your key supports it
+            messages=[
+                {"role": "user", "content": user_question}
+            ]
+        )
+
+        answer = response['choices'][0]['message']['content']
+        return render_template("ask.html", question=user_question, answer=answer)
+
+    except Exception as e:
+        return f"An error occurred: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True)
