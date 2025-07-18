@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ask AI</title>
+</head>
+<body>
+    <h2>Ask the AI a Question</h2>
+
+    <form action="/ask" method="POST">
+        <input type="text" name="question" placeholder="Enter your question">
+        <button type="submit">Ask</button>
+    </form>
+
+    {% if answer %}
+        <h3>Question:</h3>
+        <p>{{ question }}</p>
+        <h3>Answer:</h3>
+        <p>{{ answer }}</p>
+    {% endif %}
+</body>
+</html>
