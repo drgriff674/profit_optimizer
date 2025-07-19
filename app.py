@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import smtplib
 from flask_mail import Mail, Message
-from dotev import load_dotenv
+from dotenv import load_dotenv
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
