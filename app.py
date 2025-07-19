@@ -140,8 +140,22 @@ def dashboard():
         except Exception as e:
             notifications.append("Could not read latest financial data.")
 
+    answer = None
+    if request.method == "POST":
+        question = request.form.get("question")
+        if question:
+            import openai
+            import os
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": question}]
+            )
+            answer = response.choices[0].message.content
+
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user' not in session:
