@@ -143,13 +143,17 @@ def dashboard():
     if request.method == "POST":
         question = request.form.get("question")
         if question:
-            openai.api_key = os.getenv("OPENAI_API_KEY")
+            try:
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": question}]
-            )
-            answer = response.choices[0].message.content
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": question}]
+                )
+                answer = response.choices[0].message.content
+            except Exception as e:
+                print(f"OpenAI Error:{e}")
+                answer = f"Error:{str(e)}"
 
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
