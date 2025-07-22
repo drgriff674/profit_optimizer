@@ -976,7 +976,7 @@ def add_entry(filename):
 
     return render_template('add_entry.html', filename=filename)
 
-@app.route('/ask', methods=['POST'])
+@app.route("/ask",methods=["GET","POST"])
 def ask():
     user_question = request.form.get('question')
 
