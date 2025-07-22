@@ -101,9 +101,6 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
-
-@app.route('/dashboard')
-def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
 
@@ -144,8 +141,6 @@ def dashboard():
     if request.method == "POST":
         question = request.form.get("question")
         if question:
-            import openai
-            import os
             openai.api_key = os.getenv("OPENAI_API_KEY")
 
             response = openai.ChatCompletion.create(
