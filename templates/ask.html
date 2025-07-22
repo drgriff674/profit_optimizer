@@ -6,7 +6,7 @@
 <body>
     <h2>Ask the AI a Question</h2>
 
-    <form action="/ask" method="POST">
+    <form action="{{url_for('ask')}}" method="POST">
         <input type="text" name="question" placeholder="Enter your question">
         <button type="submit">Ask</button>
     </form>
