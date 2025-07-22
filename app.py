@@ -101,6 +101,8 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('login'))
 
+@app.route("/dashboard", methods=["GET","POST"])
+def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
 
