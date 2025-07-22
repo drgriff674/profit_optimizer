@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 import os
-from openai import OpenAI
+import openai
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
