@@ -978,22 +978,24 @@ def add_entry(filename):
 
     return render_template('add_entry.html', filename=filename)
 
-@app.route("/ask",methods=["GET","POST"])
+@app.route("/ask", methods=["GET", "POST"])
 def ask():
-    user_question = request.form.get('question')
+    answer = None
+    if request.method == "POST":
+        question = request.form["question"]
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # or gpt-4 if your key supports it
-            messages=[
-                {"role": "user", "content": user_question}
-            ]
-        )
+        openai.api_key = os.getenv("OPENAI_API_KEY")
 
-        answer = response['choices'][0]['message']['content']
-        return render_template("ask.html", question=user_question, answer=answer)
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "user", "content": question}
+                ]
+            )
+            answer = response['choices'][0]['message']['content']
+        except Exception as e:
+            answer = f"Error: {str(e)}"
 
-    except Exception as e:
-        return f"An error occurred: {e}"
-
+    return render_template("ask.html", answer=answer)
 
