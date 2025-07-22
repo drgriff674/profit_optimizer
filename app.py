@@ -986,19 +986,21 @@ def add_entry(filename):
 def ask():
     answer = None
     if request.method == "POST":
-        question = request.form["question"]
+        question = request.form.get["question"]
 
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if question:
+            try:
+                client = OpenAI(api_keys=os.getenvs("OPEN_API_KEY"))
 
-        try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "user", "content": question}
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "user", "content": question}
                 ]
             )
             answer = response['choices'][0]['message']['content']
         except Exception as e:
+            print(f"OpenAI Error:{e}")
             answer = f"Error: {str(e)}"
 
     return render_template("ask.html", answer=answer)
