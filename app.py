@@ -107,7 +107,7 @@ def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'],session['user'])
     os.makedirs(user_folder, exist_ok=True)
     files = os.listdir(user_folder)
 
