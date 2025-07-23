@@ -144,7 +144,7 @@ def dashboard():
         question = request.form.get("question")
         if question:
             try:
-                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                client = 0penai(api_key=os.getenv("OPENAI_API_KEY"))
 
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
@@ -992,7 +992,7 @@ def ask():
 
         if question:
             try:
-                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                client = openai(api_key=os.getenv("OPENAI_API_KEY"))
 
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
