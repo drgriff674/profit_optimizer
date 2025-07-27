@@ -1007,3 +1007,11 @@ def ask():
                 answer = f"Error: {str(e)}"
 
     return render_template("ask.html", answer=answer)
+
+@app.route("/admin")
+def admin():
+    if "user" not in session or session["user"] != "griffinnnnn77@gmail.com":
+        return "Unauthorized", 403
+
+    # Later we’ll add real stats here
+    return render_template("admin.html", user=session["user"])
