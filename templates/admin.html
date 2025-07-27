@@ -10,9 +10,19 @@
 
     <h2>Stats</h2>
     <ul>
-        <li>Total Users: {{total_users}}</li>
-        <li>Recent Activity: coming soon</li>
+        <li>Total Users: {{ total_users }}</li>
     </ul>
+
+    <h2>Registered Users</h2>
+    {% if user_list %}
+        <ul>
+            {% for u in user_list %}
+                <li>{{ u }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
 
     <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
 </body>

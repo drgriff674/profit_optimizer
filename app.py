@@ -1018,4 +1018,4 @@ def admin():
     total_users = len(users)
 
     # Later we’ll add real stats here
-    return render_template("admin.html", user=session["user"],total_users=total_users)
+    return render_template("admin.html", user=session["user"],total_users=len(users),user_list=list(users.keys()))
