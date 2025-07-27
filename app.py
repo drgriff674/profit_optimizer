@@ -1010,7 +1010,7 @@ def ask():
 
 @app.route("/admin")
 def admin():
-    if "user" not in session or session["user"] != "griffinnnnn77@gmail.com":
+    if "user" not in session or session["user"] != "griff":
         return "Unauthorized", 403
 
     # Later we’ll add real stats here
