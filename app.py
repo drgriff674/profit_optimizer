@@ -1010,7 +1010,7 @@ def ask():
 
 @app.route("/admin")
 def admin():
-    if "user" not in session or session["user"] != "griff","teresia","zachary","mutuma":
+    if "user" not in session or session["user"] != ["griff","teresia","zachary","mutuma"]
         return "Unauthorized", 403
     with open("users.json","r")as f:
         users = json.load(f)
