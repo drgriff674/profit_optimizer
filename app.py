@@ -1010,12 +1010,14 @@ def ask():
 
 @app.route("/admin")
 def admin():
-    if "user" not in session or session["user"] != ["griff","teresia","zachary","mutuma"]
+    allowed_admins = ["griff","teresia","zachary","mutuma"]
+    current_user = session.get("user")
+    print("current user:",current_user)
+
+    if current_user not in allowed_admins:
         return "Unauthorized", 403
-    with open("users.json","r")as f:
-        users = json.load(f)
-    
-    total_users = len(users)
+
+    users=load_users()
 
     # Later we’ll add real stats here
-    return render_template("admin.html", user=session["user"],total_users=len(users),user_list=list(users.keys()))
+    return render_template("admin.html", user=current_user,users=users)
