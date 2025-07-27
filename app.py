@@ -1012,6 +1012,8 @@ def ask():
 def admin():
     if "user" not in session or session["user"] != "griff":
         return "Unauthorized", 403
+    users = load_users()
+    user_count = len(users)
 
     # Later we’ll add real stats here
     return render_template("admin.html", user=session["user"])
