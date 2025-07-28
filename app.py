@@ -1008,16 +1008,19 @@ def ask():
 
     return render_template("ask.html", answer=answer)
 
+import json
+
 @app.route("/admin")
 def admin():
-    allowed_admins = ["griff","teresia","zachary","mutuma"]
-    current_user = session.get("user")
-    print("current user:",current_user)
-
-    if current_user not in allowed_admins:
+    if "user" not in session or session["user"] not in ["griff", "teresia", "zachary", "mutuma"]:
         return "Unauthorized", 403
 
-    users=load_users()
+    try:
+        with open("users.json", "r") as f:
+            users = json.load(f)
+    except FileNotFoundError:
+        users = []
 
-    # Later we’ll add real stats here
-    return render_template("admin.html", user=current_user,users=users)
+    total_users = len(users)  # ✅ This line is important!
+
+    return render_template("admin.html", user=session["user"], users=users, total_users=total_users)
