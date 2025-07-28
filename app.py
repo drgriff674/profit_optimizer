@@ -113,6 +113,34 @@ def dashboard():
     latest_file = None
     notifications = []
 
+    if files:
+        file_path = os.path.join("uploads", files[0])
+        try:
+            import pandas as pd
+            from openai import OpenAI
+
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+            df = pd.read_csv(file_path)
+            preview = df.head().to_string()
+
+            prompt = f"""
+            Analyze the following business data and give three actionable insights or suggestions for improvement.
+            Data:
+            {preview}
+            """
+
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}]
+            )
+
+            insights = response.choices[0].message.content.strip()
+            notifications.append(insights)
+
+        except Exception as e:
+            notifications.append(f"Error generating insights: {str(e)}")
+
     # ✅ FIX 1: Try using the most recently uploaded file from session
     if 'uploaded_file' in session and session['uploaded_file'] in files:
         latest_file = session['uploaded_file']
