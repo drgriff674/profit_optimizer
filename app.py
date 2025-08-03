@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+DISABLE_AI = True
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
@@ -173,15 +175,19 @@ def dashboard():
         if question:
             try:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        if not DISABLE_AI:
+            try:
 
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": question}]
                 )
-                answer = response.choices[0].message.content
+                insights = response.choices[0].message.content.strip()
+                notifications.append(insights)
             except Exception as e:
-                print(f"OpenAI Error:{e}")
-                answer = f"Error:{str(e)}"
+                notifications.append(f"Error generating insights:{str(e)}")
+        else:
+            notifications.append("AI insights temporarily disabled.")
 
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
@@ -1021,6 +1027,8 @@ def ask():
         if question:
             try:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        if not DISABLE_AI:
+            try:
 
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
@@ -1031,8 +1039,9 @@ def ask():
 
                 answer = response.choices[0].message.content
             except Exception as e:
-                print(f"OpenAI Error: {e}")
                 answer = f"Error: {str(e)}"
+        else:
+            answer = "AI temporarily disabled."
 
     return render_template("ask.html", answer=answer)
 
