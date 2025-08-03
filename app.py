@@ -168,27 +168,26 @@ def dashboard():
                     notifications.append("Good job: Revenue is steadily increasing.")
         except Exception as e:
             notifications.append("Could not read latest financial data.")
-
-    answer = None
+            
+        answer = None
     if request.method == "POST":
         question = request.form.get("question")
         if question:
-            try:
-                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        if DISABLE_AI:
-            try:
+            if os.getenv("DISABLE_AI") == "true":
+                notifications.append("AI insights temporarily disabled.")
+            else:
+                try:
+                    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[{"role": "user", "content": question}]
+                    )
+                    answer = response.choices[0].message.content.strip()
+                    notifications.append(answer)
+                except Exception as e:
+                    notifications.append(f"Error generating insights: {str(e)}")
 
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": question}]
-                )
-                insights = response.choices[0].message.content.strip()
-                notifications.append(insights)
-            except Exception as e:
-                notifications.append(f"Error generating insights:{str(e)}")
-        else:
-            notifications.append("AI insights temporarily disabled.")
-
+ 
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
 @app.route('/upload', methods=['GET', 'POST'])
