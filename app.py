@@ -175,7 +175,7 @@ def dashboard():
         if question:
             try:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        if not DISABLE_AI:
+        if DISABLE_AI:
             try:
 
                 response = client.chat.completions.create(
@@ -1027,7 +1027,7 @@ def ask():
         if question:
             try:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        if not DISABLE_AI:
+        if DISABLE_AI:
             try:
 
                 response = client.chat.completions.create(
