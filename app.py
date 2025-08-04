@@ -1023,24 +1023,29 @@ def ask():
     if not question:
         return jsonify({"error": "No question provided"}), 400
 
-    # 🔒 Check if AI should be disabled (based on env variable)
-    if os.getenv("DISABLE_AI") == "true":
+    # 🔒 Check if AI is disabled from environment variable
+    if os.getenv("DISABLE_AI", "false").lower() == "true":
         return jsonify({"error": "AI functionality is temporarily disabled."}), 503
 
     try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        from openai import OpenAI
+
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return jsonify({"error": "Missing OpenAI API key."}), 500
+
+        client = OpenAI(api_key=api_key)
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": question}]
         )
 
-        answer = response.choices[0].message.content.strip()
+        answer = response.choices[0].message.content.strip() if response.choices else "No response received."
         return jsonify({"answer": answer})
 
     except Exception as e:
         return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
-
 @app.route("/admin")
 def admin():
     if "user" not in session or session["user"] not in ["griff", "teresia", "zachary", "mutuma"]:
