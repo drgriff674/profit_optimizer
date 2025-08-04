@@ -1016,35 +1016,30 @@ def add_entry(filename):
     return render_template('add_entry.html', filename=filename)
 
 
-@app.route("/ask", methods=["GET", "POST"])
+@app.route("/ask", methods=["POST"])
 def ask():
-    answer = None
+    question = request.json.get("question")
 
-    if request.method == "POST":
-        question = request.form.get("question")
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
 
-        if question:
-            try:
-                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        if DISABLE_AI:
-            try:
+    # 🔒 Check if AI should be disabled (based on env variable)
+    if os.getenv("DISABLE_AI") == "true":
+        return jsonify({"error": "AI functionality is temporarily disabled."}), 503
 
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "user", "content": question}
-                    ]
-                )
+    try:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-                answer = response.choices[0].message.content
-            except Exception as e:
-                answer = f"Error: {str(e)}"
-        else:
-            answer = "AI temporarily disabled."
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": question}]
+        )
 
-    return render_template("ask.html", answer=answer)
+        answer = response.choices[0].message.content.strip()
+        return jsonify({"answer": answer})
 
-import json
+    except Exception as e:
+        return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
 
 @app.route("/admin")
 def admin():
