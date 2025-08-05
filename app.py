@@ -207,8 +207,8 @@ def upload():
         if len(files) < 2:
             return "Please upload two files to compare.", 400
 
-        if not all(allowed_file(file.filename)for files in files):
-            return "only CSV files allowed.",400
+        if not files ot not all(allowed_file(f.filename)for f in files):
+            return "Only CSV files allowed.",400
 
         # Save files to the user's folder
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
