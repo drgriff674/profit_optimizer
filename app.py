@@ -15,6 +15,11 @@ import smtplib
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 
+ALLOWED_EXTENSIONS = {'csv'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -201,6 +206,9 @@ def upload():
 
         if len(files) < 2:
             return "Please upload two files to compare.", 400
+
+        if not all(allowed_file(file.filename)for files in files):
+            return "only CSV files allowed.",400
 
         # Save files to the user's folder
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
