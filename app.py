@@ -114,6 +114,7 @@ def dashboard():
 
     latest_file = None
     notifications = []
+    answer = None
 
     if files:
         file_path = os.path.join("uploads", files[0])
