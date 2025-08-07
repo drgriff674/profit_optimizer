@@ -192,7 +192,7 @@ def dashboard():
                     notifications.append(answer)
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
-
+    notifications = session.get('notifications',[])
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
@@ -247,6 +247,24 @@ def upload():
             'Expense Difference': df2['Expenses'] - df1['Expenses']
         })
         session['comparison_data'] = comparison.to_json()
+
+        # Smart feedback
+        notifications = []
+        revenue_diff = comparison['Revenue Difference'].sum()
+        expense_diff = comparison['Expense Difference'].sum()
+
+        if revenue_diff > 0:
+            notifications.append("📈 Your revenue increased overall!")
+        elif revenue_diff < 0:
+            notifications.append("📉 Revenue dropped — look into it!")
+
+        if expense_diff > 0:
+            notifications.append("⚠️ Expenses went up — consider reducing costs.")
+        elif expense_diff < 0:
+            notifications.append("✅ Great job! You lowered your expenses.")
+
+        # Save to session so it can be shown on dashboard
+        session['notifications'] = notifications
 
         table_html = comparison.to_html(index=False)
 
