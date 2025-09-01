@@ -193,9 +193,32 @@ def dashboard():
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
     notifications = session.get('notifications',[])
+
+    # 🔹 Example data (replace later with your real company data)
+    data = {
+        "date": pd.date_range(start="2024-01-01", periods=12, freq="M"),
+        "revenue": [10000,12000,11000,15000,18000,16000,20000,22000,21000,25000,27000,30000],
+        "expenses": [7000,8000,7500,10000,11000,9500,12000,13000,12500,15000,16000,17000],
+    }
+    df = pd.DataFrame(data)
+    df["profit"] = df["revenue"] - df["expenses"]
+
+    # 🔹 KPI calculations
+    total_profit = df["profit"].sum()
+    avg_profit = df["profit"].mean()
+    profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
+
+    kpis = {
+        "total_profit": f"${total_profit:,.2f}",
+        "avg_profit": f"${avg_profit:,.2f}",
+        "profit_growth": f"{profit_growth:.2f}%",
+        "largest_expense": "Operations"  # placeholder for now
+    }
+
+    # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis)
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user' not in session:
