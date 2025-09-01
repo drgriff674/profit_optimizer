@@ -195,47 +195,46 @@ def dashboard():
 
     kpis = {}
     if latest_file:
-       filepath = os.path.join(user_folder, latest_file)
-       try:
-         df = pd.read_csv(filepath)
+        filepath = os.path.join(user_folder, latest_file)
+        try:
+            df = pd.read_csv(filepath)
 
-            # ✅ Standardize column names (lowercase, strip spaces)
-         df.columns = df.columns.str.lower().str.strip()
+            # Standardize column names (lowercase, strip spaces)
+            df.columns = df.columns.str.lower().str.strip()
 
-         if "revenue" in df.columns and "expenses" in df.columns:
-             df["profit"] = df["revenue"] - df["expenses"]
+            if "revenue" in df.columns and "expenses" in df.columns:
+                df["profit"] = df["revenue"] - df["expenses"]
 
-             total_profit = df["profit"].sum()
-             avg_profit = df["profit"].mean()
-             profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
+                total_profit = df["profit"].sum()
+                avg_profit = df["profit"].mean()
+                profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
 
-                # Find category with largest total expenses (if description exists)
-             if "description" in df.columns:
-                 largest_expense = df.groupby("description")["expenses"].sum().idxmax()
-             else:
-                 largest_expense = "Unknown"
+                # Largest expense category if description exists
+                if "description" in df.columns:
+                    largest_expense = df.groupby("description")["expenses"].sum().idxmax()
+                else:
+                    largest_expense = "Unknown"
 
-             kpis = {
-                 "total_profit": f"${total_profit:,.2f}",
-                 "avg_profit": f"${avg_profit:,.2f}",
-                 "profit_growth": f"{profit_growth:.2f}%",
-                 "largest_expense": largest_expense
-             }
-             else:
-               kpis = {
-                 "total_profit": "N/A",
-                 "avg_profit": "N/A",
-                 "profit_growth": "N/A",
-                 "largest_expense": "N/A"
+                kpis = {
+                    "total_profit": f"${total_profit:,.2f}",
+                    "avg_profit": f"${avg_profit:,.2f}",
+                    "profit_growth": f"{profit_growth:.2f}%",
+                    "largest_expense": largest_expense
                 }
-         except Exception as e:
+            else:
+                kpis = {
+                    "total_profit": "N/A",
+                    "avg_profit": "N/A",
+                    "profit_growth": "N/A",
+                    "largest_expense": "N/A"
+                }
+        except Exception as e:
             kpis = {
                 "total_profit": "Error",
                 "avg_profit": "Error",
                 "profit_growth": "Error",
                 "largest_expense": "Error"
             }
-
     # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
