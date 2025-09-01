@@ -124,7 +124,6 @@ def dashboard():
     if files:
         file_path = os.path.join("uploads", files[0])
         try:
-            import pandas as pd
             from openai import OpenAI
 
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
