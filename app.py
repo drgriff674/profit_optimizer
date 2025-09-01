@@ -193,26 +193,48 @@ def dashboard():
                     notifications.append(f"Error generating insights: {str(e)}")
     notifications = session.get('notifications',[])
 
-    # 🔹 Example data (replace later with your real company data)
-    data = {
-        "date": pd.date_range(start="2024-01-01", periods=12, freq="M"),
-        "revenue": [10000,12000,11000,15000,18000,16000,20000,22000,21000,25000,27000,30000],
-        "expenses": [7000,8000,7500,10000,11000,9500,12000,13000,12500,15000,16000,17000],
-    }
-    df = pd.DataFrame(data)
-    df["profit"] = df["revenue"] - df["expenses"]
+ kpis = {}
+    if latest_file:
+        filepath = os.path.join(user_folder, latest_file)
+        try:
+            df = pd.read_csv(filepath)
 
-    # 🔹 KPI calculations
-    total_profit = df["profit"].sum()
-    avg_profit = df["profit"].mean()
-    profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
+            # ✅ Standardize column names (lowercase, strip spaces)
+            df.columns = df.columns.str.lower().str.strip()
 
-    kpis = {
-        "total_profit": f"${total_profit:,.2f}",
-        "avg_profit": f"${avg_profit:,.2f}",
-        "profit_growth": f"{profit_growth:.2f}%",
-        "largest_expense": "Operations"  # placeholder for now
-    }
+            if "revenue" in df.columns and "expenses" in df.columns:
+                df["profit"] = df["revenue"] - df["expenses"]
+
+                total_profit = df["profit"].sum()
+                avg_profit = df["profit"].mean()
+                profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
+
+                # Find category with largest total expenses (if description exists)
+                if "description" in df.columns:
+                    largest_expense = df.groupby("description")["expenses"].sum().idxmax()
+                else:
+                    largest_expense = "Unknown"
+
+                kpis = {
+                    "total_profit": f"${total_profit:,.2f}",
+                    "avg_profit": f"${avg_profit:,.2f}",
+                    "profit_growth": f"{profit_growth:.2f}%",
+                    "largest_expense": largest_expense
+                }
+            else:
+                kpis = {
+                    "total_profit": "N/A",
+                    "avg_profit": "N/A",
+                    "profit_growth": "N/A",
+                    "largest_expense": "N/A"
+                }
+        except Exception as e:
+            kpis = {
+                "total_profit": "Error",
+                "avg_profit": "Error",
+                "profit_growth": "Error",
+                "largest_expense": "Error"
+            }
 
     # 🔹 Send KPIs to dashboard.html
  
