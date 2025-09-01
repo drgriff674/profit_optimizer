@@ -191,7 +191,7 @@ def dashboard():
                     notifications.append(answer)
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
-    notifications = session.get('notifications',[])
+    
 
     kpis = {}
     if latest_file:
