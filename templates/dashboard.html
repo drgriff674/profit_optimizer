@@ -66,6 +66,27 @@
         </form>
     </div>
 
+<!-- 🔹 KPI Section -->
+<div class="kpi-container" style="display: flex; gap: 20px; margin-bottom: 20px;">
+  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
+    <h3>Total Profit</h3>
+    <p style="font-size:24px; font-weight:bold;">{{ kpis.total_profit }}</p>
+  </div>
+  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
+    <h3>Average Profit</h3>
+    <p style="font-size:24px; font-weight:bold;">{{ kpis.avg_profit }}</p>
+  </div>
+  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
+    <h3>Profit Growth</h3>
+    <p style="font-size:24px; font-weight:bold;">{{ kpis.profit_growth }}</p>
+  </div>
+  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
+    <h3>Largest Expense</h3>
+    <p style="font-size:24px; font-weight:bold;">{{ kpis.largest_expense }}</p>
+  </div>
+</div>
+<!-- 🔹 End KPI Section -->
+
     <!-- ✅ Smart Notifications (if any) -->
     {% if notifications %}
         <div class="notification">
