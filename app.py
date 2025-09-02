@@ -14,6 +14,7 @@ import seaborn as sns
 import smtplib
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
+from prophet import prophet
 
 ALLOWED_EXTENSIONS = {'csv'}
 
@@ -234,11 +235,50 @@ def dashboard():
                 "avg_profit": "Error",
                 "profit_growth": "Error",
                 "largest_expense": "Error"
+
+        # 🔮 Forecasting with Prophet
+    forecast_data = []
+    if latest_file:
+        filepath = os.path.join(user_folder, latest_file)
+        try:
+            df = pd.read_csv(filepath)
+
+            # Normalize column names
+            df.columns = df.columns.str.lower().str.strip()
+
+            if "month" in df.columns and "revenue" in df.columns:
+                # Convert 'Month' into proper datetime
+                df['ds'] = pd.to_datetime(df['month'], format='%B', errors='coerce')
+                df['ds'] = df['ds'].fillna(pd.to_datetime(df['month'], errors='coerce'))
+
+                df = df.dropna(subset=['ds'])
+                df['y'] = df['revenue']
+
+                # Fit Prophet model
+                model = Prophet()
+                model.fit(df[['ds', 'y']])
+
+                # Forecast next 6 months
+                future = model.make_future_dataframe(periods=6, freq='M')
+                forecast = model.predict(future)
+
+                # Get only future predictions
+                future_forecast = forecast.tail(6)
+
+                forecast_data = [
+                    {
+                        "date": row['ds'].strftime('%B %Y'),
+                        "predicted_revenue": f"${row['yhat']:,.2f}"
+                    }
+                    for _, row in future_forecast.iterrows()
+                ]
+        except Exception as e:
+            forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
             }
     # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecasr_data)
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user' not in session:
