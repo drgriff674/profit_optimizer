@@ -14,7 +14,7 @@ import seaborn as sns
 import smtplib
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
-from prophet import prophet
+from Prophet import Prophet
 
 ALLOWED_EXTENSIONS = {'csv'}
 
