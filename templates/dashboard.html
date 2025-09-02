@@ -96,6 +96,44 @@
   </ul>
 </div>
 
+<h3>📊 Revenue Forecast Trend</h3>
+<canvas id="forecastChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    const forecastData = JSON.parse('{{ forecast_chart | safe }}');
+
+    const labels = forecastData.map(item => item.date);
+    const data = forecastData.map(item => item.predicted_revenue);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Predicted Revenue',
+                data: data,
+                borderColor: 'blue',
+                backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+</script>
+
     <!-- ✅ Smart Notifications (if any) -->
     {% if notifications %}
         <div class="notification">
