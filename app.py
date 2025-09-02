@@ -276,11 +276,21 @@ def dashboard():
                 ]
         except Exception as e:
             forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
+
+    # After forecast_data is created:
+    forecast_chart = []
+    if not isinstance(forecast_data, list) or len(forecast_data) == 0:
+        forecast_chart = []
+    else:
+        forecast_chart = [
+            {"date": item["date"], "predicted_revenue": float(item["predicted_revenue"].replace("$", "").replace(",", ""))}
+            for item in forecast_data if "predicted_revenue" in item
+    ]
             
     # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user' not in session:
