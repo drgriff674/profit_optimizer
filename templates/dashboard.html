@@ -87,6 +87,15 @@
 </div>
 <!-- 🔹 End KPI Section -->
 
+<div class="card">
+  <h2>📈 Revenue Forecast (Next 6 Months)</h2>
+  <ul>
+    {% for item in forecast_data %}
+      <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
     <!-- ✅ Smart Notifications (if any) -->
     {% if notifications %}
         <div class="notification">
