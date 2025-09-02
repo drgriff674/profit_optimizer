@@ -276,7 +276,7 @@ def dashboard():
                 ]
         except Exception as e:
             forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-            }
+            
     # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
