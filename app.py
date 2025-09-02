@@ -236,6 +236,8 @@ def dashboard():
                 "profit_growth": "Error",
                 "largest_expense": "Error"
 
+                }
+
         # 🔮 Forecasting with Prophet
     forecast_data = []
     if latest_file:
