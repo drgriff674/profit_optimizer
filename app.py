@@ -278,7 +278,7 @@ def dashboard():
     # 🔹 Send KPIs to dashboard.html
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecasr_data)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data)
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'user' not in session:
