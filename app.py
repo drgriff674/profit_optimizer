@@ -336,10 +336,14 @@ def upload():
         df1 = pd.read_csv(filepath1)
         df2 = pd.read_csv(filepath2)
 
+        # ✅ Standardize column names to lowercase (fix for phone uploads)
+        df1.columns = df1.columns.str.lower().str.strip()
+        df2.columns = df2.columns.str.lower().str.strip()
+
         comparison = pd.DataFrame({
-            'Month': df1['Month'],
-            'Revenue Difference': df2['Revenue'] - df1['Revenue'],
-            'Expense Difference': df2['Expenses'] - df1['Expenses']
+            'Month': df1['month'],  # lowercase now
+            'Revenue Difference': df2['revenue'] - df1['revenue'],
+            'Expense Difference': df2['expenses'] - df1['expenses']
         })
         session['comparison_data'] = comparison.to_json()
 
