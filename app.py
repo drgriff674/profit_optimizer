@@ -78,10 +78,9 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
         if username in users and users[username] == password:
-            session['user'] = username
-            session['user_id'] = username
-            session['username'] = username
+            session['user'] = username  # ← use a single, consistent key
             return redirect(url_for('dashboard'))
         else:
             flash("Invalid username or password", "error")
