@@ -120,10 +120,10 @@ def logout():
 
 @app.route("/dashboard", methods=["GET","POST"])
 def dashboard():
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'],session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'],session['username'])
     os.makedirs(user_folder, exist_ok=True)
     files = os.listdir(user_folder)
 
