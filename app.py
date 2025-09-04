@@ -315,7 +315,7 @@ def upload():
             return "Only CSV files allowed.",400
 
         # Save files to the user's folder
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
         os.makedirs(user_folder, exist_ok=True)
 
         username = session.get('username')
@@ -339,7 +339,7 @@ def upload():
         file2.save(filepath2)
 
         # Save one of the files to session so dashboard can use it
-        session['uploaded_file'] = filename1
+        session['uploaded_file'] = filename2
 
         # Load into pandas for comparison
         df1 = pd.read_csv(filepath1)
