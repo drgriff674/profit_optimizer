@@ -94,16 +94,26 @@ def register():
     if request.method == 'POST':
         new_user = request.form['username']
         new_pass = request.form['password']
+
+        # Check if username already exists
         if new_user in users:
             flash("Username already exists", "error")
             return redirect(url_for('register'))
+
+        # Save new user
         users[new_user] = new_pass
         save_users(users)
-        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
-        flash("Registration successful! Please login.", "success")
-        return redirect(url_for('login'))
-    return render_template('register.html')
 
+        # Create folder for this user’s uploads
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
+
+        # ✅ Store session so they are logged in immediately
+        session['username'] = new_user  
+
+        flash("Registration successful! You are now logged in.", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('register.html')
 @app.route('/logout')
 def logout():
     session.pop('user', None)
