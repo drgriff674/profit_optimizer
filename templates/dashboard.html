@@ -171,6 +171,10 @@
     <!-- ✅ Upload New CSV Button -->
     <a href="{{ url_for('upload') }}" class="upload-btn">Upload New CSV</a>
 
+    <a href="{{ url_for('manual_entry') }}" class="upload-btn" style="background-color: green;margin-left: 10px;">
+     Manual entry
+    </a>
+
     <a href="{{ url_for('profile') }}" class="btn btn-info mt-2">My Profile</a>
     <a href="{{ url_for('ask') }}" class="btn btn-info">Ask ChatGPT</a>
     <a href="{{ url_for('admin') }}" class="btn btn-warning">Admin panel</a>
