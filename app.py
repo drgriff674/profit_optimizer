@@ -288,7 +288,7 @@ def dashboard():
                 model.fit(df[['ds', 'y']])
 
                 # Forecast next 6 months
-                future = model.make_future_dataframe(periods=6, freq='M')
+                future = model.make_future_dataframe(periods=6, freq='ME')
                 forecast = model.predict(future)
 
                 # Get only future predictions
