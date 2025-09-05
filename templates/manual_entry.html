@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual Entry</title>
+</head>
+<body>
+    <h2>Enter Daily Sales/Expenses</h2>
+
+    <form action="/manual_entry" method="POST">
+        <label>Month/Date:</label><br>
+        <input type="text" name="month" placeholder="e.g. March 2025" required><br><br>
+
+        <label>Revenue ($):</label><br>
+        <input type="number" name="revenue" step="0.01" required><br><br>
+
+        <label>Expenses ($):</label><br>
+        <input type="number" name="expenses" step="0.01" required><br><br>
+
+        <label>Description:</label><br>
+        <input type="text" name="description"><br><br>
+
+        <input type="submit" value="Add Entry">
+    </form>
+
+    <br>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>

@@ -138,7 +138,13 @@ def dashboard():
 
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(filepath)
+
+        # 🔹 Merge with manual entries if they exist
+            manual_path = os.path.join(user_folder, "manual_entries.csv")
+            if os.path.exists(manual_path):
+                manual_df = pd.read_csv(manual_path)
+                df = pd.concat([df, manual_df], ignore_index=True)
             preview = df.head().to_string()
 
             prompt = f"""
@@ -169,6 +175,12 @@ def dashboard():
         filepath = os.path.join(user_folder, latest_file)
         try:
             df = pd.read_csv(filepath)
+
+# 🔹 Merge with manual entries if they exist
+            manual_path = os.path.join(user_folder, "manual_entries.csv")
+            if os.path.exists(manual_path):
+                manual_df = pd.read_csv(manual_path)
+                df = pd.concat([df, manual_df], ignore_index=True)
 
             # ✅ NO CHANGE: Sample analysis logic
             if 'Revenue' in df.columns and 'Expenses' in df.columns:
@@ -253,6 +265,12 @@ def dashboard():
         filepath = os.path.join(user_folder, latest_file)
         try:
             df = pd.read_csv(filepath)
+
+# 🔹 Merge with manual entries if they exist
+            manual_path = os.path.join(user_folder, "manual_entries.csv")
+            if os.path.exists(manual_path):
+                manual_df = pd.read_csv(manual_path)
+                df = pd.concat([df, manual_df], ignore_index=True)
 
             # Normalize column names
             df.columns = df.columns.str.lower().str.strip()
@@ -1195,3 +1213,40 @@ def admin():
     total_users = len(users)  # ✅ This line is important!
 
     return render_template("admin.html", user=session["user"], users=users, total_users=total_users)
+
+@app.route('/manual_entry', methods=['GET', 'POST'])
+def manual_entry():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    os.makedirs(user_folder, exist_ok=True)
+
+    # We'll save manual entries into a file called "manual_entries.csv"
+    filepath = os.path.join(user_folder, "manual_entries.csv")
+
+    if request.method == 'POST':
+        month = request.form['month']
+        revenue = float(request.form['revenue'])
+        expenses = float(request.form['expenses'])
+        description = request.form['description']
+
+        new_data = pd.DataFrame([{
+            "month": month,
+            "revenue": revenue,
+            "expenses": expenses,
+            "description": description
+        }])
+
+        # Append to file if exists, otherwise create new one
+        if os.path.exists(filepath):
+            existing = pd.read_csv(filepath)
+            updated = pd.concat([existing, new_data], ignore_index=True)
+            updated.to_csv(filepath, index=False)
+        else:
+            new_data.to_csv(filepath, index=False)
+
+        flash("Entry added successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('manual_entry.html')
