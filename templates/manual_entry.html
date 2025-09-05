@@ -6,7 +6,7 @@
 <body>
     <h2>Enter Daily Sales/Expenses</h2>
 
-    <form action="/manual_entry" method="POST">
+    <form action={{ url_for('manual_entry') }} method="POST">
         <label>Month/Date:</label><br>
         <input type="text" name="month" placeholder="e.g. March 2025" required><br><br>
 
