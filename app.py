@@ -367,6 +367,12 @@ def upload():
         df1.columns = df1.columns.str.lower().str.strip()
         df2.columns = df2.columns.str.lower().str.strip()
 
+        # ✅ Convert revenue/expenses to numeric to avoid string issues
+        df1['revenue'] = pd.to_numeric(df1['revenue'], errors='coerce')
+        df1['expenses'] = pd.to_numeric(df1['expenses'], errors='coerce')
+        df2['revenue'] = pd.to_numeric(df2['revenue'], errors='coerce')
+        df2['expenses'] = pd.to_numeric(df2['expenses'], errors='coerce')
+
         comparison = pd.DataFrame({
             'Month': df1['month'],  # lowercase now
             'Revenue Difference': df2['revenue'] - df1['revenue'],
@@ -1214,39 +1220,44 @@ def admin():
 
     return render_template("admin.html", user=session["user"], users=users, total_users=total_users)
 
-@app.route('/manual_entry', methods=['GET', 'POST'])
+@app.route('/manual-entry', methods=['GET', 'POST'])
 def manual_entry():
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
-
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
-    os.makedirs(user_folder, exist_ok=True)
-
-    # We'll save manual entries into a file called "manual_entries.csv"
-    filepath = os.path.join(user_folder, "manual_entries.csv")
 
     if request.method == 'POST':
         month = request.form['month']
-        revenue = float(request.form['revenue'])
-        expenses = float(request.form['expenses'])
-        description = request.form['description']
+        # ✅ Force numeric conversion
+        try:
+            revenue = float(request.form['revenue'])
+            expenses = float(request.form['expenses'])
+        except ValueError:
+            flash("Revenue and Expenses must be numbers.", "error")
+            return redirect(url_for('manual_entry'))
 
-        new_data = pd.DataFrame([{
-            "month": month,
-            "revenue": revenue,
-            "expenses": expenses,
-            "description": description
+        description = request.form.get('description', '')
+
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+        os.makedirs(user_folder, exist_ok=True)
+        filepath = os.path.join(user_folder, "manual_entries.csv")
+
+        new_entry = pd.DataFrame([{
+            'Month': month,
+            'Revenue': revenue,
+            'Expenses': expenses,
+            'Description': description
         }])
 
-        # Append to file if exists, otherwise create new one
         if os.path.exists(filepath):
-            existing = pd.read_csv(filepath)
-            updated = pd.concat([existing, new_data], ignore_index=True)
-            updated.to_csv(filepath, index=False)
+            df = pd.read_csv(filepath)
+            df = pd.concat([df, new_entry], ignore_index=True)
         else:
-            new_data.to_csv(filepath, index=False)
+            df = new_entry
 
-        flash("Entry added successfully!", "success")
+        df.to_csv(filepath, index=False)
+        session['uploaded_file'] = "manual_entries.csv"
+
+        flash("Manual entry added successfully!", "success")
         return redirect(url_for('dashboard'))
 
     return render_template('manual_entry.html')
