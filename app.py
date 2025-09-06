@@ -304,15 +304,21 @@ def dashboard():
         except Exception as e:
             forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
 
-    # After forecast_data is created:
     forecast_chart = []
-    if not isinstance(forecast_data, list) or len(forecast_data) == 0:
-        forecast_chart = []
-    else:
-        forecast_chart = [
-            {"date": item["date"], "predicted_revenue": float(item["predicted_revenue"].replace("$", "").replace(",", ""))}
-            for item in forecast_data if "predicted_revenue" in item
-    ]
+    for item in forecast_data:
+        try:
+            if "predicted_revenue" in item:
+                value = item["predicted_revenue"]
+                # If it's a string like "$1,234.56"
+                if isinstance(value, str):
+                    value = value.replace("$", "").replace(",", "")
+                forecast_chart.append({
+                    "date": item["date"],
+                    "predicted_revenue": float(value)
+                })
+        except Exception:
+            # Skip invalid rows
+            continue
             
     # 🔹 Send KPIs to dashboard.html
  
