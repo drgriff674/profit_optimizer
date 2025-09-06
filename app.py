@@ -1279,3 +1279,25 @@ def manual_entry():
         return redirect(url_for('dashboard'))
 
     return render_template('manual_entry.html')
+
+@app.route('/use-demo-data')
+def use_demo_data():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    os.makedirs(user_folder, exist_ok=True)
+
+    demo_file = os.path.join(user_folder, "demo_data.csv")
+
+    # Copy sample file for this user
+    sample_path = os.path.join("sample_data.csv")
+    if os.path.exists(sample_path):
+        import shutil
+        shutil.copy(sample_path, demo_file)
+        session['uploaded_file'] = "demo_data.csv"
+        flash("Demo data loaded successfully!", "success")
+    else:
+        flash("Sample data file missing. Please contact admin.", "error")
+
+    return redirect(url_for('dashboard'))
