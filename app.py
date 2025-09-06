@@ -188,11 +188,23 @@ def dashboard():
                 recent_expenses = df['Expenses'].tail(3).mean()
                 older_expenses = df['Expenses'].head(3).mean()
 
+                # 🚨 Expense growth alert
                 if recent_expenses > older_expenses * 1.3:
                     notifications.append("Alert: Your expenses increased by over 30% in recent months.")
 
+                # 📈 Revenue growth check
                 if df['Revenue'].iloc[-1] > df['Revenue'].iloc[0]:
                     notifications.append("Good job: Revenue is steadily increasing.")
+
+                # 🚨 Profit margin check
+                df["Profit"] = df["Revenue"] - df["Expenses"]
+                profit_margin = (df["Profit"].sum() / df["Revenue"].sum()) * 100 if df["Revenue"].sum() != 0 else 0
+                if profit_margin < 10:
+                    notifications.append(f"Warning: Your overall profit margin is low ({profit_margin:.2f}%). Consider reducing costs or increasing sales.")
+
+                # 🚨 Negative profit alert
+                if (df["Profit"] < 0).any():
+                    notifications.append("Alert: Some months show negative profit (loss). Review expenses and revenue sources.")
         except Exception as e:
             notifications.append("Could not read latest financial data.")
             
