@@ -338,7 +338,7 @@ def dashboard():
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -424,7 +424,7 @@ def upload():
 
 @app.route('/view/<filename>',methods=['GET','POST'])
 def view_file(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     search_query = request.form.get('search') if request.method == 'POST' else''
@@ -611,7 +611,7 @@ def download_report():
     
 @app.route('/preview/<filename>')
 def preview_file(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -630,7 +630,7 @@ def preview_file(filename):
 
 @app.route('/download_excel/<filename>')
 def download_excel(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -653,7 +653,7 @@ def download_excel(filename):
 
 @app.route('/download_csv/<filename>')
 def download_csv(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -666,7 +666,7 @@ def download_csv(filename):
 
 @app.route('/download_cleaned/<filename>')
 def download_cleaned(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -697,7 +697,7 @@ def download_cleaned(filename):
     
 @app.route('/send_summary', methods=['POST'])
 def send_summary():
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     email = request.form.get('email')
@@ -729,7 +729,7 @@ def download_advice():
 
 @app.route('/download_raw_pdf/<filename>', methods=['GET'])
 def download_raw_pdf(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -799,7 +799,7 @@ def download_summary_txt():
 
 @app.route('/compare/<filenames>')
 def compare_files(filenames):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     files = filenames.split(',')
@@ -1082,7 +1082,7 @@ def profile():
 
 @app.route('/delete/<filename>', methods=['POST'])
 def delete_file(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     username = session['user']
@@ -1102,7 +1102,7 @@ def delete_file(filename):
     return redirect(url_for('profile'))
 @app.route('/rename_file', methods=['POST'])
 def rename_file():
-    if 'user_id' not in session:
+    if 'username' not in session:
         flash("Please log in to access this page.", "warning")
         return redirect(url_for('login'))
 
@@ -1167,7 +1167,7 @@ def advisor():
 
 @app.route('/add_entry/<filename>', methods=['GET', 'POST'])
 def add_entry(filename):
-    if 'user' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
@@ -1225,7 +1225,7 @@ def ask():
         return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
 @app.route("/admin")
 def admin():
-    if "user" not in session or session["user"] not in ["griff", "teresia", "zachary", "mutuma"]:
+    if "username" not in session or session["user"] not in ["griff", "teresia", "zachary", "mutuma"]:
         return "Unauthorized", 403
 
     try:
