@@ -47,8 +47,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'csv'}
 
 
-
-USER_FILE = 'users.json'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+USER_FILE = os.path.join(BASE_DIR,'users.json')
 
 def load_users():
     if os.path.exists(USER_FILE):
@@ -58,7 +58,7 @@ def load_users():
 
 def save_users(users):
     with open(USER_FILE, 'w') as f:
-        json.dump(users, f)
+        json.dump(users, f, indent=4)
         
 def allowed_file(filename):
     return','in filename and filename.rsplit(',',1)[1].lower()=='csv'
