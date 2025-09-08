@@ -80,7 +80,7 @@ def login():
         password = request.form['password']
 
         if username in users and users[username] == password:
-            session['user'] = username  # ← use a single, consistent key
+            session['username'] = username  # ← use a single, consistent key
             return redirect(url_for('dashboard'))
         else:
             flash("Invalid username or password", "error")
@@ -115,7 +115,7 @@ def register():
     return render_template('register.html')
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.pop('username', None)
     return redirect(url_for('login'))
 
 @app.route("/dashboard", methods=["GET","POST"])
