@@ -429,7 +429,7 @@ def view_file(filename):
 
     search_query = request.form.get('search') if request.method == 'POST' else''
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
     if not os.path.exists(filepath):
         return "File not found", 404
@@ -614,7 +614,7 @@ def preview_file(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -633,7 +633,7 @@ def download_excel(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -669,7 +669,7 @@ def download_cleaned(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -732,7 +732,7 @@ def download_raw_pdf(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -804,7 +804,7 @@ def compare_files(filenames):
 
     files = filenames.split(',')
     summaries = []
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
 
     for file in files:
         path = os.path.join(user_folder, file)
@@ -1085,7 +1085,7 @@ def delete_file(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['user']
+    username = session['username']
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], username)
     file_path = os.path.join(user_folder, filename)
 
@@ -1170,7 +1170,7 @@ def add_entry(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -1225,7 +1225,7 @@ def ask():
         return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
 @app.route("/admin")
 def admin():
-    if "username" not in session or session["user"] not in ["griff", "teresia", "zachary", "mutuma"]:
+    if "username" not in session or session["username"] not in ["griff", "teresia", "zachary", "mutuma"]:
         return "Unauthorized", 403
 
     try:
