@@ -656,7 +656,7 @@ def download_csv(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['user'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     filepath = os.path.join(user_folder, filename)
 
     if not os.path.exists(filepath):
@@ -1236,7 +1236,7 @@ def admin():
 
     total_users = len(users)  # ✅ This line is important!
 
-    return render_template("admin.html", user=session["user"], users=users, total_users=total_users)
+    return render_template("admin.html", user=session["username"], users=users, total_users=total_users)
 
 @app.route('/manual-entry', methods=['GET', 'POST'])
 def manual_entry():
