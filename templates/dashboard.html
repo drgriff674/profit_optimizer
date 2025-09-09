@@ -60,6 +60,10 @@
 
     <div class="top-bar">
         <h1>Welcome, {{ session['user'] }}</h1>
+<!-- 🌙 Dark Mode Toggle -->
+<button id="darkToggle" class="logout-btn" style="background-color:#444; margin-left:10px;">
+    🌙 Toggle Dark Mode
+</button>
     </div>
 
 <!-- 🔹 KPI Section -->
@@ -103,15 +107,28 @@
     const labels = forecastData.map(item => item.date);
     const data = forecastData.map(item => item.predicted_revenue);
 
-    new Chart(ctx, {
+    // function to get colors based on mode
+    function getChartColors() {
+        const isDark = document.body.classList.contains("dark-mode");
+        return {
+            border: isDark ? "lightgreen" : "blue",
+            background: isDark ? "rgba(144, 238, 144, 0.2)" : "rgba(0, 0, 255, 0.1)",
+            grid: isDark ? "#555" : "#ccc",
+            ticks: isDark ? "#fff" : "#000"
+        };
+    }
+
+    let chartColors = getChartColors();
+
+    const forecastChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Predicted Revenue',
                 data: data,
-                borderColor: 'blue',
-                backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                borderColor: chartColors.border,
+                backgroundColor: chartColors.background,
                 tension: 0.3,
                 fill: true
             }]
@@ -119,17 +136,31 @@
         options: {
             responsive: true,
             plugins: {
-                legend: { display: true }
+                legend: { display: true, labels: { color: chartColors.ticks } }
             },
             scales: {
-                y: {
-                    beginAtZero: false
-                }
+                x: { ticks: { color: chartColors.ticks }, grid: { color: chartColors.grid } },
+                y: { ticks: { color: chartColors.ticks }, grid: { color: chartColors.grid }, beginAtZero: false }
             }
         }
     });
-</script>
 
+    // Dark mode toggle
+    document.getElementById("darkModeToggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+
+        // update chart colors dynamically
+        chartColors = getChartColors();
+        forecastChart.data.datasets[0].borderColor = chartColors.border;
+        forecastChart.data.datasets[0].backgroundColor = chartColors.background;
+        forecastChart.options.plugins.legend.labels.color = chartColors.ticks;
+        forecastChart.options.scales.x.ticks.color = chartColors.ticks;
+        forecastChart.options.scales.x.grid.color = chartColors.grid;
+        forecastChart.options.scales.y.ticks.color = chartColors.ticks;
+        forecastChart.options.scales.y.grid.color = chartColors.grid;
+        forecastChart.update();
+    });
+</script>
     <!-- ✅ Smart Notifications (if any) -->
     {% if notifications %}
         <div class="notification">
@@ -187,6 +218,26 @@
   <h3>Answer:</h3>
   <p>{{ answer }}</p>
 {% endif %}
+
+<script>
+  const toggleBtn = document.getElementById("darkToggle");
+  toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      // Save preference in localStorage
+      if (document.body.classList.contains("dark-mode")) {
+          localStorage.setItem("theme", "dark");
+      } else {
+          localStorage.setItem("theme", "light");
+      }
+  });
+
+  // Apply saved preference on page load
+  window.onload = () => {
+      if (localStorage.getItem("theme") === "dark") {
+          document.body.classList.add("dark-mode");
+      }
+  };
+</script>
     
 
 </body>
