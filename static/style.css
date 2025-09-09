@@ -107,3 +107,29 @@ h2 {
     background: #ffe6e6;
     color: #b30000;
 }
+
+/* 🌙 Dark Mode */
+body.dark-mode {
+    background: #121212;
+    color: #f1f1f1;
+}
+
+body.dark-mode .auth-container,
+body.dark-mode .kpi-card,
+body.dark-mode .card,
+body.dark-mode .notification {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+}
+
+body.dark-mode .upload-btn,
+body.dark-mode .btn {
+    background: #333;
+    color: #fff;
+}
+
+body.dark-mode .upload-btn:hover,
+body.dark-mode .btn:hover {
+    background: #555;
+}
