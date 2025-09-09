@@ -101,67 +101,87 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('forecastChart').getContext('2d');
-    const forecastData = JSON.parse('{{ forecast_chart | safe }}');
-
+  // DOM-safe: wait for the DOM
+  window.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('forecastChart')?.getContext('2d');
+    let forecastData = [];
+    try {
+      forecastData = JSON.parse('{{ forecast_chart | safe }}') || [];
+    } catch (e) {
+      forecastData = [];
+    }
     const labels = forecastData.map(item => item.date);
     const data = forecastData.map(item => item.predicted_revenue);
 
-    // function to get colors based on mode
-    function getChartColors() {
-        const isDark = document.body.classList.contains("dark-mode");
-        return {
-            border: isDark ? "lightgreen" : "blue",
-            background: isDark ? "rgba(144, 238, 144, 0.2)" : "rgba(0, 0, 255, 0.1)",
-            grid: isDark ? "#555" : "#ccc",
-            ticks: isDark ? "#fff" : "#000"
-        };
+    function chartColorPalette(isDark) {
+      return {
+        border: isDark ? "lightgreen" : "blue",
+        background: isDark ? "rgba(144, 238, 144, 0.2)" : "rgba(0, 0, 255, 0.1)",
+        grid: isDark ? "#555" : "#ccc",
+        ticks: isDark ? "#fff" : "#000"
+      };
     }
 
-    let chartColors = getChartColors();
+    const initialDark = localStorage.getItem('theme') === 'dark';
+    const initialColors = chartColorPalette(initialDark);
 
-    const forecastChart = new Chart(ctx, {
+    // Create chart only if canvas exists
+    let forecastChart = null;
+    if (ctx) {
+      forecastChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
-            datasets: [{
-                label: 'Predicted Revenue',
-                data: data,
-                borderColor: chartColors.border,
-                backgroundColor: chartColors.background,
-                tension: 0.3,
-                fill: true
-            }]
+          labels: labels,
+          datasets: [{
+            label: 'Predicted Revenue',
+            data: data,
+            borderColor: initialColors.border,
+            backgroundColor: initialColors.background,
+            tension: 0.3,
+            fill: true
+          }]
         },
         options: {
-            responsive: true,
-            plugins: {
-                legend: { display: true, labels: { color: chartColors.ticks } }
-            },
-            scales: {
-                x: { ticks: { color: chartColors.ticks }, grid: { color: chartColors.grid } },
-                y: { ticks: { color: chartColors.ticks }, grid: { color: chartColors.grid }, beginAtZero: false }
-            }
+          responsive: true,
+          plugins: { legend: { display: true, labels: { color: initialColors.ticks } } },
+          scales: {
+            x: { ticks: { color: initialColors.ticks }, grid: { color: initialColors.grid } },
+            y: { ticks: { color: initialColors.ticks }, grid: { color: initialColors.grid }, beginAtZero: false }
+          }
         }
-    });
+      });
+    }
 
-    // Dark mode toggle
-    document.getElementById("dark Toggle").addEventListener("click", () => {
-        document.body.classList.toggle("dark-mode");
+    function updateChartTheme(isDark) {
+      if (!forecastChart) return;
+      const colors = chartColorPalette(isDark);
+      forecastChart.data.datasets[0].borderColor = colors.border;
+      forecastChart.data.datasets[0].backgroundColor = colors.background;
+      forecastChart.options.plugins.legend.labels.color = colors.ticks;
+      forecastChart.options.scales.x.ticks.color = colors.ticks;
+      forecastChart.options.scales.x.grid.color = colors.grid;
+      forecastChart.options.scales.y.ticks.color = colors.ticks;
+      forecastChart.options.scales.y.grid.color = colors.grid;
+      forecastChart.update();
+    }
 
-        // update chart colors dynamically
-        chartColors = getChartColors();
-        forecastChart.data.datasets[0].borderColor = chartColors.border;
-        forecastChart.data.datasets[0].backgroundColor = chartColors.background;
-        forecastChart.options.plugins.legend.labels.color = chartColors.ticks;
-        forecastChart.options.scales.x.ticks.color = chartColors.ticks;
-        forecastChart.options.scales.x.grid.color = chartColors.grid;
-        forecastChart.options.scales.y.ticks.color = chartColors.ticks;
-        forecastChart.options.scales.y.grid.color = chartColors.grid;
-        forecastChart.update();
-    });
-</script>
-    <!-- ✅ Smart Notifications (if any) -->
+    // Apply saved preference on load
+    if (initialDark) {
+      document.body.classList.add('dark-mode');
+      updateChartTheme(true);
+    }
+
+    // Unified toggle button (use id "darkToggle")
+    const toggleBtn = document.getElementById('darkToggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const isNowDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('theme', isNowDark ? 'dark' : 'light');
+        updateChartTheme(isNowDark);
+      });
+    }
+  });
+</script>    <!-- ✅ Smart Notifications (if any) -->
     {% if notifications %}
         <div class="notification">
             <strong>Smart Notifications:</strong>
@@ -240,7 +260,7 @@
 </script>
     
 
-</body>
+
 
 <!-- ✅ Navbar with Logo & Branding -->
 <nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
@@ -255,3 +275,5 @@
     </div>
 </nav>
 </html>
+
+</body>
