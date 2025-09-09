@@ -1,23 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login - Profit Optimizer</title>
+    <meta charset="UTF-8">
+    <title>Login - OptiGain</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 350px;
+        }
+        img {
+            width: 80px;
+            margin-bottom: 15px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #444;
+        }
+        label {
+            float: left;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        p {
+            margin-top: 15px;
+        }
+        a {
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h2>Login to Profit Optimizer</h2>
-    <form method="POST">
-        <label>Username:</label><br>
-        <input type="text" name="username" required><br><br>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+        <h2>Login to OptiGain</h2>
+        <form method="POST">
+            <label>Username:</label>
+            <input type="text" name="username" required>
 
-        <label>Password:</label><br>
-        <input type="password" name="password" required><br><br>
+            <label>Password:</label>
+            <input type="password" name="password" required>
 
-        <button type="submit">Login</button>
-    </form>
+            <button type="submit">Login</button>
+        </form>
 
-    <p>Don't have an account? 
-        <a href="{{ url_for('register') }}">Register here</a>
-    </p>
-
+        <p>Don't have an account? 
+            <a href="{{ url_for('register') }}">Register here</a>
+        </p>
+    </div>
 </body>
 </html>

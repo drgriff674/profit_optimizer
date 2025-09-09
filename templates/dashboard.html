@@ -60,10 +60,6 @@
 
     <div class="top-bar">
         <h1>Welcome, {{ session['user'] }}</h1>
-        <!-- ✅ Logout Button -->
-        <form action="{{ url_for('logout') }}" method="get">
-            <button type="submit" class="logout-btn">Logout</button>
-        </form>
     </div>
 
 <!-- 🔹 KPI Section -->
@@ -194,4 +190,17 @@
     
 
 </body>
+
+<!-- ✅ Navbar with Logo & Branding -->
+<nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
+    <div style="display:flex; align-items:center; gap:10px;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
+        <h2 style="margin:0;">OptiGain</h2>
+    </div>
+    <div>
+        <form action="{{ url_for('logout') }}" method="get" style="margin:0;">
+            <button type="submit" class="logout-btn" style="background-color:#d9534f; border:none; padding:8px 16px; border-radius:5px; color:white; cursor:pointer;">Logout</button>
+        </form>
+    </div>
+</nav>
 </html>
