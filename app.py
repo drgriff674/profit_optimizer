@@ -1226,16 +1226,34 @@ def ask():
         return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
 @app.route("/admin")
 def admin():
-    if "username" not in session or session["username"] not in ["griff", "teresia", "zachary", "mutuma"]:
-        return "Unauthorized", 403
+    # ✅ Must be logged in
+    if "username" not in session:
+        flash("You must be logged in to access the admin panel.", "error")
+        return redirect(url_for("login"))
 
+    users = load_users()
+    current_user = session["username"]
+
+    # ✅ Must be admin role
+    if users.get(current_user, {}).get("role") != "admin":
+        flash("Unauthorized: You don’t have admin access.", "error")
+        return redirect(url_for("dashboard"))
+
+    # ✅ Load users safely
     try:
         with open("users.json", "r") as f:
             users = json.load(f)
     except FileNotFoundError:
-        users = []
+        users = {}
 
-    total_users = len(users)  # ✅ This line is important!
+    total_users = len(users)
+
+    return render_template(
+        "admin.html",
+        user=current_user,
+        users=users,
+        total_users=total_users
+    )
 
     return render_template("admin.html", user=session["username"], users=users, total_users=total_users)
 
