@@ -15,6 +15,7 @@ import smtplib
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
+from werkzeug.security import generate_password_hash, check_password_hash
 
 ALLOWED_EXTENSIONS = {'csv'}
 
@@ -79,8 +80,8 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if username in users and users[username] == password:
-            session['username'] = username  # ← use a single, consistent key
+        if username in users and check_password_hash(users[username], password):
+            session['username'] = username
             return redirect(url_for('dashboard'))
         else:
             flash("Invalid username or password", "error")
@@ -100,7 +101,7 @@ def register():
             return redirect(url_for('register'))
 
         # Save new user
-        users[new_user] = new_pass
+        users[new_user] = generate_password_hash(new_pass)
         save_users(users)
 
         # Create folder for this user’s uploads
