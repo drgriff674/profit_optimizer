@@ -1234,8 +1234,9 @@ def admin():
     users = load_users()
     current_user = session["username"]
 
-    # ✅ Must be admin role
-    if users.get(current_user, {}).get("role") != "admin":
+    # ✅ Restrict admin panel to specific usernames
+    allowed_admins = ["griff", "teresia", "zachary", "mutuma"]
+    if current_user not in allowed_admins:
         flash("Unauthorized: You don’t have admin access.", "error")
         return redirect(url_for("dashboard"))
 
