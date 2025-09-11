@@ -95,25 +95,25 @@ def register():
         new_user = request.form['username']
         new_pass = request.form['password']
 
-        # Check if username already exists
         if new_user in users:
             flash("Username already exists", "error")
             return redirect(url_for('register'))
 
-        # Save new user
-        users[new_user] = generate_password_hash(new_pass)
+        hashed_pass = generate_password_hash(new_pass)
+
+        # ✅ If no users exist, make the first one admin
+        role = "admin" if len(users) == 0 else "user"
+
+        users[new_user] = {"password": hashed_pass, "role": role}
         save_users(users)
 
-        # Create folder for this user’s uploads
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
-        # ✅ Store session so they are logged in immediately
-        session['username'] = new_user  
-
+        session['username'] = new_user
         flash("Registration successful! You are now logged in.", "success")
         return redirect(url_for('dashboard'))
 
-    return render_template('register.html')
+    return render_template('register.html'))
 @app.route('/logout')
 def logout():
     session.pop('username', None)
