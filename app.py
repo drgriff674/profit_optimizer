@@ -53,8 +53,12 @@ USER_FILE = os.path.join(BASE_DIR,'users.json')
 
 def load_users():
     if os.path.exists(USER_FILE):
-        with open(USER_FILE, 'r') as f:
-            return json.load(f)
+        try:
+            with open(USER_FILE, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            # ✅ Fix corrupted or empty file
+            return {}
     return {}
 
 def save_users(users):
