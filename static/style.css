@@ -133,3 +133,50 @@ body.dark-mode .upload-btn:hover,
 body.dark-mode .btn:hover {
     background: #555;
 }
+
+/* 🌙 Dark Mode - Dashboard Specific */
+body.dark-mode .dashboard-container {
+    background: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode p,
+body.dark-mode li {
+    color: #e0e0e0;
+}
+
+body.dark-mode canvas {
+    background: #1e1e1e !important;
+}
+
+/* 🌙 Dark Mode Toggle Button */
+.dark-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #4facfe;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease;
+    z-index: 999;
+}
+
+.dark-toggle:hover {
+    background: #00c6ff;
+}
+
+body.dark-mode .dark-toggle {
+    background: #333;
+    color: #fff;
+}
+
+body.dark-mode .dark-toggle:hover {
+    background: #555;
+}
