@@ -84,12 +84,18 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if username in users and check_password_hash(users[username], password):
-            session['username'] = username
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Invalid username or password", "error")
-            return redirect(url_for('login'))
+        # ✅ Make sure user exists and compare hashed password
+        if username in users:
+            stored_user = users[username]  # This is a dict: {"password": "...", "role": "user"}
+            stored_hash = stored_user.get("password")  # Extract just the password hash
+
+            if stored_hash and check_password_hash(stored_hash, password):
+                session['username'] = username
+                return redirect(url_for('dashboard'))
+
+        flash("Invalid username or password", "error")
+        return redirect(url_for('login'))
+
     return render_template('login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
