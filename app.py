@@ -52,19 +52,30 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 USER_FILE = os.path.join(BASE_DIR,'users.json')
 
 def load_users():
-    if os.path.exists(USER_FILE):
-        try:
-            with open(USER_FILE, 'r') as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            # ✅ Fix corrupted or empty file
-            return {}
-    return {}
+    if not os.path.exists(USER_FILE):
+        # Create an empty file if it doesn't exist
+        with open(USER_FILE, 'w') as f:
+            json.dump({}, f)
+        return {}
+
+    try:
+        with open(USER_FILE, 'r') as f:
+            data = f.read().strip()
+            if not data:
+                return {}  # Empty file -> treat as no users
+            return json.loads(data)
+    except json.JSONDecodeError:
+        # Reset corrupted file to empty dict
+        with open(USER_FILE, 'w') as f:
+            json.dump({}, f)
+        return {}
 
 def save_users(users):
-    with open(USER_FILE, 'w') as f:
+    temp_file = USER_FILE + ".tmp"
+    with open(temp_file, 'w') as f:
         json.dump(users, f, indent=4)
-        
+    os.replace(temp_file, USER_FILE)  # Prevents corruption
+    
 def allowed_file(filename):
     return','in filename and filename.rsplit(',',1)[1].lower()=='csv'
 
@@ -84,15 +95,16 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # ✅ Make sure user exists and compare hashed password
-        if username in users:
-            stored_user = users[username]  # This is a dict: {"password": "...", "role": "user"}
-            stored_hash = stored_user.get("password")  # Extract just the password hash
+        if not users:
+            flash("⚠ No users found in the system. Please register first.", "error")
+            return redirect(url_for('register'))
 
+        if username in users:
+            stored_user = users[username]
+            stored_hash = stored_user.get("password")
             if stored_hash and check_password_hash(stored_hash, password):
                 session['username'] = username
                 return redirect(url_for('dashboard'))
-
         flash("Invalid username or password", "error")
         return redirect(url_for('login'))
 
