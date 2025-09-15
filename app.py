@@ -498,11 +498,19 @@ def view_file(filename):
         if filename not in uploaded_csvs[username]:
             uploaded_csvs[username].append(filename)
 
-    # Handle optional category filter
+   # Handle optional category filter safely
     category_filter = request.args.get('category')
-    if category_filter:
+    if category_filter and 'Category' in df.columns:
         df = df[df['Category'] == category_filter]
 
+    # If filtering removed all rows, return a friendly message
+    if df.empty:
+        flash(f"No data found for category: {category_filter}", "warning")
+        return redirect(url_for('view_file', filename=filename))
+    # If filtering removed all rows, return a friendly message
+    if df.empty:
+        flash(f"No data found for category: {category_filter}", "warning")
+        return redirect(url_for('view_file', filename=filename))
     # Get unique categories for dropdown (only if 'Category' column exists)
     categories = df['Category'].unique().tolist() if 'Category' in df.columns else []
 
@@ -554,12 +562,16 @@ def view_file(filename):
     else:
         advice.append("🟢 Excellent profit margin! Keep doing what works.")
 
-    max_expense = df['Expenses'].max()
-    max_month = df.loc[df['Expenses'].idxmax(), 'Month']
+    if not df.empty:
+        max_expense = df['Expenses'].max()
+        max_month = df.loc[df['Expenses'].idxmax(), 'Month']
+    else:
+        max_expense = 0
+        max_month = None
     if max_expense > (df['Expenses'].mean() * 1.5):
         advice.append(f"⚠️ Expenses were unusually high in {max_month}. Investigate large spending.")
 
-    if df['Revenue'].iloc[-1] < df['Revenue'].iloc[0]:
+    if len(df) > 1 and df['Revenue'].iloc[-1] < df['Revenue'].iloc[0]:
         advice.append("📉 Revenue is trending down. Try boosting sales or marketing.")
     else:
         advice.append("📈 Revenue is trending upward. Well done!")
