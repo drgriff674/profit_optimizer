@@ -49,36 +49,10 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {'csv'}
 
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-USER_FILE = os.path.join(BASE_DIR,'users.json')
 
 init_db()
 
-def load_users():
-    if not os.path.exists(USER_FILE):
-        # Create an empty file if it doesn't exist
-        with open(USER_FILE, 'w') as f:
-            json.dump({}, f)
-        return {}
 
-    try:
-        with open(USER_FILE, 'r') as f:
-            data = f.read().strip()
-            if not data:
-                return {}  # Empty file -> treat as no users
-            return json.loads(data)
-    except json.JSONDecodeError:
-        # Reset corrupted file to empty dict
-        with open(USER_FILE, 'w') as f:
-            json.dump({}, f)
-        return {}
-
-def save_users(users):
-    temp_file = USER_FILE + ".tmp"
-    with open(temp_file, 'w') as f:
-        json.dump(users, f, indent=4)
-    os.replace(temp_file, USER_FILE)  # Prevents corruption
-    
 def allowed_file(filename):
     return','in filename and filename.rsplit(',',1)[1].lower()=='csv'
 
@@ -93,17 +67,15 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    users = load_users()  # ✅ Always read from DB
+    users = load_users()  # ✅ Fetch from SQLite
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        stored_user = users.get(username)  # ✅ Cleaner lookup
-        if stored_user:
-            stored_hash = stored_user["password"]
-            if check_password_hash(stored_hash, password):
-                session['username'] = username
-                return redirect(url_for('dashboard'))
+        stored_user = users.get(username)
+        if stored_user and check_password_hash(stored_user["password"], password):
+            session['username'] = username
+            return redirect(url_for('dashboard'))
 
         flash("Invalid username or password", "error")
         return redirect(url_for('login'))
@@ -124,16 +96,14 @@ def register():
         hashed_password = generate_password_hash(new_pass)
         role = "admin" if len(users) == 0 else "user"
 
-        save_user(new_user, hashed_password, role)  # ✅ Saves to SQLite
+        save_user(new_user, hashed_password, role)  # ✅ Writes to SQLite
 
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
-
         session['username'] = new_user
         flash("Registration successful! You are now logged in.", "success")
         return redirect(url_for('dashboard'))
 
     return render_template('register.html')
-
 @app.route('/logout')
 def logout():
     session.pop('username', None)
