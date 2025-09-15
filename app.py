@@ -95,16 +95,14 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        if not users:
-            flash("⚠ No users found in the system. Please register first.", "error")
-            return redirect(url_for('register'))
-
         if username in users:
             stored_user = users[username]
             stored_hash = stored_user.get("password")
+
             if stored_hash and check_password_hash(stored_hash, password):
                 session['username'] = username
                 return redirect(url_for('dashboard'))
+
         flash("Invalid username or password", "error")
         return redirect(url_for('login'))
 
@@ -128,17 +126,13 @@ def register():
         # ✅ First user becomes admin, others normal
         role = "admin" if len(users) == 0 else "user"
 
-        # ✅ Save new user with hashed password and role
-        users[new_user] = {
-            "password": hashed_password,
-            "role": role
-        }
-        save_users(users)
+        # ✅ Save user to database
+        save_user(new_user, hashed_password, role)
 
-        # ✅ Create folder for this user’s uploads
+        # ✅ Create folder for uploads
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
-        # ✅ Store session so they are logged in immediately
+        # ✅ Log them in immediately
         session['username'] = new_user  
 
         flash("Registration successful! You are now logged in.", "success")
