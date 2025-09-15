@@ -16,6 +16,7 @@ from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
+from database import init_db, load_users, save_user
 
 ALLOWED_EXTENSIONS = {'csv'}
 
@@ -50,6 +51,8 @@ ALLOWED_EXTENSIONS = {'csv'}
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 USER_FILE = os.path.join(BASE_DIR,'users.json')
+
+init_db()
 
 def load_users():
     if not os.path.exists(USER_FILE):
