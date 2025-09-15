@@ -93,16 +93,15 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    users = load_users()
+    users = load_users()  # ✅ Always read from DB
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        if username in users:
-            stored_user = users[username]
-            stored_hash = stored_user.get("password")
-
-            if stored_hash and check_password_hash(stored_hash, password):
+        stored_user = users.get(username)  # ✅ Cleaner lookup
+        if stored_user:
+            stored_hash = stored_user["password"]
+            if check_password_hash(stored_hash, password):
                 session['username'] = username
                 return redirect(url_for('dashboard'))
 
@@ -118,30 +117,23 @@ def register():
         new_user = request.form['username']
         new_pass = request.form['password']
 
-        # ✅ Check if username already exists
         if new_user in users:
             flash("Username already exists", "error")
             return redirect(url_for('register'))
 
-        # ✅ Hash password
         hashed_password = generate_password_hash(new_pass)
-
-        # ✅ First user becomes admin, others normal
         role = "admin" if len(users) == 0 else "user"
 
-        # ✅ Save user to database
-        save_user(new_user, hashed_password, role)
+        save_user(new_user, hashed_password, role)  # ✅ Saves to SQLite
 
-        # ✅ Create folder for uploads
         os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
-        # ✅ Log them in immediately
-        session['username'] = new_user  
-
+        session['username'] = new_user
         flash("Registration successful! You are now logged in.", "success")
         return redirect(url_for('dashboard'))
 
     return render_template('register.html')
+
 @app.route('/logout')
 def logout():
     session.pop('username', None)
