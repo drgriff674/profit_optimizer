@@ -7,7 +7,6 @@ import plotly.offline as pyo
 from urllib.parse import quote
 from werkzeug.utils import secure_filename
 from fpdf import FPDF
-import json
 import io
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -16,24 +15,24 @@ from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import init_db, load_users, save_user
+from database import init_db, load_users, save_user  # ✅ Use DB functions only
 
-ALLOWED_EXTENSIONS = {'csv'}
+# ✅ Initialize database before anything else
+init_db()
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-DISABLE_AI = True
-
+# ✅ Flask app setup
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-uploaded_csvs = {}
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Mail Configuration for griffinnnnn77@gmail.com
+ALLOWED_EXTENSIONS = {'csv'}
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ✅ Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -43,24 +42,12 @@ app.config['MAIL_DEFAULT_SENDER'] = 'griffinnnnn77@gmail.com'
 
 mail = Mail(app)
 
+# ✅ Disable AI if not needed
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+DISABLE_AI = True
 
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'csv'}
-
-
-
-init_db()
-
-
-def allowed_file(filename):
-    return','in filename and filename.rsplit(',',1)[1].lower()=='csv'
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
+uploaded_csvs = {}
 @app.route('/')
 def index():
     return redirect(url_for('login'))
