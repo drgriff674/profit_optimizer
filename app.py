@@ -125,14 +125,17 @@ def dashboard():
     answer = None
 
     if files:
-        file_path = os.path.join("uploads", files[0])
+        # ✅ Pick the correct file FIRST (session > latest)
+        if 'uploaded_file' in session and session['uploaded_file'] in files:
+            latest_file = session['uploaded_file']
+        else:
+            latest_file = sorted(files)[-1]  # fallback to most recent file in folder
+
+        file_path = os.path.join(user_folder, latest_file)
+
         try:
-            from openai import OpenAI
-
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-            df = pd.read_csv(filepath)
-
+            df = pd.read_csv(file_path)
         # 🔹 Merge with manual entries if they exist
             manual_path = os.path.join(user_folder, "manual_entries.csv")
             if os.path.exists(manual_path):
