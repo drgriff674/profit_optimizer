@@ -72,24 +72,38 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    init_db()  # ✅ Ensure the table exists before we try to save
+
     users = load_users()
     if request.method == 'POST':
-        new_user = request.form['username']
-        new_pass = request.form['password']
+        new_user = request.form['username'].strip()
+        new_pass = request.form['password'].strip()
 
+        # ✅ Prevent duplicate usernames (extra safeguard)
         if new_user in users:
-            flash("Username already exists", "error")
+            flash("⚠️ Username already exists, please choose another.", "error")
             return redirect(url_for('register'))
 
-        hashed_password = generate_password_hash(new_pass)
+        # ✅ Ensure strong password (optional, but good practice)
+        if len(new_pass) < 4:
+            flash("⚠️ Password must be at least 4 characters long.", "error")
+            return redirect(url_for('register'))
+
+        # ✅ First ever user is admin, others are normal users
         role = "admin" if len(users) == 0 else "user"
 
-        save_user(new_user, hashed_password, role)  # ✅ Writes to SQLite
+        try:
+            hashed_password = generate_password_hash(new_pass)
+            save_user(new_user, hashed_password, role)  # ✅ Writes to SQLite
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
-        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
-        session['username'] = new_user
-        flash("Registration successful! You are now logged in.", "success")
-        return redirect(url_for('dashboard'))
+            session['username'] = new_user
+            flash("✅ Registration successful! You are now logged in.", "success")
+            return redirect(url_for('dashboard'))
+
+        except Exception as e:
+            flash(f"❌ Error creating user: {str(e)}", "error")
+            return redirect(url_for('register'))
 
     return render_template('register.html')
 @app.route('/logout')
