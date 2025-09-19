@@ -7,6 +7,7 @@ DB_PATH = os.path.join(BASE_DIR, "users.db")
 
 # 🔽 REPLACE EVERYTHING in init_db() WITH THIS
 def init_db():
+    print(f"[INIT] Using database at: {DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -32,6 +33,7 @@ def init_db():
 
 # ✅ Load all users as a dict
 def load_users():
+    print(f"[LOAD] Reading users from:{DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT username, password, role FROM users")
@@ -41,9 +43,11 @@ def load_users():
 
 # ✅ Save a new user
 def save_user(username, password, role):
+    print(f"[SAVE] Saving user '{username}' to: {DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
                    (username, password, role))
     conn.commit()
     conn.close()
+    print(f"[SAVE] User '{username}' saved successfully!")
