@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 # ✅ Use your Supabase connection string
-DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.djzmdhodxvdckbqyhrqj.supabase.co:5432/postgres"
+DATABASE_URL = "postgresql://postgres:Profit123!project@db.djzmdhodxvdckbqyhrqj.supabase.co:5432/postgres"
 
 # ✅ Connect to the database
 def get_connection():
