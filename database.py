@@ -1,12 +1,17 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, "users.db")
+# ✅ Use your Supabase connection string
+DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.djzmdhodxvdckbqyhrqj.supabase.co:5432/postgres"
 
-# ✅ Initialize database and users table if not exists
+# ✅ Connect to the database
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
+# ✅ Initialize users table if not exists
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -16,29 +21,25 @@ def init_db():
     )
     """)
     conn.commit()
+    cursor.close()
     conn.close()
 
-# ✅ Load all users as a dict
+# ✅ Load all users
 def load_users():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT username, password, role FROM users")
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
-    return {username: {"password": password, "role": role} for username, password, role in rows}
+    return {row["username"]: {"password": row["password"], "role": row["role"]} for row in rows}
 
-# ✅ Save a new user (FIXED)
+# ✅ Save a new user
 def save_user(username, password, role):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            (username, password, role)
-        )
-        conn.commit()
-        print(f"✅ User '{username}' saved successfully!")  # Debug message
-    except sqlite3.IntegrityError:
-        print(f"⚠️ Username '{username}' already exists, not saved.")
-    finally:
-        conn.close()
+    cursor.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+                   (username, password, role))
+    conn.commit()
+    cursor.close()
+    conn.close()
