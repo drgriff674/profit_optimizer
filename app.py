@@ -20,6 +20,7 @@ from database import init_db, load_users, save_user  # ✅ Use DB functions only
 
 # ✅ Initialize database before anything else
 init_db()
+debug_print_users()
 
 # ✅ Flask app setup
 app = Flask(__name__)
