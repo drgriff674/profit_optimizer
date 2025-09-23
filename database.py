@@ -1,12 +1,13 @@
 import sqlite3
 import os
 
-# ✅ Database file path (inside your project folder)
+# ✅ Database file path (inside your project folder, always the same one)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "users.db")
 
 # ✅ Initialize database and users table if not exists
 def init_db():
+    os.makedirs(BASE_DIR, exist_ok=True)  # ensure folder exists
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -38,3 +39,12 @@ def save_user(username, password, role):
     )
     conn.commit()
     conn.close()
+
+# ✅ Debug: print all users directly from DB
+def debug_print_users():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, role FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+    print("📌 Current users in DB:", rows)
