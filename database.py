@@ -1,15 +1,13 @@
+import sqlite3
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
 
-# ✅ Use your Supabase connection string (password URL-encoded!)
-DATABASE_URL = "postgresql://postgres:Profit123%21project@db.djzmdhodxvdckbqyhrqj.supabase.co:5432/postgres"
+# ✅ Database file path (inside your project folder)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(BASE_DIR, "users.db")
 
-def get_connection():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-
+# ✅ Initialize database and users table if not exists
 def init_db():
-    conn = get_connection()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -19,25 +17,24 @@ def init_db():
     )
     """)
     conn.commit()
-    cursor.close()
     conn.close()
 
+# ✅ Load all users as a dict
 def load_users():
-    conn = get_connection()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT username, password, role FROM users")
     rows = cursor.fetchall()
-    cursor.close()
     conn.close()
-    return {row["username"]: {"password": row["password"], "role": row["role"]} for row in rows}
+    return {username: {"password": password, "role": role} for username, password, role in rows}
 
+# ✅ Save a new user
 def save_user(username, password, role):
-    conn = get_connection()
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+        "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
         (username, password, role)
     )
     conn.commit()
-    cursor.close()
     conn.close()
