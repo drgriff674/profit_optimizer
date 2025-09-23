@@ -16,7 +16,7 @@ from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import init_db, load_users, save_user  # ✅ Use DB functions only
+from database import init_db, load_users, save_user, debug_print_users  # ✅ Use DB functions only
 
 # ✅ Initialize database before anything else
 init_db()
