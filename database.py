@@ -1,13 +1,14 @@
 import sqlite3
 import os
 
-# ✅ Database file path (inside your project folder, always the same one)
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, "users.db")
+# ✅ Always use the project root folder (where app.py is located)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
+DB_PATH = os.path.join(PROJECT_ROOT, "users.db")
+
+print(f"📂 Using database at: {DB_PATH}")
 
 # ✅ Initialize database and users table if not exists
 def init_db():
-    os.makedirs(BASE_DIR, exist_ok=True)  # ensure folder exists
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -39,6 +40,7 @@ def save_user(username, password, role):
     )
     conn.commit()
     conn.close()
+    debug_print_users()  # show saved users each time
 
 # ✅ Debug: print all users directly from DB
 def debug_print_users():
