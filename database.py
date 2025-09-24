@@ -1,15 +1,13 @@
-import sqlite3
+import psycopg2
 import os
+from psycopg2.extras import RealDictCursor
 
-# ✅ Always use the project root folder (where app.py is located)
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
-DB_PATH = os.path.join(PROJECT_ROOT, "users.db")
-
-print(f"📂 Using database at: {DB_PATH}")
+# ✅ Railway PostgreSQL connection string
+DB_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
 
 # ✅ Initialize database and users table if not exists
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DB_URL)
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -19,34 +17,38 @@ def init_db():
     )
     """)
     conn.commit()
+    cursor.close()
     conn.close()
 
 # ✅ Load all users as a dict
 def load_users():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
     cursor = conn.cursor()
     cursor.execute("SELECT username, password, role FROM users")
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
-    return {username: {"password": password, "role": role} for username, password, role in rows}
+    return {row["username"]: {"password": row["password"], "role": row["role"]} for row in rows}
 
 # ✅ Save a new user
 def save_user(username, password, role):
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DB_URL)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+        "INSERT INTO users (username, password, role) VALUES (%s, %s, %s) ON CONFLICT (username) DO NOTHING",
         (username, password, role)
     )
     conn.commit()
+    cursor.close()
     conn.close()
-    debug_print_users()  # show saved users each time
+    debug_print_users()
 
 # ✅ Debug: print all users directly from DB
 def debug_print_users():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DB_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT username, role FROM users")
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
     print("📌 Current users in DB:", rows)

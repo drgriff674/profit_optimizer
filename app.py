@@ -16,11 +16,14 @@ from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import init_db, load_users, save_user, debug_print_users  # ✅ Use DB functions only
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-# ✅ Initialize database before anything else
-init_db()
-debug_print_users()
+# Railway PostgreSQL connection
+DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
+
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 # ✅ Flask app setup
 app = Flask(__name__)
@@ -56,46 +59,82 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    users = load_users()  # ✅ Fetch from SQLite
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
 
-        stored_user = users.get(username)
-        if stored_user and check_password_hash(stored_user["password"], password):
-            session['username'] = username
-            return redirect(url_for('dashboard'))
+        try:
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT username, password, role FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
 
-        flash("Invalid username or password", "error")
-        return redirect(url_for('login'))
+            if user and check_password_hash(user["password"], password):
+                session['username'] = username
+                flash("✅ Login successful!", "success")
+                return redirect(url_for('dashboard'))
+
+            flash("❌ Invalid username or password", "error")
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            flash(f"⚠️ Database error: {str(e)}", "error")
+            return redirect(url_for('login'))
 
     return render_template('login.html')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    init_db()  # ✅ Ensure the table exists before we try to save
-
-    users = load_users()
     if request.method == 'POST':
         new_user = request.form['username'].strip()
         new_pass = request.form['password'].strip()
 
-        # ✅ Prevent duplicate usernames (extra safeguard)
-        if new_user in users:
-            flash("⚠️ Username already exists, please choose another.", "error")
-            return redirect(url_for('register'))
-
-        # ✅ Ensure strong password (optional, but good practice)
-        if len(new_pass) < 4:
-            flash("⚠️ Password must be at least 4 characters long.", "error")
-            return redirect(url_for('register'))
-
-        # ✅ First ever user is admin, others are normal users
-        role = "admin" if len(users) == 0 else "user"
-
         try:
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            # ✅ Ensure users table exists
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    username TEXT PRIMARY KEY,
+                    password TEXT NOT NULL,
+                    role TEXT NOT NULL
+                )
+            """)
+
+            # ✅ Check if user already exists
+            cursor.execute("SELECT * FROM users WHERE username = %s", (new_user,))
+            existing_user = cursor.fetchone()
+            if existing_user:
+                flash("⚠️ Username already exists, please choose another.", "error")
+                cursor.close()
+                conn.close()
+                return redirect(url_for('register'))
+
+            # ✅ Validate password
+            if len(new_pass) < 4:
+                flash("⚠️ Password must be at least 4 characters long.", "error")
+                cursor.close()
+                conn.close()
+                return redirect(url_for('register'))
+
+            # ✅ First ever user = admin
+            cursor.execute("SELECT COUNT(*) FROM users")
+            user_count = cursor.fetchone()["count"]
+            role = "admin" if user_count == 0 else "user"
+
+            # ✅ Save user
             hashed_password = generate_password_hash(new_pass)
-            save_user(new_user, hashed_password, role)  # ✅ Writes to SQLite
+            cursor.execute(
+                "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
+                (new_user, hashed_password, role)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            # ✅ Make upload folder for new user
             os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
             session['username'] = new_user
