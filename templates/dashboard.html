@@ -246,10 +246,11 @@
         <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
         <h2 style="margin:0;">OptiGain</h2>
     </div>
-<button type="submit" class="btn btn-danger">Logout</button>
     <div>
-</div>
+        <form action="{{ url_for('logout') }}" method="get" style="margin:0;">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
 </nav>
-</html>
-
 </body>
+</html>
