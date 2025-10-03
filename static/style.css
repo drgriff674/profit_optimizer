@@ -180,3 +180,45 @@ body.dark-mode .dark-toggle {
 body.dark-mode .dark-toggle:hover {
     background: #555;
 }
+
+body.dark-mode .dark-toggle:hover {
+    background: #555;
+}
+
+/* 🌟 Button Variants */
+.btn-primary {
+    background: #4facfe;
+}
+.btn-primary:hover {
+    background: #00c6ff;
+}
+
+.btn-success {
+    background: #28a745;
+}
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+.btn-warning:hover {
+    background: #e0a800;
+    color: #fff;
+}
+
+.btn-danger {
+    background: #dc3545;
+}
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.btn-info {
+    background: #17a2b8;
+}
+.btn-info:hover {
+    background: #117a8b;
+}

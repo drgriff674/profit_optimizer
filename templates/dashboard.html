@@ -213,27 +213,25 @@
         {% endif %}
     </div>
 
-    <!-- ✅ Upload New CSV Button -->
-    <a href="{{ url_for('upload') }}" class="upload-btn">Upload New CSV</a>
+   <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload New CSV</a>
 
-    <a href="{{ url_for('manual_entry') }}" class="upload-btn" style="background-color: green;margin-left: 10px;">
-     Manual entry
-    </a>
+<a href="{{ url_for('manual_entry') }}" class="btn btn-success" style="margin-left: 10px;">
+ Manual Entry
+</a>
 
-    <a href="{{ url_for('use_demo_data') }}" class="upload-btn">Use Demo Data</a>
+<a href="{{ url_for('use_demo_data') }}" class="btn btn-primary">Use Demo Data</a>
 
-    <a href="{{ url_for('profile') }}" class="btn btn-info mt-2">My Profile</a>
-    <a href="{{ url_for('ask') }}" class="btn btn-info">Ask ChatGPT</a>
-    <a href="{{ url_for('admin') }}" class="btn btn-warning">Admin panel</a>
+<a href="{{ url_for('profile') }}" class="btn btn-info">My Profile</a>
+<a href="{{ url_for('ask') }}" class="btn btn-info">Ask ChatGPT</a>
+<a href="{{ url_for('admin') }}" class="btn btn-warning">Admin Panel</a>
 
-    <!-- ✅ New Feature Buttons -->
-   <a href="{{ url_for('profit_calculator') }}" class="upload-btn" style="background-color: purple; margin-left: 10px;">
-    Profit Calculator
-   </a>
+<a href="{{ url_for('profit_calculator') }}" class="btn btn-info" style="margin-left: 10px;">
+ Profit Calculator
+</a>
 
-   <a href="{{ url_for('trend_forecaster') }}" class="upload-btn" style="background-color: orange; margin-left: 10px;">
-    Trend Forecaster
-   </a>
+<a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning" style="margin-left: 10px;">
+ Trend Forecaster
+</a>
 
 <h2>Ask ChatGPT</h2>
 <form action="/dashboard" method="post">
@@ -258,8 +256,8 @@
     </div>
     <div>
         <form action="{{ url_for('logout') }}" method="get" style="margin:0;">
-            <button type="submit" class="logout-btn" style="background-color:#d9534f; border:none; padding:8px 16px; border-radius:5px; color:white; cursor:pointer;">Logout</button>
-        </form>
+    <button type="submit" class="btn btn-danger">Logout</button>
+</form>
     </div>
 </nav>
 </html>
