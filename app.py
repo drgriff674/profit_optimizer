@@ -1368,3 +1368,51 @@ def use_demo_data():
         flash("Sample data file missing. Please contact admin.", "error")
 
     return redirect(url_for('dashboard'))
+
+@app.route('/profit_calculator', methods=['GET', 'POST'])
+def profit_calculator():
+    profit = None
+    if request.method == 'POST':
+        try:
+            revenue = float(request.form['revenue'])
+            expenses = float(request.form['expenses'])
+            profit = revenue - expenses
+        except ValueError:
+            flash("⚠️ Please enter valid numbers.", "error")
+    
+    return render_template('profit_calculator.html', profit=profit)
+
+@app.route('/trend_forecaster', methods=['GET', 'POST'])
+def trend_forecaster():
+    forecast_plot = None
+
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and file.filename.endswith('.csv'):
+            df = pd.read_csv(file)
+
+            # Ensure correct column names
+            df.columns = [c.lower() for c in df.columns]
+            if 'date' not in df or 'revenue' not in df:
+                flash("⚠️ CSV must have 'date' and 'revenue' columns.", "error")
+                return redirect(url_for('trend_forecaster'))
+
+            # Prepare data
+            df['date'] = pd.to_datetime(df['date'])
+            prophet_df = df.rename(columns={'date': 'ds', 'revenue': 'y'})
+
+            # Fit Prophet model
+            model = Prophet()
+            model.fit(prophet_df)
+
+            # Forecast next 30 days
+            future = model.make_future_dataframe(periods=30)
+            forecast = model.predict(future)
+
+            # Plot
+            fig = model.plot(forecast)
+            img_path = os.path.join("static", "forecast.png")
+            fig.savefig(img_path)
+            forecast_plot = img_path
+
+    return render_template('trend_forecaster.html', forecast_plot=forecast_plot)
