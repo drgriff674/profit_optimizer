@@ -222,3 +222,26 @@ body.dark-mode .dark-toggle:hover {
 .btn-info:hover {
     background: #117a8b;
 }
+
+/* 🌟 Dashboard Button Group */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.button-group .btn {
+    padding: 12px 20px;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.button-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
