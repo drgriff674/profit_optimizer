@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trend Forecaster</title>
+</head>
+<body>
+    <h2>📈 Trend Forecaster (Demo)</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label>Upload CSV (with Date & Revenue columns):</label>
+        <input type="file" name="file" accept=".csv" required><br><br>
+        <button type="submit">Generate Forecast</button>
+    </form>
+
+    {% if forecast_plot %}
+        <h3>✅ Forecast Generated:</h3>
+        <img src="{{ url_for('static', filename='forecast.png') }}" width="600">
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}">⬅ Back to Dashboard</a>
+</body>
+</html>
