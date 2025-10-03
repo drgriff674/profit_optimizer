@@ -226,6 +226,15 @@
     <a href="{{ url_for('ask') }}" class="btn btn-info">Ask ChatGPT</a>
     <a href="{{ url_for('admin') }}" class="btn btn-warning">Admin panel</a>
 
+    <!-- ✅ New Feature Buttons -->
+   <a href="{{ url_for('profit_calculator') }}" class="upload-btn" style="background-color: purple; margin-left: 10px;">
+    Profit Calculator
+   </a>
+
+   <a href="{{ url_for('trend_forecaster') }}" class="upload-btn" style="background-color: orange; margin-left: 10px;">
+    Trend Forecaster
+   </a>
+
 <h2>Ask ChatGPT</h2>
 <form action="/dashboard" method="post">
   <input type="text" name="question" placeholder="Ask something..." required>
