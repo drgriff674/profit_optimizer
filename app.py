@@ -1278,7 +1278,6 @@ def admin():
         flash("You must be logged in to access the admin panel.", "error")
         return redirect(url_for("login"))
 
-    users = load_users()
     current_user = session["username"]
 
     # ✅ Restrict admin panel to specific usernames
@@ -1296,15 +1295,13 @@ def admin():
 
     total_users = len(users)
 
+    # ✅ Render admin page
     return render_template(
         "admin.html",
         user=current_user,
         users=users,
         total_users=total_users
     )
-
-    return render_template("admin.html", user=session["username"], users=users, total_users=total_users)
-
 @app.route('/manual-entry', methods=['GET', 'POST'])
 def manual_entry():
     if 'username' not in session:
