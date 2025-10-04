@@ -96,9 +96,9 @@
         <h2>👥 Registered Users</h2>
         {% if users %}
             <ul>
-                {% for username in users %}
-                    <li>{{ username }}</li>
-                {% endfor %}
+               {% for username, info in users.items() %}
+    <li>{{ username }} — {{ info.role }}</li>
+{% endfor %}
             </ul>
         {% else %}
             <p>No users found.</p>
