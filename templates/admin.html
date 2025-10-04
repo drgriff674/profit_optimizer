@@ -2,51 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
+    <title>Admin Panel - OptiGain</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #4facfe, #00f2fe);
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-        }
-        .admin-container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
-        h1, h2 {
             color: #333;
         }
+
+        .admin-container {
+            background: #fff;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        h2 {
+            margin-top: 25px;
+            color: #444;
+            font-size: 20px;
+        }
+
         ul {
             list-style: none;
             padding: 0;
+            margin: 10px 0;
         }
+
         ul li {
             background: #f8f9fa;
-            margin: 5px 0;
-            padding: 8px;
-            border-radius: 6px;
+            margin: 6px 0;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 500;
         }
+
+        .stats {
+            background: #e9f7ff;
+            border-left: 5px solid #4facfe;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
         .back-btn {
             display: inline-block;
-            margin-top: 15px;
-            padding: 10px 15px;
-            background: #0275d8;
+            margin-top: 25px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #4facfe, #00c6ff);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s ease;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
+
         .back-btn:hover {
-            background: #025aa5;
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #00c6ff, #4facfe);
         }
     </style>
 </head>
@@ -55,15 +89,14 @@
         <h1>🔑 Admin Dashboard</h1>
         <p>Welcome, <strong>{{ user }}</strong>!</p>
 
-        <h2>📊 Stats</h2>
-        <ul>
-            <li><strong>Total Users:</strong> {{ total_users }}</li>
-        </ul>
+        <div class="stats">
+            <strong>Total Registered Users:</strong> {{ total_users }}
+        </div>
 
         <h2>👥 Registered Users</h2>
         {% if users %}
             <ul>
-                {% for username, password in users.items() %}
+                {% for username in users %}
                     <li>{{ username }}</li>
                 {% endfor %}
             </ul>
