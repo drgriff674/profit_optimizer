@@ -1281,17 +1281,14 @@ def admin():
     current_user = session["username"]
 
     # ✅ Restrict admin panel to specific usernames
-    allowed_admins = ["griffin","diana","rose"]
+    allowed_admins = ["griffin", "diana", "rose"]
     if current_user not in allowed_admins:
         flash("Unauthorized: You don’t have admin access.", "error")
         return redirect(url_for("dashboard"))
 
-    # ✅ Load users safely
-    try:
-        with open("users.json", "r") as f:
-            users = json.load(f)
-    except FileNotFoundError:
-        users = {}
+    # ✅ Load users from the PostgreSQL database
+    from database import load_users
+    users = load_users()
 
     total_users = len(users)
 
