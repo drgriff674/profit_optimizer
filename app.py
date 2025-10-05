@@ -1426,7 +1426,7 @@ def delete_user(username):
         flash("Unauthorized access.", "error")
         return redirect(url_for("dashboard"))
 
-    conn = psycopg2.connect(DB_URL)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM users WHERE username = %s", (username,))
     conn.commit()
@@ -1448,7 +1448,7 @@ def promote_user(username):
         flash("Unauthorized access.", "error")
         return redirect(url_for("dashboard"))
 
-    conn = psycopg2.connect(DB_URL)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET role = 'admin' WHERE username = %s", (username,))
     conn.commit()
@@ -1470,7 +1470,7 @@ def reset_password(username):
         flash("Unauthorized access.", "error")
         return redirect(url_for("dashboard"))
 
-    conn = psycopg2.connect(DB_URL)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET password = %s WHERE username = %s", ("1234", username))
     conn.commit()
