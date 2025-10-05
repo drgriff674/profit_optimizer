@@ -18,6 +18,7 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from database import load_users, save_user, init_db
 
 # Railway PostgreSQL connection
 DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
@@ -46,6 +47,8 @@ app.config['MAIL_PASSWORD'] = 'abcdefghijklmnop'  # Replace with Gmail App Passw
 app.config['MAIL_DEFAULT_SENDER'] = 'griffinnnnn77@gmail.com'
 
 mail = Mail(app)
+
+init_db()
 
 # ✅ Disable AI if not needed
 load_dotenv()
@@ -1410,3 +1413,69 @@ def trend_forecaster():
             forecast_plot = img_path
 
     return render_template('trend_forecaster.html', forecast_plot=forecast_plot)
+
+# 🗑 Delete a user
+@app.route("/delete_user/<username>", methods=["POST"])
+def delete_user(username):
+    if "username" not in session:
+        flash("Login required.", "error")
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+    if current_user not in ["griffin", "diana", "rose"]:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("dashboard"))
+
+    conn = psycopg2.connect(DB_URL)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE username = %s", (username,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash(f"User '{username}' deleted successfully.", "success")
+    return redirect(url_for("admin"))
+
+# ⭐ Promote a user (make them admin)
+@app.route("/promote_user/<username>", methods=["POST"])
+def promote_user(username):
+    if "username" not in session:
+        flash("Login required.", "error")
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+    if current_user not in ["griffin", "diana", "rose"]:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("dashboard"))
+
+    conn = psycopg2.connect(DB_URL)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET role = 'admin' WHERE username = %s", (username,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash(f"User '{username}' promoted to admin.", "success")
+    return redirect(url_for("admin"))
+
+# 🔁 Reset user password (default: '1234')
+@app.route("/reset_password/<username>", methods=["POST"])
+def reset_password(username):
+    if "username" not in session:
+        flash("Login required.", "error")
+        return redirect(url_for("login"))
+
+    current_user = session["username"]
+    if current_user not in ["griffin", "diana", "rose"]:
+        flash("Unauthorized access.", "error")
+        return redirect(url_for("dashboard"))
+
+    conn = psycopg2.connect(DB_URL)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET password = %s WHERE username = %s", ("1234", username))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    flash(f"Password for '{username}' reset to '1234'.", "success")
+    return redirect(url_for("admin"))
