@@ -53,6 +53,8 @@ init_db()
 # ✅ Disable AI if not needed
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+if not os.getenv("OPENAI_KEY"):
+    print("WARNING: No OpenAI API key found - AI features will be limited.")
 DISABLE_AI = False
 
 uploaded_csvs = {}
