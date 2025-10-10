@@ -178,42 +178,47 @@ def dashboard():
 
         file_path = os.path.join(user_folder, latest_file)
 
-        try:
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            df = pd.read_csv(file_path)
+       try:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        df = pd.read_csv(file_path)
+
         # 🔹 Merge with manual entries if they exist
-            manual_path = os.path.join(user_folder, "manual_entries.csv")
-            if os.path.exists(manual_path):
-                manual_df = pd.read_csv(manual_path)
-                df = pd.concat([df, manual_df], ignore_index=True)
-            preview = df.head().to_string()
+        manual_path = os.path.join(user_folder, "manual_entries.csv")
+        if os.path.exists(manual_path):
+            manual_df = pd.read_csv(manual_path)
+            df = pd.concat([df, manual_df], ignore_index=True)
 
-            prompt = f"""
-    You are OptiGain’s AI analyst. Review the uploaded company dataset and generate:
-    1️⃣  Two short live trend insights (e.g. "Revenue up 12% MoM" or "Expenses rose sharply in Q2")
-    2️⃣  One actionable recommendation (based on data)
-    3️⃣  One performance summary in a professional sentence
+        preview = df.head().to_string()
 
-    DATA SAMPLE:
-    {preview}
+        prompt = f"""
+        You are a business data analyst AI for OptiGain. Review the latest uploaded company data below.
+        Generate:
+        1. 2 short trend insights (e.g. revenue uptrend, expense spike)
+        2. 1 actionable recommendation (e.g. optimize marketing, reduce overhead)
+        3. 1 performance summary (1 sentence, professional tone)
 
-    Respond as three concise bullet points, no fluff.
-    """
+        Data sample:
+        {preview}
 
-    response = client.chat.completions.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "You are OptiGain’s advanced AI dashboard engine — concise, analytical, and business-focused."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.6,
-        max_tokens=250
-    )
+        Respond in 3 short bullet points, each under 20 words.
+        """
 
-    insights = response.choices[0].message.content.strip()
-    notifications.append(f"🤖 Live AI Insights:\n{insights}")
-        except Exception as e:
-            notifications.append(f"Error generating insights: {str(e)}")
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "You are OptiGain's smart business assistant. Give data-driven, clear financial insights."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
+
+        insights = response.choices[0].message.content.strip()
+        notifications.append(insights)
+
+    except Exception as e:
+        notifications.append(f"Error generating insights: {str(e)}")
+        
 
     # ✅ FIX 1: Try using the most recently uploaded file from session
     if 'uploaded_file' in session and session['uploaded_file'] in files:
