@@ -261,10 +261,13 @@ def dashboard():
             
         answer = None
     if request.method == "POST":
-        question = request.form.get("question")
-        if question:
-            if os.getenv("DISABLE_AI") == "true":
-                notifications.append("AI insights temporarily disabled.")
+        question = request.form.get("question", "").strip()
+
+        if not question:
+            notifications.append("Please enter a question before submitting.")
+        else:
+            if DISABLE_AI:
+                notifications.append("⚙️ AI insights are currently disabled.")
             else:
                 try:
                     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -273,10 +276,9 @@ def dashboard():
                         messages=[{"role": "user", "content": question}]
                     )
                     answer = response.choices[0].message.content.strip()
-                    notifications.append(answer)
+                    notifications.append(f"💡 Smart Insight: {answer}")
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
-    
 
     kpis = {}
     if latest_file:
