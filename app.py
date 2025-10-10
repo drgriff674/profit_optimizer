@@ -204,7 +204,7 @@ def dashboard():
             """
 
             response = client.chat.completions.create(
-                model="gpt-4-turbo",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are OptiGain's smart business assistant. Give data-driven, clear financial insights."},
                     {"role": "user", "content": prompt}
@@ -1281,7 +1281,7 @@ def ask():
         client = OpenAI(api_key=api_key)
 
         response = client.chat.completions.create(
-            model="gpt-4-turbo",  # ✅ upgraded model (smarter, more accurate)
+            model="gpt-3.5-turbo",  # ✅ upgraded model (smarter, more accurate)
             messages=[
                 {"role": "system", "content": "You are a smart business assistant that gives concise, actionable insights."},
                 {"role": "user", "content": question}
