@@ -53,7 +53,7 @@ init_db()
 # ✅ Disable AI if not needed
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-DISABLE_AI = True
+DISABLE_AI = False
 
 uploaded_csvs = {}
 @app.route('/')
@@ -187,14 +187,26 @@ def dashboard():
             preview = df.head().to_string()
 
             prompt = f"""
-            Analyze the following business data and give three actionable insights or suggestions for improvement.
-            Data:
+            You are a business data analyst AI for OptiGain. Review the latest uploaded company data below.
+            Generate:
+            1. 2 short trend insights (e.g. revenue uptrend, expense spike)
+            2. 1 actionable recommendation (e.g. optimize marketing, reduce overhead)
+            3. 1 performance summary (1 sentence, professional tone)
+
+            Data sample:
             {preview}
+
+            Respond in 3 short bullet points, each under 20 words.
             """
 
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}]
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "You are OptiGain's smart business assistant. Give data-driven, clear financial insights."},
+                    {"role": "user", "content": question}
+                ],
+                temperature=0.7,
+                max_tokens=300
             )
 
             insights = response.choices[0].message.content.strip()
@@ -1251,13 +1263,11 @@ def ask():
     if not question:
         return jsonify({"error": "No question provided"}), 400
 
-    # 🔒 Check if AI is disabled from environment variable
-    if os.getenv("DISABLE_AI", "false").lower() == "true":
+    # ✅ Use app-level DISABLE_AI flag instead of reading env var every time
+    if DISABLE_AI:
         return jsonify({"error": "AI functionality is temporarily disabled."}), 503
 
     try:
-        from openai import OpenAI
-
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             return jsonify({"error": "Missing OpenAI API key."}), 500
@@ -1265,8 +1275,12 @@ def ask():
         client = OpenAI(api_key=api_key)
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": question}]
+            model="gpt-4-turbo",  # ✅ upgraded model (smarter, more accurate)
+            messages=[
+                {"role": "system", "content": "You are a smart business assistant that gives concise, actionable insights."},
+                {"role": "user", "content": question}
+            ],
+            temperature=0.7,  # ✅ add slight creativity for better insight phrasing
         )
 
         answer = response.choices[0].message.content.strip() if response.choices else "No response received."
@@ -1274,6 +1288,7 @@ def ask():
 
     except Exception as e:
         return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
+    
 @app.route("/admin")
 def admin():
     # ✅ Must be logged in
