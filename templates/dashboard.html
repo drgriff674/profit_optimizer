@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<body>
-
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - Profit Optimizer</title>
     <!-- ✅ Link external stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
+<body>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -20,7 +20,7 @@
     <div class="top-bar">
         <h1>Welcome, {{ session['user'] }}</h1>
 <!-- 🌙 Dark Mode Toggle -->
-<button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button></button>
+<button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
     </div>
 
 <!-- 🔹 KPI Section -->
@@ -227,4 +227,23 @@ toggleBtn?.addEventListener('click', () => {
     </div>
 </nav>
 </body>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn = document.getElementById('darkToggle');
+  const savedTheme = localStorage.getItem('theme');
+
+  // Apply saved mode on load
+  if (savedTheme === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+
+  // Toggle and save mode
+  toggleBtn?.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+});
+</script>
+
 </html>
