@@ -96,6 +96,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Plotly.newPlot('forecastPlotly', plotData, layout);
 
+// 🧠 Add AI Insight Overlays
+const notificationsList = {{ notifications | tojson | safe }};
+const annotations = [];
+
+if (notificationsList && notificationsList.length > 0) {
+    notificationsList.forEach((note, idx) => {
+        // Position the annotation evenly along the chart
+        const xIndex = idx % labels.length;
+        annotations.push({
+            x: labels[xIndex],
+            y: revenue[xIndex] || 0,
+            text: note.length > 60 ? note.slice(0, 60) + "…" : note,
+            showarrow: true,
+            arrowhead: 5,
+            ax: 0,
+            ay: -40,
+            bgcolor: 'rgba(255,255,0,0.2)',
+            bordercolor: '#ffcc00',
+            font: { color: '#222', size: 12 }
+        });
+    });
+
+    Plotly.relayout('forecastPlotly', { annotations });
+}
+
     // Dropdown Filter
     document.getElementById('metricSelect').addEventListener('change', (e) => {
         const selected = e.target.value;
@@ -113,6 +138,20 @@ document.addEventListener('DOMContentLoaded', () => {
             font: { color: isDark ? '#fff' : '#000' }
         });
     });
+// Update annotations in dark mode
+const updateAnnotationColors = (isDark) => {
+    const annos = annotations.map(a => ({
+        ...a,
+        bgcolor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,0,0.2)',
+        font: { color: isDark ? '#fff' : '#222', size: 12 }
+    }));
+    Plotly.relayout('forecastPlotly', { annotations: annos });
+};
+
+toggleBtn?.addEventListener('click', () => {
+    const isDark = document.body.classList.contains('dark-mode');
+    updateAnnotationColors(isDark);
+});
 });
 </script>
     {% if notifications %}
