@@ -1504,7 +1504,7 @@ def reset_password(username):
 @app.route('/admin/toggle_ai', methods=['POST'])
 def toggle_ai():
     # Only admin can access
-    if 'username' not in session or session['username'] != 'admin':
+    if 'username' not in session or session['username'] != 'griffin':
         return "Unauthorized", 403
 
     # Flip the current value
