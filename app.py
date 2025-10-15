@@ -59,6 +59,8 @@ if not os.getenv("OPENAI_KEY"):
     print("WARNING: No OpenAI API key found - AI features will be limited.")
 DISABLE_AI = False
 
+AI_ENABLED = True
+
 uploaded_csvs = {}
 @app.route('/')
 def index():
@@ -272,7 +274,7 @@ def dashboard():
         if not question:
             notifications.append("Please enter a question before submitting.")
         else:
-            if DISABLE_AI:
+            if not AI_ENABLED:
                 notifications.append("⚙️ AI insights are currently disabled.")
             else:
                 try:
@@ -1270,7 +1272,7 @@ def ask():
         return jsonify({"error": "No question provided"}), 400
 
     # ✅ Use app-level DISABLE_AI flag instead of reading env var every time
-    if DISABLE_AI:
+    if not AI_ENABLED:
         return jsonify({"error": "AI functionality is temporarily disabled."}), 503
 
     try:
