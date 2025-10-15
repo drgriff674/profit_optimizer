@@ -93,6 +93,22 @@
             <strong>Total Registered Users:</strong> {{ total_users }}
         </div>
 
+<!-- 🔹 AI Toggle Section -->
+<h2>🤖 AI Feature Control</h2>
+<form action="{{ url_for('toggle_ai') }}" method="POST" style="margin-bottom:20px;">
+    <button type="submit" style="
+        padding: 10px 18px; 
+        background: {{ 'green' if not ai_disabled else 'red' }};
+        color: white; 
+        border: none; 
+        border-radius: 6px; 
+        font-weight: bold;
+        cursor: pointer;
+    ">
+        {{ 'Enable AI for Users' if ai_disabled else 'Disable AI for Users' }}
+    </button>
+</form>
+
         <h2>👥 Registered Users</h2>
         {% if users %}
             <ul>
