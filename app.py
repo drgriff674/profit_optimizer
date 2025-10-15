@@ -57,7 +57,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 if not os.getenv("OPENAI_KEY"):
     print("WARNING: No OpenAI API key found - AI features will be limited.")
-DISABLE_AI = True
+DISABLE_AI = False
 
 uploaded_csvs = {}
 @app.route('/')
@@ -1500,3 +1500,16 @@ def reset_password(username):
 
     flash(f"Password for '{username}' reset to '1234'.", "success")
     return redirect(url_for("admin"))
+
+@app.route('/admin/toggle_ai', methods=['POST'])
+def toggle_ai():
+    # Only admin can access
+    if 'username' not in session or session['username'] != 'admin':
+        return "Unauthorized", 403
+
+    # Flip the current value
+    global AI_ENABLED
+    AI_ENABLED = not AI_ENABLED
+
+    status = "enabled" if AI_ENABLED else "disabled"
+    return f"AI insights are now {status}."
