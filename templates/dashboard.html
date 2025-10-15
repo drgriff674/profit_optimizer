@@ -197,8 +197,17 @@ toggleBtn?.addEventListener('click', () => {
   <a href="{{ url_for('admin') }}" class="btn btn-warning">Admin Panel</a>
   <a href="{{ url_for('profit_calculator') }}" class="btn btn-success">Profit Calculator</a>
   <a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning">Trend Forecaster</a>
-</div>
 
+  <!-- 📄 Download Report Button -->
+  <form action="{{ url_for('download_report') }}" method="POST" style="display:inline;">
+      <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+      <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
+      <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
+      <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
+      <input type="hidden" name="advice" value="{{ advice }}">
+      <button type="submit" class="btn btn-secondary">📄 Download Report</button>
+  </form>
+</div>
 <h2>Ask ChatGPT</h2>
 <form action="/dashboard" method="post">
   <input type="text" name="question" placeholder="Ask something..." required>

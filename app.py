@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
+from xhtml2pdf import pisa
 import json
 import os
 from openai import OpenAI
@@ -7,6 +8,7 @@ import plotly.graph_objs as go
 import plotly.offline as pyo
 from urllib.parse import quote
 from werkzeug.utils import secure_filename
+from datetime import datetime
 from fpdf import FPDF
 import io
 import matplotlib.pyplot as plt
@@ -654,29 +656,27 @@ def remove_emojis(text):
 @app.route('/download_report', methods=['POST'])
 def download_report():
     data = request.form
-    try:
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt="Financial Report", ln=True, align='C')
-        pdf.ln(10)
 
-        pdf.cell(200, 10, txt=f"Total Revenue: {data['revenue']}", ln=True)
-        pdf.cell(200, 10, txt=f"Total Expenses: {data['expenses']}", ln=True)
-        pdf.cell(200, 10, txt=f"Profit: {data['profit']}", ln=True)
-        pdf.cell(200, 10, txt=f"Profit Margin: {data['margin']}%", ln=True)
-        pdf.ln(5)
-        
-        clean_advice=remove_emojis(data['advice'])
-        
-        pdf.multi_cell(0,10,txt="AI Advice:\n" + clean_advice)
+    # Render the HTML template with context
+    html = render_template(
+        'report.html',
+        username=session.get('user', 'User'),
+        metrics={
+            'revenue': data.get('revenue', 'N/A'),
+            'expenses': data.get('expenses', 'N/A'),
+            'profit': data.get('profit', 'N/A'),
+            'margin': data.get('margin', 'N/A')
+        },
+        advice=data.get('advice', 'No advice provided.')
+    )
 
-        pdf_data=pdf.output(dest='S').encode('latin1')
-        pdf_output=io.BytesIO(pdf_data)
+    # Convert HTML → PDF
+    pdf_buffer = io.BytesIO()
+    pisa.CreatePDF(io.BytesIO(html.encode("utf-8")), dest=pdf_buffer)
+    pdf_buffer.seek(0)
 
-        return send_file(pdf_output, download_name='financial_report.pdf', as_attachment=True)
-    except Exception as e:
-        return str(e), 500
+    filename = f"Financial_Report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
+    return send_file(pdf_buffer, download_name=filename, as_attachment=True)
     
 @app.route('/preview/<filename>')
 def preview_file(filename):
