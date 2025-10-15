@@ -57,7 +57,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 if not os.getenv("OPENAI_KEY"):
     print("WARNING: No OpenAI API key found - AI features will be limited.")
-DISABLE_AI = False
+DISABLE_AI = True
 
 uploaded_csvs = {}
 @app.route('/')
