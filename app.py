@@ -1523,7 +1523,7 @@ def send_reports():
         return redirect(url_for('login'))
 
     conn = get_connection()
-    cur = conn.cursor()
+    cur = conn.cursor()(cursor_factory=RealDictCursor)
     cur.execute("SELECT username, email FROM users")
     users = cur.fetchall()
     cur.close()
