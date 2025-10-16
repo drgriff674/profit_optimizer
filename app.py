@@ -1515,3 +1515,80 @@ def toggle_ai():
 
     status = "enabled" if AI_ENABLED else "disabled"
     return f"AI insights are now {status}."
+
+@app.route('/admin/send_reports', methods=['POST'])
+def send_reports():
+    if 'username' not in session or session['username'] != 'griffin':
+        flash("Access denied.", "danger")
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT username, email FROM users")
+    users = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    sent_count = 0
+    for user in users:
+        username = user['username']
+        email = user['email']
+
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], username)
+        if not os.path.exists(user_folder):
+            continue
+
+        files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
+        if not files:
+            continue
+
+        latest_file = sorted(files)[-1]
+        file_path = os.path.join(user_folder, latest_file)
+
+        try:
+            df = pd.read_csv(file_path)
+            preview = df.head().to_string()
+
+            prompt = f"""
+            Generate a professional business summary for user {username} based on the following financial data:
+            {preview}
+
+            Include:
+            - 3 key insights
+            - 1 improvement recommendation
+            - A short motivational line
+            """
+
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+
+            ai_text = response.choices[0].message.content.strip()
+
+            # Generate PDF
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            pdf.cell(200, 10, txt=f"Weekly Business Report - {username}", ln=True, align='C')
+            pdf.ln(10)
+            pdf.multi_cell(0, 10, txt=ai_text)
+            pdf_bytes = pdf.output(dest='S').encode('latin1')
+
+            # Send via email
+            msg = Message(subject="📊 Your Weekly OptiGain Report",
+                          recipients=[email])
+            msg.body = "Attached is your latest AI-generated business performance report."
+            msg.attach(f"{username}_report.pdf", "application/pdf", pdf_bytes)
+
+            mail.send(msg)
+            sent_count += 1
+
+        except Exception as e:
+            print(f"Error sending report to {username}: {e}")
+
+    flash(f"✅ Reports sent successfully to {sent_count} users.", "success")
+    return redirect(url_for('admin'))
