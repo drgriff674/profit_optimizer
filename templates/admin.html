@@ -87,6 +87,12 @@
 <body>
     <div class="admin-container">
         <h1>🔑 Admin Dashboard</h1>
+
+<form action="{{ url_for('send_reports') }}" method="POST" style="margin-bottom: 20px;">
+  <button type="submit" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer;">
+    📩 Send Weekly AI Reports to All Users
+  </button>
+</form>
         <p>Welcome, <strong>{{ user }}</strong>!</p>
 
         <div class="stats">
