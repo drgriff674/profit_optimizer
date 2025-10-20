@@ -14,6 +14,8 @@ import io
 import matplotlib.pyplot as plt
 import seaborn as sns
 import smtplib
+import requests
+from requests.auth import HTTPBasicAuth
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
 from prophet import Prophet
@@ -398,36 +400,83 @@ def dashboard():
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))
 
-@app.route('/api/financial_data')
+@app.route("/api/financial_data")
 def financial_data():
     if 'username' not in session:
-        return jsonify([])
+        return {"error": "Unauthorized"}, 401
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    if not os.path.exists(user_folder):
+        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+
     files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
     if not files:
-        return jsonify([])
+        return {"month": [], "revenue": [], "expenses": [], "profit": []}
 
     latest_file = sorted(files)[-1]
     file_path = os.path.join(user_folder, latest_file)
-    df = pd.read_csv(file_path)
 
-    # Standardize column names
-    df.columns = df.columns.str.lower().str.strip()
-    if "month" not in df.columns:
-        return jsonify([])
+    try:
+        df = pd.read_csv(file_path)
+        df.columns = df.columns.str.lower().str.strip()
 
-    # Compute profit if not available
-    if "profit" not in df.columns and "revenue" in df.columns and "expenses" in df.columns:
-        df["profit"] = df["revenue"] - df["expenses"]
+        # Check if "month" column exists
+        if "month" not in df.columns:
+            return {"month": [], "revenue": [], "expenses": [], "profit": []}
 
-    data = {
-        "month": df["month"].tolist(),
-        "revenue": df.get("revenue", pd.Series([0]*len(df))).tolist(),
-        "expenses": df.get("expenses", pd.Series([0]*len(df))).tolist(),
-        "profit": df.get("profit", pd.Series([0]*len(df))).tolist()
-    }
-    return jsonify(data)
+        # Compute profit if missing
+        if "profit" not in df.columns and "revenue" in df.columns and "expenses" in df.columns:
+            df["profit"] = df["revenue"] - df["expenses"]
+
+        # Limit to recent 12 rows (months)
+        df = df.tail(12)
+
+        data = {
+            "month": df["month"].astype(str).tolist(),
+            "revenue": df.get("revenue", pd.Series([0]*len(df))).fillna(0).tolist(),
+            "expenses": df.get("expenses", pd.Series([0]*len(df))).fillna(0).tolist(),
+            "profit": df.get("profit", pd.Series([0]*len(df))).fillna(0).tolist()
+        }
+        return data
+
+    except Exception as e:
+        print("Error reading financial data:", e)
+        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+
+
+
+@app.route('/api/mpesa_balance')
+def mpesa_balance():
+    try:
+        consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+        consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+        shortcode = os.getenv("MPESA_SHORTCODE")
+        passkey = os.getenv("MPESA_PASSKEY")
+
+        # 1️⃣ Get Access Token
+        token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        token_response = requests.get(token_url, auth=HTTPBasicAuth(consumer_key, consumer_secret))
+        access_token = token_response.json().get("access_token")
+
+        # 2️⃣ Fetch sample balance data (for testing sandbox)
+        balance_url = "https://sandbox.safaricom.co.ke/mpesa/accountbalance/v1/query"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        payload = {
+            "Initiator": "testapi",
+            "SecurityCredential": "Safaricom123!",
+            "CommandID": "AccountBalance",
+            "PartyA": shortcode,
+            "IdentifierType": "4",
+            "Remarks": "Checking account balance",
+            "QueueTimeOutURL": "https://example.com/timeout",
+            "ResultURL": "https://example.com/result"
+        }
+
+        response = requests.post(balance_url, json=payload, headers=headers)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():

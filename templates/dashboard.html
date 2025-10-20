@@ -58,6 +58,25 @@
   <div id="liveChart" style="height: 400px;"></div>
 </div>
 
+<div id="mpesaBalance" style="background:#fff;padding:10px;margin:10px 0;border-radius:8px;">
+  <h3>📱 M-Pesa Business Balance</h3>
+  <p id="balanceValue">Fetching balance...</p>
+</div>
+
+<script>
+fetch("/api/mpesa_balance")
+  .then(r => r.json())
+  .then(data => {
+      if(data.Result){
+          document.getElementById("balanceValue").innerText =
+              data.Result.ResultParameters.ResultParameter[0].Value || "Unavailable";
+      } else {
+          document.getElementById("balanceValue").innerText = JSON.stringify(data);
+      }
+  })
+  .catch(err => document.getElementById("balanceValue").innerText = "Error loading balance");
+</script>
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 async function loadChart() {
