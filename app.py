@@ -1,4 +1,4 @@
-from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file, jsonify
 from xhtml2pdf import pisa
 import json
 import os
