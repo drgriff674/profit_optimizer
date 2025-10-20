@@ -53,6 +53,43 @@
   </ul>
 </div>
 
+<div class="card mt-4 p-3 shadow rounded-3">
+  <h4 class="mb-3 text-center">📈 Live Financial Performance</h4>
+  <div id="liveChart" style="height: 400px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+async function loadChart() {
+  const res = await fetch('/api/financial_data');
+  const data = await res.json();
+
+  const months = data.month || [];
+  const revenue = data.revenue || [];
+  const expenses = data.expenses || [];
+  const profit = data.profit || [];
+
+  const trace1 = { x: months, y: revenue, type: 'scatter', name: 'Revenue' };
+  const trace2 = { x: months, y: expenses, type: 'scatter', name: 'Expenses' };
+  const trace3 = { x: months, y: profit, type: 'scatter', name: 'Profit' };
+
+  const layout = {
+    title: 'Company Financial Trends',
+    xaxis: { title: 'Month' },
+    yaxis: { title: 'Amount (KSh)' },
+    plot_bgcolor: '#f9f9f9',
+    paper_bgcolor: '#fff',
+    margin: { t: 40, l: 50, r: 30, b: 50 }
+  };
+
+  Plotly.newPlot('liveChart', [trace1, trace2, trace3], layout);
+}
+
+// Refresh every 10 seconds
+loadChart();
+setInterval(loadChart, 10000);
+</script>
+
 <h3>📊 Revenue Forecast Trend</h3>
 <div id="forecastPlotly" style="width: 100%; height: 500px;"></div>
 

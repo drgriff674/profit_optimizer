@@ -397,6 +397,38 @@ def dashboard():
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))
+
+@app.route('/api/financial_data')
+def financial_data():
+    if 'username' not in session:
+        return jsonify([])
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
+    if not files:
+        return jsonify([])
+
+    latest_file = sorted(files)[-1]
+    file_path = os.path.join(user_folder, latest_file)
+    df = pd.read_csv(file_path)
+
+    # Standardize column names
+    df.columns = df.columns.str.lower().str.strip()
+    if "month" not in df.columns:
+        return jsonify([])
+
+    # Compute profit if not available
+    if "profit" not in df.columns and "revenue" in df.columns and "expenses" in df.columns:
+        df["profit"] = df["revenue"] - df["expenses"]
+
+    data = {
+        "month": df["month"].tolist(),
+        "revenue": df.get("revenue", pd.Series([0]*len(df))).tolist(),
+        "expenses": df.get("expenses", pd.Series([0]*len(df))).tolist(),
+        "profit": df.get("profit", pd.Series([0]*len(df))).tolist()
+    }
+    return jsonify(data)
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'username' not in session:
