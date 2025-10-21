@@ -376,5 +376,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<script>
+async function refreshDashboard() {
+  try {
+    const res = await fetch('/api/dashboard_data');
+    const data = await res.json();
+
+    // ✅ Update KPIs
+    document.querySelectorAll('.kpi-card h3').forEach((el, i) => {
+      const key = Object.keys(data.kpis)[i];
+      el.nextElementSibling.innerText = data.kpis[key];
+    });
+
+    // ✅ Update M-Pesa balance
+    document.getElementById("balanceValue").innerText =
+      "KSh " + data.mpesa_balance.toLocaleString();
+
+    // ✅ Update Chart
+    const trace1 = { x: data.chart.months, y: data.chart.revenue, type: 'scatter', name: 'Revenue' };
+    const trace2 = { x: data.chart.months, y: data.chart.expenses, type: 'scatter', name: 'Expenses' };
+    const trace3 = { x: data.chart.months, y: data.chart.profit, type: 'scatter', name: 'Profit' };
+    const layout = {
+      title: 'Company Financial Trends',
+      xaxis: { title: 'Month' },
+      yaxis: { title: 'Amount (KSh)' }
+    };
+    Plotly.newPlot('liveChart', [trace1, trace2, trace3], layout);
+
+  } catch (err) {
+    console.error("Dashboard refresh failed:", err);
+  }
+}
+
+// Refresh every 10 seconds
+refreshDashboard();
+setInterval(refreshDashboard, 10000);
+</script>
+
 </body>
 </html>

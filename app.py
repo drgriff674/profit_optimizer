@@ -517,6 +517,41 @@ def mpesa_timeout():
     print("⏱️ M-Pesa Timeout:", data)
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
+@app.route('/api/dashboard_data')
+def dashboard_data():
+    try:
+        # ✅ Fetch KPIs (dummy/sample data for now)
+        kpis = {
+            "total_profit": 245000,
+            "avg_profit": 56000,
+            "profit_growth": "12%",
+            "largest_expense": "Marketing"
+        }
+
+        # ✅ Sample graph data
+        months = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"]
+        revenue = [600000, 650000, 670000, 720000, 750000, 780000]
+        expenses = [400000, 420000, 450000, 470000, 490000, 510000]
+        profit = [r - e for r, e in zip(revenue, expenses)]
+
+        # ✅ Get M-Pesa balance (sandbox simulation)
+        mpesa_balance = 125340.75  # Replace later with real fetch
+
+        data = {
+            "kpis": kpis,
+            "chart": {
+                "months": months,
+                "revenue": revenue,
+                "expenses": expenses,
+                "profit": profit
+            },
+            "mpesa_balance": mpesa_balance
+        }
+        return jsonify(data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
