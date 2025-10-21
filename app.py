@@ -478,6 +478,29 @@ def mpesa_balance():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+# ✅ M-Pesa Callback Route
+@app.route('/mpesa/callback', methods=['POST'])
+def mpesa_callback():
+    data = request.get_json()
+    print("📥 M-Pesa Callback Received:", data)
+
+    # Optional: Save the result to your database for records
+    result_code = data.get("Result", {}).get("ResultCode", None)
+    result_desc = data.get("Result", {}).get("ResultDesc", "")
+    originator_id = data.get("OriginatorConversationID", "")
+    transaction_id = data.get("ConversationID", "")
+
+    print(f"✅ Result: {result_desc} | Code: {result_code}")
+
+    return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"})
+
+# ✅ M-Pesa Timeout Route
+@app.route('/mpesa/timeout', methods=['POST'])
+def mpesa_timeout():
+    data = request.get_json()
+    print("⏱️ M-Pesa Timeout:", data)
+    return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'username' not in session:
