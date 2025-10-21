@@ -501,6 +501,12 @@ def mpesa_timeout():
     print("⏱️ M-Pesa Timeout:", data)
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
+@app.route('/api/mpesa_balance')
+def mpesa_balance():
+    # This is just mock data for now — will connect to Daraja API later
+    sample_balance = 124560.75
+    return jsonify({"balance": sample_balance})
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
     if 'username' not in session:

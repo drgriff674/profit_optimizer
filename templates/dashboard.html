@@ -23,6 +23,11 @@
 <button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
     </div>
 
+<!-- 💰 Live Balance Section -->
+<div id="live-balance" style="margin:10px; font-weight:bold;">
+  💰 Live Balance: <span id="balance-amount">Loading...</span>
+</div>
+
 <!-- 🔹 KPI Section -->
 <div class="kpi-container" style="display: flex; gap: 20px; margin-bottom: 20px;">
   <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
@@ -291,7 +296,7 @@ toggleBtn?.addEventListener('click', () => {
         </form>
     </div>
 </nav>
-</body>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -311,4 +316,65 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // 🔁 Auto-refresh KPI + chart data every 15 seconds
+  async function refreshLiveData() {
+    try {
+      const res = await fetch('/api/financial_data');
+      const data = await res.json();
+
+      // Update KPI cards dynamically
+      document.querySelectorAll('.kpi-card h3').forEach(card => {
+        const label = card.textContent.trim();
+        const valueElem = card.nextElementSibling;
+
+        if (label === 'Total Profit') valueElem.textContent = data.total_profit || '—';
+        if (label === 'Average Profit') valueElem.textContent = data.avg_profit || '—';
+        if (label === 'Profit Growth') valueElem.textContent = data.profit_growth || '—';
+        if (label === 'Largest Expense') valueElem.textContent = data.largest_expense || '—';
+      });
+
+      // Update chart
+      if (data.month && data.revenue && data.expenses && data.profit) {
+        Plotly.react('liveChart', [
+          { x: data.month, y: data.revenue, type: 'scatter', name: 'Revenue' },
+          { x: data.month, y: data.expenses, type: 'scatter', name: 'Expenses' },
+          { x: data.month, y: data.profit, type: 'scatter', name: 'Profit' }
+        ], {
+          title: 'Company Financial Trends',
+          xaxis: { title: 'Month' },
+          yaxis: { title: 'Amount (KSh)' }
+        });
+      }
+
+    } catch (err) {
+      console.error('⚠️ Live data refresh failed:', err);
+    }
+  }
+
+  // 💰 Live M-Pesa Balance refresh
+  async function fetchBalance() {
+    try {
+      const res = await fetch('/api/mpesa_balance');
+      const data = await res.json();
+      document.getElementById('balance-amount').textContent =
+        data.balance ? `${data.balance.toLocaleString()} KSh` : 'Unavailable';
+    } catch {
+      document.getElementById('balance-amount').textContent = 'Unavailable';
+    }
+  }
+
+  // Refresh every 15–20 seconds
+  setInterval(refreshLiveData, 15000);
+  setInterval(fetchBalance, 20000);
+
+  // Initial load
+  refreshLiveData();
+  fetchBalance();
+});
+</script>
+
+</body>
 </html>
