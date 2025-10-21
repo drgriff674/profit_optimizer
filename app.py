@@ -458,7 +458,10 @@ def mpesa_balance():
         token_response = requests.get(token_url, auth=HTTPBasicAuth(consumer_key, consumer_secret))
         access_token = token_response.json().get("access_token")
 
-        # 2️⃣ Fetch sample balance data (for testing sandbox)
+        if not access_token:
+            return jsonify({"error": "Failed to get access token"}), 500
+
+        # 2️⃣ Query Account Balance
         balance_url = "https://sandbox.safaricom.co.ke/mpesa/accountbalance/v1/query"
         headers = {"Authorization": f"Bearer {access_token}"}
 
@@ -469,14 +472,27 @@ def mpesa_balance():
             "PartyA": shortcode,
             "IdentifierType": "4",
             "Remarks": "Checking account balance",
-            "QueueTimeOutURL": "https://example.com/timeout",
-            "ResultURL": "https://example.com/result"
+            "QueueTimeOutURL": "https://profit-optimizer.onrender.com/mpesa/timeout",
+            "ResultURL": "https://profit-optimizer.onrender.com/mpesa/callback"
         }
 
         response = requests.post(balance_url, json=payload, headers=headers)
-        return jsonify(response.json())
+
+        # ✅ Handle invalid or empty responses safely
+        try:
+            data = response.json()
+        except ValueError:
+            print("⚠️ Invalid JSON from M-Pesa:", response.text)
+            return jsonify({
+                "error": "Invalid or empty JSON response from M-Pesa",
+                "raw": response.text
+            }), 500
+
+        print("✅ M-Pesa raw response:", data)
+        return jsonify(data)
+
     except Exception as e:
-        return jsonify({"error": str(e)})
+        return jsonify({"error": str(e)}), 500
 
 # ✅ M-Pesa Callback Route
 @app.route('/mpesa/callback', methods=['POST'])
