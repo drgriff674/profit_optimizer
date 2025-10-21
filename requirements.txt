@@ -63,6 +63,6 @@ xlrd==2.0.2
 xlsxwriter==3.2
 openai
 python-dotenv
-prophet==1.2.4
+prophet==1.2.0
 cmdstanpy==1.2.3
 psycopg2-binary
