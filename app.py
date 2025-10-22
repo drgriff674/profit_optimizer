@@ -552,6 +552,52 @@ def dashboard_data():
     except Exception as e:
         return jsonify({"error": str(e)})
 
+# ✅ AI Insight Engine — analyzes latest financial data and generates insights
+@app.route('/api/ai_insights')
+def ai_insights():
+    try:
+        if 'username' not in session:
+            return jsonify([])
+
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+        files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
+        if not files:
+            return jsonify([])
+
+        latest_file = sorted(files)[-1]
+        df = pd.read_csv(os.path.join(user_folder, latest_file))
+        df.columns = df.columns.str.lower().str.strip()
+
+        insights = []
+
+        # --- Trend analysis ---
+        if all(col in df.columns for col in ['revenue', 'expenses']):
+            df['profit'] = df['revenue'] - df['expenses']
+            recent = df.tail(3)
+
+            if recent['profit'].iloc[-1] > recent['profit'].iloc[-2]:
+                insights.append("Profit increased in the latest period ✅")
+            elif recent['profit'].iloc[-1] < recent['profit'].iloc[-2]:
+                insights.append("Profit decreased recently ⚠️ Check expenses or pricing.")
+            else:
+                insights.append("Profit remained stable recently.")
+
+            avg_margin = (df['profit'] / df['revenue']).mean() * 100
+            insights.append(f"Average profit margin: {avg_margin:.1f}%")
+
+            if avg_margin < 15:
+                insights.append("Profit margin is below 15%. Consider reducing costs or revising prices.")
+            elif avg_margin > 30:
+                insights.append("Strong profit margin (>30%). Business is performing well! 💪")
+
+            # Highest & lowest month
+            max_profit_month = df.loc[df['profit'].idxmax(), 'month']
+            insights.append(f"Highest profit recorded in {max_profit_month}.")
+
+        return jsonify(insights)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
