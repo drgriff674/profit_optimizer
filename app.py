@@ -63,6 +63,32 @@ DISABLE_AI = False
 
 AI_ENABLED = True
 
+def generate_ai_insights(kpis):
+    """Generate smart business insights from KPI metrics."""
+    insights = []
+    try:
+        total_profit = float(kpis.get("total_profit", "0").replace("$", "").replace(",", ""))
+        avg_profit = float(kpis.get("avg_profit", "0").replace("$", "").replace(",", ""))
+        profit_growth = float(kpis.get("profit_growth", "0").replace("%", "").replace(",", ""))
+
+        if profit_growth > 15:
+            insights.append("🚀 Profit growth is impressive! Consider reinvesting profits into marketing or expansion.")
+        elif profit_growth < 0:
+            insights.append("⚠️ Profit is declining. Review cost centers and adjust revenue strategies.")
+        else:
+            insights.append("📊 Profit growth is steady. Maintain your current operational efficiency.")
+
+        if avg_profit < total_profit * 0.05:
+            insights.append("💡 Low average profit per period — optimize product pricing or reduce overhead.")
+        else:
+            insights.append("✅ Average profit margins look healthy. Keep optimizing your revenue streams.")
+
+        insights.append(f"📅 Latest KPI snapshot — Growth: {profit_growth:.2f}%, Total Profit: ${total_profit:,.2f}")
+    except Exception as e:
+        insights.append(f"Error generating insights: {str(e)}")
+
+    return insights
+
 uploaded_csvs = {}
 @app.route('/')
 def index():
@@ -396,6 +422,9 @@ def dashboard():
             continue
             
     # 🔹 Send KPIs to dashboard.html
+
+    ai_insights = generate_ai_insights(kpis)
+    notifications.extend(ai_insights)
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
     return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))

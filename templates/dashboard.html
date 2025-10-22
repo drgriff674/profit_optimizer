@@ -80,6 +80,17 @@
     </div>
 {% endif %}
 
+{% if notifications %}
+    <div class="notification">
+        <strong>Smart Notifications:</strong>
+        <ul>
+            {% for note in notifications %}
+                <li>{{ note }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
 <div id="mpesaBalance" style="background:#fff;padding:10px;margin:10px 0;border-radius:8px;">
   <h3>📱 M-Pesa Business Balance</h3>
   <p id="balanceValue">Fetching balance...</p>
