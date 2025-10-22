@@ -304,6 +304,13 @@ toggleBtn?.addEventListener('click', () => {
          style="padding:8px; border-radius:5px; border:1px solid #ccc;">
   <button type="submit" class="btn btn-info">📧 Send Report</button>
 </form>
+
+<!-- 📊 Revenue vs Expenses Graph -->
+<div class="card">
+    <h3 style="text-align:center;">Financial Performance</h3>
+    <div>{{ graph_html|safe }}</div>
+</div>
+
 <h2>Ask ChatGPT</h2>
 <form action="/dashboard" method="post">
   <input type="text" name="question" placeholder="Ask something..." required>
