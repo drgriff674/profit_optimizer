@@ -429,9 +429,29 @@ def dashboard():
 
     ai_insights = generate_ai_insights(kpis)
     notifications.extend(ai_insights)
+
+    # 📊 Revenue vs Expenses Graph
+    data = pd.DataFrame({
+        "Date": pd.date_range(start="2025-01-01", periods=6, freq="M"),
+        "Revenue": [12000, 15000, 17000, 16000, 18000, 20000],
+        "Expenses": [8000, 9000, 10000, 9500, 11000, 12000]
+    })
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data["Date"], y=data["Revenue"], mode="lines+markers", name="Revenue"))
+    fig.add_trace(go.Scatter(x=data["Date"], y=data["Expenses"], mode="lines+markers", name="Expenses"))
+    fig.update_layout(
+        title="Revenue vs Expenses Trend",
+        xaxis_title="Date",
+        yaxis_title="Amount (KSh)",
+        template="plotly_white",
+        height=400
+    )
+
+    graph_html = pyo.plot(fig, include_plotlyjs=False, output_type='div')
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart))
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html)
 
 @app.route("/api/financial_data")
 def financial_data():
