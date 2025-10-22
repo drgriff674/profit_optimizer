@@ -449,9 +449,31 @@ def dashboard():
     )
 
     graph_html = pyo.plot(fig, include_plotlyjs=False, output_type='div')
+
+
+    # 🔹 Generate real live performance chart data
+    performance_chart = []
+    if latest_file:
+        filepath = os.path.join(user_folder, latest_file)
+        try:
+            df = pd.read_csv(filepath)
+            df.columns = df.columns.str.lower().str.strip()
+
+            if "month" in df.columns and "revenue" in df.columns and "expenses" in df.columns:
+                chart_data = df.tail(12)  # Show recent 12 months if available
+                performance_chart = [
+                    {
+                        "month": row["month"],
+                        "revenue": float(row["revenue"]),
+                        "expenses": float(row["expenses"])
+                    }
+                    for _, row in chart_data.iterrows()
+                ]
+        except Exception as e:
+            print("Error generating performance chart:", e)
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html)
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html, perfomance_chart=json.dumps(perfomance_chart))
 
 @app.route("/api/financial_data")
 def financial_data():
