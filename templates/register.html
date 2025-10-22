@@ -91,7 +91,8 @@
         <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" class="logo">
         
         <h2>Create an Account</h2>
-        <form method="POST">  
+
+    <form method="POST">  
     <label>Username:</label>  
     <input type="text" name="username" required>  
 
@@ -102,7 +103,7 @@
     <input type="password" name="password" required>  
 
     <button type="submit">Register</button>  
-</form>
+    </form>
 
         <p>Already have an account? 
             <a href="{{ url_for('login') }}">Login here</a>
