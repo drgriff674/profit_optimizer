@@ -473,7 +473,7 @@ def dashboard():
             print("Error generating performance chart:", e)
  
     # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html, perfomance_chart=json.dumps(perfomance_chart))
+    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html, performance_chart=json.dumps(perfomance_chart))
 
 @app.route("/api/financial_data")
 def financial_data():
