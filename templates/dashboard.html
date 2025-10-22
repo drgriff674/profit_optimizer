@@ -63,6 +63,23 @@
   <div id="liveChart" style="height: 400px;"></div>
 </div>
 
+<div class="card mt-4 p-3 shadow rounded-3">
+  <h4 class="mb-3 text-center">📈 Live Financial Performance</h4>
+  <div id="liveChart" style="height: 400px;"></div>
+</div>
+
+<!-- 🧠 Smart AI Insights Section -->
+{% if notifications %}
+    <div class="notification" style="background:#fff; padding:15px; border-radius:10px; margin:20px 0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+        <strong>🧠 Smart Notifications:</strong>
+        <ul style="margin-top:10px;">
+            {% for note in notifications %}
+                <li>{{ note }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
 <div id="mpesaBalance" style="background:#fff;padding:10px;margin:10px 0;border-radius:8px;">
   <h3>📱 M-Pesa Business Balance</h3>
   <p id="balanceValue">Fetching balance...</p>
@@ -411,6 +428,31 @@ async function refreshDashboard() {
 // Refresh every 10 seconds
 refreshDashboard();
 setInterval(refreshDashboard, 10000);
+</script>
+
+<script>
+async function loadInsights() {
+  try {
+    const res = await fetch('/api/ai_insights');
+    const data = await res.json();
+
+    const container = document.querySelector('.notification ul');
+    if (container && Array.isArray(data)) {
+      container.innerHTML = '';
+      data.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        container.appendChild(li);
+      });
+    }
+  } catch (err) {
+    console.error("AI Insights refresh failed:", err);
+  }
+}
+
+// Refresh AI insights every 20 seconds
+loadInsights();
+setInterval(loadInsights, 20000);
 </script>
 
 </body>
