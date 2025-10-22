@@ -297,6 +297,13 @@ toggleBtn?.addEventListener('click', () => {
       <button type="submit" class="btn btn-secondary">📄 Download Report</button>
   </form>
 </div>
+
+<!-- 📧 Send Report via Email -->
+<form action="{{ url_for('send_report') }}" method="POST" style="margin-top: 15px;">
+  <input type="email" name="email" placeholder="Enter recipient email" required 
+         style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+  <button type="submit" class="btn btn-info">📧 Send Report</button>
+</form>
 <h2>Ask ChatGPT</h2>
 <form action="/dashboard" method="post">
   <input type="text" name="question" placeholder="Ask something..." required>
