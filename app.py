@@ -890,7 +890,6 @@ def remove_emojis(text):
 def download_report():
     data = request.form
 
-    # Render the HTML template with context
     html = render_template(
         'report.html',
         username=session.get('user', 'User'),
@@ -903,14 +902,12 @@ def download_report():
         advice=data.get('advice', 'No advice provided.')
     )
 
-    # Convert HTML → PDF
     pdf_buffer = io.BytesIO()
     pisa.CreatePDF(io.BytesIO(html.encode("utf-8")), dest=pdf_buffer)
     pdf_buffer.seek(0)
 
     filename = f"Financial_Report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
     return send_file(pdf_buffer, download_name=filename, as_attachment=True)
-    
 @app.route('/preview/<filename>')
 def preview_file(filename):
     if 'username' not in session:
@@ -1332,46 +1329,44 @@ def download_full_report():
 
 @app.route('/send_report', methods=['POST'])
 def send_report():
-    email = request.form.get('email')
-    if not email:
-        flash("No email provided.", "danger")
+    # Get the recipient email (from form or session)
+    recipient_email = request.form.get('email') or session.get('email')
+    if not recipient_email:
+        flash("❌ No recipient email provided.", "danger")
         return redirect(url_for('dashboard'))
+
     try:
-        flash(f"report sent to {email} successfully.","success")
+        # Generate sample PDF report in memory
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="Financial Report Summary", ln=True, align='C')
+        pdf.cell(200, 10, txt="Generated via OptiGain", ln=True, align='C')
+
+        # Convert to BytesIO for attachment
+        pdf_bytes = pdf.output(dest='S').encode('latin1')
+        pdf_buffer = io.BytesIO(pdf_bytes)
+
+        # Create email
+        msg = Message(
+            subject="📊 Your Financial Report - OptiGain",
+            recipients=[recipient_email],
+            body="Hello,\n\nPlease find attached your latest financial report.\n\nBest,\nThe OptiGain Team"
+        )
+
+        # Attach PDF
+        msg.attach("Financial_Report.pdf", "application/pdf", pdf_buffer.read())
+
+        # Send email
+        mail.send(msg)
+
+        flash(f"✅ Report sent successfully to {recipient_email}.", "success")
+
     except Exception as e:
-        print("Error:",e)
-        flash("An error occured while sending the email,", "danger")
+        print("Error sending email:", e)
+        flash(f"⚠️ Failed to send report: {str(e)}", "danger")
+
     return redirect(url_for('dashboard'))
-
-    # Example PDF content
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Financial Report Summary", ln=True, align='C')
-    pdf.cell(200, 10, txt="Generated via Profit Optimizer", ln=True, align='C')
-
-    # Save PDF to memory (not disk)
-    pdf_bytes = pdf.output(dest='S').encode('latin1')
-    pdf.buffer = io.BytesIO(pdf_bytes)
-    pdf_buffer.seek(0)  # Go to start of BytesIO stream
-
-    # Compose email
-    msg = EmailMessage()
-    msg['Subject'] = 'Your Financial Report'
-    msg['From'] = 'griffinnnnn77@gmail.com'
-    msg['To'] = recipient_email
-    msg.set_content('Please find attached your financial report.')
-
-    # Attach the PDF (with filename)
-    msg.add_attachment(pdf_output.read(), maintype='application', subtype='pdf', filename='report.pdf')
-
-    # Send the email using Gmail’s SMTP server
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login('griffinnnnn77@gmail.com', 'abcdefghijklmnop')
-        smtp.send_message(msg)
-
-    return 'Report sent successfully!'
-
 @app.route('/profile')
 def profile():
     if 'username' not in session:
