@@ -17,32 +17,40 @@
         }
         .register-container {
             background: white;
-            padding: 30px;
+            padding: 30px 35px;
             border-radius: 12px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            width: 350px;
-            text-align: center;
+            width: 360px;
         }
         .register-container img.logo {
+            display: block;
             width: 80px;
-            margin-bottom: 15px;
+            margin: 0 auto 15px auto;
         }
         h2 {
             color: #333;
+            text-align: center;
             margin-bottom: 20px;
         }
-        label {
-            float: left;
-            font-weight: bold;
-            margin: 8px 0 5px;
-            color: #444;
+        form {
+            display: flex;
+            flex-direction: column;
         }
-        input[type="text"], input[type="password"] {
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #444;
+            text-align: left;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
             margin-bottom: 15px;
+            font-size: 15px;
         }
         button {
             width: 100%;
@@ -59,7 +67,8 @@
             background: #00c6ff;
         }
         p {
-            margin-top: 15px;
+            margin-top: 20px;
+            text-align: center;
         }
         a {
             color: #4facfe;
@@ -87,29 +96,26 @@
 </head>
 <body class="auth-page">
     <div class="register-container">
-        <!-- Logo -->
         <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" class="logo">
-        
         <h2>Create an Account</h2>
 
-    <form method="POST">  
-    <label>Username:</label>  
-    <input type="text" name="username" required>  
+        <form method="POST">
+            <label>Username:</label>
+            <input type="text" name="username" required>
 
-    <label>Email:</label>  
-    <input type="email" name="email" required>  
+            <label>Email:</label>
+            <input type="email" name="email" required>
 
-    <label>Password:</label>  
-    <input type="password" name="password" required>  
+            <label>Password:</label>
+            <input type="password" name="password" required>
 
-    <button type="submit">Register</button>  
-    </form>
+            <button type="submit">Register</button>
+        </form>
 
         <p>Already have an account? 
             <a href="{{ url_for('login') }}">Login here</a>
         </p>
 
-        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
