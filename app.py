@@ -125,26 +125,28 @@ def login():
 def register():
     if request.method == 'POST':
         new_user = request.form['username'].strip()
+        new_email = request.form['email'].strip()
         new_pass = request.form['password'].strip()
 
         try:
             conn = get_connection()
             cursor = conn.cursor()
 
-            # ✅ Ensure users table exists
+            # ✅ Ensure users table exists (with email column)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     username TEXT PRIMARY KEY,
+                    email TEXT UNIQUE,
                     password TEXT NOT NULL,
                     role TEXT NOT NULL
                 )
             """)
 
-            # ✅ Check if user already exists
-            cursor.execute("SELECT * FROM users WHERE username = %s", (new_user,))
+            # ✅ Check if username or email already exists
+            cursor.execute("SELECT * FROM users WHERE username = %s OR email = %s", (new_user, new_email))
             existing_user = cursor.fetchone()
             if existing_user:
-                flash("⚠️ Username already exists, please choose another.", "error")
+                flash("⚠️ Username or email already exists, please choose another.", "error")
                 cursor.close()
                 conn.close()
                 return redirect(url_for('register'))
@@ -156,25 +158,27 @@ def register():
                 conn.close()
                 return redirect(url_for('register'))
 
-            # ✅ First ever user = admin
+            # ✅ Determine role
             cursor.execute("SELECT COUNT(*) FROM users")
             user_count = cursor.fetchone()["count"]
             role = "admin" if user_count == 0 else "user"
 
-            # ✅ Save user
+            # ✅ Hash password and save new user
             hashed_password = generate_password_hash(new_pass)
             cursor.execute(
-                "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
-                (new_user, hashed_password, role)
+                "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
+                (new_user, new_email, hashed_password, role)
             )
             conn.commit()
             cursor.close()
             conn.close()
 
-            # ✅ Make upload folder for new user
+            # ✅ Create upload folder
             os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], new_user), exist_ok=True)
 
+            # ✅ Save session info
             session['username'] = new_user
+            session['email'] = new_email
             flash("✅ Registration successful! You are now logged in.", "success")
             return redirect(url_for('dashboard'))
 
