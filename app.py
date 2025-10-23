@@ -1798,48 +1798,9 @@ def send_reports():
     flash(f"✅ Reports sent successfully to {sent_count} users.", "success")
     return redirect(url_for('admin'))
 
-@app.route('/manual-entry', methods=['GET', 'POST'])
-def manual_entry():
-    if 'username' not in session:
-        return redirect(url_for('login'))
 
-    if request.method == 'POST':
-        month = request.form['month']
-        # ✅ Force numeric conversion
-        try:
-            revenue = float(request.form['revenue'])
-            expenses = float(request.form['expenses'])
-        except ValueError:
-            flash("Revenue and Expenses must be numbers.", "error")
-            return redirect(url_for('manual_entry'))
 
-        description = request.form.get('description', '')
-
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-        os.makedirs(user_folder, exist_ok=True)
-        filepath = os.path.join(user_folder, "manual_entries.csv")
-
-        new_entry = pd.DataFrame([{
-            'Month': month,
-            'Revenue': revenue,
-            'Expenses': expenses,
-            'Description': description
-        }])
-
-        if os.path.exists(filepath):
-            df = pd.read_csv(filepath)
-            df = pd.concat([df, new_entry], ignore_index=True)
-        else:
-            df = new_entry
-
-        df.to_csv(filepath, index=False)
-        session['uploaded_file'] = "manual_entries.csv"
-
-        flash("Manual entry added successfully!", "success")
-        return redirect(url_for('dashboard'))
-
-    return render_template('manual_entry.html')
-[23/10, 13:10] G: @app.route("/manual_entry", methods=["GET", "POST"])
+@app.route("/manual_entry", methods=["GET", "POST"])
 def manual_entry():
     if 'username' not in session:
         return redirect(url_for('login'))
