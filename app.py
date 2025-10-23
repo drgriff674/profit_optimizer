@@ -1508,32 +1508,6 @@ def advisor():
 
     return render_template('advisor.html', answer=answer)
 
-@app.route('/add_entry/<filename>', methods=['GET', 'POST'])
-def add_entry(filename):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "CSV file not found.", 404
-
-    if request.method == 'POST':
-        # Get form values
-        month = request.form['month']
-        revenue = request.form['revenue']
-        expenses = request.form['expenses']
-        description = request.form['description']  # optional
-
-        # Append new row to CSV
-        with open(filepath, 'a') as f:
-            line = f"{month},{revenue},{expenses},{description}\n"
-            f.write(line)
-
-        return redirect(url_for('view_file', filename=filename))
-
-    return render_template('add_entry.html', filename=filename)
 
 
 @app.route("/ask", methods=["POST"])
@@ -1597,47 +1571,6 @@ def admin():
         users=users,
         total_users=total_users
     )
-@app.route('/manual-entry', methods=['GET', 'POST'])
-def manual_entry():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        month = request.form['month']
-        # ✅ Force numeric conversion
-        try:
-            revenue = float(request.form['revenue'])
-            expenses = float(request.form['expenses'])
-        except ValueError:
-            flash("Revenue and Expenses must be numbers.", "error")
-            return redirect(url_for('manual_entry'))
-
-        description = request.form.get('description', '')
-
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-        os.makedirs(user_folder, exist_ok=True)
-        filepath = os.path.join(user_folder, "manual_entries.csv")
-
-        new_entry = pd.DataFrame([{
-            'Month': month,
-            'Revenue': revenue,
-            'Expenses': expenses,
-            'Description': description
-        }])
-
-        if os.path.exists(filepath):
-            df = pd.read_csv(filepath)
-            df = pd.concat([df, new_entry], ignore_index=True)
-        else:
-            df = new_entry
-
-        df.to_csv(filepath, index=False)
-        session['uploaded_file'] = "manual_entries.csv"
-
-        flash("Manual entry added successfully!", "success")
-        return redirect(url_for('dashboard'))
-
-    return render_template('manual_entry.html')
 
 @app.route('/use-demo-data')
 def use_demo_data():
@@ -1864,3 +1797,130 @@ def send_reports():
 
     flash(f"✅ Reports sent successfully to {sent_count} users.", "success")
     return redirect(url_for('admin'))
+
+
+[23/10, 13:06] G: @app.route('/manual-entry', methods=['GET', 'POST'])
+def manual_entry():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        month = request.form['month']
+        # ✅ Force numeric conversion
+        try:
+            revenue = float(request.form['revenue'])
+            expenses = float(request.form['expenses'])
+        except ValueError:
+            flash("Revenue and Expenses must be numbers.", "error")
+            return redirect(url_for('manual_entry'))
+
+        description = request.form.get('description', '')
+
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+        os.makedirs(user_folder, exist_ok=True)
+        filepath = os.path.join(user_folder, "manual_entries.csv")
+
+        new_entry = pd.DataFrame([{
+            'Month': month,
+            'Revenue': revenue,
+            'Expenses': expenses,
+            'Description': description
+        }])
+
+        if os.path.exists(filepath):
+            df = pd.read_csv(filepath)
+            df = pd.concat([df, new_entry], ignore_index=True)
+        else:
+            df = new_entry
+
+        df.to_csv(filepath, index=False)
+        session['uploaded_file'] = "manual_entries.csv"
+
+        flash("Manual entry added successfully!", "success")
+        return redirect(url_for('dashboard'))
+
+    return render_template('manual_entry.html')
+[23/10, 13:10] G: @app.route("/manual_entry", methods=["GET", "POST"])
+def manual_entry():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    os.makedirs(user_folder, exist_ok=True)
+    manual_path = os.path.join(user_folder, "manual_entries.csv")
+
+    # ✅ Load existing data
+    if os.path.exists(manual_path):
+        df = pd.read_csv(manual_path)
+    else:
+        df = pd.DataFrame(columns=["Month", "Revenue", "Expenses", "Description"])
+
+    # ✅ Handle form submission
+    if request.method == "POST":
+        month = request.form.get("month")
+        revenue = request.form.get("revenue")
+        expenses = request.form.get("expenses")
+        description = request.form.get("description")
+
+        if not month or not revenue or not expenses:
+            flash("Please fill in all required fields.", "error")
+        else:
+            new_entry = {"Month": month, "Revenue": float(revenue), "Expenses": float(expenses), "Description": description}
+            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+            df.to_csv(manual_path, index=False)
+            flash("✅ Data added successfully!", "success")
+            return redirect(url_for('manual_entry'))
+
+    return render_template("manual_entry.html", entries=df.to_dict(orient="records"))
+
+@app.route("/edit_entry/<int:index>", methods=["GET", "POST"])
+def edit_entry(index):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    manual_path = os.path.join(user_folder, "manual_entries.csv")
+
+    if not os.path.exists(manual_path):
+        flash("No data found to edit.", "error")
+        return redirect(url_for('manual_entry'))
+
+    df = pd.read_csv(manual_path)
+
+    if index >= len(df):
+        flash("Invalid entry selected.", "error")
+        return redirect(url_for('manual_entry'))
+
+    if request.method == "POST":
+        df.at[index, "Month"] = request.form.get("month")
+        df.at[index, "Revenue"] = float(request.form.get("revenue"))
+        df.at[index, "Expenses"] = float(request.form.get("expenses"))
+        df.at[index, "Description"] = request.form.get("description")
+        df.to_csv(manual_path, index=False)
+        flash("✅ Entry updated successfully!", "success")
+        return redirect(url_for('manual_entry'))
+
+    entry = df.iloc[index].to_dict()
+    return render_template("edit_entry.html", entry=entry, index=index)
+
+@app.route("/delete_entry/<int:index>")
+def delete_entry(index):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    manual_path = os.path.join(user_folder, "manual_entries.csv")
+
+    if not os.path.exists(manual_path):
+        flash("No data found.", "error")
+        return redirect(url_for('manual_entry'))
+
+    df = pd.read_csv(manual_path)
+    if index < len(df):
+        df = df.drop(index)
+        df.to_csv(manual_path, index=False)
+        flash("🗑️ Entry deleted successfully!", "success")
+    else:
+        flash("Invalid entry selected.", "error")
+
+    return redirect(url_for('manual_entry'))
