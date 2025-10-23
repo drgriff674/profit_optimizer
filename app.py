@@ -1798,8 +1798,7 @@ def send_reports():
     flash(f"✅ Reports sent successfully to {sent_count} users.", "success")
     return redirect(url_for('admin'))
 
-
-[23/10, 13:06] G: @app.route('/manual-entry', methods=['GET', 'POST'])
+@app.route('/manual-entry', methods=['GET', 'POST'])
 def manual_entry():
     if 'username' not in session:
         return redirect(url_for('login'))
