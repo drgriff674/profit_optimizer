@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Data Entry - OptiGain</title>
+    <title>Edit Entry - OptiGain</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,39 +56,27 @@
             color: #4facfe;
             text-decoration: none;
         }
-        .flash-message {
-            margin-top: 10px;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Manual Data Entry</h2>
+        <h2>Edit Entry</h2>
         <form method="POST">
-            <label for="month">Month</label>
-            <input type="text" name="month" placeholder="e.g., January" required>
+            <label>Month</label>
+            <input type="text" name="month" value="{{ entry.month }}" required>
 
-            <label for="revenue">Revenue</label>
-            <input type="number" name="revenue" placeholder="e.g., 12000" required>
+            <label>Revenue</label>
+            <input type="number" name="revenue" value="{{ entry.revenue }}" required>
 
-            <label for="expenses">Expenses</label>
-            <input type="number" name="expenses" placeholder="e.g., 5000" required>
+            <label>Expenses</label>
+            <input type="number" name="expenses" value="{{ entry.expenses }}" required>
 
-            <label for="description">Description</label>
-            <input type="text" name="description" placeholder="Optional">
+            <label>Description</label>
+            <input type="text" name="description" value="{{ entry.description }}">
 
-            <button type="submit">Add Entry</button>
+            <button type="submit">Save Changes</button>
         </form>
         <p><a href="{{ url_for('dashboard') }}">⬅ Back to Dashboard</a></p>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
     </div>
 </body>
 </html>
