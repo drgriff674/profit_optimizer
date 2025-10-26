@@ -1510,38 +1510,51 @@ def advisor():
 
 
 
-@app.route("/ask", methods=["POST"])
+@app.route("/ask", methods=["GET", "POST"])
 def ask():
-    question = request.json.get("question")
+    if request.method == "GET":
+        # When someone just visits the Ask page
+        return render_template("ask.html")
+
+    # For POST (form submission or API)
+    question = request.form.get("question") or (request.json.get("question") if request.is_json else None)
 
     if not question:
-        return jsonify({"error": "No question provided"}), 400
+        if request.is_json:
+            return jsonify({"error": "No question provided"}), 400
+        return render_template("ask.html", answer="Please enter a question.")
 
-    # ✅ Use app-level DISABLE_AI flag instead of reading env var every time
     if not AI_ENABLED:
-        return jsonify({"error": "AI functionality is temporarily disabled."}), 503
+        msg = "AI functionality is temporarily disabled."
+        return jsonify({"error": msg}), 503 if request.is_json else render_template("ask.html", answer=msg)
 
     try:
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            return jsonify({"error": "Missing OpenAI API key."}), 500
+            msg = "Missing OpenAI API key."
+            return jsonify({"error": msg}), 500 if request.is_json else render_template("ask.html", answer=msg)
 
         client = OpenAI(api_key=api_key)
-
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # ✅ upgraded model (smarter, more accurate)
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a smart business assistant that gives concise, actionable insights."},
                 {"role": "user", "content": question}
             ],
-            temperature=0.7,  # ✅ add slight creativity for better insight phrasing
+            temperature=0.7,
         )
 
         answer = response.choices[0].message.content.strip() if response.choices else "No response received."
-        return jsonify({"answer": answer})
+
+        if request.is_json:
+            return jsonify({"answer": answer})
+        return render_template("ask.html", answer=answer)
 
     except Exception as e:
-        return jsonify({"error": f"Error generating answer: {str(e)}"}), 500
+        msg = f"Error generating answer: {str(e)}"
+        if request.is_json:
+            return jsonify({"error": msg}), 500
+        return render_template("ask.html", answer=msg)
     
 @app.route("/admin")
 def admin():
