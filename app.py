@@ -765,26 +765,47 @@ def upload():
         return render_template('comparison.html', table_html=table_html, notifications=notifications)
 
     return render_template('upload.html')
-@app.route('/view/<filename>',methods=['GET','POST'])
+@app.route('/view/<filename>', methods=['GET', 'POST'])
 def view_file(filename):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    search_query = request.form.get('search') if request.method == 'POST' else''
-
+    search_query = request.form.get('search') if request.method == 'POST' else ''
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+    filepaths = []
+
+    # ✅ Support up to 3 uploaded files per user
+    uploaded_files = uploaded_csvs.get(session['username'], [])
+    for f in uploaded_files:
+        path = os.path.join(user_folder, f)
+        if os.path.exists(path):
+            filepaths.append(path)
+
+    # If the file being viewed isn't already in the list, include it
     filepath = os.path.join(user_folder, filename)
-    if not os.path.exists(filepath):
-        return "File not found", 404
+    if filepath not in filepaths:
+        filepaths.insert(0, filepath)
 
-    if filepath.endswith('.csv'):
-        df = pd.read_csv(filepath, on_bad_lines='skip')
-    elif filepath.endswith('.xls') or filepath.endswith('.xlsx'):
-        df = pd.read_excel(filepath)
-    else:
-        return "Unsupported file format"
+    if not filepaths:
+        return "No uploaded files found", 404
 
-    # Example keyword-based categorization
+    # ✅ Read all CSVs (1–3) safely
+    dataframes = []
+    for path in filepaths[:3]:
+        try:
+            df = pd.read_csv(path, on_bad_lines='skip')
+            df.columns = df.columns.str.lower().str.strip()
+            if 'revenue' in df.columns and 'expenses' in df.columns:
+                df['revenue'] = pd.to_numeric(df['revenue'], errors='coerce')
+                df['expenses'] = pd.to_numeric(df['expenses'], errors='coerce')
+                dataframes.append(df)
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
+
+    if not dataframes:
+        return "No valid financial data found in uploaded files.", 400
+
+    # ✅ Categorization (kept from your version)
     def categorize(description):
         desc = str(description).lower()
         if any(word in desc for word in ['facebook', 'ad', 'campaign', 'seo']):
@@ -798,122 +819,92 @@ def view_file(filename):
         else:
             return 'Other'
 
-# Only run if 'Description' column exists
-    if 'Description' in df.columns:
-        df['Category'] = df['Description'].apply(categorize)
+    for df in dataframes:
+        if 'description' in df.columns:
+            df['category'] = df['description'].apply(categorize)
 
-    if 'username' in session:
-        username = session['username']
-        if username not in uploaded_csvs:
-            uploaded_csvs[username] = []
-        if filename not in uploaded_csvs[username]:
-            uploaded_csvs[username].append(filename)
+    # ✅ Combine or compare datasets dynamically
+    if len(dataframes) == 1:
+        df = dataframes[0]
+    else:
+        base = dataframes[0]
+        for i, compare_df in enumerate(dataframes[1:], start=2):
+            base = base.merge(compare_df, on='month', suffixes=('', f'_file{i}'), how='outer')
+        df = base
 
-   # Handle optional category filter safely
-    category_filter = request.args.get('category')
-    if category_filter and 'Category' in df.columns:
-        df = df[df['Category'] == category_filter]
-
-    # If filtering removed all rows, return a friendly message
-    if df.empty:
-        flash(f"No data found for category: {category_filter}", "warning")
-        return redirect(url_for('view_file', filename=filename))
-    # If filtering removed all rows, return a friendly message
-    if df.empty:
-        flash(f"No data found for category: {category_filter}", "warning")
-        return redirect(url_for('view_file', filename=filename))
-    # Get unique categories for dropdown (only if 'Category' column exists)
-    categories = df['Category'].unique().tolist() if 'Category' in df.columns else []
-
-    total_revenue = df['Revenue'].sum()
-    total_expenses = df['Expenses'].sum()
+    # ✅ Core metrics
+    total_revenue = sum(df[col].sum() for col in df.columns if 'revenue' in col)
+    total_expenses = sum(df[col].sum() for col in df.columns if 'expenses' in col)
     profit = total_revenue - total_expenses
     profit_margin = round((profit / total_revenue) * 100, 2) if total_revenue > 0 else 0
+    avg_revenue = round(df[[c for c in df.columns if 'revenue' in c]].mean().mean(), 2)
+    avg_expenses = round(df[[c for c in df.columns if 'expenses' in c]].mean().mean(), 2)
 
-    # Calculate averages
-    avg_revenue = round(df['Revenue'].mean(), 2)
-    avg_expenses = round(df['Expenses'].mean(), 2)
-
-    bar_fig = go.Figure(data=[
-        go.Bar(name='Revenue', x=df['Month'], y=df['Revenue']),
-        go.Bar(name='Expenses', x=df['Month'], y=df['Expenses'])
-    ])
-    bar_fig.update_layout(barmode='group', title='Monthly Revenue vs Expenses')
+    # ✅ Charts
+    bar_fig = go.Figure()
+    for col in df.columns:
+        if 'revenue' in col:
+            bar_fig.add_trace(go.Bar(name=f'Revenue {col}', x=df['month'], y=df[col]))
+        elif 'expenses' in col:
+            bar_fig.add_trace(go.Bar(name=f'Expenses {col}', x=df['month'], y=df[col]))
+    bar_fig.update_layout(barmode='group', title='Monthly Revenue vs Expenses (All Files)')
     bar_chart = pyo.plot(bar_fig, output_type='div', include_plotlyjs=True)
 
+    # Pie Chart
     pie_fig = go.Figure(data=[
         go.Pie(labels=['Profit', 'Expenses'], values=[profit, total_expenses])
     ])
     pie_chart = pyo.plot(pie_fig, output_type='div', include_plotlyjs=True)
 
-    if 'Expense Category' in df.columns:
-        category_totals = df.groupby('Expense Category')['Expenses'].sum()
-        category_fig = go.Figure(data=[
-            go.Pie(labels=category_totals.index, values=category_totals.values)
-        ])
-        category_fig.update_layout(title="🧾 Expense Breakdown by Category")
-        category_chart = pyo.plot(category_fig, output_type='div', include_plotlyjs=False)
-    else:
-        category_chart = "<div class='alert alert-warning'>No 'Expense Category' data available.</div>"
-
-    # Line Chart for Trends
+    # Line Chart
     line_fig = go.Figure()
-    line_fig.add_trace(go.Scatter(x=df['Month'], y=df['Revenue'], mode='lines+markers', name='Revenue'))
-    line_fig.add_trace(go.Scatter(x=df['Month'], y=df['Expenses'], mode='lines+markers', name='Expenses'))
-    line_fig.update_layout(title='📉 Trend Over Time', xaxis_title='Month', yaxis_title='Amount')
+    for col in df.columns:
+        if 'revenue' in col or 'expenses' in col:
+            line_fig.add_trace(go.Scatter(x=df['month'], y=df[col], mode='lines+markers', name=col))
+    line_fig.update_layout(title='📉 Financial Trends', xaxis_title='Month', yaxis_title='Amount')
     line_chart = pyo.plot(line_fig, output_type='div', include_plotlyjs=True)
 
-    
-    advice = []
+    # ✅ Advanced insights
+    insights = []
+    if len(dataframes) > 1:
+        for i in range(1, len(dataframes)):
+            rev1, rev2 = dataframes[i - 1]['revenue'].sum(), dataframes[i]['revenue'].sum()
+            diff = rev2 - rev1
+            pct = (diff / rev1 * 100) if rev1 else 0
+            insights.append(f"💼 Between File {i} and File {i+1}, revenue changed by {pct:.2f}% ({'↑' if pct > 0 else '↓'} {abs(diff):,.2f}).")
 
-    if profit_margin < 15:
-        advice.append("💡 Profit margin is below 15%. Consider cutting costs or boosting revenue.")
+    if profit_margin < 10:
+        insights.append("⚠️ Low profit margin — consider pricing or cost adjustments.")
     elif profit_margin < 25:
-        advice.append("🟡 Profit margin is okay, but there's room for improvement.")
+        insights.append("🟡 Average margin. Try optimizing operations or marketing ROI.")
     else:
-        advice.append("🟢 Excellent profit margin! Keep doing what works.")
+        insights.append("🟢 Healthy margin — maintain efficiency and growth.")
 
-    if not df.empty:
-        max_expense = df['Expenses'].max()
-        max_month = df.loc[df['Expenses'].idxmax(), 'Month']
+    # Trend stability
+    if 'month' in df.columns and 'revenue' in df.columns:
+        trend = df['revenue'].diff().fillna(0)
+        if (trend > 0).all():
+            insights.append("📈 Steady revenue growth each period.")
+        elif (trend < 0).all():
+            insights.append("📉 Consistent decline — investigate causes.")
+        else:
+            insights.append("↕️ Mixed revenue trend — review month-to-month changes.")
+
+    # ✅ Category chart (optional)
+    if 'category' in df.columns:
+        category_totals = df.groupby('category')['expenses'].sum()
+        cat_fig = go.Figure(data=[
+            go.Pie(labels=category_totals.index, values=category_totals.values)
+        ])
+        cat_fig.update_layout(title="🧾 Expense Breakdown by Category")
+        category_chart = pyo.plot(cat_fig, output_type='div', include_plotlyjs=False)
     else:
-        max_expense = 0
-        max_month = None
-    if max_expense > (df['Expenses'].mean() * 1.5):
-        advice.append(f"⚠️ Expenses were unusually high in {max_month}. Investigate large spending.")
+        category_chart = "<div class='alert alert-warning'>No 'Category' data available.</div>"
 
-    if len(df) > 1 and df['Revenue'].iloc[-1] < df['Revenue'].iloc[0]:
-        advice.append("📉 Revenue is trending down. Try boosting sales or marketing.")
-    else:
-        advice.append("📈 Revenue is trending upward. Well done!")
-
-    revenue_diff = df['Revenue'].diff().fillna(0)
-    if revenue_diff.abs().max() > df['Revenue'].mean() * 0.5:
-        advice.append("🔍 Significant spike/drop in revenue detected — check for causes.")
-
-    expenses_diff = df['Expenses'].diff().fillna(0)
-    if expenses_diff.abs().max() > df['Expenses'].mean() * 0.5:
-        advice.append("🔍 Significant change in expenses — investigate cost fluctuations.")
-
-    final_advice = "<br>".join(advice)
+    # ✅ Safe HTML for results
+    table_html = df.to_html(classes='table table-bordered table-striped', index=False)
+    final_advice = "<br>".join(insights)
     escaped_advice = quote(final_advice)
-    table_html = df.to_html(classes='table table-bordered table-stripped',index=False)
-
-    # Trend analysis
-    trend_insights = []
-
-    if df['Revenue'].is_monotonic_increasing:
-        trend_insights.append("📈 Revenue has been consistently increasing.")
-    elif df['Revenue'].is_monotonic_decreasing:
-        trend_insights.append("📉 Revenue has been consistently decreasing.")
-    else:
-        trend_insights.append("↕️ Revenue shows fluctuations over time.")
-
-    if df['Expenses'].max() > df['Expenses'].mean() * 1.5:
-        spike_month = df.loc[df['Expenses'].idxmax(), 'Month']
-        trend_insights.append(f"⚠️ Expense spike detected in {spike_month}.")
-    else:
-        trend_insights.append("✅ Expenses remain stable without major spikes.")
 
     return render_template(
         'results.html',
@@ -921,22 +912,19 @@ def view_file(filename):
         expenses=total_expenses,
         profit=profit,
         margin=profit_margin,
+        avg_revenue=avg_revenue,
+        avg_expenses=avg_expenses,
         bar_chart=bar_chart,
         pie_chart=pie_chart,
-        category_chart=category_chart,
         line_chart=line_chart,
+        category_chart=category_chart,
         advice=final_advice,
-        trend_insights=trend_insights,
+        trend_insights=insights,
         escaped_advice=escaped_advice,
         filename=filename,
         table_html=table_html,
-        search_query=search_query,
-        selected_category=category_filter
-    
+        search_query=search_query
     )
-def remove_emojis(text):
-    return''.join(c for c in text if ord(c) < 128)
-
 @app.route('/download_report', methods=['POST'])
 def download_report():
     data = request.form
