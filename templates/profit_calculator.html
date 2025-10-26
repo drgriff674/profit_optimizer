@@ -1,24 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Profit Calculator</title>
+  <meta charset="UTF-8">
+  <title>OptiGain Profit Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .calculator-container {
+      max-width: 500px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .calculator-container h2 {
+      color: #0275d8;
+      margin-bottom: 20px;
+    }
+    .calc-input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .result-box {
+      background: #e6f3ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #0275d8;
+      font-size: 18px;
+    }
+    .currency-select {
+      width: 95%;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+    }
+    .btn {
+      width: 95%;
+      margin-top: 15px;
+    }
+    body.dark-mode .calculator-container {
+      background: #1e1e1e;
+      color: #fff;
+    }
+    body.dark-mode .result-box {
+      background: #333;
+      color: #00f2fe;
+    }
+  </style>
 </head>
+
 <body>
+  <!-- Navbar -->
+  <nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
+      <h2 style="margin:0;">OptiGain</h2>
+    </div>
+    <div>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
+    </div>
+  </nav>
+
+  <!-- Calculator -->
+  <div class="calculator-container">
     <h2>📊 Profit Calculator</h2>
-    <form method="POST">
-        <label>Revenue ($):</label>
-        <input type="number" step="0.01" name="revenue" required><br><br>
+    <form id="profitForm" method="POST">
+      <input type="number" step="0.01" name="revenue" id="revenue" class="calc-input" placeholder="Enter Revenue" required>
+      <input type="number" step="0.01" name="expenses" id="expenses" class="calc-input" placeholder="Enter Expenses" required>
 
-        <label>Expenses ($):</label>
-        <input type="number" step="0.01" name="expenses" required><br><br>
+      <select id="currency" class="currency-select">
+        <option value="USD">USD ($)</option>
+        <option value="KES">KES (KSh)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+      </select>
 
-        <button type="submit">Calculate Profit</button>
+      <button type="submit" class="btn btn-primary">Calculate Profit</button>
     </form>
 
-    {% if profit is not none %}
-        <h3>✅ Profit: ${{ profit }}</h3>
-    {% endif %}
+    <div class="result-box" id="resultBox" style="display:none;">
+      ✅ Profit: <span id="profitValue"></span>
+    </div>
+  </div>
 
-    <a href="{{ url_for('dashboard') }}">⬅ Back to Dashboard</a>
+  <button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
+
+  <script>
+    const rates = {
+      USD: 1,
+      KES: 128.5,
+      EUR: 0.93,
+      GBP: 0.81
+    };
+
+    document.getElementById('profitForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const revenue = parseFloat(document.getElementById('revenue').value);
+      const expenses = parseFloat(document.getElementById('expenses').value);
+      const currency = document.getElementById('currency').value;
+
+      if (isNaN(revenue) || isNaN(expenses)) {
+        alert('Please enter valid numbers');
+        return;
+      }
+
+      const profitUSD = revenue - expenses;
+      const convertedProfit = profitUSD * rates[currency];
+
+      document.getElementById('resultBox').style.display = 'block';
+      document.getElementById('profitValue').textContent = 
+        `${convertedProfit.toFixed(2)} ${currency}`;
+    });
+
+    // Dark mode toggle
+    const darkToggle = document.getElementById('darkToggle');
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+  </script>
 </body>
 </html>

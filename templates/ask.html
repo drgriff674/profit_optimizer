@@ -1,18 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Ask ChatGPT</title>
+    <meta charset="UTF-8">
+    <title>Ask ChatGPT - OptiGain Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background, #f4f6f9);
+            margin: 0;
+            padding: 0;
+        }
+
+        .ask-container {
+            max-width: 700px;
+            margin: 80px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: 0.3s ease;
+        }
+
+        .ask-container h1 {
+            color: #0275d8;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 12px 15px;
+            border: 2px solid #0275d8;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #0275d8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #025bb5;
+        }
+
+        .answer-box {
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            background-color: #0275d8;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        nav img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        nav h2 {
+            margin: 0;
+            display: inline;
+        }
+
+        nav .right button {
+            background-color: #dc3545;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .dark-mode {
+            background-color: #121212 !important;
+            color: #fff !important;
+        }
+    </style>
 </head>
 <body>
-    <h1>Ask ChatGPT Anything</h1>
+
+<!-- ✅ Navbar -->
+<nav>
+    <div style="display:flex; align-items:center;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+        <h2>OptiGain Assistant</h2>
+    </div>
+    <div class="right">
+        <a href="{{ url_for('dashboard') }}" style="color:white; text-decoration:none; margin-right:15px;">Dashboard</a>
+        <button onclick="location.href='{{ url_for('logout') }}'">Logout</button>
+    </div>
+</nav>
+
+<!-- 💬 Ask ChatGPT Section -->
+<div class="ask-container">
+    <h1>Ask OptiGain AI Assistant</h1>
+    <p style="color:#666;">Ask anything related to business strategy, profits, or trends.</p>
+
     <form method="POST" action="/ask">
         <input type="text" name="question" placeholder="Type your question here..." required>
         <button type="submit">Ask</button>
     </form>
 
     {% if answer %}
-        <h2>Answer:</h2>
-        <p>{{ answer }}</p>
+        <div class="answer-box">
+            <h2>Answer:</h2>
+            <p>{{ answer }}</p>
+        </div>
     {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+});
+</script>
+
 </body>
 </html>

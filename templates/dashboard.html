@@ -311,17 +311,6 @@ toggleBtn?.addEventListener('click', () => {
   <button type="submit" class="btn btn-info">📧 Send Report</button>
 </form>
 
-<h2>Ask ChatGPT</h2>
-<form action="/dashboard" method="post">
-  <input type="text" name="question" placeholder="Ask something..." required>
-  <button type="submit">Ask</button>
-</form>
-
-{% if answer %}
-  <h3>Answer:</h3>
-  <p>{{ answer }}</p>
-{% endif %}
-
     
 
 
