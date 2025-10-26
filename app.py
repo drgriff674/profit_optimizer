@@ -682,61 +682,68 @@ def upload():
     if request.method == 'POST':
         files = request.files.getlist('files')
 
-        if len(files) < 2:
-            return "Please upload two files to compare.", 400
+        # ✅ Validate uploads
+        if not files or not all(allowed_file(f.filename) for f in files):
+            return "Only CSV files are allowed.", 400
 
-        if not files or not all(allowed_file(f.filename)for f in files):
-            return "Only CSV files allowed.",400
+        if len(files) > 3:
+            return "Please upload up to 3 files only.", 400
 
-        # Save files to the user's folder
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
         os.makedirs(user_folder, exist_ok=True)
 
         username = session.get('username')
-        if username:
-            if username not in uploaded_csvs:
-                uploaded_csvs[username] = []
-            for file in files:
-                filename = file.filename
-                uploaded_csvs[username].append(filename)
+        if username not in uploaded_csvs:
+            uploaded_csvs[username] = []
 
-        file1 = files[0]
-        file2 = files[1]
+        saved_paths = []
+        for file in files:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(user_folder, filename)
+            file.save(filepath)
+            uploaded_csvs[username].append(filename)
+            saved_paths.append(filepath)
 
-        filename1 = secure_filename(file1.filename)
-        filename2 = secure_filename(file2.filename)
+        # ✅ If only one file uploaded → just show summary, no comparison
+        if len(saved_paths) == 1:
+            df = pd.read_csv(saved_paths[0])
+            df.columns = df.columns.str.lower().str.strip()
 
-        filepath1 = os.path.join(user_folder, filename1)
-        filepath2 = os.path.join(user_folder, filename2)
+            df['revenue'] = pd.to_numeric(df['revenue'], errors='coerce')
+            df['expenses'] = pd.to_numeric(df['expenses'], errors='coerce')
 
-        file1.save(filepath1)
-        file2.save(filepath2)
+            summary = {
+                "total_revenue": df['revenue'].sum(),
+                "total_expenses": df['expenses'].sum(),
+                "profit": df['revenue'].sum() - df['expenses'].sum(),
+            }
 
-        # Save one of the files to session so dashboard can use it
-        session['uploaded_file'] = filename2
+            return render_template('results.html', revenue=summary["total_revenue"],
+                                   expenses=summary["total_expenses"],
+                                   profit=summary["profit"],
+                                   margin=round(summary["profit"] / summary["total_revenue"] * 100, 2)
+                                   if summary["total_revenue"] else 0,
+                                   advice="📊 Uploaded single file — showing summary only.")
 
-        # Load into pandas for comparison
-        df1 = pd.read_csv(filepath1)
-        df2 = pd.read_csv(filepath2)
+        # ✅ If two or more files → compare the latest two
+        df1 = pd.read_csv(saved_paths[-2])
+        df2 = pd.read_csv(saved_paths[-1])
 
-        # ✅ Standardize column names to lowercase (fix for phone uploads)
-        df1.columns = df1.columns.str.lower().str.strip()
-        df2.columns = df2.columns.str.lower().str.strip()
-
-        # ✅ Convert revenue/expenses to numeric to avoid string issues
-        df1['revenue'] = pd.to_numeric(df1['revenue'], errors='coerce')
-        df1['expenses'] = pd.to_numeric(df1['expenses'], errors='coerce')
-        df2['revenue'] = pd.to_numeric(df2['revenue'], errors='coerce')
-        df2['expenses'] = pd.to_numeric(df2['expenses'], errors='coerce')
+        # Standardize and clean
+        for df in (df1, df2):
+            df.columns = df.columns.str.lower().str.strip()
+            df['revenue'] = pd.to_numeric(df['revenue'], errors='coerce')
+            df['expenses'] = pd.to_numeric(df['expenses'], errors='coerce')
 
         comparison = pd.DataFrame({
-            'Month': df1['month'],  # lowercase now
+            'Month': df1['month'],
             'Revenue Difference': df2['revenue'] - df1['revenue'],
             'Expense Difference': df2['expenses'] - df1['expenses']
         })
+
         session['comparison_data'] = comparison.to_json()
 
-        # Smart feedback
+        # ✅ Smart notifications
         notifications = []
         revenue_diff = comparison['Revenue Difference'].sum()
         expense_diff = comparison['Expense Difference'].sum()
@@ -744,22 +751,20 @@ def upload():
         if revenue_diff > 0:
             notifications.append("📈 Your revenue increased overall!")
         elif revenue_diff < 0:
-            notifications.append("📉 Revenue dropped — look into it!")
+            notifications.append("📉 Revenue dropped — check details.")
 
         if expense_diff > 0:
-            notifications.append("⚠️ Expenses went up — consider reducing costs.")
+            notifications.append("⚠️ Expenses went up — monitor costs.")
         elif expense_diff < 0:
-            notifications.append("✅ Great job! You lowered your expenses.")
+            notifications.append("✅ Great job! Expenses decreased.")
 
-        # Save to session so it can be shown on dashboard
         session['notifications'] = notifications
 
         table_html = comparison.to_html(index=False)
 
-        return render_template('comparison.html', table_html=table_html)
+        return render_template('comparison.html', table_html=table_html, notifications=notifications)
 
     return render_template('upload.html')
-
 @app.route('/view/<filename>',methods=['GET','POST'])
 def view_file(filename):
     if 'username' not in session:

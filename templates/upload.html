@@ -1,27 +1,95 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Upload and Compare Data Files</title>
+  <meta charset="UTF-8">
+  <title>OptiGain | Upload Financial Data</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .upload-container {
+      max-width: 600px;
+      margin: 60px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    .upload-container h2 {
+      color: #0275d8;
+      margin-bottom: 20px;
+    }
+    .file-input {
+      width: 90%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    .btn {
+      width: 95%;
+      margin-top: 15px;
+    }
+    #fileCount {
+      color: #0275d8;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    body.dark-mode .upload-container {
+      background: #1e1e1e;
+      color: #fff;
+    }
+  </style>
 </head>
+
 <body>
-    <h2>Upload and Compare Company Financial Data</h2>
+  <!-- Navbar -->
+  <nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
+      <h2 style="margin:0;">OptiGain</h2>
+    </div>
+    <div>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
+    </div>
+  </nav>
+
+  <!-- Upload Form -->
+  <div class="upload-container">
+    <h2>📁 Upload & Compare Financial Data</h2>
+    <p>Upload up to <strong>3 CSV files</strong> for automated comparison and insights.</p>
 
     <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="files" multiple required accept=".csv">
-        <input type="submit" value="Upload and Compare">
+      <input type="file" name="files" class="file-input" multiple required accept=".csv">
+      <p id="fileCount">No files selected</p>
+      <button type="submit" class="btn btn-primary">Upload and Analyze</button>
     </form>
+  </div>
 
-    <br>
+  <button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
 
-    <form action="/dashboard" method="GET">
-        <button type="submit">Back to Dashboard</button>
-    </form>
+  <script>
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileCount = document.getElementById('fileCount');
 
-    <script>
-        // Optional: Alert how many files are selected
-        document.querySelector('input[type="file"]').addEventListener('change', function () {
-            alert("You selected " + this.files.length + " file(s). Please make sure to select 2 files.");
-        });
-    </script>
+    fileInput.addEventListener('change', function() {
+      const count = this.files.length;
+      if (count === 0) {
+        fileCount.textContent = 'No files selected';
+      } else if (count === 1) {
+        fileCount.textContent = '1 file selected';
+      } else {
+        fileCount.textContent = `${count} files selected`;
+      }
+    });
+
+    // 🌙 Dark Mode toggle
+    const darkToggle = document.getElementById('darkToggle');
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+  </script>
 </body>
 </html>
