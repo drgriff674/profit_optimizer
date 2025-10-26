@@ -36,7 +36,7 @@ class="btn btn-success"> Download Cleaned CSV</a>
 class="btn btn-danger">Download Raw Data (PDF)</a>
        <a href="{{ url_for('download_full_report') }}"
 class="btn btn-danger mt-3">Download Full Report</a>
-       <a href="{{ url_for('add_entry', filename=filename) }}" class="btn btn-primary">➕ Add New Row</a>
+       <a href="{{ url_for('manual_entry', filename=filename) }}" class="btn btn-primary">➕ Add New Row</a>
 </div>
 <form action="{{ url_for('download_summary_txt') }}" method="post">
     <input type="hidden" name="revenue" value="{{ revenue }}">
