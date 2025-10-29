@@ -3,3 +3,4 @@ uploads/
 __pycache__/
 .env
 !sample_data.csv
+instance/google-credentials.json
