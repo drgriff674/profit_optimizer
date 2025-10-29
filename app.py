@@ -23,6 +23,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
+from sheets_helper import read_data, add_row
 
 # Railway PostgreSQL connection
 DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
@@ -93,6 +94,14 @@ uploaded_csvs = {}
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
+@app.route('/sync_sheets')
+def sync_sheets():
+    try:
+        data = read_data()
+        return jsonify({"status": "success", "data": data})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
