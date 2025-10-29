@@ -17,7 +17,7 @@ creds = Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 client = gspread.authorize(creds)
 
 # ✅ Use your spreadsheet ID (replace this with your actual ID!)
-SHEET_ID = "1vL-wLddVruVCIyjgB35Ej66UsbdnoIZkrlIe4_eK4xs/edit?gid=0#gid=0"
+SHEET_ID = "1vL-wLddVruVCIyjgB35Ej66UsbdnoIZkrlIe4_eK4xs"
 
 # Open the sheet by key (ID)
 sheet = client.open_by_key(SHEET_ID).sheet1
