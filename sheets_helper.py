@@ -1,17 +1,22 @@
+import os
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Path to your downloaded JSON key file
-SERVICE_ACCOUNT_FILE = "profit-optimizer-sheets.json"  # <-- update filename if different
+# Load the Google credentials JSON from environment variable
+# (You’ll add this in Render dashboard as GOOGLE_APPLICATION_CREDENTIALS_JSON)
+credentials_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
 
-# Define the scopes (permissions)
+# Define Google Sheets API scopes (permissions)
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-# Authenticate
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# Create credentials object
+creds = Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
+
+# Authorize the gspread client
 client = gspread.authorize(creds)
 
-# Open your Google Sheet by name (rename this to your actual sheet name)
+# Open your Google Sheet by name — update this to match your sheet’s name
 SHEET_NAME = "ProfitOptimizerData"
 sheet = client.open(SHEET_NAME).sheet1
 
