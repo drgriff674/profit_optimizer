@@ -12,8 +12,8 @@ SCOPES = [
 creds = Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 client = gspread.authorize(creds)
 
-SHEET_NAME = "ProfitOptimizerData"  # your Google Sheet name
-sheet = client.open(SHEET_NAME).sheet1
+SHEET_NAME = "1vL-wLddVruVCIyjgB35Ej66UsbdnoIZkrlIe4_eK4xs/edit?gid=0#gid=0"  # your Google Sheet name
+sheet = client.open_by_key(SHEET_ID).sheet1
 def read_data():
     """Read all rows from the sheet"""
     return sheet.get_all_records()
