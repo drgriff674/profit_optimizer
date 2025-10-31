@@ -257,6 +257,7 @@ def dashboard():
     latest_file = None
     notifications = []
     answer = None
+    forecast_data = []
 
     if files:
         # ✅ Pick the correct file FIRST (session > latest)
@@ -418,7 +419,7 @@ def dashboard():
                 }
 
         # 🔮 Forecasting with Prophet
-        forecast_data = []
+        
         try:
             # Always use the latest synced Google Sheets data
             df = pd.read_csv("financial_data.csv")
