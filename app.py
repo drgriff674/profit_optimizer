@@ -418,39 +418,39 @@ def dashboard():
                 }
 
         # 🔮 Forecasting with Prophet
-    forecast_data = []
-    try:
-        # Always use the latest synced Google Sheets data
-        df = pd.read_csv("financial_data.csv")
+        forecast_data = []
+        try:
+            # Always use the latest synced Google Sheets data
+            df = pd.read_csv("financial_data.csv")
 
-        # Merge with manual entries if they exist
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-        manual_path = os.path.join(user_folder, "manual_entries.csv")
-        if os.path.exists(manual_path):
-            manual_df = pd.read_csv(manual_path)
-            df = pd.concat([df, manual_df], ignore_index=True)
+            # Merge with manual entries if they exist
+            user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+            manual_path = os.path.join(user_folder, "manual_entries.csv")
+            if os.path.exists(manual_path):
+                manual_df = pd.read_csv(manual_path)
+                df = pd.concat([df, manual_df], ignore_index=True)
 
-        # Normalize column names
-        df.columns = df.columns.str.lower().str.strip()
+            # Normalize column names
+            df.columns = df.columns.str.lower().str.strip()
 
-        if "date" in df.columns and "revenue" in df.columns:
-            df['ds'] = pd.to_datetime(df['date'], errors='coerce')
-            df = df.dropna(subset=['ds'])
-            df['y'] = df['revenue']
+            if "date" in df.columns and "revenue" in df.columns:
+                df['ds'] = pd.to_datetime(df['date'], errors='coerce')
+                df = df.dropna(subset=['ds'])
+                df['y'] = df['revenue']
 
-            model = Prophet()
-            model.fit(df[['ds', 'y']])
+                model = Prophet()
+                model.fit(df[['ds', 'y']])
 
-            future = model.make_future_dataframe(periods=6, freq='M')
-            forecast = model.predict(future)
-            future_forecast = forecast.tail(6)
+                future = model.make_future_dataframe(periods=6, freq='M')
+                forecast = model.predict(future)
+                future_forecast = forecast.tail(6)
 
-            forecast_data = [
-                {"date": row['ds'].strftime('%b %Y'), "predicted_revenue": f"${row['yhat']:,.2f}"}
-                for _, row in future_forecast.iterrows()
-            ]
-    except Exception as e:
-        forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
+                forecast_data = [
+                    {"date": row['ds'].strftime('%b %Y'), "predicted_revenue": f"${row['yhat']:,.2f}"}
+                    for _, row in future_forecast.iterrows()
+                ]
+        except Exception as e:
+            forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
 
 # 🔹 Merge with manual entries if they exist
             manual_path = os.path.join(user_folder, "manual_entries.csv")
