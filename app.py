@@ -234,6 +234,22 @@ def dashboard():
     if 'username' not in session:
         return redirect(url_for('login'))
 
+    # 🔄 Auto-refresh Google Sheets data before loading dashboard
+    try:
+        from sheets_helper import read_data
+        import csv
+        data = read_data()
+        csv_file = "financial_data.csv"
+        fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
+        with open(csv_file, mode="w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
+        print("✅ Google Sheets auto-sync complete.")
+    except Exception as e:
+        print(f"⚠️ Google Sheets sync failed: {e}")
+
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'],session['username'])
     os.makedirs(user_folder, exist_ok=True)
     files = os.listdir(user_folder)
