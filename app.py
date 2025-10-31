@@ -95,13 +95,41 @@ uploaded_csvs = {}
 def index():
     return redirect(url_for('login'))
 
-@app.route('/sync_sheets')
+@app.route("/sync_sheets")
 def sync_sheets():
+    from sheets_helper import read_data
+    import csv
+
+    data = read_data()
+
+    # Save data into your local CSV so dashboard can use it
+    csv_file = "financial_data.csv"
+    fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
+
+    with open(csv_file, mode="w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
+    return {"status": "success", "rows_synced": len(data)}
+
+# Auto-sync Google Sheets data on startup (Render-compatible)
+with app.app_context():
     try:
+        from sheets_helper import read_data
+        import csv
         data = read_data()
-        return jsonify({"status": "success", "data": data})
+        csv_file = "financial_data.csv"
+        fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
+        with open(csv_file, mode="w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
+        print("✅ Google Sheets auto-sync complete.")
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+        print(f"⚠️ Google Sheets sync failed: {e}")
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
