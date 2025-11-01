@@ -374,11 +374,37 @@ def dashboard():
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
 
-    kpis = {}
-    if latest_file:
-        filepath = os.path.join(user_folder, latest_file)
-        try:
+   kpis = {}
+    try:
+        # ✅ Always prioritize Google Sheets live data
+        df = pd.read_csv("financial_data.csv")
+        print("📊 Loaded data from Google Sheets")
+
+    except Exception:
+        # 🧭 Fallback: use last uploaded file
+        if latest_file:
+            filepath = os.path.join(user_folder, latest_file)
             df = pd.read_csv(filepath)
+            print("📂 Fallback to uploaded CSV")
+        else:
+            df = pd.DataFrame()
+
+    if not df.empty:
+        df.columns = df.columns.str.lower().str.strip()
+
+        if "revenue" in df.columns and "expenses" in df.columns:
+            df["profit"] = df["revenue"] - df["expenses"]
+
+            total_profit = df["profit"].sum()
+            avg_profit = df["profit"].mean()
+            profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100 if df["profit"].iloc[0] != 0 else 0
+
+            kpis = {
+                "total_profit": f"${total_profit:,.2f}",
+                "avg_profit": f"${avg_profit:,.2f}",
+                "profit_growth": f"{profit_growth:.2f}%",
+                "largest_expense": "N/A"
+            }
 
             # Standardize column names (lowercase, strip spaces)
             df.columns = df.columns.str.lower().str.strip()
@@ -513,11 +539,16 @@ def dashboard():
     notifications.extend(ai_insights)
 
     # 📊 Revenue vs Expenses Graph
-    data = pd.DataFrame({
-        "Date": pd.date_range(start="2025-01-01", periods=6, freq="M"),
-        "Revenue": [12000, 15000, 17000, 16000, 18000, 20000],
-        "Expenses": [8000, 9000, 10000, 9500, 11000, 12000]
-    })
+    data = df.copy()
+
+    if "date" in data.columns:
+        data["Date"] = pd.to_datetime(data["date"], errors="coerce")
+    else:
+        data["Date"] = pd.date_range(start="2025-01-01", periods=len(data), freq="M")
+
+    if "revenue" not in data.columns or "expenses" not in data.columns:
+        data["revenue"] = 0
+        data["expenses"] = 0
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data["Date"], y=data["Revenue"], mode="lines+markers", name="Revenue"))
