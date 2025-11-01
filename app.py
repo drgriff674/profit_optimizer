@@ -397,7 +397,10 @@ def dashboard():
 
             total_profit = df["profit"].sum()
             avg_profit = df["profit"].mean()
-            profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100 if df["profit"].iloc[0] != 0 else 0
+            profit_growth = (
+                (df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0] * 100
+                if df["profit"].iloc[0] != 0 else 0
+            )
 
             kpis = {
                 "total_profit": f"${total_profit:,.2f}",
