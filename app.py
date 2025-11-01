@@ -373,8 +373,7 @@ def dashboard():
                     notifications.append(f"💡 Smart Insight: {answer}")
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
-
-   kpis = {}
+    kpis = {}
     try:
         # ✅ Always prioritize Google Sheets live data
         df = pd.read_csv("financial_data.csv")
@@ -397,10 +396,7 @@ def dashboard():
 
             total_profit = df["profit"].sum()
             avg_profit = df["profit"].mean()
-            profit_growth = (
-                (df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0] * 100
-                if df["profit"].iloc[0] != 0 else 0
-            )
+            profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100 if df["profit"].iloc[0] != 0 else 0
 
             kpis = {
                 "total_profit": f"${total_profit:,.2f}",
@@ -408,7 +404,6 @@ def dashboard():
                 "profit_growth": f"{profit_growth:.2f}%",
                 "largest_expense": "N/A"
             }
-
             # Standardize column names (lowercase, strip spaces)
             df.columns = df.columns.str.lower().str.strip()
 
