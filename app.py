@@ -371,14 +371,18 @@ def dashboard():
 
     # 🔮 Forecasting with Prophet
     try:
+        # Always use the latest synced Google Sheets data
         df = pd.read_csv("financial_data.csv")
-        df.columns = df.columns.str.lower().str.strip()
 
+        # Merge with manual entries if they exist
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
         manual_path = os.path.join(user_folder, "manual_entries.csv")
         if os.path.exists(manual_path):
             manual_df = pd.read_csv(manual_path)
             df = pd.concat([df, manual_df], ignore_index=True)
+
+        # Normalize column names
+        df.columns = df.columns.str.lower().str.strip()
 
         if "date" in df.columns and "revenue" in df.columns:
             df['ds'] = pd.to_datetime(df['date'], errors='coerce')
@@ -397,21 +401,22 @@ def dashboard():
             ]
     except Exception as e:
         forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-        
+
+    # 📊 Prepare forecast chart data
     forecast_chart = []
-        for item in forecast_data:
-            try:
-                if "predicted_revenue" in item:
-                    value = item["predicted_revenue"]
-                    # If it's a string like "$1,234.56"
-                    if isinstance(value, str):
-                        value = value.replace("$", "").replace(",", "")
-                    forecast_chart.append({
-                        "date": item["date"],
-                        "predicted_revenue": float(value)
-                    })
-            except Exception:
-                continue
+    for item in forecast_data:
+        try:
+            if "predicted_revenue" in item:
+                value = item["predicted_revenue"]
+                if isinstance(value, str):
+                    value = value.replace("$", "").replace(",", "")
+                forecast_chart.append({
+                    "date": item["date"],
+                    "predicted_revenue": float(value)
+                })
+        except Exception:
+            continue
+
     # ✅ Render dashboard
     return render_template(
         "dashboard.html",
@@ -421,9 +426,7 @@ def dashboard():
         answer=answer,
         kpis=kpis,
         forecast_data=forecast_data,
-        forecast_chart=json.dumps(forecast_chart),
-        graph_html=graph_html,
-        performance_chart=json.dumps(performance_chart)
+        forecast_chart=json.dumps(forecast_chart)
     )
 @app.route("/api/financial_data")
 def financial_data():
