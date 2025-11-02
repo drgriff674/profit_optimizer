@@ -229,7 +229,7 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
-@app.route("/dashboard", methods=["GET","POST"])
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -250,7 +250,7 @@ def dashboard():
     except Exception as e:
         print(f"⚠️ Google Sheets sync failed: {e}")
 
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'],session['username'])
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
     os.makedirs(user_folder, exist_ok=True)
     files = os.listdir(user_folder)
 
@@ -259,12 +259,12 @@ def dashboard():
     answer = None
     forecast_data = []
 
+    # ✅ Handle uploaded files
     if files:
-        # ✅ Pick the correct file FIRST (session > latest)
         if 'uploaded_file' in session and session['uploaded_file'] in files:
             latest_file = session['uploaded_file']
         else:
-            latest_file = sorted(files)[-1]  # fallback to most recent file in folder
+            latest_file = sorted(files)[-1]
 
         file_path = os.path.join(user_folder, latest_file)
 
@@ -272,14 +272,13 @@ def dashboard():
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             df = pd.read_csv(file_path)
 
-            # 🔹 Merge with manual entries if they exist
+            # Merge with manual entries
             manual_path = os.path.join(user_folder, "manual_entries.csv")
             if os.path.exists(manual_path):
                 manual_df = pd.read_csv(manual_path)
                 df = pd.concat([df, manual_df], ignore_index=True)
 
             preview = df.head().to_string()
-
             prompt = f"""
             You are a business data analyst AI for OptiGain. Review the latest uploaded company data below.
             Generate:
@@ -289,8 +288,6 @@ def dashboard():
 
             Data sample:
             {preview}
-
-            Respond in 3 short bullet points, each under 20 words.
             """
 
             response = client.chat.completions.create(
@@ -305,92 +302,41 @@ def dashboard():
 
             insights = response.choices[0].message.content.strip()
             notifications.append(insights)
-
         except Exception as e:
             notifications.append(f"Error generating insights: {str(e)}")
 
-    # ✅ FIX 1: Try using the most recently uploaded file from session
-    if 'uploaded_file' in session and session['uploaded_file'] in files:
-        latest_file = session['uploaded_file']
-    elif files:
-        # ✅ FIX 2: If no session file, fall back to last file in folder
-        latest_file = sorted(files)[-1]
-
-    if latest_file:
-        filepath = os.path.join(user_folder, latest_file)
-        try:
-            df = pd.read_csv(filepath)
-
-# 🔹 Merge with manual entries if they exist
-            manual_path = os.path.join(user_folder, "manual_entries.csv")
-            if os.path.exists(manual_path):
-                manual_df = pd.read_csv(manual_path)
-                df = pd.concat([df, manual_df], ignore_index=True)
-
-            # ✅ NO CHANGE: Sample analysis logic
-            if 'Revenue' in df.columns and 'Expenses' in df.columns:
-                recent_revenue = df['Revenue'].tail(3).mean()
-                recent_expenses = df['Expenses'].tail(3).mean()
-                older_expenses = df['Expenses'].head(3).mean()
-
-                # 🚨 Expense growth alert
-                if recent_expenses > older_expenses * 1.3:
-                    notifications.append("Alert: Your expenses increased by over 30% in recent months.")
-
-                # 📈 Revenue growth check
-                if df['Revenue'].iloc[-1] > df['Revenue'].iloc[0]:
-                    notifications.append("Good job: Revenue is steadily increasing.")
-
-                # 🚨 Profit margin check
-                df["Profit"] = df["Revenue"] - df["Expenses"]
-                profit_margin = (df["Profit"].sum() / df["Revenue"].sum()) * 100 if df["Revenue"].sum() != 0 else 0
-                if profit_margin < 10:
-                    notifications.append(f"Warning: Your overall profit margin is low ({profit_margin:.2f}%). Consider reducing costs or increasing sales.")
-
-                # 🚨 Negative profit alert
-                if (df["Profit"] < 0).any():
-                    notifications.append("Alert: Some months show negative profit (loss). Review expenses and revenue sources.")
-        except Exception as e:
-            notifications.append("Could not read latest financial data.")
-            
-        answer = None
+    # ✅ Handle question form submission
     if request.method == "POST":
         question = request.form.get("question", "").strip()
-
         if not question:
             notifications.append("Please enter a question before submitting.")
         else:
-            if not AI_ENABLED:
-                notifications.append("⚙️ AI insights are currently disabled.")
-            else:
-                try:
-                    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-                    response = client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=[{"role": "user", "content": question}]
-                    )
-                    answer = response.choices[0].message.content.strip()
-                    notifications.append(f"💡 Smart Insight: {answer}")
-                except Exception as e:
-                    notifications.append(f"Error generating insights: {str(e)}")
-     kpis = {}
-     try:
-        # ✅ Always prioritize Google Sheets live data
-       df = pd.read_csv("financial_data.csv")
-       print("📊 Loaded data from Google Sheets")
+            try:
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": question}]
+                )
+                answer = response.choices[0].message.content.strip()
+                notifications.append(f"💡 Smart Insight: {answer}")
+            except Exception as e:
+                notifications.append(f"Error generating insights: {str(e)}")
 
-     except Exception:
-        # 🧭 Fallback: use last uploaded file
-       if latest_file:
-          filepath = os.path.join(user_folder, latest_file)
-          df = pd.read_csv(filepath)
-          print("📂 Fallback to uploaded CSV")
-       else:
-         df = pd.DataFrame()
+    # ✅ KPI Calculation
+    kpis = {}
+    try:
+        df = pd.read_csv("financial_data.csv")
+        print("📊 Loaded data from Google Sheets")
+    except Exception:
+        if latest_file:
+            filepath = os.path.join(user_folder, latest_file)
+            df = pd.read_csv(filepath)
+            print("📂 Fallback to uploaded CSV")
+        else:
+            df = pd.DataFrame()
 
-     if not df.empty:
+    if not df.empty:
         df.columns = df.columns.str.lower().str.strip()
-
         if "revenue" in df.columns and "expenses" in df.columns:
             df["profit"] = df["revenue"] - df["expenses"]
 
@@ -398,165 +344,73 @@ def dashboard():
             avg_profit = df["profit"].mean()
             profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100 if df["profit"].iloc[0] != 0 else 0
 
+            largest_expense = "Unknown"
+            if "description" in df.columns:
+                largest_expense = df.groupby("description")["expenses"].sum().idxmax()
+
             kpis = {
-              "total_profit": f"${total_profit:,.2f}",
-              "avg_profit": f"${avg_profit:,.2f}",
-              "profit_growth": f"{profit_growth:.2f}%",
-              "largest_expense": "N/A"
-         }
-        except Exception as e:
+                "total_profit": f"${total_profit:,.2f}",
+                "avg_profit": f"${avg_profit:,.2f}",
+                "profit_growth": f"{profit_growth:.2f}%",
+                "largest_expense": largest_expense
+            }
+        else:
             kpis = {
-                "total_profit": "Error",
-                "avg_profit": "Error",
-                "profit_growth": "Error",
-                "largest_expense": "Error"
-
-                }
-
-        # 🔮 Forecasting with Prophet
-        
-        try:
-            # Always use the latest synced Google Sheets data
-            df = pd.read_csv("financial_data.csv")
-
-            # Merge with manual entries if they exist
-            user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-            manual_path = os.path.join(user_folder, "manual_entries.csv")
-            if os.path.exists(manual_path):
-                manual_df = pd.read_csv(manual_path)
-                df = pd.concat([df, manual_df], ignore_index=True)
-
-            # Normalize column names
-            df.columns = df.columns.str.lower().str.strip()
-
-            if "date" in df.columns and "revenue" in df.columns:
-                df['ds'] = pd.to_datetime(df['date'], errors='coerce')
-                df = df.dropna(subset=['ds'])
-                df['y'] = df['revenue']
-
-                model = Prophet()
-                model.fit(df[['ds', 'y']])
-
-                future = model.make_future_dataframe(periods=6, freq='M')
-                forecast = model.predict(future)
-                future_forecast = forecast.tail(6)
-
-                forecast_data = [
-                    {"date": row['ds'].strftime('%b %Y'), "predicted_revenue": f"${row['yhat']:,.2f}"}
-                    for _, row in future_forecast.iterrows()
-                ]
-        except Exception as e:
-            forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-
-# 🔹 Merge with manual entries if they exist
-            manual_path = os.path.join(user_folder, "manual_entries.csv")
-            if os.path.exists(manual_path):
-                manual_df = pd.read_csv(manual_path)
-                df = pd.concat([df, manual_df], ignore_index=True)
-
-            # Normalize column names
-            df.columns = df.columns.str.lower().str.strip()
-
-            if "month" in df.columns and "revenue" in df.columns:
-                # Convert 'Month' into proper datetime
-                df['ds'] = pd.to_datetime(df['month'], format='%B', errors='coerce')
-                df['ds'] = df['ds'].fillna(pd.to_datetime(df['month'], errors='coerce'))
-
-                df = df.dropna(subset=['ds'])
-                df['y'] = df['revenue']
-
-                # Fit Prophet model
-                model = Prophet()
-                model.fit(df[['ds', 'y']])
-
-                # Forecast next 6 months
-                future = model.make_future_dataframe(periods=6, freq='ME')
-                forecast = model.predict(future)
-
-                # Get only future predictions
-                future_forecast = forecast.tail(6)
-
-                forecast_data = [
-                    {
-                        "date": row['ds'].strftime('%B %Y'),
-                        "predicted_revenue": f"${row['yhat']:,.2f}"
-                    }
-                    for _, row in future_forecast.iterrows()
-                ]
-        except Exception as e:
-            forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-
-    forecast_chart = []
-    for item in forecast_data:
-        try:
-            if "predicted_revenue" in item:
-                value = item["predicted_revenue"]
-                # If it's a string like "$1,234.56"
-                if isinstance(value, str):
-                    value = value.replace("$", "").replace(",", "")
-                forecast_chart.append({
-                    "date": item["date"],
-                    "predicted_revenue": float(value)
-                })
-        except Exception:
-            # Skip invalid rows
-            continue
-            
-    # 🔹 Send KPIs to dashboard.html
-
-    ai_insights = generate_ai_insights(kpis)
-    notifications.extend(ai_insights)
-
-    # 📊 Revenue vs Expenses Graph
-    data = df.copy()
-
-    if "date" in data.columns:
-        data["Date"] = pd.to_datetime(data["date"], errors="coerce")
+                "total_profit": "N/A",
+                "avg_profit": "N/A",
+                "profit_growth": "N/A",
+                "largest_expense": "N/A"
+            }
     else:
-        data["Date"] = pd.date_range(start="2025-01-01", periods=len(data), freq="M")
+        kpis = {
+            "total_profit": "N/A",
+            "avg_profit": "N/A",
+            "profit_growth": "N/A",
+            "largest_expense": "N/A"
+        }
 
-    if "revenue" not in data.columns or "expenses" not in data.columns:
-        data["revenue"] = 0
-        data["expenses"] = 0
+    # 🔮 Forecasting with Prophet
+    try:
+        df = pd.read_csv("financial_data.csv")
+        df.columns = df.columns.str.lower().str.strip()
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=data["Date"], y=data["Revenue"], mode="lines+markers", name="Revenue"))
-    fig.add_trace(go.Scatter(x=data["Date"], y=data["Expenses"], mode="lines+markers", name="Expenses"))
-    fig.update_layout(
-        title="Revenue vs Expenses Trend",
-        xaxis_title="Date",
-        yaxis_title="Amount (KSh)",
-        template="plotly_white",
-        height=400
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
+        manual_path = os.path.join(user_folder, "manual_entries.csv")
+        if os.path.exists(manual_path):
+            manual_df = pd.read_csv(manual_path)
+            df = pd.concat([df, manual_df], ignore_index=True)
+
+        if "date" in df.columns and "revenue" in df.columns:
+            df['ds'] = pd.to_datetime(df['date'], errors='coerce')
+            df = df.dropna(subset=['ds'])
+            df['y'] = df['revenue']
+
+            model = Prophet()
+            model.fit(df[['ds', 'y']])
+            future = model.make_future_dataframe(periods=6, freq='M')
+            forecast = model.predict(future)
+            future_forecast = forecast.tail(6)
+
+            forecast_data = [
+                {"date": row['ds'].strftime('%b %Y'), "predicted_revenue": f"${row['yhat']:,.2f}"}
+                for _, row in future_forecast.iterrows()
+            ]
+    except Exception as e:
+        forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
+
+    # ✅ Render dashboard
+    return render_template(
+        "dashboard.html",
+        files=files,
+        latest_file=latest_file,
+        notifications=notifications,
+        answer=answer,
+        kpis=kpis,
+        forecast_data=forecast_data,
+        forecast_chart=json.dumps(forecast_chart),
+        graph_html=graph_html,
+        performance_chart=json.dumps(performance_chart)
     )
-
-    graph_html = pyo.plot(fig, include_plotlyjs=False, output_type='div')
-
-
-    # 🔹 Generate real live performance chart data
-    performance_chart = []
-    if latest_file:
-        filepath = os.path.join(user_folder, latest_file)
-        try:
-            df = pd.read_csv(filepath)
-            df.columns = df.columns.str.lower().str.strip()
-
-            if "month" in df.columns and "revenue" in df.columns and "expenses" in df.columns:
-                chart_data = df.tail(12)  # Show recent 12 months if available
-                performance_chart = [
-                    {
-                        "month": row["month"],
-                        "revenue": float(row["revenue"]),
-                        "expenses": float(row["expenses"])
-                    }
-                    for _, row in chart_data.iterrows()
-                ]
-        except Exception as e:
-            print("Error generating performance chart:", e)
- 
-    # ✅ NO CHANGE: Pass list of files and notifications to dashboard template
-    return render_template('dashboard.html', files=files, notifications=notifications, answer=answer, kpis=kpis, forecast_data=forecast_data, forecast_chart=json.dumps(forecast_chart),graph_html=graph_html, performance_chart=json.dumps(performance_chart))
-
 @app.route("/api/financial_data")
 def financial_data():
     if 'username' not in session:
