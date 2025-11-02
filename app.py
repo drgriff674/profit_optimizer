@@ -247,6 +247,8 @@ def dashboard():
             for row in data:
                 writer.writerow(row)
         print("✅ Google Sheets auto-sync complete.")
+        from datetime import datetime
+        last_synced = datetime.now().strftime("%b %d, %y . %I:%M %p")
     except Exception as e:
         print(f"⚠️ Google Sheets sync failed: {e}")
 
@@ -426,7 +428,8 @@ def dashboard():
         answer=answer,
         kpis=kpis,
         forecast_data=forecast_data,
-        forecast_chart=json.dumps(forecast_chart)
+        forecast_chart=json.dumps(forecast_chart),
+        last_synced=last_synced
     )
 @app.route("/api/financial_data")
 def financial_data():
