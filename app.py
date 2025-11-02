@@ -397,7 +397,21 @@ def dashboard():
             ]
     except Exception as e:
         forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-
+        
+    forecast_chart = []
+        for item in forecast_data:
+            try:
+                if "predicted_revenue" in item:
+                    value = item["predicted_revenue"]
+                    # If it's a string like "$1,234.56"
+                    if isinstance(value, str):
+                        value = value.replace("$", "").replace(",", "")
+                    forecast_chart.append({
+                        "date": item["date"],
+                        "predicted_revenue": float(value)
+                    })
+            except Exception:
+                continue
     # ✅ Render dashboard
     return render_template(
         "dashboard.html",
