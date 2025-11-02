@@ -24,6 +24,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
 from sheets_helper import read_data, add_row
+import pytz
 
 # Railway PostgreSQL connection
 DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
@@ -248,7 +249,8 @@ def dashboard():
                 writer.writerow(row)
         print("✅ Google Sheets auto-sync complete.")
         from datetime import datetime
-        last_synced = datetime.now().strftime("%b %d, %y . %I:%M %p")
+        nairobi_tz = pytz.timezone("Africa/Nairobi")
+        last_synced = datetime.now(nairobi_tz).strftime("%b %d, %y . %I:%M %p")
     except Exception as e:
         print(f"⚠️ Google Sheets sync failed: {e}")
 
