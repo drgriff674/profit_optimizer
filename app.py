@@ -373,22 +373,22 @@ def dashboard():
                     notifications.append(f"💡 Smart Insight: {answer}")
                 except Exception as e:
                     notifications.append(f"Error generating insights: {str(e)}")
-    kpis = {}
-    try:
+     kpis = {}
+     try:
         # ✅ Always prioritize Google Sheets live data
-        df = pd.read_csv("financial_data.csv")
-        print("📊 Loaded data from Google Sheets")
+       df = pd.read_csv("financial_data.csv")
+       print("📊 Loaded data from Google Sheets")
 
-    except Exception:
+     except Exception:
         # 🧭 Fallback: use last uploaded file
-        if latest_file:
-            filepath = os.path.join(user_folder, latest_file)
-            df = pd.read_csv(filepath)
-            print("📂 Fallback to uploaded CSV")
-        else:
-            df = pd.DataFrame()
+       if latest_file:
+          filepath = os.path.join(user_folder, latest_file)
+          df = pd.read_csv(filepath)
+          print("📂 Fallback to uploaded CSV")
+       else:
+         df = pd.DataFrame()
 
-    if not df.empty:
+     if not df.empty:
         df.columns = df.columns.str.lower().str.strip()
 
         if "revenue" in df.columns and "expenses" in df.columns:
@@ -399,40 +399,11 @@ def dashboard():
             profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100 if df["profit"].iloc[0] != 0 else 0
 
             kpis = {
-                "total_profit": f"${total_profit:,.2f}",
-                "avg_profit": f"${avg_profit:,.2f}",
-                "profit_growth": f"{profit_growth:.2f}%",
-                "largest_expense": "N/A"
-            }
-            # Standardize column names (lowercase, strip spaces)
-            df.columns = df.columns.str.lower().str.strip()
-
-            if "revenue" in df.columns and "expenses" in df.columns:
-                df["profit"] = df["revenue"] - df["expenses"]
-
-                total_profit = df["profit"].sum()
-                avg_profit = df["profit"].mean()
-                profit_growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
-
-                # Largest expense category if description exists
-                if "description" in df.columns:
-                    largest_expense = df.groupby("description")["expenses"].sum().idxmax()
-                else:
-                    largest_expense = "Unknown"
-
-                kpis = {
-                    "total_profit": f"${total_profit:,.2f}",
-                    "avg_profit": f"${avg_profit:,.2f}",
-                    "profit_growth": f"{profit_growth:.2f}%",
-                    "largest_expense": largest_expense
-                }
-            else:
-                kpis = {
-                    "total_profit": "N/A",
-                    "avg_profit": "N/A",
-                    "profit_growth": "N/A",
-                    "largest_expense": "N/A"
-                }
+              "total_profit": f"${total_profit:,.2f}",
+              "avg_profit": f"${avg_profit:,.2f}",
+              "profit_growth": f"{profit_growth:.2f}%",
+              "largest_expense": "N/A"
+         }
         except Exception as e:
             kpis = {
                 "total_profit": "Error",
