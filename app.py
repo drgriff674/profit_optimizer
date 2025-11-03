@@ -309,6 +309,36 @@ def dashboard():
             for row in data:
                 writer.writerow(row)
         print("✅ Google Sheets auto-sync complete.")
+
+        # 🔮 Generate AI insights for synced data
+        try:
+            df = pd.read_csv("financial_data.csv")
+            preview = df.head().to_string()
+            prompt = f"""
+            You are a business data analyst AI for OptiGain.
+            Review this synced financial data and provide:
+            - 2 short trend insights
+            - 1 actionable recommendation
+            - 1 one-sentence performance summary
+            Data sample:
+            {preview}
+            """
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are OptiGain's smart financial assistant.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=300,
+            )
+            notifications.append(response.choices[0].message.content.strip())
+        except Exception as e:
+            print(f"⚠️ Failed to generate AI insights after sync: {e}")
         from datetime import datetime
 
         nairobi_tz = pytz.timezone("Africa/Nairobi")
@@ -539,51 +569,67 @@ def financial_data():
     if "username" not in session:
         return {"error": "Unauthorized"}, 401
 
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    csv_file = os.path.join(
-        app.root_path, "financial_data.csv"
-    )  # Google Sheets synced file
-
-    # 🧩 Choose which source to read (user upload or Google Sheets)
-    file_path = None
-    if os.path.exists(user_folder):
-        files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
-        if files:
-            latest_file = sorted(files)[-1]
-            file_path = os.path.join(user_folder, latest_file)
-    if not file_path and os.path.exists(csv_file):
-        file_path = csv_file
-
-    if not file_path:
-        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+    df = pd.DataFrame()  # Initialize empty dataframe
 
     try:
-        df = pd.read_csv(file_path)
-        df.columns = df.columns.str.lower().str.strip()
+        # ✅ 1. Try to use the latest Google Sheets data
+        if os.path.exists("financial_data.csv"):
+            df = pd.read_csv("financial_data.csv")
+            print("📊 Loaded data from Google Sheets for live performance")
 
-        if "month" not in df.columns:
-            return {"month": [], "revenue": [], "expenses": [], "profit": []}
+        # ✅ 2. If the user uploaded a file more recently, use that instead
+        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
+        if os.path.exists(user_folder):
+            files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
+            if files:
+                latest_file = sorted(files)[-1]
+                file_path = os.path.join(user_folder, latest_file)
 
-        if (
-            "profit" not in df.columns
-            and "revenue" in df.columns
-            and "expenses" in df.columns
-        ):
-            df["profit"] = df["revenue"] - df["expenses"]
+                # Compare timestamps — whichever file is newer wins
+                sheet_time = (
+                    os.path.getmtime("financial_data.csv")
+                    if os.path.exists("financial_data.csv")
+                    else 0
+                )
+                upload_time = os.path.getmtime(file_path)
 
-        df = df.tail(12)
-
-        data = {
-            "month": df["month"].astype(str).tolist(),
-            "revenue": df.get("revenue", pd.Series([0] * len(df))).fillna(0).tolist(),
-            "expenses": df.get("expenses", pd.Series([0] * len(df))).fillna(0).tolist(),
-            "profit": df.get("profit", pd.Series([0] * len(df))).fillna(0).tolist(),
-        }
-        return data
+                if upload_time > sheet_time:
+                    df = pd.read_csv(file_path)
+                    print(
+                        "📂 Loaded data from latest uploaded file for live performance"
+                    )
 
     except Exception as e:
-        print("Error reading financial data:", e)
+        print(f"⚠️ Error reading financial data: {e}")
         return {"month": [], "revenue": [], "expenses": [], "profit": []}
+
+    # ✅ 3. Normalize and compute metrics
+    if df.empty:
+        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+
+    df.columns = df.columns.str.lower().str.strip()
+
+    # Extract month for plotting
+    if "date" in df.columns:
+        df["month"] = pd.to_datetime(df["date"], errors="coerce").dt.strftime("%b")
+
+    # Compute profit if missing
+    if (
+        "profit" not in df.columns
+        and "revenue" in df.columns
+        and "expenses" in df.columns
+    ):
+        df["profit"] = df["revenue"] - df["expenses"]
+
+    # Limit to the most recent 12 entries
+    df = df.tail(12)
+
+    return {
+        "month": df.get("month", pd.Series([0] * len(df))).astype(str).tolist(),
+        "revenue": df.get("revenue", pd.Series([0] * len(df))).fillna(0).tolist(),
+        "expenses": df.get("expenses", pd.Series([0] * len(df))).fillna(0).tolist(),
+        "profit": df.get("profit", pd.Series([0] * len(df))).fillna(0).tolist(),
+    }
 
 
 @app.route("/api/mpesa_balance")
