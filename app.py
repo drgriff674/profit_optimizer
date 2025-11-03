@@ -690,10 +690,10 @@ def mpesa_balance():
         return jsonify({"error": str(e)}), 500
 
 # ✅ Enhanced M-Pesa Callback Route
-@app.route("/mpesa/callback", methods=["POST"])
-def mpesa_callback():
+@app.route("/payment/callback", methods=["POST"])
+def payment_callback():
     data = request.get_json()
-    print("📥 M-Pesa Callback Received:", data)
+    print("Callback Received:", data)
 
     try:
         # Extract fields safely
@@ -790,8 +790,8 @@ def register_url():
     payload = {
         "ShortCode": short_code,
         "ResponseType": "Completed",
-        "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/mpesa/callback",
-        "ValidationURL": "https://profitoptimizer-production.up.railway.app/mpesa/callback"
+        "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/payment/callback",
+        "ValidationURL": "https://profitoptimizer-production.up.railway.app/payment/callback"
     }
 
     result = requests.post(register_url, json=payload, headers=headers)
