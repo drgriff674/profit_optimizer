@@ -481,42 +481,56 @@ setInterval(loadInsights, 20000);
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-    const performanceData = JSON.parse('{{ performance_chart|safe }}');
+async function loadPerformanceChart() {
+  try {
+    const res = await fetch('/api/financial_data'); // or your Google Sheets route if different
+    const data = await res.json();
 
-    if (performanceData.length > 0) {
-        const months = performanceData.map(item => item.month);
-        const revenue = performanceData.map(item => item.revenue);
-        const expenses = performanceData.map(item => item.expenses);
+    // 🧩 Ensure your backend returns the correct keys: month, revenue, expenses
+    const months = data.month || [];
+    const revenue = data.revenue || [];
+    const expenses = data.expenses || [];
 
-        const trace1 = {
-            x: months,
-            y: revenue,
-            type: 'scatter',
-            name: 'Revenue',
-            line: { color: 'green', width: 3 }
-        };
-
-        const trace2 = {
-            x: months,
-            y: expenses,
-            type: 'scatter',
-            name: 'Expenses',
-            line: { color: 'red', width: 3 }
-        };
-
-        const layout = {
-            title: 'Business Performance (Last 12 Months)',
-            xaxis: { title: 'Month' },
-            yaxis: { title: 'Amount (KSh)' },
-            margin: { t: 40, l: 60, r: 30, b: 40 }
-        };
-
-        Plotly.newPlot('performanceChart', [trace1, trace2], layout);
-    } else {
-        document.getElementById('performanceChart').innerHTML =
-            "<p style='text-align:center; color:gray;'>No performance data available yet.</p>";
+    if (months.length === 0) {
+      document.getElementById('performanceChart').innerHTML =
+        "<p style='text-align:center; color:gray;'>No data available yet.</p>";
+      return;
     }
-</script>
 
+    const trace1 = {
+      x: months,
+      y: revenue,
+      type: 'scatter',
+      name: 'Revenue',
+      line: { color: 'green', width: 3 }
+    };
+
+    const trace2 = {
+      x: months,
+      y: expenses,
+      type: 'scatter',
+      name: 'Expenses',
+      line: { color: 'red', width: 3 }
+    };
+
+    const layout = {
+      title: '📊 Live Performance (Revenue vs Expenses)',
+      xaxis: { title: 'Month' },
+      yaxis: { title: 'Amount (KSh)' },
+      margin: { t: 40, l: 60, r: 30, b: 40 },
+      plot_bgcolor: '#f9f9f9',
+      paper_bgcolor: '#fff'
+    };
+
+    Plotly.react('performanceChart', [trace1, trace2], layout);
+  } catch (err) {
+    console.error("⚠️ Failed to load performance chart:", err);
+  }
+}
+
+// Initial load + refresh every 5 min (same as Google Sheets sync)
+loadPerformanceChart();
+setInterval(loadPerformanceChart, 5 * 60 * 1000);
+</script>
 </body>
 </html>

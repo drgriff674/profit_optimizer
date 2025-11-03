@@ -439,29 +439,31 @@ def financial_data():
         return {"error": "Unauthorized"}, 401
 
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], session['username'])
-    if not os.path.exists(user_folder):
-        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+    csv_file = os.path.join(app.root_path, "financial_data.csv")  # Google Sheets synced file
 
-    files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
-    if not files:
-        return {"month": [], "revenue": [], "expenses": [], "profit": []}
+    # 🧩 Choose which source to read (user upload or Google Sheets)
+    file_path = None
+    if os.path.exists(user_folder):
+        files = [f for f in os.listdir(user_folder) if f.endswith('.csv')]
+        if files:
+            latest_file = sorted(files)[-1]
+            file_path = os.path.join(user_folder, latest_file)
+    if not file_path and os.path.exists(csv_file):
+        file_path = csv_file
 
-    latest_file = sorted(files)[-1]
-    file_path = os.path.join(user_folder, latest_file)
+    if not file_path:
+        return {"month": [], "revenue": [], "expenses": [], "profit": []}
 
     try:
         df = pd.read_csv(file_path)
         df.columns = df.columns.str.lower().str.strip()
 
-        # Check if "month" column exists
         if "month" not in df.columns:
             return {"month": [], "revenue": [], "expenses": [], "profit": []}
 
-        # Compute profit if missing
         if "profit" not in df.columns and "revenue" in df.columns and "expenses" in df.columns:
             df["profit"] = df["revenue"] - df["expenses"]
 
-        # Limit to recent 12 rows (months)
         df = df.tail(12)
 
         data = {
@@ -475,7 +477,6 @@ def financial_data():
     except Exception as e:
         print("Error reading financial data:", e)
         return {"month": [], "revenue": [], "expenses": [], "profit": []}
-
 
 
 @app.route('/api/mpesa_balance')
