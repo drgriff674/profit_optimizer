@@ -768,6 +768,35 @@ def mpesa_timeout():
     print("⏱️ M-Pesa Timeout:", data)
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
+@app.route("/register_url", methods=["GET"])
+def register_url():
+    import requests
+    import base64
+    from requests.auth import HTTPBasicAuth
+
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+    short_code = os.getenv("MPESA_SHORTCODE", "600986")  # sandbox shortcode
+
+    # Get access token
+    token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+    response = requests.get(token_url, auth=HTTPBasicAuth(consumer_key, consumer_secret))
+    access_token = response.json().get("access_token")
+
+    # Register URLs
+    register_url = "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl"
+    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+    payload = {
+        "ShortCode": short_code,
+        "ResponseType": "Completed",
+        "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/mpesa/callback",
+        "ValidationURL": "https://profitoptimizer-production.up.railway.app/mpesa/callback"
+    }
+
+    result = requests.post(register_url, json=payload, headers=headers)
+    return result.json()
+
 
 @app.route("/api/dashboard_data")
 def dashboard_data():
