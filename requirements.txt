@@ -42,7 +42,7 @@ lxml==6.0.0
 MarkupSafe==3.0.2
 matplotlib==3.10.3
 narwhals==1.45.0
-numpy==2.3.1
+numpy==1.26.4
 oauthlib==3.3.1
 openai==1.97.0
 openpyxl==3.1.5
