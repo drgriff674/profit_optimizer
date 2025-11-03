@@ -740,6 +740,27 @@ def mpesa_callback():
     except Exception as e:
         print("⚠️ Error saving M-Pesa callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": str(e)})
+
+# ✅ M-Pesa Sandbox Token Route
+@app.route("/get_token")
+def get_token():
+    import os
+    import requests
+    from flask import jsonify
+
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+
+    if not consumer_key or not consumer_secret:
+        return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
+
+    try:
+        auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(auth_url, auth=(consumer_key, consumer_secret))
+        data = response.json()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 # ✅ M-Pesa Timeout Route
 @app.route("/mpesa/timeout", methods=["POST"])
 def mpesa_timeout():
