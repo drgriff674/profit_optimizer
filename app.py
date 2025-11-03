@@ -689,24 +689,57 @@ def mpesa_balance():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# ✅ M-Pesa Callback Route
+# ✅ Enhanced M-Pesa Callback Route
 @app.route("/mpesa/callback", methods=["POST"])
 def mpesa_callback():
     data = request.get_json()
     print("📥 M-Pesa Callback Received:", data)
 
-    # Optional: Save the result to your database for records
-    result_code = data.get("Result", {}).get("ResultCode", None)
-    result_desc = data.get("Result", {}).get("ResultDesc", "")
-    originator_id = data.get("OriginatorConversationID", "")
-    transaction_id = data.get("ConversationID", "")
+    try:
+        # Extract fields safely
+        result = data.get("Result", {})
+        result_code = result.get("ResultCode", None)
+        result_desc = result.get("ResultDesc", "")
+        originator_id = data.get("OriginatorConversationID", "")
+        transaction_id = data.get("ConversationID", "")
+        amount = result.get("ResultParameters", {}).get("ResultParameter", [{}])[0].get("Value", 0)
 
-    print(f"✅ Result: {result_desc} | Code: {result_code}")
+        print(f"✅ Result: {result_desc} | Code: {result_code} | Amount: {amount}")
 
-    return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"})
+        # --- Save to PostgreSQL ---
+        import psycopg2, json, os
+        from datetime import datetime
 
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cur = conn.cursor()
 
+        cur.execute("""
+            INSERT INTO mpesa_transactions
+            (transaction_id, amount, sender, receiver, transaction_type, account_reference, description, timestamp, raw_payload, origin_ip, created_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+        """, (
+            transaction_id,
+            amount,
+            "Unknown",  # Sender (sandbox doesn’t send this)
+            "OptiGain",  # Receiver name
+            "C2B Payment",
+            originator_id,
+            result_desc,
+            datetime.utcnow(),
+            json.dumps(data),
+            request.remote_addr
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        print("✅ M-Pesa transaction saved successfully.")
+        return jsonify({"ResultCode": 0, "ResultDesc": "Callback received and saved"})
+
+    except Exception as e:
+        print("⚠️ Error saving M-Pesa callback:", e)
+        return jsonify({"ResultCode": 1, "ResultDesc": str(e)})
 # ✅ M-Pesa Timeout Route
 @app.route("/mpesa/timeout", methods=["POST"])
 def mpesa_timeout():
