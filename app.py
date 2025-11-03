@@ -300,7 +300,8 @@ def dashboard():
         from sheets_helper import read_data
         import csv
 
-        data = read_data()
+        sheet_name = request.args.get("sheet","sheet1")
+        data = read_data(sheet_name)
         csv_file = "financial_data.csv"
         fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
         with open(csv_file, mode="w", newline="") as file:

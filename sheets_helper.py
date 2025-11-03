@@ -16,16 +16,28 @@ SCOPES = [
 creds = Credentials.from_service_account_info(credentials_info, scopes=SCOPES)
 client = gspread.authorize(creds)
 
-# ✅ Use your spreadsheet ID (replace this with your actual ID!)
+# ✅ Your Google Sheet ID
 SHEET_ID = "1vL-wLddVruVCIyjgB35Ej66UsbdnoIZkrlIe4_eK4xs"
 
-# Open the sheet by key (ID)
-sheet = client.open_by_key(SHEET_ID).sheet1
+def get_sheet(sheet_name="Sheet1"):
+    """
+    Open a specific sheet by name.
+    Defaults to 'Sheet1' if no name is provided.
+    """
+    spreadsheet = client.open_by_key(SHEET_ID)
+    try:
+        sheet = spreadsheet.worksheet(sheet_name)
+    except gspread.exceptions.WorksheetNotFound:
+        # Fallback to the first sheet if the given one doesn't exist
+        sheet = spreadsheet.sheet1
+    return sheet
 
-def read_data():
-    """Read all rows from the sheet"""
+def read_data(sheet_name="Sheet1"):
+    """Read all rows from a specific sheet"""
+    sheet = get_sheet(sheet_name)
     return sheet.get_all_records()
 
-def add_row(data):
-    """Append a new row"""
+def add_row(data, sheet_name="Sheet1"):
+    """Append a new row to a specific sheet"""
+    sheet = get_sheet(sheet_name)
     sheet.append_row(data)

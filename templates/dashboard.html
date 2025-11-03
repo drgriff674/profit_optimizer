@@ -13,6 +13,15 @@
 
 <body>
 
+<form method="get" action="/dashboard" class="flex items-center space-x-2">
+  <label for="sheet" class="text-sm font-medium">Select Sheet:</label>
+  <select name="sheet" id="sheet" onchange="this.form.submit()" class="border rounded p-1 text-sm">
+    <option value="Sheet1">Sheet1</option>
+    <option value="Sheet2">Sheet2</option>
+    <option value="Sheet3">Sheet3</option>
+  </select>
+</form>
+
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     {% for category, message in messages %}
