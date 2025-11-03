@@ -5,6 +5,11 @@ from google.oauth2.service_account import Credentials
 
 # Load credentials from environment variable
 credentials_info = json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"])
+if not credentials_json:
+    with open("instance/google-credentials.json") as f:
+        credentials_info = json.load(f)
+else:
+    credentials_info = json.loads(credentials_json)
 
 # Define the correct scopes (for Sheets + Drive access)
 SCOPES = [
