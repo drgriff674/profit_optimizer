@@ -775,36 +775,40 @@ def register_url():
     consumer_key = os.getenv("MPESA_CONSUMER_KEY")
     consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
 
-    # Generate access token
-    auth_response = requests.get(
-        "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
-        auth=(consumer_key, consumer_secret),
-    )
-    token_data = auth_response.json()
-    access_token = token_data.get("access_token")
+    # ✅ Step 1: Get access token directly from Safaricom
+    try:
+        auth_response = requests.get(
+            "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+            auth=(consumer_key, consumer_secret),
+        )
+        auth_response.raise_for_status()
+        token_data = auth_response.json()
+        access_token = token_data.get("access_token")
+    except Exception as e:
+        return jsonify({"error": f"Failed to get token: {str(e)}"}), 400
 
-    if not access_token:
-        return jsonify({"error": "Failed to get access token"}), 400
-
-    # Register your callback URLs directly
+    # ✅ Step 2: Register callback URLs directly
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
     }
     payload = {
-        "ShortCode": "600983",  # Replace with your test or live shortcode
+        "ShortCode": "600983",  # Use sandbox shortcode for now
         "ResponseType": "Completed",
         "ConfirmationURL": "https://profit-optimizer.onrender.com/mpesa/callback",
         "ValidationURL": "https://profit-optimizer.onrender.com/mpesa/validation",
     }
 
-    res = requests.post(
-        "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
-        headers=headers,
-        json=payload,
-    )
-
-    return jsonify(res.json()), res.status_code
+    try:
+        res = requests.post(
+            "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
+            headers=headers,
+            json=payload,
+            timeout=10,
+        )
+        return jsonify(res.json()), res.status_code
+    except Exception as e:
+        return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
 # ✅ AI Insight Engine — analyzes latest financial data and generates insights
 @app.route("/api/ai_insights")
 def ai_insights():
