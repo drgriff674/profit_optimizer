@@ -770,82 +770,41 @@ def mpesa_timeout():
 
 @app.route("/register_url", methods=["GET"])
 def register_url():
-    import requests
-    import base64
-    from requests.auth import HTTPBasicAuth
+    import requests, os, json
 
-    try:
-        consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-        consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-        short_code = os.getenv("MPESA_SHORTCODE", "600986")  # Sandbox shortcode
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
 
-        print(f"🔑 Using Key: {consumer_key[:4]}... and Shortcode: {short_code}")
+    # Generate access token
+    auth_response = requests.get(
+        "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+        auth=(consumer_key, consumer_secret),
+    )
+    token_data = auth_response.json()
+    access_token = token_data.get("access_token")
 
-        # Step 1: Get access token
-        token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(token_url, auth=HTTPBasicAuth(consumer_key, consumer_secret))
-        if response.status_code != 200:
-            print("❌ Failed to get token:", response.text)
-            return jsonify({"error": "Failed to get token", "details": response.text}), 500
+    if not access_token:
+        return jsonify({"error": "Failed to get access token"}), 400
 
-        access_token = response.json().get("access_token")
-        print("✅ Got Access Token:", access_token[:10], "...")
+    # Register your callback URLs directly
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "ShortCode": "600983",  # Replace with your test or live shortcode
+        "ResponseType": "Completed",
+        "ConfirmationURL": "https://profit-optimizer.onrender.com/mpesa/callback",
+        "ValidationURL": "https://profit-optimizer.onrender.com/mpesa/validation",
+    }
 
-        # Step 2: Register callback URLs
-        register_url = "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl"
-        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
-        payload = {
-            "ShortCode": short_code,
-            "ResponseType": "Completed",
-            "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/payment/callback",
-            "ValidationURL": "https://profitoptimizer-production.up.railway.app/payment/callback"
-        }
+    res = requests.post(
+        "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
+        headers=headers,
+        json=payload,
+    )
 
-        print("📤 Registering URL payload:", payload)
-        result = requests.post(register_url, json=payload, headers=headers)
-        print("📥 Safaricom response:", result.text)
-
-        return jsonify(result.json())
-
-    except Exception as e:
-        print(f"💥 Error in register_url: {e}")
-        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
-@app.route("/api/dashboard_data")
-def dashboard_data():
-    try:
-        # ✅ Fetch KPIs (dummy/sample data for now)
-        kpis = {
-            "total_profit": 245000,
-            "avg_profit": 56000,
-            "profit_growth": "12%",
-            "largest_expense": "Marketing",
-        }
-
-        # ✅ Sample graph data
-        months = ["May", "Jun", "Jul", "Aug", "Sep", "Oct"]
-        revenue = [600000, 650000, 670000, 720000, 750000, 780000]
-        expenses = [400000, 420000, 450000, 470000, 490000, 510000]
-        profit = [r - e for r, e in zip(revenue, expenses)]
-
-        # ✅ Get M-Pesa balance (sandbox simulation)
-        mpesa_balance = 125340.75  # Replace later with real fetch
-
-        data = {
-            "kpis": kpis,
-            "chart": {
-                "months": months,
-                "revenue": revenue,
-                "expenses": expenses,
-                "profit": profit,
-            },
-            "mpesa_balance": mpesa_balance,
-        }
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-
+    return jsonify(res.json()), res.status_code
 # ✅ AI Insight Engine — analyzes latest financial data and generates insights
 @app.route("/api/ai_insights")
 def ai_insights():
