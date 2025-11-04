@@ -568,37 +568,36 @@ def financial_data():
     except Exception as e:
         print(f"⚠️ Error generating live financial data: {e}")
         return jsonify({"error": str(e)})
+
+
+
 @app.route("/api/transactions_summary")
 def transactions_summary():
-    try:
-        import psycopg2, os
-        from flask import jsonify
+    import psycopg2, os
+    from flask import jsonify
 
+    try:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
-        cur.execute("SELECT COALESCE(SUM(amount),0) FROM mpesa_transactions;")
-        total = float(cur.fetchone()[0])
-
-        cur.execute("SELECT COALESCE(AVG(amount),0) FROM mpesa_transactions;")
-        avg = float(cur.fetchone()[0])
-
         cur.execute("""
-            SELECT MAX(amount) FROM mpesa_transactions WHERE transaction_type='Expense';
+            SELECT 
+                COALESCE(SUM(amount),0) AS total_profit,
+                COALESCE(AVG(amount),0) AS avg_profit,
+                COUNT(*) AS txn_count
+            FROM mpesa_transactions;
         """)
-        largest_expense = float(cur.fetchone()[0] or 0)
-
+        total_profit, avg_profit, txn_count = cur.fetchone()
         cur.close()
         conn.close()
 
         return jsonify({
-            "total_profit": total,
-            "average_profit": avg,
-            "largest_expense": largest_expense,
-            "profit_growth": 0.0  # we’ll compute real growth later
+            "total_profit": round(total_profit, 2),
+            "avg_profit": round(avg_profit, 2),
+            "profit_growth": f"{(avg_profit/total_profit*100 if total_profit else 0):.1f}%",
+            "largest_expense": 0.0  # placeholder until expenses are tracked
         })
-
     except Exception as e:
-        print("⚠️ Error loading summary:", e)
+        print(f"⚠️ Error generating summary: {e}")
         return jsonify({"error": str(e)})
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
