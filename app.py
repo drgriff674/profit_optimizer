@@ -567,72 +567,76 @@ def dashboard():
 
 @app.route("/api/financial_data")
 def financial_data():
-    if "username" not in session:
-        return {"error": "Unauthorized"}, 401
-
-    df = pd.DataFrame()  # Initialize empty dataframe
-
     try:
-        # ✅ 1. Try to use the latest Google Sheets data
-        if os.path.exists("financial_data.csv"):
-            df = pd.read_csv("financial_data.csv")
-            print("📊 Loaded data from Google Sheets for live performance")
+        import psycopg2, os
+        from flask import jsonify
+        import pandas as pd
 
-        # ✅ 2. If the user uploaded a file more recently, use that instead
-        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-        if os.path.exists(user_folder):
-            files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
-            if files:
-                latest_file = sorted(files)[-1]
-                file_path = os.path.join(user_folder, latest_file)
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        query = """
+            SELECT 
+                DATE_TRUNC('month', created_at) AS month,
+                SUM(amount) AS revenue
+            FROM mpesa_transactions
+            GROUP BY 1
+            ORDER BY 1;
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
 
-                # Compare timestamps — whichever file is newer wins
-                sheet_time = (
-                    os.path.getmtime("financial_data.csv")
-                    if os.path.exists("financial_data.csv")
-                    else 0
-                )
-                upload_time = os.path.getmtime(file_path)
+        if df.empty:
+            return jsonify({"month": [], "revenue": [], "expenses": [], "profit": []})
 
-                if upload_time > sheet_time:
-                    df = pd.read_csv(file_path)
-                    print(
-                        "📂 Loaded data from latest uploaded file for live performance"
-                    )
-
-    except Exception as e:
-        print(f"⚠️ Error reading financial data: {e}")
-        return {"month": [], "revenue": [], "expenses": [], "profit": []}
-
-    # ✅ 3. Normalize and compute metrics
-    if df.empty:
-        return {"month": [], "revenue": [], "expenses": [], "profit": []}
-
-    df.columns = df.columns.str.lower().str.strip()
-
-    # Extract month for plotting
-    if "date" in df.columns:
-        df["month"] = pd.to_datetime(df["date"], errors="coerce").dt.strftime("%b")
-
-    # Compute profit if missing
-    if (
-        "profit" not in df.columns
-        and "revenue" in df.columns
-        and "expenses" in df.columns
-    ):
+        # For now, assume expenses = 0 (or calculate if you store them later)
+        df["expenses"] = 0
         df["profit"] = df["revenue"] - df["expenses"]
 
-    # Limit to the most recent 12 entries
-    df = df.tail(12)
+        df["month"] = df["month"].dt.strftime("%b %Y")
 
-    return {
-        "month": df.get("month", pd.Series([0] * len(df))).astype(str).tolist(),
-        "revenue": df.get("revenue", pd.Series([0] * len(df))).fillna(0).tolist(),
-        "expenses": df.get("expenses", pd.Series([0] * len(df))).fillna(0).tolist(),
-        "profit": df.get("profit", pd.Series([0] * len(df))).fillna(0).tolist(),
-    }
+        return jsonify({
+            "month": df["month"].tolist(),
+            "revenue": df["revenue"].tolist(),
+            "expenses": df["expenses"].tolist(),
+            "profit": df["profit"].tolist(),
+        })
+
+    except Exception as e:
+        print("⚠️ Error generating live financial data:", e)
+        return jsonify({"error": str(e)})
 
 
+@app.route("/api/transactions_summary")
+def transactions_summary():
+    try:
+        import psycopg2, os
+        from flask import jsonify
+
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cur = conn.cursor()
+        cur.execute("SELECT COALESCE(SUM(amount),0) FROM mpesa_transactions;")
+        total = float(cur.fetchone()[0])
+
+        cur.execute("SELECT COALESCE(AVG(amount),0) FROM mpesa_transactions;")
+        avg = float(cur.fetchone()[0])
+
+        cur.execute("""
+            SELECT MAX(amount) FROM mpesa_transactions WHERE transaction_type='Expense';
+        """)
+        largest_expense = float(cur.fetchone()[0] or 0)
+
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "total_profit": total,
+            "average_profit": avg,
+            "largest_expense": largest_expense,
+            "profit_growth": 0.0  # we’ll compute real growth later
+        })
+
+    except Exception as e:
+        print("⚠️ Error loading summary:", e)
+        return jsonify({"error": str(e)})
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
 def get_token():

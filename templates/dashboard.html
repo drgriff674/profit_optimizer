@@ -541,5 +541,45 @@ async function loadPerformanceChart() {
 loadPerformanceChart();
 setInterval(loadPerformanceChart, 5 * 60 * 1000);
 </script>
+
+<script>
+async function loadTransactionSummary() {
+  try {
+    const res = await fetch('/api/transactions_summary');
+    const data = await res.json();
+
+    if (data.error) {
+      console.warn("⚠️ Error loading summary:", data.error);
+      return;
+    }
+
+    // Dynamically update KPI cards
+    document.querySelectorAll('.kpi-card').forEach(card => {
+      const title = card.querySelector('h3').innerText.trim();
+      const valueEl = card.querySelector('p');
+
+      if (title === 'Total Profit') {
+        valueEl.innerText = `${data.total_profit?.toLocaleString() || '0'} KSh`;
+      }
+      if (title === 'Average Profit') {
+        valueEl.innerText = `${data.average_profit?.toLocaleString() || '0'} KSh`;
+      }
+      if (title === 'Profit Growth') {
+        valueEl.innerText = `${data.profit_growth?.toFixed(1) || 0}%`;
+      }
+      if (title === 'Largest Expense') {
+        valueEl.innerText = `${data.largest_expense?.toLocaleString() || '0'} KSh`;
+      }
+    });
+
+  } catch (err) {
+    console.error("⚠️ Failed to load transaction summary:", err);
+  }
+}
+
+// Load once and refresh every 30 seconds
+loadTransactionSummary();
+setInterval(loadTransactionSummary, 30000);
+</script>
 </body>
 </html>
