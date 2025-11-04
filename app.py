@@ -37,8 +37,7 @@ from database import load_users, save_user, init_db
 from sheets_helper import read_data, add_row
 import pytz
 
-# --- TEMP FIX: Ensure 'amount' column is numeric ---
-import psycopg2, os
+# --- TEMP FIX: Ensure 'amount' column is numeric --
 try:
     conn = psycopg2.connect(os.environ["DATABASE_URL"])
     cur = conn.cursor()
