@@ -633,9 +633,138 @@ def financial_data():
     }
 
 
-@app.route("/api/mpesa_balance")
-def mpesa_balance():
+# ✅ GET ACCESS TOKEN
+@app.route("/get_token")
+def get_token():
+    import os, requests
+    from flask import jsonify
+
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+
+    if not consumer_key or not consumer_secret:
+        return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
+
     try:
+        auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(auth_url, auth=(consumer_key, consumer_secret))
+        response.raise_for_status()
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
+
+# ✅ REGISTER CALLBACK URL
+@app.route("/register_url", methods=["GET"])
+def register_url():
+    import os, requests, json
+    from flask import jsonify
+
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+
+    # Step 1: Get access token
+    try:
+        token_response = requests.get(
+            "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+            auth=(consumer_key, consumer_secret),
+        )
+        token_response.raise_for_status()
+        access_token = token_response.json().get("access_token")
+    except Exception as e:
+        return jsonify({"error": f"Failed to get token: {str(e)}"}), 400
+
+    # Step 2: Register callback URLs (avoid using “mpesa” in the URL)
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "ShortCode": "600983",  # Sandbox Shortcode (will replace with live shortcode later)
+        "ResponseType": "Completed",
+        "ConfirmationURL": "https://profit-optimizer.onrender.com/payment/confirm",
+        "ValidationURL": "https://profit-optimizer.onrender.com/payment/validate",
+    }
+
+    try:
+        res = requests.post(
+            "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
+            headers=headers,
+            json=payload,
+            timeout=15,
+        )
+        return jsonify(res.json()), res.status_code
+    except Exception as e:
+        return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
+
+# ✅ PAYMENT CONFIRMATION CALLBACK
+@app.route("/payment/confirm", methods=["POST"])
+def payment_confirm():
+    from flask import request, jsonify
+    import psycopg2, json, os
+    from datetime import datetime
+
+    data = request.get_json()
+    print("📥 Confirmation received:", data)
+
+    try:
+        result = data.get("Result", {})
+        result_desc = result.get("ResultDesc", "")
+        transaction_id = result.get("ConversationID", "")
+        amount = (
+            result.get("ResultParameters", {})
+            .get("ResultParameter", [{}])[0]
+            .get("Value", 0)
+        )
+
+        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO mpesa_transactions
+            (transaction_id, amount, sender, receiver, transaction_type, account_reference, description, timestamp, raw_payload, origin_ip, created_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+            """,
+            (
+                transaction_id,
+                amount,
+                "Unknown",
+                "OptiGain",
+                "C2B Payment",
+                "Confirmation",
+                result_desc,
+                datetime.utcnow(),
+                json.dumps(data),
+                request.remote_addr,
+            ),
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("✅ Transaction saved successfully.")
+
+        return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"})
+    except Exception as e:
+        print("⚠️ Error saving callback:", e)
+        return jsonify({"ResultCode": 1, "ResultDesc": str(e)})
+
+# ✅ PAYMENT VALIDATION CALLBACK
+@app.route("/payment/validate", methods=["POST"])
+def payment_validate():
+    data = request.get_json()
+    print("📥 Validation request:", data)
+    return jsonify({"ResultCode": 0, "ResultDesc": "Validation received successfully"})
+
+
+# ✅ Query M-Pesa Account Balance (safe naming)
+@app.route("/api/account_balance")
+def account_balance():
+    try:
+        import os, requests
+        from requests.auth import HTTPBasicAuth
+        from flask import jsonify
+
         consumer_key = os.getenv("MPESA_CONSUMER_KEY")
         consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
         shortcode = os.getenv("MPESA_SHORTCODE")
@@ -662,26 +791,17 @@ def mpesa_balance():
             "PartyA": shortcode,
             "IdentifierType": "4",
             "Remarks": "Checking account balance",
-            "QueueTimeOutURL": "https://profit-optimizer.onrender.com/mpesa/timeout",
-            "ResultURL": "https://profit-optimizer.onrender.com/mpesa/callback",
+            "QueueTimeOutURL": "https://profit-optimizer.onrender.com/payment/timeout",
+            "ResultURL": "https://profit-optimizer.onrender.com/payment/balance_result",
         }
 
         response = requests.post(balance_url, json=payload, headers=headers)
 
-        # ✅ Handle invalid or empty responses safely
         try:
             data = response.json()
         except ValueError:
             print("⚠️ Invalid JSON from M-Pesa:", response.text)
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid or empty JSON response from M-Pesa",
-                        "raw": response.text,
-                    }
-                ),
-                500,
-            )
+            return jsonify({"error": "Invalid or empty JSON response from M-Pesa", "raw": response.text}), 500
 
         print("✅ M-Pesa raw response:", data)
         return jsonify(data)
@@ -689,129 +809,19 @@ def mpesa_balance():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ✅ Enhanced M-Pesa Callback Route
-@app.route("/payment/callback", methods=["POST"])
-def payment_callback():
+# ✅ Payment Timeout Callback
+@app.route("/payment/timeout", methods=["POST"])
+def payment_timeout():
     data = request.get_json()
-    print("Callback Received:", data)
-
-    try:
-        # Extract fields safely
-        result = data.get("Result", {})
-        result_code = result.get("ResultCode", None)
-        result_desc = result.get("ResultDesc", "")
-        originator_id = data.get("OriginatorConversationID", "")
-        transaction_id = data.get("ConversationID", "")
-        amount = result.get("ResultParameters", {}).get("ResultParameter", [{}])[0].get("Value", 0)
-
-        print(f"✅ Result: {result_desc} | Code: {result_code} | Amount: {amount}")
-
-        # --- Save to PostgreSQL ---
-        import psycopg2, json, os
-        from datetime import datetime
-
-        conn = psycopg2.connect(os.environ["DATABASE_URL"])
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO mpesa_transactions
-            (transaction_id, amount, sender, receiver, transaction_type, account_reference, description, timestamp, raw_payload, origin_ip, created_at)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
-        """, (
-            transaction_id,
-            amount,
-            "Unknown",  # Sender (sandbox doesn’t send this)
-            "OptiGain",  # Receiver name
-            "C2B Payment",
-            originator_id,
-            result_desc,
-            datetime.utcnow(),
-            json.dumps(data),
-            request.remote_addr
-        ))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        print("✅ M-Pesa transaction saved successfully.")
-        return jsonify({"ResultCode": 0, "ResultDesc": "Callback received and saved"})
-
-    except Exception as e:
-        print("⚠️ Error saving M-Pesa callback:", e)
-        return jsonify({"ResultCode": 1, "ResultDesc": str(e)})
-
-# ✅ M-Pesa Sandbox Token Route
-@app.route("/get_token")
-def get_token():
-    import os
-    import requests
-    from flask import jsonify
-
-    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-
-    if not consumer_key or not consumer_secret:
-        return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
-
-    try:
-        auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(auth_url, auth=(consumer_key, consumer_secret))
-        data = response.json()
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-# ✅ M-Pesa Timeout Route
-@app.route("/mpesa/timeout", methods=["POST"])
-def mpesa_timeout():
-    data = request.get_json()
-    print("⏱️ M-Pesa Timeout:", data)
+    print("⏱️ Payment Timeout:", data)
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
-@app.route("/register_url", methods=["GET"])
-def register_url():
-    import requests, os, json
-
-    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-
-    print("Using Key:",consumer_key)
-    print("Using Secret:",consumer_secret)
-
-    # ✅ Step 1: Get access token directly from Safaricom
-    try:
-        auth_response = requests.get(
-            "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
-            auth=(consumer_key, consumer_secret),
-        )
-        auth_response.raise_for_status()
-        token_data = auth_response.json()
-        access_token = token_data.get("access_token")
-    except Exception as e:
-        return jsonify({"error": f"Failed to get token: {str(e)}"}), 400
-
-    # ✅ Step 2: Register callback URLs directly
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "ShortCode": "600983",  # Use sandbox shortcode for now
-        "ResponseType": "Completed",
-        "ConfirmationURL": "https://profit-optimizer.onrender.com/mpesa/callback",
-        "ValidationURL": "https://profit-optimizer.onrender.com/mpesa/validation",
-    }
-
-    try:
-        res = requests.post(
-            "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
-            headers=headers,
-            json=payload,
-            timeout=10,
-        )
-        return jsonify(res.json()), res.status_code
-    except Exception as e:
-        return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
+# ✅ Balance Result Callback
+@app.route("/payment/balance_result", methods=["POST"])
+def payment_balance_result():
+    data = request.get_json()
+    print("💰 Account Balance Result:", data)
+    return jsonify({"ResultCode": 0, "ResultDesc": "Balance result received"})
 # ✅ AI Insight Engine — analyzes latest financial data and generates insights
 @app.route("/api/ai_insights")
 def ai_insights():
