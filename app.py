@@ -681,8 +681,8 @@ def register_url():
     payload = {
         "ShortCode": "600983",  # Sandbox Shortcode (will replace with live shortcode later)
         "ResponseType": "Completed",
-        "ConfirmationURL": "https://profit-optimizer.onrender.com/payment/callback",
-        "ValidationURL": "https://profit-optimizer.onrender.com/payment/validation",
+        "ConfirmationURL": "https://profit-optimizer-production.up.railway.app/payment/confirm",
+        "ValidationURL": "https://profit-optimizer-production.up.railway.app/payment/validate",
     }
 
     try:
