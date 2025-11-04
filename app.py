@@ -37,6 +37,35 @@ from database import load_users, save_user, init_db
 from sheets_helper import read_data, add_row
 import pytz
 
+# --- TEMP FIX: Ensure 'amount' column is numeric ---
+import psycopg2, os
+try:
+    conn = psycopg2.connect(os.environ["DATABASE_URL"])
+    cur = conn.cursor()
+    cur.execute("""
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name='mpesa_transactions' AND column_name='amount'
+            ) THEN
+                BEGIN
+                    EXECUTE 'ALTER TABLE mpesa_transactions 
+                             ALTER COLUMN amount TYPE numeric 
+                             USING REPLACE(amount::text, ''$'', '''')::numeric';
+                EXCEPTION WHEN others THEN
+                    RAISE NOTICE 'Column already numeric or error ignored';
+                END;
+            END IF;
+        END$$;
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("✅ Amount column ensured as numeric.")
+except Exception as e:
+    print("⚠️ Skipped DB patch:", e)
+
 # Railway PostgreSQL connection
 DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
 
