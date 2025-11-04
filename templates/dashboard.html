@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <p style="font-size: 0.9rem; color: gray; margin-top: 5px;">
-    Last Synced: {{ last_synced }} ✅
+   
 </p>
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="60">
@@ -13,14 +12,6 @@
 
 <body>
 
-<form method="get" action="/dashboard" class="flex items-center space-x-2">
-  <label for="sheet" class="text-sm font-medium">Select Sheet:</label>
-  <select name="sheet" id="sheet" onchange="this.form.submit()" class="border rounded p-1 text-sm">
-    <option value="Sheet1">Sheet1</option>
-    <option value="Sheet2">Sheet2</option>
-    <option value="Sheet3">Sheet3</option>
-  </select>
-</form>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
