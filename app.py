@@ -775,6 +775,9 @@ def register_url():
     consumer_key = os.getenv("MPESA_CONSUMER_KEY")
     consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
 
+    print("Using Key:",consumer_key)
+    print("Using Secret:",consumer_secret)
+
     # ✅ Step 1: Get access token directly from Safaricom
     try:
         auth_response = requests.get(
