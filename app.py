@@ -710,10 +710,10 @@ def payment_confirm():
         result = data.get("Result", {})
         result_desc = result.get("ResultDesc", "")
         transaction_id = result.get("ConversationID", "")
-        amount = (
+        amount = float(
             result.get("ResultParameters", {})
             .get("ResultParameter", [{}])[0]
-            .get("Value", 0)
+            .get("Value" , 0) or 0
         )
 
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
