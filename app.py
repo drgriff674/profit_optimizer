@@ -34,7 +34,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
-from sheets_helper import read_data, add_row
 import pytz
 
 
@@ -135,44 +134,6 @@ uploaded_csvs = {}
 def index():
     return redirect(url_for("login"))
 
-
-@app.route("/sync_sheets")
-def sync_sheets():
-    from sheets_helper import read_data
-    import csv
-
-    data = read_data()
-
-    # Save data into your local CSV so dashboard can use it
-    csv_file = "financial_data.csv"
-    fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
-
-    with open(csv_file, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in data:
-            writer.writerow(row)
-
-    return {"status": "success", "rows_synced": len(data)}
-
-
-# Auto-sync Google Sheets data on startup (Render-compatible)
-with app.app_context():
-    try:
-        from sheets_helper import read_data
-        import csv
-
-        data = read_data()
-        csv_file = "financial_data.csv"
-        fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
-        with open(csv_file, mode="w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in data:
-                writer.writerow(row)
-        print("✅ Google Sheets auto-sync complete.")
-    except Exception as e:
-        print(f"⚠️ Google Sheets sync failed: {e}")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -568,44 +529,45 @@ def dashboard():
 
 @app.route("/api/financial_data")
 def financial_data():
-    try:
-        import psycopg2, os
-        from flask import jsonify
-        import pandas as pd
+    import psycopg2, os
+    from flask import jsonify
 
+    try:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
-        query = """
-            SELECT 
-                DATE_TRUNC('month', created_at) AS month,
-                SUM(amount) AS revenue
+        cur = conn.cursor()
+
+        # Group totals per day (or month) for your chart
+        cur.execute("""
+            SELECT
+                DATE(created_at) AS date,
+                SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS revenue,
+                SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) AS expenses
             FROM mpesa_transactions
-            GROUP BY 1
-            ORDER BY 1;
-        """
-        df = pd.read_sql_query(query, conn)
+            GROUP BY DATE(created_at)
+            ORDER BY DATE(created_at)
+            LIMIT 12;
+        """)
+
+        rows = cur.fetchall()
+        cur.close()
         conn.close()
 
-        if df.empty:
-            return jsonify({"month": [], "revenue": [], "expenses": [], "profit": []})
-
-        # For now, assume expenses = 0 (or calculate if you store them later)
-        df["expenses"] = 0
-        df["profit"] = df["revenue"] - df["expenses"]
-
-        df["month"] = df["month"].dt.strftime("%b %Y")
+        # Convert DB rows to lists
+        months = [r[0].strftime("%b %d") for r in rows]
+        revenue = [float(r[1]) for r in rows]
+        expenses = [float(r[2]) for r in rows]
+        profit = [r1 - r2 for r1, r2 in zip(revenue, expenses)]
 
         return jsonify({
-            "month": df["month"].tolist(),
-            "revenue": df["revenue"].tolist(),
-            "expenses": df["expenses"].tolist(),
-            "profit": df["profit"].tolist(),
+            "month": months,
+            "revenue": revenue,
+            "expenses": expenses,
+            "profit": profit
         })
 
     except Exception as e:
-        print("⚠️ Error generating live financial data:", e)
+        print(f"⚠️ Error generating live financial data: {e}")
         return jsonify({"error": str(e)})
-
-
 @app.route("/api/transactions_summary")
 def transactions_summary():
     try:
