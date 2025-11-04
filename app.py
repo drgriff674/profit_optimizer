@@ -726,6 +726,15 @@ def payment_confirm():
                         break
         except Exception:
             amount = 0.0
+        # Extract sender details if available
+        sender_name = "Unknown"
+        phone_number = ""
+
+        # Some simulator responses include "FirstName", "MiddleName", "LastName"
+        if "FirstName" in data:
+            names = [data.get("FirstName", ""), data.get("MiddleName", ""), data.get("LastName", "")]
+            sender_name = " ".join([n for n in names if n]).strip()
+            phone_number = data.get("MSISDN", "")
 
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
@@ -739,7 +748,7 @@ def payment_confirm():
             (
                 transaction_id,
                 amount,
-                "Unknown",
+                sender_name,
                 "OptiGain",
                 "C2B Payment",
                 "Confirmation",
