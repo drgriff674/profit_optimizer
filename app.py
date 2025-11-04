@@ -710,11 +710,22 @@ def payment_confirm():
         result = data.get("Result", {})
         result_desc = result.get("ResultDesc", "")
         transaction_id = result.get("ConversationID", "")
-        amount = float(
-            result.get("ResultParameters", {})
-            .get("ResultParameter", [{}])[0]
-            .get("Value" , 0) or 0
-        )
+        # Try to extract amount from multiple possible places
+        amount = 0.0
+        try:
+            # Case 1: Normal sandbox structure (direct TransAmount)
+            if "TransAmount" in data:
+                amount = float(data.get("TransAmount", 0))
+
+            # Case 2: Callback wrapped under "Result"
+            elif "Result" in data and isinstance(data["Result"], dict):
+                params = data["Result"].get("ResultParameters", {}).get("ResultParameter", [])
+                for p in params:
+                    if p.get("Key") == "TransAmount":
+                        amount = float(p.get("Value", 0))
+                        break
+        except Exception:
+            amount = 0.0
 
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
