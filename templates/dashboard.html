@@ -381,101 +381,65 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-
-  // 🔁 Auto-refresh KPI + chart data every 15 seconds
-  async function refreshLiveData() {
+document.addEventListener("DOMContentLoaded", () => {
+  // 💰 Fetch and update M-Pesa balance
+  async function fetchMpesaBalance() {
     try {
-      const res = await fetch('/api/financial_data');
+      const res = await fetch("/api/mpesa_balance");
+      const data = await res.json();
+      const balanceElement = document.getElementById("balance-amount");
+      if (data.balance) {
+        balanceElement.textContent = `${data.balance.toLocaleString()} KSh`;
+      } else {
+        balanceElement.textContent = "Unavailable";
+      }
+    } catch (err) {
+      console.error("⚠️ Failed to fetch M-Pesa balance:", err);
+      document.getElementById("balance-amount").textContent = "Unavailable";
+    }
+  }
+
+  // 📊 Fetch and update live transaction summary (real DB)
+  async function loadTransactionSummary() {
+    try {
+      const res = await fetch("/api/transactions_summary");
       const data = await res.json();
 
-      // Update KPI cards dynamically
-      document.querySelectorAll('.kpi-card h3').forEach(card => {
-        const label = card.textContent.trim();
-        const valueElem = card.nextElementSibling;
-
-        if (label === 'Total Profit') valueElem.textContent = data.total_profit || '—';
-        if (label === 'Average Profit') valueElem.textContent = data.avg_profit || '—';
-        if (label === 'Profit Growth') valueElem.textContent = data.profit_growth || '—';
-        if (label === 'Largest Expense') valueElem.textContent = data.largest_expense || '—';
-      });
-
-      // Update chart
-      if (data.month && data.revenue && data.expenses && data.profit) {
-        Plotly.react('liveChart', [
-          { x: data.month, y: data.revenue, type: 'scatter', name: 'Revenue' },
-          { x: data.month, y: data.expenses, type: 'scatter', name: 'Expenses' },
-          { x: data.month, y: data.profit, type: 'scatter', name: 'Profit' }
-        ], {
-          title: 'Company Financial Trends',
-          xaxis: { title: 'Month' },
-          yaxis: { title: 'Amount (KSh)' }
-        });
+      if (data.error) {
+        console.warn("⚠️ Error loading summary:", data.error);
+        return;
       }
 
+      document.querySelectorAll(".card").forEach(card => {
+        const title = card.querySelector("h5, h3")?.innerText?.trim();
+        const valueEl = card.querySelector("h3, p");
+
+        if (title === "Total Profit") {
+          valueEl.innerText = `${data.total_profit?.toLocaleString() || "0"} KSh`;
+        }
+        if (title === "Average Profit") {
+          valueEl.innerText = `${data.average_profit?.toLocaleString() || "0"} KSh`;
+        }
+        if (title === "Profit Growth") {
+          valueEl.innerText = `${data.profit_growth?.toFixed(1) || 0}%`;
+        }
+        if (title === "Largest Expense") {
+          valueEl.innerText = `${data.largest_expense?.toLocaleString() || "0"} KSh`;
+        }
+      });
     } catch (err) {
-      console.error('⚠️ Live data refresh failed:', err);
+      console.error("⚠️ Failed to load transaction summary:", err);
     }
   }
 
-  // 💰 Live M-Pesa Balance refresh
-  async function fetchBalance() {
-    try {
-      const res = await fetch('/api/mpesa_balance');
-      const data = await res.json();
-      document.getElementById('balance-amount').textContent =
-        data.balance ? `${data.balance.toLocaleString()} KSh` : 'Unavailable';
-    } catch {
-      document.getElementById('balance-amount').textContent = 'Unavailable';
-    }
-  }
-
-  // Refresh every 15–20 seconds
-  setInterval(refreshLiveData, 15000);
-  setInterval(fetchBalance, 20000);
-
-  // Initial load
-  refreshLiveData();
-  fetchBalance();
+  // ⏱ Refresh both every 20 seconds
+  loadTransactionSummary();
+  fetchMpesaBalance();
+  setInterval(loadTransactionSummary, 20000);
+  setInterval(fetchMpesaBalance, 20000);
 });
 </script>
 
-<script>
-async function refreshDashboard() {
-  try {
-    const res = await fetch('/api/dashboard_data');
-    const data = await res.json();
-
-    // ✅ Update KPIs
-    document.querySelectorAll('.kpi-card h3').forEach((el, i) => {
-      const key = Object.keys(data.kpis)[i];
-      el.nextElementSibling.innerText = data.kpis[key];
-    });
-
-    // ✅ Update M-Pesa balance
-    document.getElementById("balanceValue").innerText =
-      "KSh " + data.mpesa_balance.toLocaleString();
-
-    // ✅ Update Chart
-    const trace1 = { x: data.chart.months, y: data.chart.revenue, type: 'scatter', name: 'Revenue' };
-    const trace2 = { x: data.chart.months, y: data.chart.expenses, type: 'scatter', name: 'Expenses' };
-    const trace3 = { x: data.chart.months, y: data.chart.profit, type: 'scatter', name: 'Profit' };
-    const layout = {
-      title: 'Company Financial Trends',
-      xaxis: { title: 'Month' },
-      yaxis: { title: 'Amount (KSh)' }
-    };
-    Plotly.newPlot('liveChart', [trace1, trace2, trace3], layout);
-
-  } catch (err) {
-    console.error("Dashboard refresh failed:", err);
-  }
-}
-
-// Refresh every 10 seconds
-refreshDashboard();
-setInterval(refreshDashboard, 10000);
-</script>
 
 <script>
 async function loadInsights() {
