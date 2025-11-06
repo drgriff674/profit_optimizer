@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   
-</p>
     <meta charset="UTF-8">
     <meta http-equiv="refresh" content="60">
     <title>Dashboard - Profit Optimizer</title>
-    <!-- ✅ Link external stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
 
+    <!-- ✅ Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- ✅ Your custom CSS (must come after Bootstrap so it overrides styles) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- ✅ Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
 <body>
 
 
@@ -32,27 +36,34 @@
   💰 Live Balance: <span id="balance-amount">Loading...</span>
 </div>
 
-<!-- 🔹 KPI Section -->
-<div class="kpi-container" style="display: flex; gap: 20px; margin-bottom: 20px;">
-  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
-    <h3>Total Profit</h3>
-    <p style="font-size:24px; font-weight:bold;">{{ kpis.total_profit }}</p>
-  </div>
-  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
-    <h3>Average Profit</h3>
-    <p style="font-size:24px; font-weight:bold;">{{ kpis.avg_profit }}</p>
-  </div>
-  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
-    <h3>Profit Growth</h3>
-    <p style="font-size:24px; font-weight:bold;">{{ kpis.profit_growth }}</p>
-  </div>
-  <div class="kpi-card" style="flex:1; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center;">
-    <h3>Largest Expense</h3>
-    <p style="font-size:24px; font-weight:bold;">{{ kpis.largest_expense }}</p>
+<div class="container my-4">
+  <div class="row g-3 text-center">
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="card-title">Total Profit</h5>
+        <h3>{{ kpis.total_profit }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="card-title">Average Profit</h5>
+        <h3>{{ kpis.avg_profit }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="card-title">Profit Growth</h5>
+        <h3>{{ kpis.profit_growth }}</h3>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card shadow-sm p-3">
+        <h5 class="card-title">Largest Expense</h5>
+        <h3>{{ kpis.largest_expense }}</h3>
+      </div>
+    </div>
   </div>
 </div>
-<!-- 🔹 End KPI Section -->
-
 <div class="card">
   <h2>📈 Revenue Forecast (Next 6 Months)</h2>
   <ul>
@@ -286,26 +297,46 @@ toggleBtn?.addEventListener('click', () => {
     <div>{{ graph_html|safe }}</div>
 </div>
 
-  <!-- ✅ Feature Buttons -->
-<div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
-  <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload New CSV</a>
-  <a href="{{ url_for('manual_entry') }}" class="btn btn-success">Manual Entry</a>
-  <a href="{{ url_for('use_demo_data') }}" class="btn btn-primary">Use Demo Data</a>
-  <a href="{{ url_for('profile') }}" class="btn btn-info">My Profile</a>
-  <a href="{{ url_for('ask') }}" class="btn btn-info">Ask ChatGPT</a>
-  <a href="{{ url_for('admin') }}" class="btn btn-warning">Admin Panel</a>
-  <a href="{{ url_for('profit_calculator') }}" class="btn btn-success">Profit Calculator</a>
-  <a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning">Trend Forecaster</a>
+ <!-- ✅ Feature Buttons (Bootstrap Responsive Layout) -->
+<div class="container my-4">
+  <div class="row g-2">
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('upload') }}" class="btn btn-primary w-100">Upload New CSV</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('manual_entry') }}" class="btn btn-success w-100">Manual Entry</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('use_demo_data') }}" class="btn btn-info w-100">Use Demo Data</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('profile') }}" class="btn btn-secondary w-100">My Profile</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('ask') }}" class="btn btn-info w-100">Ask ChatGPT</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('admin') }}" class="btn btn-warning w-100">Admin Panel</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('profit_calculator') }}" class="btn btn-success w-100">Profit Calculator</a>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning w-100">Trend Forecaster</a>
+    </div>
 
-  <!-- 📄 Download Report Button -->
-  <form action="{{ url_for('download_report') }}" method="POST" style="display:inline;">
-      <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
-      <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
-      <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
-      <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
-      <input type="hidden" name="advice" value="{{ advice }}">
-      <button type="submit" class="btn btn-secondary">📄 Download Report</button>
-  </form>
+    <!-- 📄 Download Report Button -->
+    <div class="col-md-3 col-sm-6">
+      <form action="{{ url_for('download_report') }}" method="POST" class="d-grid">
+        <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+        <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
+        <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
+        <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
+        <input type="hidden" name="advice" value="{{ advice }}">
+        <button type="submit" class="btn btn-secondary w-100">📄 Download Report</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- 📧 Send Report via Email -->
@@ -319,19 +350,17 @@ toggleBtn?.addEventListener('click', () => {
 
 
 
-<!-- ✅ Navbar with Logo & Branding -->
-<nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
-    <div style="display:flex; align-items:center; gap:10px;">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
-        <h2 style="margin:0;">OptiGain</h2>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" height="40">
+      <span class="navbar-brand mb-0 h1">OptiGain</span>
     </div>
-    <div>
-        <form action="{{ url_for('logout') }}" method="get" style="margin:0;">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
-    </div>
+    <form action="{{ url_for('logout') }}" method="get" class="m-0">
+      <button type="submit" class="btn btn-light btn-sm">Logout</button>
+    </form>
+  </div>
 </nav>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
