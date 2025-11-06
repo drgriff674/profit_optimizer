@@ -79,16 +79,16 @@
   </style>
 </head>
 
-<body>
+<body style="transition: background 0.4s, color 0.4s;">
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div style="display:flex; align-items:center;">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
-      <h2>OptiGain Financial Summary</h2>
-    </div>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
-  </nav>
+ <!-- Navbar -->
+<nav class="navbar navbar-dark bg-primary shadow-sm px-3">
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:55px; margin-right:12px;">
+    <h2 class="text-white fw-bold mb-0" style="font-size:26px;">📊 OptiGain Financial Summary</h2>
+  </div>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">⬅ Back to Dashboard</a>
+</nav>
 
   <div class="container mt-4">
 
