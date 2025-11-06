@@ -1127,6 +1127,10 @@ def view_file(filename):
         border=0,
         justify="center"
     ).replace('style="', 'style="color:white !important; background-color:#121212 !important; ')
+
+    final_advice = "<br>".join(insights) if 'insights' in locals() else ""
+    escaped_advice = quote(final_advice)
+    
     return render_template(
         "results.html",
         revenue=total_revenue,
@@ -1140,7 +1144,7 @@ def view_file(filename):
         line_chart=line_chart,
         category_chart=category_chart,
         advice=final_advice,
-        trend_insights=insights,
+        trend_insights=insights if 'insights' in locals()else[],
         escaped_advice=escaped_advice,
         filename=filename,
         table_html=table_html,
