@@ -524,6 +524,7 @@ def dashboard():
         forecast_data=forecast_data,
         forecast_chart=json.dumps(forecast_chart),
         last_synced=last_synced,
+        current_year=datetime.now().year
     )
 
 

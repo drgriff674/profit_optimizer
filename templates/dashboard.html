@@ -32,10 +32,19 @@
     </div>
 
 <!-- 💰 Live Balance Section -->
-<div id="live-balance" style="margin:10px; font-weight:bold;">
-  💰 Live Balance: <span id="balance-amount">Loading...</span>
+<div class="container my-3">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title">💰 Live M-Pesa Business Balance</h5>
+          <h3 id="balance-amount" class="fw-bold text-success">Loading...</h3>
+          <p id="balance-updated" class="text-muted small mt-2">last updated: just now</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
 <div class="container my-4">
   <div class="row g-3 text-center">
     <div class="col-md-3 col-sm-6">
@@ -115,14 +124,26 @@
 fetch("/api/mpesa_balance")
   .then(r => r.json())
   .then(data => {
-      if(data.Result){
-          document.getElementById("balanceValue").innerText =
-              data.Result.ResultParameters.ResultParameter[0].Value || "Unavailable";
+      const balanceEl = document.getElementById("balance-amount");
+      const timeEl = document.getElementById("balance-updated");
+
+      if (data.Result) {
+          balanceEl.innerText =
+              data.Result.ResultParameters.ResultParameter[0].Value + " KSh" || "Unavailable";
+      } else if (data.balance) {
+          balanceEl.innerText = `${data.balance.toLocaleString()} KSh`;
       } else {
-          document.getElementById("balanceValue").innerText = JSON.stringify(data);
+          balanceEl.innerText = "Unavailable";
+      }
+
+      // 🕒 Update timestamp
+      if (timeEl) {
+          timeEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
       }
   })
-  .catch(err => document.getElementById("balanceValue").innerText = "Error loading balance");
+  .catch(err => {
+      document.getElementById("balance-amount").innerText = "Error loading balance";
+  });
 </script>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -354,7 +375,7 @@ toggleBtn?.addEventListener('click', () => {
   <div class="container-fluid d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
       <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" height="40">
-      <span class="navbar-brand mb-0 h1">OptiGain</span>
+      <href="{{ url_for ('dashboard') }}" class="navbar-brand mb-0 hi text-white text-decoration-none">OptiGain<a>
     </div>
     <form action="{{ url_for('logout') }}" method="get" class="m-0">
       <button type="submit" class="btn btn-light btn-sm">Logout</button>
@@ -565,5 +586,9 @@ async function loadTransactionSummary() {
 loadTransactionSummary();
 setInterval(loadTransactionSummary, 30000);
 </script>
+
+<footer class="text-center py-3 mt-5 text-muted border-top">
+  © {{ current_year }} OptiGain. All rights reserved.
+</footer>
 </body>
 </html>
