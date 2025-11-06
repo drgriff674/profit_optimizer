@@ -323,3 +323,31 @@ body.dark-mode .dataTables_length select {
 body.dark-mode .dataTables_filter input::placeholder {
   color: #9aa0a6 !important;
 }
+
+/* 🌙 FINAL FIX — Bright text and rows for DataTables in Dark Mode */
+body.dark-mode table.dataTable tbody td {
+  color: #ffffff !important;           /* brighter numbers/text */
+  font-weight: 500;
+}
+
+body.dark-mode table.dataTable thead th {
+  color: #ffffff !important;           /* bright headers */
+  background-color: #202020 !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+body.dark-mode table.dataTable tbody tr {
+  background-color: #121212 !important; /* subtle dark row */
+}
+
+body.dark-mode table.dataTable tbody tr:hover {
+  background-color: #1e1e1e !important; /* hover highlight */
+}
+
+body.dark-mode .dataTables_wrapper .dataTables_info,
+body.dark-mode .dataTables_wrapper .dataTables_length label,
+body.dark-mode .dataTables_wrapper .dataTables_filter label,
+body.dark-mode .dataTables_wrapper .dataTables_paginate a {
+  color: #ddd !important;
+}
+
