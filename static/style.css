@@ -280,3 +280,46 @@ body.dark-mode .dataTables_wrapper .dataTables_length select {
     color: #fff;
     border: 1px solid #555;
 }
+
+/* 🌚 Dark Mode — DataTables readability boost */
+body.dark-mode table,
+body.dark-mode table.dataTable {
+  color: #eaeef7 !important;
+  border-color: #3a3a3a !important;
+}
+
+body.dark-mode table thead th,
+body.dark-mode table.dataTable thead th {
+  color: #ffffff !important;
+  background-color: #202020 !important;
+  border-bottom: 1px solid #444 !important;
+}
+
+body.dark-mode table tbody td,
+body.dark-mode table.dataTable tbody td {
+  color: #eef3ff !important;
+}
+
+body.dark-mode table.dataTable tbody tr {
+  background-color: #161616 !important;
+}
+body.dark-mode table.dataTable tbody tr:hover {
+  background-color: #222 !important;
+}
+
+body.dark-mode .dataTables_info,
+body.dark-mode .dataTables_length label,
+body.dark-mode .dataTables_filter label,
+body.dark-mode .dataTables_paginate a {
+  color: #ddd !important;
+}
+
+body.dark-mode .dataTables_filter input,
+body.dark-mode .dataTables_length select {
+  background: #1e1e1e !important;
+  color: #f5f5f5 !important;
+  border: 1px solid #444 !important;
+}
+body.dark-mode .dataTables_filter input::placeholder {
+  color: #9aa0a6 !important;
+}
