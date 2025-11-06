@@ -1121,10 +1121,12 @@ def view_file(filename):
         )
 
     # ✅ Safe HTML for results
-    table_html = df.to_html(classes="table table-bordered table-striped", index=False)
-    final_advice = "<br>".join(insights)
-    escaped_advice = quote(final_advice)
-
+    table_html = df.to_html(
+        classes="table table-hover table-dark table-bordered",
+        index=False,
+        border=0,
+        justify="center"
+    ).replace('style="', 'style="color:white !important; background-color:#121212 !important; ')
     return render_template(
         "results.html",
         revenue=total_revenue,
