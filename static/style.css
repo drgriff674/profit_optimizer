@@ -351,3 +351,22 @@ body.dark-mode .dataTables_wrapper .dataTables_paginate a {
   color: #ddd !important;
 }
 
+/* 🌙 Force DataTables inside Results page to be fully bright in dark mode */
+body.dark-mode .dark-table table,
+body.dark-mode .dark-table th,
+body.dark-mode .dark-table td {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .dark-table tbody tr:hover {
+  background-color: #1f1f1f !important;
+}
+
+body.dark-mode .dark-table thead th {
+  background-color: #202020 !important;
+  color: #00c6ff !important; /* bright header text */
+  font-weight: 600;
+}
+
