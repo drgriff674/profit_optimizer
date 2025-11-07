@@ -1,19 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>User Profile</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-</head>
-<body class="container mt-4">
+  <meta charset="UTF-8">
+  <title>My Profile - OptiGain</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <h2>Welcome, {{ session['username'] }}!</h2>
+  <!-- ✅ Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #2196F3, #4CAF50);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 0;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    .profile-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 90%;
+      max-width: 950px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      transition: 0.3s;
+    }
+
+    .profile-container:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    h2 {
+      font-weight: 700;
+      color: #333;
+    }
+
+    h2 span {
+      color: #2196F3;
+    }
+
+    .section-title {
+      margin-top: 25px;
+      color: #444;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 5px;
+    }
+
+    .list-group-item input[type="text"] {
+      width: 180px;
+      font-size: 13px;
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-left: 8px;
+    }
+
+    .btn {
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* 🌙 Dark Mode */
+    body.dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .profile-container {
+      background: #1f1f1f;
+      color: #e0e0e0;
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.08);
+    }
+
+    body.dark-mode .list-group-item {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #ddd;
+    }
+
+    body.dark-mode input[type="text"] {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+    }
+
+    body.dark-mode .btn {
+      color: #fff;
+      border: none;
+    }
+
+    .dark-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+
+    .dark-toggle:hover {
+      background: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <button id="darkToggle" class="dark-toggle">🌙</button>
+
+  <div class="profile-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Welcome, <span>{{ session['username'] }}</span>!</h2>
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:50px;">
+    </div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div class="alert alert-info">
+        <div class="alert alert-info shadow-sm">
           {% for message in messages %}
             {{ message }}
           {% endfor %}
@@ -21,43 +143,55 @@
       {% endif %}
     {% endwith %}
 
-    <hr>
+    <h4 class="section-title">📁 Uploaded Files</h4>
 
-    <h3>Uploaded Files</h3>
     {% if uploaded_files %}
-        <ul class="list-group">
+      <ul class="list-group mt-3">
         {% for file in uploaded_files %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ file }}
-                <span>
-                    <a href="{{ url_for('view_file', filename=file) }}" class="btn btn-sm btn-info">View</a>
-                    <a href="{{ url_for('download_csv', filename=file) }}" class="btn btn-sm btn-success">Download</a>
+          <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+            <span>{{ file }}</span>
+            <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
 
-<!-- 🆕 This is the Delete button form -->
-    <form action="{{ url_for('delete_file', filename=file) }}"
-    method="post" style="display:inline;">
-        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-    </form>
+              <!-- View Button -->
+              <a href="{{ url_for('view_file', filename=file) }}" class="btn btn-info btn-sm me-2">View</a>
 
-<!-- Rename Input + Button -->
-  <form method="POST" action="{{ url_for('rename_file') }}" style="display:inline; margin-left: 10px;">
-    <input type="hidden" name="old_filename" value="{{ file }}">
-    <input type="text" name="new_filename" placeholder="New name.csv" required>
-    <button type="submit" class="btn btn-warning btn-sm">Rename</button>
-  </form>
-</li>
-                </span>
-            </li>
+              <!-- Download Button -->
+              <a href="{{ url_for('download_csv', filename=file) }}" class="btn btn-success btn-sm me-2">Download</a>
+
+              <!-- Delete Form -->
+              <form action="{{ url_for('delete_file', filename=file) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm me-2">Delete</button>
+              </form>
+
+              <!-- Rename Form -->
+              <form method="POST" action="{{ url_for('rename_file') }}" class="d-flex align-items-center" style="gap:8px;">
+                <input type="hidden" name="old_filename" value="{{ file }}">
+                <input type="text" name="new_filename" placeholder="New name.csv" required>
+                <button type="submit" class="btn btn-warning btn-sm text-white">Rename</button>
+              </form>
+            </div>
+          </li>
         {% endfor %}
-        </ul>
+      </ul>
     {% else %}
-        <p>No uploaded files yet.</p>
+      <p class="text-muted mt-3">No uploaded files yet.</p>
     {% endif %}
 
-    <br>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to Dashboard</a>
+    <div class="mt-4 d-flex justify-content-between flex-wrap">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-2">⬅ Back to Dashboard</a>
+      <a href="{{ url_for('upload') }}" class="btn btn-primary mt-2">📤 Upload New File</a>
+    </div>
+  </div>
 
-    <a href="{{ url_for('upload') }}" class="btn btn-primary mt-3">Upload New File</a>
+  <script>
+    // Dark Mode Toggle
+    const toggle = document.getElementById('darkToggle');
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
+    toggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+  </script>
 </body>
 </html>
