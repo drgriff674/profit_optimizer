@@ -1611,17 +1611,30 @@ def download_full_report():
         f"Consider reducing operational costs to improve profitability further."
     )
 
-    # 🖼️ Step 4: Generate charts dynamically
-    charts = []
+    # 🖼️ Step 4: Generate charts safely (Render-compatible)
+    chart_html = ""
     if "Month" in df.columns and "Revenue" in df.columns and "Expenses" in df.columns:
         fig = go.Figure()
-        fig.add_trace(go.Bar(x=df["Month"], y=df["Revenue"], name="Revenue"))
-        fig.add_trace(go.Bar(x=df["Month"], y=df["Expenses"], name="Expenses"))
-        fig.update_layout(title="Monthly Revenue vs Expenses", barmode="group")
-        chart_path = f"static/reports/revenue_expenses_{username}.png"
-        os.makedirs(os.path.dirname(chart_path), exist_ok=True)
-        pio.write_image(fig, chart_path)
-        charts.append(chart_path)
+        fig.add_trace(go.Bar(x=df["Month"], y=df["Revenue"], name="Revenue", marker_color="green"))
+        fig.add_trace(go.Bar(x=df["Month"], y=df["Expenses"], name="Expenses", marker_color="red"))
+        fig.update_layout(
+            title="Monthly Revenue vs Expenses",
+            barmode="group",
+            xaxis_title="Month",
+            yaxis_title="Amount (KSh)",
+            plot_bgcolor="#f9f9f9",
+            paper_bgcolor="#ffffff"
+        )
+
+        try:
+            # Try saving as image (only works locally)
+            chart_path = f"static/reports/revenue_expenses_{username}.png"
+            os.makedirs(os.path.dirname(chart_path), exist_ok=True)
+            pio.write_image(fig, chart_path)
+            chart_html = f'<img src="/{chart_path}" style="width:100%; border-radius:10px; margin-top:10px;">'
+        except Exception as e:
+            print(f"[Render-safe mode] Kaleido not available, using HTML chart instead: {e}")
+            chart_html = pyo.plot(fig, include_plotlyjs="cdn", output_type="div")
 
     # 🧾 Step 5: Render the HTML report
     html = render_template(
@@ -1629,12 +1642,12 @@ def download_full_report():
         username=username,
         metrics=metrics,
         advice=advice,
-        charts=charts,
+        chart_html=chart_html,  # ✅ use this instead of charts list
         current_date=datetime.now().strftime("%B %d, %Y"),
         current_year=datetime.now().year
     )
 
-    # 🪄 Step 6: Convert to PDF using pdfkit
+    # 🪄 Step 6: Convert to PDF using pdfkit (Render-safe)
     pdf = pdfkit.from_string(html, False, options={
         "page-size": "A4",
         "encoding": "UTF-8",

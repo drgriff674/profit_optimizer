@@ -184,18 +184,27 @@
       </form>
     </div>
 
-    <!-- Summary Statistics -->
-    <div class="section-card">
-      <h4>📈 Summary Statistics</h4>
-      <ul>
-        <li><strong>Total Revenue:</strong> {{ revenue }}</li>
-        <li><strong>Total Expenses:</strong> {{ expenses }}</li>
-        <li><strong>Total Profit:</strong> {{ profit }}</li>
-        <li><strong>Profit Margin:</strong> {{ margin }}%</li>
-        <li><strong>Average Monthly Revenue:</strong> {{ avg_revenue }}</li>
-        <li><strong>Average Monthly Expenses:</strong> {{ avg_expenses }}</li>
-      </ul>
+   <!-- Summary Statistics -->
+<div class="section-card">
+  <h4>📈 Summary Statistics</h4>
+  <ul>
+    <li><strong>Total Revenue:</strong> {{ revenue }}</li>
+    <li><strong>Total Expenses:</strong> {{ expenses }}</li>
+    <li><strong>Total Profit:</strong> {{ profit }}</li>
+    <li><strong>Profit Margin:</strong> {{ margin }}%</li>
+    <li><strong>Average Monthly Revenue:</strong> {{ avg_revenue }}</li>
+    <li><strong>Average Monthly Expenses:</strong> {{ avg_expenses }}</li>
+  </ul>
+
+  <!-- 📊 Add Render-safe financial chart from full report -->
+  {% if chart_html %}
+    <hr>
+    <h4>📊 Visual Financial Performance</h4>
+    <div class="chart-container">
+      {{ chart_html | safe }}
     </div>
+  {% endif %}
+</div>
 
     <!-- Charts Section -->
     <div class="section-card">
