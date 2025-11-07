@@ -2,89 +2,192 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OptiGain | Upload Financial Data</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Financial Data - OptiGain</title>
+
+  <!-- ✅ Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- ✅ Custom Styles -->
   <style>
-    .upload-container {
-      max-width: 600px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      text-align: center;
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      min-height: 100vh;
+      margin: 0;
+      transition: background 0.4s, color 0.4s;
     }
+
+    nav {
+      background-color: #0275d8;
+      color: #fff;
+      padding: 12px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav img {
+      height: 45px;
+      margin-right: 10px;
+    }
+
+    nav h2 {
+      font-size: 22px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .upload-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      max-width: 650px;
+      margin: 80px auto;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .upload-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
     .upload-container h2 {
       color: #0275d8;
-      margin-bottom: 20px;
+      font-weight: 600;
     }
+
     .file-input {
       width: 90%;
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 12px;
+      border: 2px solid #0275d8;
       border-radius: 8px;
-      margin: 10px 0;
+      margin: 15px 0;
       font-size: 16px;
+      background: #f9f9f9;
     }
-    .btn {
-      width: 95%;
-      margin-top: 15px;
+
+    .file-input:focus {
+      border-color: #00c6ff;
+      outline: none;
     }
+
     #fileCount {
       color: #0275d8;
       font-weight: 500;
-      margin-top: 8px;
+      margin-top: 10px;
     }
+
+    .btn-primary {
+      background-color: #0275d8;
+      border: none;
+      transition: 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #025bb5;
+    }
+
+    /* 🌙 Dark Mode */
+    body.dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode nav {
+      background: #1f1f1f;
+    }
+
     body.dark-mode .upload-container {
       background: #1e1e1e;
+      color: #f0f0f0;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.08);
+    }
+
+    body.dark-mode .file-input {
+      background: #333;
       color: #fff;
+      border-color: #555;
+    }
+
+    body.dark-mode #fileCount {
+      color: #00c6ff;
+    }
+
+    /* 🌙 Dark Mode Toggle */
+    .dark-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #0275d8;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+      transition: background 0.3s ease;
+    }
+
+    .dark-toggle:hover {
+      background: #025bb5;
     }
   </style>
 </head>
 
 <body>
-  <!-- Navbar -->
-  <nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
-      <h2 style="margin:0;">OptiGain</h2>
+
+  <!-- 🌙 Dark Mode Button -->
+  <button id="darkToggle" class="dark-toggle">🌙</button>
+
+  <!-- ✅ Navbar -->
+  <nav>
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+      <h2>OptiGain Upload Center</h2>
     </div>
     <div>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">⬅ Back to Dashboard</a>
     </div>
   </nav>
 
-  <!-- Upload Form -->
+  <!-- ✅ Upload Form -->
   <div class="upload-container">
     <h2>📁 Upload & Compare Financial Data</h2>
-    <p>Upload up to <strong>3 CSV files</strong> for automated comparison and insights.</p>
+    <p class="text-muted">Upload up to <strong>3 CSV files</strong> to analyze and compare performance.</p>
 
     <form action="/upload" method="POST" enctype="multipart/form-data">
       <input type="file" name="files" class="file-input" multiple required accept=".csv">
       <p id="fileCount">No files selected</p>
-      <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+      <button type="submit" class="btn btn-primary w-100">Upload and Analyze</button>
     </form>
+
+    <!-- ✅ Back Button Below Form -->
+    <div class="mt-4">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary w-100">⬅ Back to Dashboard</a>
+    </div>
   </div>
 
-  <button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
-
+  <!-- 🌙 Dark Mode Script -->
   <script>
     const fileInput = document.querySelector('input[type="file"]');
     const fileCount = document.getElementById('fileCount');
+    const darkToggle = document.getElementById('darkToggle');
 
+    // File counter
     fileInput.addEventListener('change', function() {
       const count = this.files.length;
-      if (count === 0) {
-        fileCount.textContent = 'No files selected';
-      } else if (count === 1) {
-        fileCount.textContent = '1 file selected';
-      } else {
-        fileCount.textContent = `${count} files selected`;
-      }
+      fileCount.textContent =
+        count === 0 ? 'No files selected' :
+        count === 1 ? '1 file selected' : `${count} files selected`;
     });
 
     // 🌙 Dark Mode toggle
-    const darkToggle = document.getElementById('darkToggle');
     if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     darkToggle.addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
