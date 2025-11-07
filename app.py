@@ -17,6 +17,7 @@ from openai import OpenAI
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pyo
+import plotly.io as pio
 from urllib.parse import quote
 from werkzeug.utils import secure_filename
 from datetime import datetime
