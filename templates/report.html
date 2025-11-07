@@ -1,28 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Financial Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        .metrics { margin-bottom: 20px; }
-        .advice { background: #f9f9f9; padding: 10px; border-left: 5px solid #4CAF50; }
-    </style>
+  <meta charset="utf-8">
+  <title>OptiGain Financial Report</title>
+  <style>
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      margin: 40px;
+      background: #f9fafc;
+      color: #333;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #0275d8;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+
+    header img {
+      height: 60px;
+    }
+
+    header h1 {
+      font-size: 26px;
+      color: #0275d8;
+      margin: 0;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .report-date {
+      font-size: 14px;
+      color: #777;
+      text-align: right;
+    }
+
+    h2 {
+      color: #0275d8;
+      border-bottom: 2px solid #0275d8;
+      padding-bottom: 5px;
+      margin-top: 30px;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .summary-table th {
+      background-color: #0275d8;
+      color: white;
+    }
+
+    .summary-table tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    .highlight {
+      background: #e8f4fd;
+      border-left: 5px solid #0275d8;
+      padding: 10px 15px;
+      margin: 20px 0;
+      border-radius: 6px;
+    }
+
+    .metrics {
+      margin-top: 25px;
+    }
+
+    .metrics strong {
+      color: #0275d8;
+    }
+
+    .advice {
+      background: #f5f9f7;
+      padding: 20px;
+      border-left: 5px solid #4CAF50;
+      border-radius: 6px;
+      margin-top: 30px;
+    }
+
+    .advice h2 {
+      border: none;
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 13px;
+      color: #777;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+
+    /* Print-Friendly Styling */
+    @media print {
+      body { background: white; margin: 20px; }
+      .advice { page-break-inside: avoid; }
+    }
+  </style>
 </head>
+
 <body>
-    <h1>Financial Report for {{ username }}</h1>
-
-    <div class="metrics">
-        <p><strong>Total Revenue:</strong> {{ metrics.revenue }}</p>
-        <p><strong>Total Expenses:</strong> {{ metrics.expenses }}</p>
-        <p><strong>Profit:</strong> {{ metrics.profit }}</p>
-        <p><strong>Profit Margin:</strong> {{ metrics.margin }}%</p>
+  <header>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+      <h1>OptiGain Financial Report</h1>
     </div>
-
-    <div class="advice">
-        <h2>AI Financial Advice</h2>
-        <p>{{ advice|safe }}</p>
+    <div class="report-date">
+      <p>Prepared for: <strong>{{ username }}</strong></p>
+      <p>Date: {{ current_date }}</p>
     </div>
+  </header>
+
+  <section class="metrics">
+    <h2>📊 Financial Summary</h2>
+    <table class="summary-table">
+      <tr>
+        <th>Metric</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Total Revenue</td>
+        <td>KSh {{ metrics.revenue }}</td>
+      </tr>
+      <tr>
+        <td>Total Expenses</td>
+        <td>KSh {{ metrics.expenses }}</td>
+      </tr>
+      <tr>
+        <td>Profit</td>
+        <td>KSh {{ metrics.profit }}</td>
+      </tr>
+      <tr>
+        <td>Profit Margin</td>
+        <td>{{ metrics.margin }}%</td>
+      </tr>
+      {% if metrics.avg_revenue %}
+      <tr>
+        <td>Average Monthly Revenue</td>
+        <td>KSh {{ metrics.avg_revenue }}</td>
+      </tr>
+      {% endif %}
+      {% if metrics.avg_expenses %}
+      <tr>
+        <td>Average Monthly Expenses</td>
+        <td>KSh {{ metrics.avg_expenses }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    <div class="highlight">
+      <strong>Key Insight:</strong> Based on the financial data, your business currently operates with a profit margin of <strong>{{ metrics.margin }}%</strong>. Maintaining this margin or improving efficiency in expense management can yield higher profitability.
+    </div>
+  </section>
+
+  <section class="advice">
+    <h2>🧠 AI-Generated Financial Advice</h2>
+    <p>{{ advice|safe }}</p>
+  </section>
+
+  <!-- Optional Chart Section (if you render charts to images)
+  <section>
+    <h2>📈 Visual Insights</h2>
+    <img src="{{ url_for('static', filename='charts/profit_trend.png') }}" alt="Profit Trend Chart" style="width:100%; border-radius:8px;">
+  </section>
+  -->
+
+  <footer>
+    <p>Generated by <strong>OptiGain</strong> | AI-Powered Business Insights © {{ current_year }}</p>
+  </footer>
 </body>
 </html>
