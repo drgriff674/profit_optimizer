@@ -1647,15 +1647,21 @@ def download_full_report():
         current_year=datetime.now().year
     )
 
-    # 🪄 Step 6: Convert to PDF using pdfkit (Render-safe)
-    pdf = pdfkit.from_string(html, False, options={
-        "page-size": "A4",
-        "encoding": "UTF-8",
-        "margin-top": "10mm",
-        "margin-bottom": "10mm",
-        "margin-left": "10mm",
-        "margin-right": "10mm"
-    })
+    # 🪄 Step 6: Convert to PDF using pdfkit or fallback to xhtml2pdf
+    if pdfkit_available:
+        pdf = pdfkit.from_string(html, False, options={
+            "page-size": "A4",
+            "encoding": "UTF-8",
+            "margin-top": "10mm",
+            "margin-bottom": "10mm",
+            "margin-left": "10mm",
+            "margin-right": "10mm"
+        })
+    else:
+        # Render-safe fallback (Render doesn’t support wkhtmltopdf)
+        pdf_buffer = io.BytesIO()
+        pisa.CreatePDF(io.BytesIO(html.encode("utf-8")), dest=pdf_buffer)
+        pdf = pdf_buffer.getvalue()
 
     # 📤 Step 7: Return as downloadable PDF
     filename = f"OptiGain_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
