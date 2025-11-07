@@ -35,6 +35,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
 import pytz
+import pdfkit
 
 
 # Railway PostgreSQL connection
@@ -1559,84 +1560,88 @@ def download_pie_chart():
     )
 
 
-@app.route("/download_full_report")
+@app.route("/download_full_report", methods=["GET"])
 def download_full_report():
-    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-    from matplotlib.figure import Figure
-    import seaborn as sns
-    from io import BytesIO
-    from flask import send_file
-    from fpdf import FPDF
-    import os
+    if "username" not in session:
+        return redirect(url_for("login"))
 
-    # Example data (replace with actual session or DB data as needed)
-    months = ["Jan", "Feb", "Mar", "Apr"]
-    revenues = [10000, 12000, 14000, 13000]
-    expenses = [8000, 8500, 9000, 9500]
+    username = session.get("username", "User")
+
+    # 📊 Step 1: Locate the latest uploaded CSV
+    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
+    if not os.path.exists(user_folder):
+        return "No uploaded files found.", 404
+
+    files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
+    if not files:
+        return "No CSV files found.", 404
+
+    # Use the most recent file
+    latest_file = max([os.path.join(user_folder, f) for f in files], key=os.path.getctime)
+    df = pd.read_csv(latest_file)
+
+    # 📈 Step 2: Basic calculations
+    revenue = df["Revenue"].sum() if "Revenue" in df.columns else 0
+    expenses = df["Expenses"].sum() if "Expenses" in df.columns else 0
+    profit = revenue - expenses
+    margin = round((profit / revenue * 100), 2) if revenue else 0
+    avg_revenue = df["Revenue"].mean() if "Revenue" in df.columns else 0
+    avg_expenses = df["Expenses"].mean() if "Expenses" in df.columns else 0
+
+    metrics = {
+        "revenue": f"{revenue:,.2f}",
+        "expenses": f"{expenses:,.2f}",
+        "profit": f"{profit:,.2f}",
+        "margin": margin,
+        "avg_revenue": f"{avg_revenue:,.2f}",
+        "avg_expenses": f"{avg_expenses:,.2f}"
+    }
+
+    # 🧠 Step 3: Example AI advice (or load your saved one)
     advice = (
-        "Consider reducing operations cost in March and investing more in marketing."
+        f"Your current profit margin is {margin}%. "
+        f"Consider reducing operational costs to improve profitability further."
     )
 
-    # Create plots and save to buffers
-    def create_chart():
-        fig = Figure(figsize=(6, 4))
-        ax = fig.add_subplot(1, 1, 1)
-        sns.lineplot(x=months, y=revenues, label="Revenue", ax=ax)
-        sns.lineplot(x=months, y=expenses, label="Expenses", ax=ax)
-        ax.set_title("Financial Trend")
-        ax.legend()
-        buf = BytesIO()
-        fig.tight_layout()
-        FigureCanvas(fig).print_png(buf)
-        buf.seek(0)
-        return buf
+    # 🖼️ Step 4: Generate charts dynamically
+    charts = []
+    if "Month" in df.columns and "Revenue" in df.columns and "Expenses" in df.columns:
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=df["Month"], y=df["Revenue"], name="Revenue"))
+        fig.add_trace(go.Bar(x=df["Month"], y=df["Expenses"], name="Expenses"))
+        fig.update_layout(title="Monthly Revenue vs Expenses", barmode="group")
+        chart_path = f"static/reports/revenue_expenses_{username}.png"
+        os.makedirs(os.path.dirname(chart_path), exist_ok=True)
+        pio.write_image(fig, chart_path)
+        charts.append(chart_path)
 
-    chart_buf = create_chart()
-
-    # Create PDF
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=14)
-    pdf.cell(200, 10, txt="Financial Summary Report", ln=True, align="C")
-    pdf.ln(10)
-
-    # Summary stats
-    avg_rev = sum(revenues) / len(revenues)
-    avg_exp = sum(expenses) / len(expenses)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt=f"Average Revenue: ${avg_rev:.2f}", ln=True)
-    pdf.cell(200, 10, txt=f"Average Expenses: ${avg_exp:.2f}", ln=True)
-    pdf.ln(10)
-
-    # Save chart image temporarily
-    img_path = os.path.join("static", "temp_chart.png")
-    with open(img_path, "wb") as f:
-        f.write(chart_buf.read())
-
-    # Add chart to PDF
-    pdf.image(img_path, x=10, y=None, w=180)
-    pdf.ln(10)
-
-    # Add advice
-    pdf.set_font("Arial", size=12)
-    pdf.multi_cell(0, 10, txt=f"AI Financial Advice:\n{advice}")
-
-    # Save PDF to buffer
-    pdf_bytes = pdf.output(dest="S").encode("latin1")
-    pdf_buffer = BytesIO(pdf_bytes)
-    pdf_buffer.seek(0)
-
-    # Clean up
-    os.remove(img_path)
-
-    return send_file(
-        pdf_buffer,
-        as_attachment=True,
-        download_name="full_dashboard_report.pdf",
-        mimetype="application/pdf",
+    # 🧾 Step 5: Render the HTML report
+    html = render_template(
+        "report.html",
+        username=username,
+        metrics=metrics,
+        advice=advice,
+        charts=charts,
+        current_date=datetime.now().strftime("%B %d, %Y"),
+        current_year=datetime.now().year
     )
 
+    # 🪄 Step 6: Convert to PDF using pdfkit
+    pdf = pdfkit.from_string(html, False, options={
+        "page-size": "A4",
+        "encoding": "UTF-8",
+        "margin-top": "10mm",
+        "margin-bottom": "10mm",
+        "margin-left": "10mm",
+        "margin-right": "10mm"
+    })
 
+    # 📤 Step 7: Return as downloadable PDF
+    filename = f"OptiGain_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
+    response = make_response(pdf)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
 @app.route("/send_report", methods=["POST"])
 def send_report():
     # Get the recipient email (from form or session)

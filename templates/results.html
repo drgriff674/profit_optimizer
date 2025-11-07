@@ -225,6 +225,15 @@
       <h4>🧠 AI Advice & Insights</h4>
       <div class="alert alert-info">{{ advice | safe }}</div>
 
+    {% if charts %}
+<section>
+  <h2>📊 Visual Insights</h2>
+  {% for chart in charts %}
+    <img src="{{ chart }}" alt="Financial Chart" style="width:100%; border-radius:10px; margin-bottom:20px;">
+  {% endfor %}
+</section>
+{% endif %}
+
       <h4>📊 Trend Insights</h4>
       <ul>
         {% for insight in trend_insights %}
