@@ -1,143 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Ask ChatGPT - OptiGain Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--background, #f4f6f9);
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Assistant - OptiGain</title>
 
-        .ask-container {
-            max-width: 700px;
-            margin: 80px auto;
-            background: #fff;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: 0.3s ease;
-        }
+  <!-- ✅ Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        .ask-container h1 {
-            color: #0275d8;
-            margin-bottom: 20px;
-        }
+  <!-- ✅ Custom Styles -->
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      margin: 0;
+      padding-bottom: 60px;
+      transition: background 0.4s, color 0.4s;
+    }
 
-        form {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    nav {
+      background-color: #0275d8;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        input[type="text"] {
-            width: 80%;
-            padding: 12px 15px;
-            border: 2px solid #0275d8;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-        }
+    nav img {
+      height: 45px;
+      margin-right: 10px;
+    }
 
-        button {
-            padding: 12px 20px;
-            background-color: #0275d8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s ease;
-        }
+    nav h2 {
+      font-size: 22px;
+      margin: 0;
+    }
 
-        button:hover {
-            background-color: #025bb5;
-        }
+    .ask-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 750px;
+      margin: 80px auto;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
 
-        .answer-box {
-            margin-top: 30px;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: left;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+    .ask-container:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    }
 
-        nav {
-            background-color: #0275d8;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
+    h1 {
+      color: #0275d8;
+      font-weight: 600;
+    }
 
-        nav img {
-            height: 40px;
-            margin-right: 10px;
-        }
+    input[type="text"] {
+      width: 80%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid #0275d8;
+      font-size: 16px;
+      outline: none;
+    }
 
-        nav h2 {
-            margin: 0;
-            display: inline;
-        }
+    button.ask-btn {
+      padding: 12px 25px;
+      background-color: #0275d8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: 0.3s ease;
+    }
 
-        nav .right button {
-            background-color: #dc3545;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-        }
+    button.ask-btn:hover {
+      background-color: #025bb5;
+    }
 
-        .dark-mode {
-            background-color: #121212 !important;
-            color: #fff !important;
-        }
-    </style>
+    .answer-box {
+      margin-top: 35px;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: left;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 🌙 Dark Mode Styles */
+    body.dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .ask-container {
+      background: #1e1e1e;
+      color: #f0f0f0;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.08);
+    }
+
+    body.dark-mode input[type="text"] {
+      background: #333;
+      color: #fff;
+      border-color: #555;
+    }
+
+    body.dark-mode .answer-box {
+      background: #2a2a2a;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode nav {
+      background: #1f1f1f;
+    }
+
+    /* 🌙 Dark Toggle Button */
+    .dark-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #0275d8;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+      transition: background 0.3s ease;
+    }
+
+    .dark-toggle:hover {
+      background: #025bb5;
+    }
+  </style>
 </head>
 <body>
 
+<!-- 🌙 Dark Mode Button -->
+<button id="darkToggle" class="dark-toggle">🌙</button>
+
 <!-- ✅ Navbar -->
 <nav>
-    <div style="display:flex; align-items:center;">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
-        <h2>OptiGain Assistant</h2>
-    </div>
-    <div class="right">
-        <a href="{{ url_for('dashboard') }}" style="color:white; text-decoration:none; margin-right:15px;">Dashboard</a>
-        <button onclick="location.href='{{ url_for('logout') }}'">Logout</button>
-    </div>
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+    <h2>OptiGain Business Assistant</h2>
+  </div>
+  <div>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm me-2">Dashboard</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Logout</a>
+  </div>
 </nav>
 
-<!-- 💬 Ask ChatGPT Section -->
-<div class="ask-container">
-    <h1>Ask OptiGain AI Assistant</h1>
-    <p style="color:#666;">Ask anything related to business strategy, profits, or trends.</p>
+<!-- 💬 Business Assistant Section -->
+<div class="ask-container text-center">
+  <h1>💼 OptiGain Business Assistant</h1>
+  <p class="text-muted">Ask anything about your business, profits, or growth strategies.</p>
 
-    <form method="POST" action="/ask">
-        <input type="text" name="question" placeholder="Type your question here..." required>
-        <button type="submit">Ask</button>
-    </form>
+  <form method="POST" action="/ask" class="d-flex justify-content-center flex-wrap gap-2">
+    <input type="text" name="question" placeholder="Type your question..." required>
+    <button type="submit" class="ask-btn">Ask</button>
+  </form>
 
-    {% if answer %}
-        <div class="answer-box">
-            <h2>Answer:</h2>
-            <p>{{ answer }}</p>
-        </div>
-    {% endif %}
+  {% if answer %}
+    <div class="answer-box mt-4">
+      <h4>💡 Answer:</h4>
+      <p>{{ answer }}</p>
+    </div>
+  {% endif %}
 </div>
 
+<!-- 🌙 Dark Mode Script -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+const darkToggle = document.getElementById('darkToggle');
+if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+
+darkToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
 });
 </script>
 
