@@ -35,7 +35,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
 import pytz
-import pdfkit
+
+# ✅ Safe import for pdfkit (Render may not have wkhtmltopdf)
+try:
+    import pdfkit
+    pdfkit_available = True
+except ImportError:
+    from xhtml2pdf import pisa
+    pdfkit_available = False
 
 
 # Railway PostgreSQL connection
