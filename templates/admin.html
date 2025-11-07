@@ -1,147 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Panel - OptiGain</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #333;
-        }
+  <meta charset="UTF-8">
+  <title>Admin Panel - OptiGain</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        .admin-container {
-            background: #fff;
-            padding: 35px;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            max-width: 600px;
-            width: 90%;
-            text-align: center;
-            animation: fadeIn 0.6s ease-in-out;
-        }
+  <!-- ✅ Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      margin: 0;
+      min-height: 100vh;
+      transition: background 0.4s, color 0.4s;
+    }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #222;
-        }
+    nav {
+      background-color: #0275d8;
+      color: white;
+      padding: 12px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
 
-        h2 {
-            margin-top: 25px;
-            color: #444;
-            font-size: 20px;
-        }
+    nav img {
+      height: 45px;
+      margin-right: 10px;
+    }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
-        }
+    nav h2 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 22px;
+    }
 
-        ul li {
-            background: #f8f9fa;
-            margin: 6px 0;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 500;
-        }
+    .admin-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      max-width: 900px;
+      margin: 60px auto;
+    }
 
-        .stats {
-            background: #e9f7ff;
-            border-left: 5px solid #4facfe;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 8px;
-            font-size: 15px;
-        }
+    h1 {
+      color: #0275d8;
+      font-weight: 600;
+      margin-bottom: 10px;
+      text-align: center;
+    }
 
-        .back-btn {
-            display: inline-block;
-            margin-top: 25px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #4facfe, #00c6ff);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
+    h2 {
+      margin-top: 30px;
+      color: #444;
+      font-size: 20px;
+    }
 
-        .back-btn:hover {
-            transform: translateY(-2px);
-            background: linear-gradient(135deg, #00c6ff, #4facfe);
-        }
-    </style>
+    .stats-box {
+      background: #e9f7ff;
+      border-left: 5px solid #0275d8;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      font-size: 16px;
+    }
+
+    .btn-action {
+      margin: 3px;
+      padding: 6px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+    }
+
+    .dark-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #0275d8;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    .dark-toggle:hover {
+      background: #025bb5;
+    }
+
+    /* 🌙 Dark Mode */
+    body.dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode nav {
+      background: #1f1f1f;
+    }
+
+    body.dark-mode .admin-container {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.08);
+    }
+
+    body.dark-mode .stats-box {
+      background: #1a1a1a;
+      border-left-color: #00c6ff;
+    }
+
+    body.dark-mode table {
+      color: #fff;
+      background: #222;
+    }
+
+    body.dark-mode .btn {
+      color: #fff !important;
+    }
+
+    footer {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 30px;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="admin-container">
-        <h1>🔑 Admin Dashboard</h1>
 
-<form action="{{ url_for('send_reports') }}" method="POST" style="margin-bottom: 20px;">
-  <button type="submit" style="background:#28a745; color:white; border:none; padding:10px 15px; border-radius:8px; cursor:pointer;">
-    📩 Send Weekly AI Reports to All Users
-  </button>
-</form>
-        <p>Welcome, <strong>{{ user }}</strong>!</p>
+  <!-- 🌙 Dark Mode Button -->
+  <button id="darkToggle" class="dark-toggle">🌙</button>
 
-        <div class="stats">
-            <strong>Total Registered Users:</strong> {{ total_users }}
-        </div>
-
-<!-- 🔹 AI Toggle Section -->
-<h2>🤖 AI Feature Control</h2>
-<form action="{{ url_for('toggle_ai') }}" method="POST" style="margin-bottom:20px;">
-    <button type="submit" style="
-        padding: 10px 18px; 
-        background: {{ 'green' if not ai_disabled else 'red' }};
-        color: white; 
-        border: none; 
-        border-radius: 6px; 
-        font-weight: bold;
-        cursor: pointer;
-    ">
-        {{ 'Enable AI for Users' if ai_disabled else 'Disable AI for Users' }}
-    </button>
-</form>
-
-        <h2>👥 Registered Users</h2>
-        {% if users %}
-            <ul>
-              {% for username, info in users.items() %}
-    <li>
-        <strong>{{ username }}</strong> — <em>{{ info.role }}</em>
-        <div style="margin-top:8px;">
-            <form action="{{ url_for('delete_user', username=username) }}" method="POST" style="display:inline;">
-                <button type="submit" style="background:#dc3545; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">🗑 Delete</button>
-            </form>
-
-            <form action="{{ url_for('promote_user', username=username) }}" method="POST" style="display:inline;">
-                <button type="submit" style="background:#28a745; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">⭐ Promote</button>
-            </form>
-
-            <form action="{{ url_for('reset_password', username=username) }}" method="POST" style="display:inline;">
-                <button type="submit" style="background:#007bff; color:white; border:none; padding:6px 10px; border-radius:5px; cursor:pointer;">🔁 Reset</button>
-            </form>
-        </div>
-    </li>
-{% endfor %}
-            </ul>
-        {% else %}
-            <p>No users found.</p>
-        {% endif %}
-
-        <a href="{{ url_for('dashboard') }}" class="back-btn">⬅ Back to Dashboard</a>
+  <!-- ✅ Navbar -->
+  <nav>
+    <div class="d-flex align-items-center">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
+      <h2>OptiGain Admin Panel</h2>
     </div>
+    <div>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">⬅ Dashboard</a>
+    </div>
+  </nav>
+
+  <!-- ✅ Main Admin Container -->
+  <div class="admin-container">
+    <h1>🔑 Administrator Dashboard</h1>
+    <p class="text-center text-muted">Welcome, <strong>{{ user }}</strong></p>
+
+    <!-- 📊 System Stats -->
+    <div class="stats-box">
+      <strong>Total Registered Users:</strong> {{ total_users }}
+    </div>
+
+    <!-- 🧠 AI Control Section -->
+    <h2>🤖 AI Feature Control</h2>
+    <form action="{{ url_for('toggle_ai') }}" method="POST" class="mb-4">
+      <button type="submit" class="btn {{ 'btn-danger' if ai_disabled else 'btn-success' }}">
+        {{ 'Enable AI for Users' if ai_disabled else 'Disable AI for Users' }}
+      </button>
+    </form>
+
+    <!-- 📩 Broadcast Reports -->
+    <h2>📩 Weekly Reports</h2>
+    <form action="{{ url_for('send_reports') }}" method="POST" class="mb-4">
+      <button type="submit" class="btn btn-primary">📤 Send Weekly AI Reports to All Users</button>
+    </form>
+
+    <!-- 👥 User Management -->
+    <h2>👥 Registered Users</h2>
+    {% if users %}
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-primary">
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for username, info in users.items() %}
+            <tr>
+              <td>{{ username }}</td>
+              <td>{{ info.role }}</td>
+              <td>
+                <form action="{{ url_for('delete_user', username=username) }}" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-danger btn-action">🗑 Delete</button>
+                </form>
+                <form action="{{ url_for('promote_user', username=username) }}" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-success btn-action">⭐ Promote</button>
+                </form>
+                <form action="{{ url_for('reset_password', username=username) }}" method="POST" style="display:inline;">
+                  <button type="submit" class="btn btn-info btn-action">🔁 Reset</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted">No registered users yet.</p>
+    {% endif %}
+
+    <div class="text-center mt-4">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">⬅ Back to Dashboard</a>
+    </div>
+  </div>
+
+  <footer>© {{ current_year }} OptiGain | Admin Panel</footer>
+
+  <!-- 🌙 Dark Mode Script -->
+  <script>
+    const darkToggle = document.getElementById('darkToggle');
+    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+  </script>
 </body>
 </html>
