@@ -1285,49 +1285,48 @@ def send_summary():
     if "username" not in session:
         return redirect(url_for("login"))
 
+    # get receiver email
+    recipient_email = request.form.get("email")
+
+    # get values from form
+    revenue = request.form.get("revenue", "0")
+    expenses = request.form.get("expenses", "0")
+    profit = request.form.get("profit", "0")
+    margin = request.form.get("margin", "0")
+    advice = request.form.get("advice", "No advice available.")
+
+    # Render HTML using template
+    html = render_template(
+        "summary_report.html",
+        revenue=revenue,
+        expenses=expenses,
+        profit=profit,
+        margin=margin,
+        advice=advice
+    )
+
+    # Convert HTML → PDF
+    pdf_buffer = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
+    pdf_buffer.seek(0)
+
+    # Create email message
+    msg = Message(
+        subject="📊 Your OptiGain Summary Report",
+        recipients=[recipient_email],
+        body="Attached is your OptiGain Financial Summary Report."
+    )
+
+    # Attach PDF
+    msg.attach("OptiGain_Summary.pdf", "application/pdf", pdf_buffer.read())
+
+    # Send email
     try:
-        # 1. Get email + data
-        email = request.form.get("email")
-        revenue = request.form.get("revenue", "0")
-        expenses = request.form.get("expenses", "0")
-        profit = request.form.get("profit", "0")
-        margin = request.form.get("margin", "0")
-        advice = request.form.get("advice", "No AI advice available.")
-
-        if not email:
-            flash("❌ No recipient email provided.", "danger")
-            return redirect(url_for("dashboard"))
-
-        # 2. Build TXT email content
-        summary_text = f"""
-OptiGain Financial Summary
-
-Revenue: {revenue}
-Expenses: {expenses}
-Profit: {profit}
-Profit Margin: {margin}%
-
-AI Insights:
-{advice}
-
-Generated via OptiGain
-"""
-
-        # 3. Create the email
-        msg = Message(
-            subject="📊 Your OptiGain Financial Summary",
-            recipients=[email],
-            body=summary_text
-        )
-
-        # 4. Send the email
         mail.send(msg)
-
-        flash(f"📧 Summary sent successfully to {email}", "success")
-
+        flash("✅ Summary report sent successfully!", "success")
     except Exception as e:
-        print("SUMMARY EMAIL ERROR:", e)
-        flash(f"⚠️ Failed to send summary: {e}", "danger")
+        print("Email Error:", e)
+        flash("❌ Failed to send summary.", "danger")
 
     return redirect(url_for("dashboard"))
 
