@@ -9,15 +9,15 @@
         .logo { width: 120px; margin-bottom: 10px; }
         .section { margin-top: 25px; }
         h2 { color: #007bff; }
-        .footer { margin-top: 50px; font-size: 12px; text-align: center; color: #555; }
+        .footer { margin-top: 80px; font-size: 12px; text-align: center; color: #555; }
     </style>
 </head>
 <body>
-
 <div class="header">
-    <img src="{{ request.url_root }}static/logo.png" class="logo">
+    <img src="{{ request.url_root.rstrip('/') }}/static/logo.png" class="logo">
     <h2>OptiGain Financial Summary</h2>
 </div>
+
 
 <div class="section">
     <p><strong>Total Revenue:</strong> {{ revenue }}</p>
