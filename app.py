@@ -1697,63 +1697,64 @@ def download_full_report():
     return response
 @app.route("/send_report", methods=["POST"])
 def send_report():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    # recipient email
+    recipient_email = request.form.get("email")
+    if not recipient_email:
+        flash("❌ No email provided.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # financial data from form
+    revenue = request.form.get("revenue", "0")
+    expenses = request.form.get("expenses", "0")
+    profit = request.form.get("profit", "0")
+    margin = request.form.get("margin", "0")
+    advice = request.form.get("advice", "No advice available.")
+
+    # 1️⃣ Build ABSOLUTE FILESYSTEM PATH for logo
+    logo_path = os.path.join(app.root_path, "static", "logo.png")
+    logo_path = logo_path.replace("\\", "/")  # ensure compatibility
+
+    # 2️⃣ Render HTML using template
+    html = render_template(
+        "email_report.html",
+        logo_path=logo_path,
+        revenue=revenue,
+        expenses=expenses,
+        profit=profit,
+        margin=margin,
+        advice=advice
+    )
+
+    # 3️⃣ Convert HTML → PDF
+    pdf_buffer = io.BytesIO()
+    result = pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
+    pdf_buffer.seek(0)
+
+    if result.err:
+        print("PDF ERROR:", result.err)
+        flash("❌ Failed to generate PDF report.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # 4️⃣ Build email message
+    msg = Message(
+        subject="📊 Your OptiGain Financial Report",
+        recipients=[recipient_email],
+        body="Hello,\n\nFind attached your financial report.\n\n— OptiGain Team"
+    )
+
+    msg.attach("OptiGain_Full_Report.pdf", "application/pdf", pdf_buffer.read())
+
     try:
-        # 1. Get data from form
-        revenue = request.form.get("revenue", "0")
-        expenses = request.form.get("expenses", "0")
-        profit = request.form.get("profit", "0")
-        margin = request.form.get("margin", "0")
-        advice = request.form.get("advice", "No advice available.")
-        recipient_email = request.form.get("email")
-
-        if not recipient_email:
-            flash("❌ No email provided.", "danger")
-            return redirect(url_for("dashboard"))
-
-        # 2. Generate proper PDF contents
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(0, 10, "OptiGain Financial Report", 0, 1, "C")
-
-        pdf.set_font("Arial", size=12)
-        pdf.ln(5)
-        pdf.cell(0, 10, f"Total Revenue: {revenue}", ln=True)
-        pdf.cell(0, 10, f"Total Expenses: {expenses}", ln=True)
-        pdf.cell(0, 10, f"Total Profit: {profit}", ln=True)
-        pdf.cell(0, 10, f"Profit Margin: {margin}%", ln=True)
-
-        pdf.ln(10)
-        pdf.set_font("Arial", "B", 14)
-        pdf.cell(0, 10, "AI Insights", ln=True)
-
-        pdf.set_font("Arial", size=12)
-        pdf.multi_cell(0, 8, advice)
-
-        # 3. Convert PDF to bytes
-        pdf_bytes = pdf.output(dest="S").encode("latin1")
-        pdf_buffer = io.BytesIO(pdf_bytes)
-
-        # 4. Build email
-        msg = Message(
-            subject="📊 Your Financial Report - OptiGain",
-            recipients=[recipient_email],
-            body="Hello,\n\nYour detailed financial report is attached.\n\n- OptiGain Team",
-        )
-
-        msg.attach("OptiGain_Report.pdf", "application/pdf", pdf_buffer.read())
-
-        # 5. Send email
         mail.send(msg)
-
-        flash(f"📧 Report sent successfully to {recipient_email}", "success")
-
+        flash(f"📧 Report sent to {recipient_email}", "success")
     except Exception as e:
-        print("EMAIL ERROR:", e)
-        flash(f"⚠️ Failed to send report: {e}", "danger")
+        print("MAIL ERROR:", e)
+        flash("❌ Failed to send report.", "danger")
 
     return redirect(url_for("dashboard"))
-
 @app.route("/profile")
 def profile():
     if "username" not in session:

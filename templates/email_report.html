@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OptiGain Full Report</title>
+
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { text-align: center; }
+        .logo { width: 130px; margin-bottom: 10px; }
+        .section { margin-top: 25px; }
+        h2 { color: #0275d8; }
+        h3 { color: #007bff; }
+        .footer { margin-top: 50px; text-align:center; font-size:12px; color:#666; }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <img src="file://{{ logo_path }}" class="logo">
+    <h2>OptiGain Financial Report</h2>
+</div>
+
+<div class="section">
+    <h3>Financial Metrics</h3>
+    <p><strong>Total Revenue:</strong> {{ revenue }}</p>
+    <p><strong>Total Expenses:</strong> {{ expenses }}</p>
+    <p><strong>Total Profit:</strong> {{ profit }}</p>
+    <p><strong>Profit Margin:</strong> {{ margin }}%</p>
+</div>
+
+<div class="section">
+    <h3>AI Insights</h3>
+    <p>{{ advice | safe }}</p>
+</div>
+
+<div class="footer">
+    © 2025 OptiGain — Smart Business Insights
+</div>
+
+</body>
+</html>
