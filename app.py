@@ -76,7 +76,7 @@ app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
 app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL") == "True"
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_DEFAULT_SENDER"] = ("OptiGain Reports",os.getenv("MAIL_USERNAME"))
 
 mail = Mail(app)
 
@@ -1285,7 +1285,6 @@ def send_summary():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # get receiver email
     recipient_email = request.form.get("email")
 
     # get values from form
@@ -1295,7 +1294,7 @@ def send_summary():
     margin = request.form.get("margin", "0")
     advice = request.form.get("advice", "No advice available.")
 
-    # Render HTML using template
+    # Render HTML for PDF
     html = render_template(
         "summary_report.html",
         revenue=revenue,
@@ -1305,17 +1304,35 @@ def send_summary():
         advice=advice
     )
 
-    # Convert HTML → PDF
+    # Convert to PDF
     pdf_buffer = io.BytesIO()
     pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
     pdf_buffer.seek(0)
 
-    # Create email message
+    # Build Email
     msg = Message(
-        subject="📊 Your OptiGain Summary Report",
+        subject="📊 OptiGain Summary Report",
         recipients=[recipient_email],
-        body="Attached is your OptiGain Financial Summary Report."
+        sender=("OptiGain Reports", os.getenv("MAIL_USERNAME")),
+        body="Your financial summary report is attached.",
     )
+
+    # HTML body (Improves deliverability)
+    msg.html = f"""
+    <p>Hello,</p>
+    <p>Your financial summary report from <strong>OptiGain</strong> is ready.</p>
+
+    <h4>📌 Quick Overview</h4>
+    <ul>
+        <li><strong>Revenue:</strong> {revenue}</li>
+        <li><strong>Expenses:</strong> {expenses}</li>
+        <li><strong>Profit:</strong> {profit}</li>
+        <li><strong>Margin:</strong> {margin}%</li>
+    </ul>
+
+    <p><em>Your full detailed summary is attached as a PDF.</em></p>
+    <p>Best regards,<br>OptiGain Team</p>
+    """
 
     # Attach PDF
     msg.attach("OptiGain_Summary.pdf", "application/pdf", pdf_buffer.read())
@@ -1329,7 +1346,6 @@ def send_summary():
         flash("❌ Failed to send summary.", "danger")
 
     return redirect(url_for("dashboard"))
-
 @app.route("/download_advice", methods=["POST"])
 def download_advice():
     advice_text = request.form.get("advice", "")
@@ -1700,7 +1716,7 @@ def send_report():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # recipient email
+    # receiver email
     recipient_email = request.form.get("email")
     if not recipient_email:
         flash("❌ No email provided.", "danger")
@@ -1713,11 +1729,10 @@ def send_report():
     margin = request.form.get("margin", "0")
     advice = request.form.get("advice", "No advice available.")
 
-    # 1️⃣ Build ABSOLUTE FILESYSTEM PATH for logo
-    logo_path = os.path.join(app.root_path, "static", "logo.png")
-    logo_path = logo_path.replace("\\", "/")  # ensure compatibility
+    # Build ABSOLUTE logo path
+    logo_path = os.path.join(app.root_path, "static", "logo.png").replace("\\", "/")
 
-    # 2️⃣ Render HTML using template
+    # Render HTML template → PDF
     html = render_template(
         "email_report.html",
         logo_path=logo_path,
@@ -1728,7 +1743,7 @@ def send_report():
         advice=advice
     )
 
-    # 3️⃣ Convert HTML → PDF
+    # Generate PDF
     pdf_buffer = io.BytesIO()
     result = pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
     pdf_buffer.seek(0)
@@ -1738,13 +1753,35 @@ def send_report():
         flash("❌ Failed to generate PDF report.", "danger")
         return redirect(url_for("dashboard"))
 
-    # 4️⃣ Build email message
+    # Build email
     msg = Message(
-        subject="📊 Your OptiGain Financial Report",
+        subject="📊 OptiGain Financial Report",
         recipients=[recipient_email],
-        body="Hello,\n\nFind attached your financial report.\n\n— OptiGain Team"
+        sender=("OptiGain Reports", os.getenv("MAIL_USERNAME")),
+        body="Your full OptiGain report is attached."
     )
 
+    # Add HTML body (professional + improves inbox deliverability)
+    msg.html = f"""
+    <p>Hello,</p>
+
+    <p>Your detailed <strong>OptiGain Financial Report</strong> is attached as a PDF.</p>
+
+    <h4>📌 Quick Snapshot</h4>
+    <ul>
+        <li><strong>Total Revenue:</strong> {revenue}</li>
+        <li><strong>Total Expenses:</strong> {expenses}</li>
+        <li><strong>Total Profit:</strong> {profit}</li>
+        <li><strong>Profit Margin:</strong> {margin}%</li>
+    </ul>
+
+    <h4>🧠 AI Insight</h4>
+    <p>{advice}</p>
+
+    <p>Best regards,<br><strong>OptiGain Team</strong></p>
+    """
+
+    # Attach PDF
     msg.attach("OptiGain_Full_Report.pdf", "application/pdf", pdf_buffer.read())
 
     try:
