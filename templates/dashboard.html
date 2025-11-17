@@ -360,14 +360,20 @@ toggleBtn?.addEventListener('click', () => {
   </div>
 </div>
 
-<!-- 📧 Send Report via Email -->
 <form action="{{ url_for('send_report') }}" method="POST" style="margin-top: 15px;">
+
+  <!-- Hidden financial data -->
+  <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+  <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
+  <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
+  <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
+  <input type="hidden" name="advice" value="{{ advice }}">
+
   <input type="email" name="email" placeholder="Enter recipient email" required 
          style="padding:8px; border-radius:5px; border:1px solid #ccc;">
-  <button type="submit" class="btn btn-info">📧 Send Report</button>
-</form>
 
-    
+  <button type="submit" class="btn btn-info">📧 Send Report</button>
+</form>    
 
 
 

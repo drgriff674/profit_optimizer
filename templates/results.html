@@ -280,13 +280,22 @@
         <button type="submit" class="btn btn-primary">⬇ Download PDF Report</button>
       </form>
 
-      <form action="{{ url_for('send_report') }}" method="POST" class="mt-3">
-        <div class="form-group">
-          <label for="email">Send Report to Email:</label>
-          <input type="email" class="form-control" id="email" name="email" required>
-        </div>
-        <button type="submit" class="btn btn-primary mt-2">📩 Email Me Report</button>
-      </form>
+     <form action="{{ url_for('send_report') }}" method="POST" class="mt-3">
+    
+    <!-- Hidden financial data -->
+    <input type="hidden" name="revenue" value="{{ revenue }}">
+    <input type="hidden" name="expenses" value="{{ expenses }}">
+    <input type="hidden" name="profit" value="{{ profit }}">
+    <input type="hidden" name="margin" value="{{ margin }}">
+    <input type="hidden" name="advice" value="{{ advice }}">
+
+    <div class="form-group">
+      <label for="email">Send Report to Email:</label>
+      <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">📩 Email Me Report</button>
+</form>
     </div>
 
     <!-- Raw Data Section -->
