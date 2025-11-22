@@ -674,94 +674,77 @@ def register_url():
         return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
 
 # ================================
-# DARJA V2 — PAYMENT VALIDATION
+# C2B VALIDATION (Sandbox)
 # ================================
 @app.route("/payment/validate", methods=["POST"])
 def payment_validate():
     data = request.get_json()
-    print("📥 Validation Callback (V2):", data)
+    print("📥 VALIDATION Callback:", data)
 
-    # Must ALWAYS return ResultCode 0 for sandbox
     return jsonify({
         "ResultCode": 0,
         "ResultDesc": "Accepted"
     })
 
 # ================================
-# DARJA V2 — PAYMENT CONFIRMATION
+# C2B CONFIRMATION (Sandbox)
 # ================================
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
-    from flask import request, jsonify
-    import psycopg2, json, os
+    import psycopg2, os, json
     from datetime import datetime
+    from flask import jsonify, request
 
     data = request.get_json()
-    print("📥 Confirmation Callback (V2):", data)
+    print("📥 CONFIRMATION Callback:", data)
 
     try:
-        # V2 format: ALL details come under "Body" → "stkCallback"
-        body = data.get("Body", {})
-        trans = body.get("stkCallback", {})
+        # -----------------------------
+        # Extract fields in C2B SIMULATE
+        # -----------------------------
+        transaction_id = data.get("TransID", "")
+        amount = float(data.get("TransAmount", 0))
+        sender_name = data.get("FirstName", "Unknown")
+        phone = data.get("MSISDN", "")
 
-        result_code = trans.get("ResultCode", "")
-        result_desc = trans.get("ResultDesc", "")
-
-        # Transaction ID
-        transaction_id = trans.get("CheckoutRequestID", "")
-
-        # Extract payment items
-        callback_items = trans.get("CallbackMetadata", {}).get("Item", [])
-
-        amount = 0.0
-        sender_phone = ""
-        sender_name = "Unknown"
-
-        for item in callback_items:
-            if item.get("Name") == "Amount":
-                amount = float(item.get("Value", 0))
-            if item.get("Name") == "MpesaReceiptNumber":
-                transaction_id = item.get("Value", transaction_id)
-            if item.get("Name") == "PhoneNumber":
-                sender_phone = str(item.get("Value", ""))
-
-        # SAVE TO DATABASE
+        # -----------------------------
+        # Save to database
+        # -----------------------------
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
-        cur.execute(
-            """
+        cur.execute("""
             INSERT INTO mpesa_transactions
-            (transaction_id, amount, sender, receiver, transaction_type, 
+            (transaction_id, amount, sender, receiver, transaction_type,
              account_reference, description, timestamp, raw_payload, origin_ip, created_at)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
-            """,
-            (
-                transaction_id,
-                amount,
-                sender_phone,
-                "OptiGain",
-                "C2B Payment",
-                "Payment",
-                result_desc,
-                datetime.utcnow(),
-                json.dumps(data),
-                request.remote_addr
-            ),
-        )
+        """, (
+            transaction_id,
+            amount,
+            sender_name,
+            "OptiGain",
+            "C2B Payment",
+            data.get("BillRefNumber", ""),
+            "C2B Payment Received",
+            datetime.utcnow(),
+            json.dumps(data),
+            request.remote_addr
+        ))
 
         conn.commit()
         cur.close()
         conn.close()
 
-        print("✅ SAVED PAYMENT:", amount)
+        print("✅ PAYMENT SAVED:", amount)
 
-        return jsonify({"ResultCode": 0, "ResultDesc": "Success"})
+        return jsonify({
+            "ResultCode": 0,
+            "ResultDesc": "Success"
+        })
 
     except Exception as e:
-        print("❌ ERROR:", e)
-        return jsonify({"ResultCode": 1, "ResultDesc": "Error processing callback"})
-
+        print("❌ ERROR Saving Callback:", e)
+        return jsonify({"ResultCode": 1, "ResultDesc": "Failed to process payment"})
 # ✅ Query M-Pesa Account Balance (safe naming)
 @app.route("/api/account_balance")
 def account_balance():
