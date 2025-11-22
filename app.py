@@ -699,17 +699,28 @@ def payment_confirm():
     print("📥 CONFIRMATION Callback:", data)
 
     try:
-        # -----------------------------
-        # Extract fields in C2B SIMULATE
-        # -----------------------------
-        transaction_id = data.get("TransID", "")
-        amount = float(data.get("TransAmount", 0))
-        sender_name = data.get("FirstName", "Unknown")
-        phone = data.get("MSISDN", "")
+        # Extract V2 C2B format
+        body = data.get("Body", {})
+        callback = body.get("stkCallback", {})
+        metadata = callback.get("CallbackMetadata", {}).get("Item", [])
 
-        # -----------------------------
+        amount = 0.0
+        transaction_id = ""
+        phone = ""
+        sender_name = "Unknown"
+
+        for item in metadata:
+            name = item.get("Name", "").lower()
+            value = item.get("Value")
+
+            if name == "amount":
+                amount = float(value)
+            elif name == "mpesareceiptnumber":
+                transaction_id = value
+            elif name == "phonenumber":
+                phone = str(value)
+
         # Save to database
-        # -----------------------------
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
@@ -721,10 +732,10 @@ def payment_confirm():
         """, (
             transaction_id,
             amount,
-            sender_name,
+            phone,
             "OptiGain",
             "C2B Payment",
-            data.get("BillRefNumber", ""),
+            "Payment",
             "C2B Payment Received",
             datetime.utcnow(),
             json.dumps(data),
@@ -737,10 +748,7 @@ def payment_confirm():
 
         print("✅ PAYMENT SAVED:", amount)
 
-        return jsonify({
-            "ResultCode": 0,
-            "ResultDesc": "Success"
-        })
+        return jsonify({"ResultCode": 0, "ResultDesc": "Success"})
 
     except Exception as e:
         print("❌ ERROR Saving Callback:", e)
