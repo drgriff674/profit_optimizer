@@ -673,7 +673,23 @@ def register_url():
     except Exception as e:
         return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
 
-# ✅ PAYMENT CONFIRMATION CALLBACK
+# ================================
+# DARJA V2 — PAYMENT VALIDATION
+# ================================
+@app.route("/payment/validate", methods=["POST"])
+def payment_validate():
+    data = request.get_json()
+    print("📥 Validation Callback (V2):", data)
+
+    # Must ALWAYS return ResultCode 0 for sandbox
+    return jsonify({
+        "ResultCode": 0,
+        "ResultDesc": "Accepted"
+    })
+
+# ================================
+# DARJA V2 — PAYMENT CONFIRMATION
+# ================================
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
     from flask import request, jsonify
@@ -681,78 +697,70 @@ def payment_confirm():
     from datetime import datetime
 
     data = request.get_json()
-    print("📥 Confirmation received:", data)
+    print("📥 Confirmation Callback (V2):", data)
 
     try:
-        result = data.get("Result", {})
-        result_desc = result.get("ResultDesc", "")
-        transaction_id = result.get("ConversationID", "")
-        # Try to extract amount from multiple possible places
+        # V2 format: ALL details come under "Body" → "stkCallback"
+        body = data.get("Body", {})
+        trans = body.get("stkCallback", {})
+
+        result_code = trans.get("ResultCode", "")
+        result_desc = trans.get("ResultDesc", "")
+
+        # Transaction ID
+        transaction_id = trans.get("CheckoutRequestID", "")
+
+        # Extract payment items
+        callback_items = trans.get("CallbackMetadata", {}).get("Item", [])
+
         amount = 0.0
-        try:
-            # Case 1: Normal sandbox structure (direct TransAmount)
-            if "TransAmount" in data:
-                amount = float(data.get("TransAmount", 0))
-
-            # Case 2: Callback wrapped under "Result"
-            elif "Result" in data and isinstance(data["Result"], dict):
-                params = data["Result"].get("ResultParameters", {}).get("ResultParameter", [])
-                for p in params:
-                    if p.get("Key") == "TransAmount":
-                        amount = float(p.get("Value", 0))
-                        break
-        except Exception:
-            amount = 0.0
-        # Extract sender details if available
+        sender_phone = ""
         sender_name = "Unknown"
-        phone_number = ""
 
-        # Some simulator responses include "FirstName", "MiddleName", "LastName"
-        if "FirstName" in data:
-            names = [data.get("FirstName", ""), data.get("MiddleName", ""), data.get("LastName", "")]
-            sender_name = " ".join([n for n in names if n]).strip()
-            phone_number = data.get("MSISDN", "")
+        for item in callback_items:
+            if item.get("Name") == "Amount":
+                amount = float(item.get("Value", 0))
+            if item.get("Name") == "MpesaReceiptNumber":
+                transaction_id = item.get("Value", transaction_id)
+            if item.get("Name") == "PhoneNumber":
+                sender_phone = str(item.get("Value", ""))
 
+        # SAVE TO DATABASE
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
         cur.execute(
             """
             INSERT INTO mpesa_transactions
-            (transaction_id, amount, sender, receiver, transaction_type, account_reference, description, timestamp, raw_payload, origin_ip, created_at)
+            (transaction_id, amount, sender, receiver, transaction_type, 
+             account_reference, description, timestamp, raw_payload, origin_ip, created_at)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
             """,
             (
                 transaction_id,
                 amount,
-                sender_name,
+                sender_phone,
                 "OptiGain",
                 "C2B Payment",
-                "Confirmation",
+                "Payment",
                 result_desc,
                 datetime.utcnow(),
                 json.dumps(data),
-                request.remote_addr,
+                request.remote_addr
             ),
         )
 
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ Transaction saved successfully.")
 
-        return jsonify({"ResultCode": 0, "ResultDesc": "Callback received successfully"})
+        print("✅ SAVED PAYMENT:", amount)
+
+        return jsonify({"ResultCode": 0, "ResultDesc": "Success"})
+
     except Exception as e:
-        print("⚠️ Error saving callback:", e)
-        return jsonify({"ResultCode": 1, "ResultDesc": str(e)})
-
-# ✅ PAYMENT VALIDATION CALLBACK
-@app.route("/payment/validate", methods=["POST"])
-def payment_validate():
-    data = request.get_json()
-    print("📥 Validation request:", data)
-    return jsonify({"ResultCode": 0, "ResultDesc": "Validation received successfully"})
-
+        print("❌ ERROR:", e)
+        return jsonify({"ResultCode": 1, "ResultDesc": "Error processing callback"})
 
 # ✅ Query M-Pesa Account Balance (safe naming)
 @app.route("/api/account_balance")
