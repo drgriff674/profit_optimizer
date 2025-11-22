@@ -686,41 +686,59 @@ def payment_validate():
         "ResultDesc": "Accepted"
     })
 
-# ================================
-# C2B CONFIRMATION (Sandbox)
-# ================================
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
     import psycopg2, os, json
     from datetime import datetime
-    from flask import jsonify, request
+    from flask import request, jsonify
 
     data = request.get_json()
-    print("📥 CONFIRMATION Callback:", data)
+    print("📥 PAYMENT CALLBACK RECEIVED:", json.dumps(data, indent=2))
 
     try:
-        # Extract V2 C2B format
-        body = data.get("Body", {})
-        callback = body.get("stkCallback", {})
-        metadata = callback.get("CallbackMetadata", {}).get("Item", [])
+        # ============================================================
+        # 1️⃣ CASE A — C2B SIMULATOR (V1 CALLBACK)
+        # ============================================================
+        if "TransID" in data:
+            print("✔ Detected: C2B Simulator (V1)")
 
-        amount = 0.0
-        transaction_id = ""
-        phone = ""
-        sender_name = "Unknown"
+            transaction_id = data.get("TransID", "")
+            amount = float(data.get("TransAmount", 0))
+            sender_name = data.get("FirstName", "Unknown")
+            sender_phone = data.get("MSISDN", "")
+            description = "C2B Payment (V1)"
+            account_ref = data.get("BillRefNumber", "")
 
-        for item in metadata:
-            name = item.get("Name", "").lower()
-            value = item.get("Value")
+        # ============================================================
+        # 2️⃣ CASE B — DARAJA V2 CALLBACK (STK-STYLE)
+        # ============================================================
+        elif "Body" in data and "stkCallback" in data["Body"]:
+            print("✔ Detected: V2 STK Callback")
 
-            if name == "amount":
-                amount = float(value)
-            elif name == "mpesareceiptnumber":
-                transaction_id = value
-            elif name == "phonenumber":
-                phone = str(value)
+            stk = data["Body"]["stkCallback"]
+            transaction_id = stk.get("CheckoutRequestID", "")
+            description = stk.get("ResultDesc", "")
+            amount = 0.0
+            sender_phone = ""
+            sender_name = "Unknown"
+            account_ref = "V2 Callback"
 
-        # Save to database
+            items = stk.get("CallbackMetadata", {}).get("Item", [])
+
+            for item in items:
+                if item.get("Name") == "Amount":
+                    amount = float(item.get("Value", 0))
+                if item.get("Name") == "MpesaReceiptNumber":
+                    transaction_id = item.get("Value", transaction_id)
+                if item.get("Name") == "PhoneNumber":
+                    sender_phone = str(item.get("Value", ""))
+        else:
+            print("❌ Unknown callback format")
+            return jsonify({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
+
+        # ============================================================
+        # SAVE TO DATABASE
+        # ============================================================
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
@@ -732,11 +750,11 @@ def payment_confirm():
         """, (
             transaction_id,
             amount,
-            phone,
+            sender_phone or sender_name,
             "OptiGain",
             "C2B Payment",
-            "Payment",
-            "C2B Payment Received",
+            account_ref,
+            description,
             datetime.utcnow(),
             json.dumps(data),
             request.remote_addr
@@ -751,8 +769,8 @@ def payment_confirm():
         return jsonify({"ResultCode": 0, "ResultDesc": "Success"})
 
     except Exception as e:
-        print("❌ ERROR Saving Callback:", e)
-        return jsonify({"ResultCode": 1, "ResultDesc": "Failed to process payment"})
+        print("❌ ERROR in confirm callback:", e)
+        return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
 # ✅ Query M-Pesa Account Balance (safe naming)
 @app.route("/api/account_balance")
 def account_balance():
