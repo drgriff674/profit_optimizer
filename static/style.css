@@ -218,3 +218,79 @@ body.auth-page {
 /* Warning */
 .btn-warning {
   background:
+
+/* 🌟 Sidebar Layout */
+.dashboard-body {
+    display: flex;
+    margin: 0;
+    background: var(--bg-gradient, linear-gradient(135deg,#4facfe,#00f2fe));
+}
+
+.sidebar {
+    width: 240px;
+    background: #ffffff;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 25px 15px;
+    box-shadow: 3px 0 12px rgba(0,0,0,0.1);
+    z-index: 999;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar-logo {
+    width: 90px;
+    margin-bottom: 10px;
+}
+
+.sidebar-title {
+    font-size: 22px;
+    color: #0275d8;
+    font-weight: 700;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin: 12px 0;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #333;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-menu a:hover {
+    background: #0275d8;
+    color: white;
+}
+
+/* 🌟 Main content wrapper */
+.main-content {
+    margin-left: 260px;
+    padding: 30px;
+    width: calc(100% - 260px);
+}
+
+/* 🌟 Top Bar */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}

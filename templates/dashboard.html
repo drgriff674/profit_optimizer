@@ -14,8 +14,36 @@
     <!-- ✅ Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
-<body>
+<body class="dashboard-body">
 
+<!-- 🌟 Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="sidebar-logo">
+        <h2 class="sidebar-title">OptiGain</h2>
+    </div>
+
+    <ul class="sidebar-menu">
+        <li><a href="{{ url_for('dashboard') }}">📊 Dashboard</a></li>
+        <li><a href="{{ url_for('upload') }}">📤 Upload CSV</a></li>
+        <li><a href="{{ url_for('manual_entry') }}">➕ Manual Entry</a></li>
+        <li><a href="{{ url_for('trend_forecaster') }}">📈 Trend Forecaster</a></li>
+        <li><a href="{{ url_for('profit_calculator') }}">💵 Profit Calculator</a></li>
+        <li><a href="{{ url_for('ask') }}">🤖 Business Assistant</a></li>
+        <li><a href="{{ url_for('admin') }}">🛠 Admin Panel</a></li>
+        <li><a href="{{ url_for('profile') }}">👤 My Profile</a></li>
+        <li><a href="{{ url_for('logout') }}">🚪 Logout</a></li>
+    </ul>
+</div>
+
+<!-- 🌟 Main content wrapper -->
+<div class="main-content">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <h1>Welcome, {{ session['user'] }}</h1>
+        <button id="darkToggle" class="dark-toggle">🌙</button>
+    </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -24,13 +52,6 @@
     {% endfor %}
   {% endif %}
 {% endwith %}
-
-    <div class="top-bar">
-        <h1>Welcome, {{ session['user'] }}</h1>
-<!-- 🌙 Dark Mode Toggle -->
-<button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
-    </div>
-
 <!-- 💰 Live Balance Section -->
 <div class="container my-3">
   <div class="row justify-content-center">
@@ -596,5 +617,6 @@ setInterval(loadTransactionSummary, 30000);
 <footer class="text-center py-3 mt-5 text-muted border-top">
   © {{ current_year }} OptiGain. All rights reserved.
 </footer>
+</div>
 </body>
 </html>
