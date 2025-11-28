@@ -2,156 +2,170 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Login - OptiGain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login – OptiGain</title>
 
-  <!-- Bootstrap (optional for spacing) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Global style.css -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
-    /* FULL-PAGE LAYOUT */
     body {
-      background: var(--og-bg-gradient);
-      height: 100vh;
       margin: 0;
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: system-ui, sans-serif;
-      transition: 0.3s ease;
+      font-family: "Inter", system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
     }
 
     .auth-wrapper {
-      width: 380px;
-      padding: 32px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(18px);
-      box-shadow: var(--og-shadow-strong);
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 35px 32px;
+      color: #fff;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
       text-align: center;
-      transition: 0.3s ease;
     }
 
-    body.dark-mode .auth-wrapper {
-      background: rgba(0, 0, 0, 0.4);
-      box-shadow: 0 18px 45px rgba(0,0,0,0.65);
-    }
-
-    .auth-logo {
-      width: 90px;
-      margin-bottom: 18px;
+    .auth-card img {
+      width: 130px;
+      margin-bottom: 10px;
     }
 
     h2 {
-      font-size: 1.7rem;
       font-weight: 700;
-      color: var(--og-text-main);
-      margin-bottom: 25px;
+      font-size: 26px;
+      margin-bottom: 20px;
     }
 
-    .auth-input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 16px;
+    .form-control {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
       border-radius: 10px;
-      border: 1px solid var(--og-border-subtle);
-      background: var(--og-surface);
-      color: var(--og-text-main);
-      transition: 0.25s;
-    }
-
-    body.dark-mode .auth-input {
-      background: #1e293b;
-      color: #f8fafc;
-      border-color: #334155;
-    }
-
-    .auth-input:focus {
-      outline: none;
-      border-color: var(--og-primary);
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
-    }
-
-    .auth-btn {
-      width: 100%;
       padding: 12px;
-      border-radius: 10px;
-      font-weight: 600;
+    }
+
+    .form-control:focus {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px #60a5fa;
+    }
+
+    label {
+      color: #d1d5db;
+      font-weight: 500;
+      text-align: left;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: #2563eb;
       border: none;
-      background: var(--og-primary);
-      color: white;
-      font-size: 1rem;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 600;
       transition: 0.2s;
     }
 
-    .auth-btn:hover {
-      background: var(--og-primary-strong);
+    .btn-primary:hover {
+      background: #1e40af;
     }
 
-    .auth-link {
-      margin-top: 14px;
-      font-size: 0.9rem;
-    }
-
-    .auth-link a {
-      color: var(--og-info);
-      text-decoration: none;
+    a {
+      color: #93c5fd;
       font-weight: 600;
+      text-decoration: none;
     }
 
-    .auth-link a:hover {
+    a:hover {
       text-decoration: underline;
     }
 
-    /* DARK-MODE BUTTON */
-    .dark-toggle {
+    .toggle-dark {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: var(--og-primary);
+      background: #2563eb;
       border: none;
       color: white;
-      width: 48px;
-      height: 48px;
-      font-size: 20px;
       border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      font-size: 20px;
       cursor: pointer;
-      box-shadow: var(--og-shadow-soft);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Dark Mode Light Variant (card stays dark always) */
+    body.light-mode {
+      background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+      color: #0f172a;
     }
   </style>
 </head>
 
 <body>
 
-  <button id="darkToggle" class="dark-toggle">🌙</button>
+  <button id="darkToggle" class="toggle-dark">🌙</button>
 
   <div class="auth-wrapper">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="auth-logo" alt="OptiGain Logo">
-    <h2>Login to OptiGain</h2>
+    <div class="auth-card">
 
-    <form method="POST">
-      <input type="text" name="username" placeholder="Username" class="auth-input" required>
-      <input type="password" name="password" placeholder="Password" class="auth-input" required>
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain">
 
-      <button type="submit" class="auth-btn">Login</button>
-    </form>
+      <h2>Welcome Back</h2>
 
-    <div class="auth-link">
-      Don’t have an account?
-      <a href="{{ url_for('register') }}">Register here</a>
+      <form method="POST">
+
+        <div class="text-start mb-3">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" class="form-control" required>
+        </div>
+
+        <div class="text-start mb-3">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" required>
+        </div>
+
+        <button class="btn btn-primary w-100 mt-2">Login</button>
+      </form>
+
+      <p class="mt-3">No account? <a href="{{ url_for('register') }}">Register</a></p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
     </div>
   </div>
 
   <script>
-    const toggle = document.getElementById('darkToggle');
-    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    const toggle = document.getElementById("darkToggle");
 
-    toggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    if (localStorage.getItem("lightmode") === "on") {
+      document.body.classList.add("light-mode");
+    }
+
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("light-mode");
+      localStorage.setItem("lightmode",
+        document.body.classList.contains("light-mode") ? "on" : "off"
+      );
     });
   </script>
 
