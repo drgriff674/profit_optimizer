@@ -87,6 +87,39 @@
       background: linear-gradient(135deg, #e2e8f0, #f8fafc);
       color: #0f172a;
     }
+
+/* ======================================================
+   FIX: Ensure text is readable in both light & dark mode
+   ====================================================== */
+.auth-container label,
+.auth-container h2,
+.auth-container .form-label {
+    color: #ffffff !important;
+}
+
+/* Text inside input */
+.auth-container input.form-control {
+    color: #ffffff !important;
+}
+
+/* Placeholder fix */
+.auth-container input::placeholder {
+    color: rgba(255,255,255,0.75) !important;
+}
+
+body:not(.dark-mode) .auth-container h2,
+body:not(.dark-mode) .auth-container label,
+body:not(.dark-mode) .auth-container .form-label {
+    color: #0f172a !important;
+}
+
+body:not(.dark-mode) .auth-container input.form-control {
+    color: #0f172a !important;
+}
+
+body:not(.dark-mode) .auth-container input::placeholder {
+    color: rgba(0,0,0,0.55) !important;
+}
   </style>
 </head>
 
