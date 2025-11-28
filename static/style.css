@@ -319,3 +319,28 @@ footer {
   font-size: 14px;
   color: var(--og-text-muted);
 }
+
+/* -------------------------------------------------
+   KPI CARDS FIX — Ensures text is visible always
+-------------------------------------------------- */
+
+.kpi-card,
+.kpi-card h3,
+.kpi-card h5,
+.card h3,
+.card h5 {
+    color: #ffffff !important;
+}
+
+body:not(.dark-mode) .kpi-card,
+body:not(.dark-mode) .card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+body.dark-mode .kpi-card,
+body.dark-mode .card {
+    background: rgba(255,255,255,0.06) !important;
+    backdrop-filter: blur(8px);
+    color: #f1f5f9 !important;
+}
