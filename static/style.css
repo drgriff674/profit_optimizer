@@ -1,372 +1,220 @@
-/* 🌟 Global Styles */
+/* =========================================================
+   OPTIGAIN UI V2 – Hybrid Fintech + Analytics SaaS Styles
+   ========================================================= */
+
+/* ---------- Design Tokens ---------- */
+:root {
+  --og-bg-gradient: linear-gradient(135deg, #0f172a, #020617); /* darker pro gradient */
+  --og-surface: #ffffff;
+  --og-surface-soft: #f8fafc;
+  --og-surface-elevated: #f1f5f9;
+
+  --og-primary: #2563eb;
+  --og-primary-soft: rgba(37, 99, 235, 0.08);
+  --og-primary-strong: #1d4ed8;
+
+  --og-accent: #06b6d4;
+  --og-success: #16a34a;
+  --og-warning: #f59e0b;
+  --og-danger: #dc2626;
+  --og-info: #0ea5e9;
+
+  --og-text-main: #0f172a;
+  --og-text-muted: #6b7280;
+  --og-border-subtle: #e2e8f0;
+
+  --og-radius-sm: 6px;
+  --og-radius-md: 10px;
+  --og-radius-lg: 16px;
+
+  --og-shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.10);
+  --og-shadow-strong: 0 18px 45px rgba(15, 23, 42, 0.20);
+
+  --og-transition-fast: 0.18s ease-out;
+  --og-transition-med: 0.25s ease-out;
+}
+
+/* ---------- Global ---------- */
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--og-bg-gradient);
+  color: var(--og-text-main);
 }
 
-/* 🌟 Auth Page Layout (Login & Register only) */
-.auth-page {
-    display: flex;              
-    justify-content: center;    
-    align-items: center;        
-    height: 100vh;              
-}
-/* 🌟 Auth Pages (Login & Register) */
-.auth-container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    text-align: center;
-    width: 350px;
+/* pages that rely on Bootstrap .container will sit on a soft surface */
+.dashboard-container,
+.file-list,
+.card,
+.section-card {
+  transition: background-color var(--og-transition-med),
+              box-shadow var(--og-transition-med),
+              transform var(--og-transition-fast);
 }
 
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--og-text-main);
+  letter-spacing: 0.01em;
+}
+
+/* =========================================================
+   AUTH PAGES (login / register)
+   ========================================================= */
+
+/* Layout wrapper for auth pages */
+body.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: var(--og-bg-gradient);
+  margin: 0;
+}
+
+.auth-container,
+.register-container {
+  background: radial-gradient(circle at top left, #eff6ff, #ffffff);
+  padding: 32px 30px;
+  border-radius: var(--og-radius-lg);
+  box-shadow: var(--og-shadow-soft);
+  text-align: center;
+  width: 360px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-container::before,
+.register-container::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle at top, rgba(37, 99, 235, 0.10), transparent 55%);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.auth-container .logo,
+.register-container .logo,
 .logo {
-    width: 150px;
-    margin-bottom: 15px;
+  width: 150px;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 1;
 }
 
-h2 {
-    margin-bottom: 20px;
-    color: #333;
+.auth-container h2,
+.register-container h2 {
+  margin-bottom: 20px;
+  color: #0f172a;
+  font-size: 22px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
 }
 
-/* 🌟 Form */
-.auth-form {
-    display: flex;
-    flex-direction: column;
+/* Auth forms */
+.auth-form,
+.register-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
-.auth-form label {
-    text-align: left;
-    font-weight: bold;
-    margin: 8px 0 4px;
+.auth-form label,
+.register-container label {
+  text-align: left;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: #4b5563;
 }
 
-.auth-form input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    outline: none;
-    margin-bottom: 15px;
+.auth-form input,
+.register-container input[type="text"],
+.register-container input[type="email"],
+.register-container input[type="password"] {
+  padding: 10px;
+  border-radius: var(--og-radius-sm);
+  border: 1px solid #d1d5db;
+  outline: none;
+  font-size: 14px;
+  background: #ffffff;
+  transition: border-color var(--og-transition-fast),
+              box-shadow var(--og-transition-fast),
+              background-color var(--og-transition-fast);
 }
 
-.auth-form input:focus {
-    border-color: #4facfe;
+.auth-form input:focus,
+.register-container input:focus {
+  border-color: var(--og-primary);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
 }
 
-/* 🌟 Button */
-.btn {
-    background: #4facfe;
-    color: white;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s ease;
-}
-
-.btn:hover {
-    background: #00c6ff;
-}
-
-/* 🌟 Links */
+/* Switch link under auth forms */
 .switch-link {
-    margin-top: 15px;
+  margin-top: 15px;
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
 }
 
 .switch-link a {
-    color: #4facfe;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-.switch-link a:hover {
-    text-decoration: underline;
-}
-
-/* 🌟 Flash messages */
-.flash-messages {
-    margin-top: 15px;
-    list-style: none;
-    padding: 0;
-}
-
-.flash-messages li {
-    padding: 8px;
-    border-radius: 6px;
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-.flash-messages .success {
-    background: #e6ffed;
-    color: #2d7a46;
-}
-
-.flash-messages .error {
-    background: #ffe6e6;
-    color: #b30000;
-}
-
-/* 🌙 Dark Mode */
-body.dark-mode {
-    background: #121212;
-    color: #f1f1f1;
-}
-
-body.dark-mode .auth-container,
-body.dark-mode .kpi-card,
-body.dark-mode .card,
-body.dark-mode .notification {
-    background: #1e1e1e;
-    color: #e0e0e0;
-    box-shadow: 0 4px 12px rgba(255,255,255,0.1);
-}
-
-body.dark-mode .upload-btn,
-body.dark-mode .btn {
-    background: #333;
-    color: #fff;
-}
-
-body.dark-mode .upload-btn:hover,
-body.dark-mode .btn:hover {
-    background: #555;
-}
-
-/* 🌙 Dark Mode - Dashboard Specific */
-body.dark-mode .dashboard-container {
-    background: #121212;
-    color: #e0e0e0;
-}
-
-body.dark-mode h1,
-body.dark-mode h2,
-body.dark-mode h3,
-body.dark-mode p,
-body.dark-mode li {
-    color: #e0e0e0;
-}
-
-body.dark-mode canvas {
-    background: #1e1e1e !important;
-}
-
-/* 🌙 Dark Mode Toggle Button */
-.dark-toggle {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background: #4facfe;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s ease;
-    z-index: 999;
-}
-
-.dark-toggle:hover {
-    background: #00c6ff;
-}
-
-body.dark-mode .dark-toggle {
-    background: #333;
-    color: #fff;
-}
-
-body.dark-mode .dark-toggle:hover {
-    background: #555;
-}
-
-body.dark-mode .dark-toggle:hover {
-    background: #555;
-}
-
-/* 🌟 Button Variants */
-.btn-primary {
-    background: #4facfe;
-}
-.btn-primary:hover {
-    background: #00c6ff;
-}
-
-.btn-success {
-    background: #28a745;
-}
-.btn-success:hover {
-    background: #218838;
-}
-
-.btn-warning {
-    background: #ffc107;
-    color: #212529;
-}
-.btn-warning:hover {
-    background: #e0a800;
-    color: #fff;
-}
-
-.btn-danger {
-    background: #dc3545;
-}
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.btn-info {
-    background: #17a2b8;
-}
-.btn-info:hover {
-    background: #117a8b;
-}
-
-/* 🌟 Dashboard Button Group */
-.button-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.button-group .btn {
-    padding: 12px 20px;
-    font-size: 15px;
-    text-align: center;
-    border-radius: 8px;
-    font-weight: bold;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-}
-
-.button-group .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
-}
-
-/* 🌟 Auth Page Layout Fix */
-body.auth-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-    margin: 0;
-}
-
-/* 🌙 Dark Mode – DataTables Visibility Fix */
-body.dark-mode table.dataTable {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-    border-color: #444 !important;
-}
-body.dark-mode table.dataTable th,
-body.dark-mode table.dataTable td {
-    color: #e0e0e0 !important;
-    border-color: #444 !important;
-}
-body.dark-mode .dataTables_wrapper .dataTables_filter input {
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-}
-body.dark-mode .dataTables_wrapper .dataTables_length select {
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-}
-
-/* 🌚 Dark Mode — DataTables readability boost */
-body.dark-mode table,
-body.dark-mode table.dataTable {
-  color: #eaeef7 !important;
-  border-color: #3a3a3a !important;
-}
-
-body.dark-mode table thead th,
-body.dark-mode table.dataTable thead th {
-  color: #ffffff !important;
-  background-color: #202020 !important;
-  border-bottom: 1px solid #444 !important;
-}
-
-body.dark-mode table tbody td,
-body.dark-mode table.dataTable tbody td {
-  color: #eef3ff !important;
-}
-
-body.dark-mode table.dataTable tbody tr {
-  background-color: #161616 !important;
-}
-body.dark-mode table.dataTable tbody tr:hover {
-  background-color: #222 !important;
-}
-
-body.dark-mode .dataTables_info,
-body.dark-mode .dataTables_length label,
-body.dark-mode .dataTables_filter label,
-body.dark-mode .dataTables_paginate a {
-  color: #ddd !important;
-}
-
-body.dark-mode .dataTables_filter input,
-body.dark-mode .dataTables_length select {
-  background: #1e1e1e !important;
-  color: #f5f5f5 !important;
-  border: 1px solid #444 !important;
-}
-body.dark-mode .dataTables_filter input::placeholder {
-  color: #9aa0a6 !important;
-}
-
-/* 🌙 FINAL FIX — Bright text and rows for DataTables in Dark Mode */
-body.dark-mode table.dataTable tbody td {
-  color: #ffffff !important;           /* brighter numbers/text */
-  font-weight: 500;
-}
-
-body.dark-mode table.dataTable thead th {
-  color: #ffffff !important;           /* bright headers */
-  background-color: #202020 !important;
-  border-bottom: 1px solid #555 !important;
-}
-
-body.dark-mode table.dataTable tbody tr {
-  background-color: #121212 !important; /* subtle dark row */
-}
-
-body.dark-mode table.dataTable tbody tr:hover {
-  background-color: #1e1e1e !important; /* hover highlight */
-}
-
-body.dark-mode .dataTables_wrapper .dataTables_info,
-body.dark-mode .dataTables_wrapper .dataTables_length label,
-body.dark-mode .dataTables_wrapper .dataTables_filter label,
-body.dark-mode .dataTables_wrapper .dataTables_paginate a {
-  color: #ddd !important;
-}
-
-/* 🌙 Force DataTables inside Results page to be fully bright in dark mode */
-body.dark-mode .dark-table table,
-body.dark-mode .dark-table th,
-body.dark-mode .dark-table td {
-  background-color: #121212 !important;
-  color: #ffffff !important;
-  border-color: #444 !important;
-}
-
-body.dark-mode .dark-table tbody tr:hover {
-  background-color: #1f1f1f !important;
-}
-
-body.dark-mode .dark-table thead th {
-  background-color: #202020 !important;
-  color: #00c6ff !important; /* bright header text */
+  color: var(--og-primary);
+  text-decoration: none;
   font-weight: 600;
 }
+.switch-link a:hover {
+  text-decoration: underline;
+}
 
+/* =========================================================
+   Buttons – Unified Look (overrides Bootstrap a bit)
+   ========================================================= */
+
+.btn {
+  border: none;
+  border-radius: var(--og-radius-md);
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform var(--og-transition-fast),
+              box-shadow var(--og-transition-fast),
+              background-color var(--og-transition-fast),
+              color var(--og-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* Primary */
+.btn-primary {
+  background: var(--og-primary);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+}
+.btn-primary:hover {
+  background: var(--og-primary-strong);
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.45);
+}
+
+/* Success */
+.btn-success {
+  background: var(--og-success);
+  color: #ffffff;
+}
+.btn-success:hover {
+  background: #15803d;
+}
+
+/* Warning */
+.btn-warning {
+  background:
