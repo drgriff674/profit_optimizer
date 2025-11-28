@@ -374,3 +374,47 @@ body.dark-mode .section-card h4,
 body.dark-mode .section-card h5 {
   color: #e5e7eb;
 }
+
+/* ============================================
+   KPI CARD FIX (light + dark mode)
+   ============================================ */
+
+/* Light mode defaults */
+.kpi-card,
+.section-card .p-3.border.rounded.bg-light {
+    background: var(--og-surface-elevated) !important;
+    color: var(--og-text-main) !important;
+    border: 1px solid var(--og-border-subtle) !important;
+}
+
+/* KPI title */
+.kpi-card h6,
+.section-card h6 {
+    color: var(--og-text-muted) !important;
+}
+
+/* KPI number value */
+.kpi-card h5,
+.section-card h5 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--og-primary) !important;
+}
+
+/* ---------- DARK MODE OVERRIDE ---------- */
+body.dark-mode .kpi-card,
+body.dark-mode .section-card .p-3.border.rounded.bg-light {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode .kpi-card h6,
+body.dark-mode .section-card h6 {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .kpi-card h5,
+body.dark-mode .section-card h5 {
+    color: #38bdf8 !important;  /* bright cyan for visibility */
+}
