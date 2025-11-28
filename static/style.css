@@ -375,46 +375,41 @@ body.dark-mode .section-card h5 {
   color: #e5e7eb;
 }
 
-/* ============================================
-   KPI CARD FIX (light + dark mode)
-   ============================================ */
+/* =========================================================
+   FIX: KPI Cards on Results Page (match dashboard styling)
+   ========================================================= */
 
-/* Light mode defaults */
-.kpi-card,
-.section-card .p-3.border.rounded.bg-light {
-    background: var(--og-surface-elevated) !important;
-    color: var(--og-text-main) !important;
-    border: 1px solid var(--og-border-subtle) !important;
+.results-kpi {
+    background: var(--og-surface-elevated);
+    padding: 18px;
+    border-radius: var(--og-radius-md);
+    box-shadow: var(--og-shadow-soft);
+    transition: 0.25s ease;
+    text-align: center;
 }
 
-/* KPI title */
-.kpi-card h6,
-.section-card h6 {
-    color: var(--og-text-muted) !important;
+.results-kpi h6 {
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    color: var(--og-text-muted);
 }
 
-/* KPI number value */
-.kpi-card h5,
-.section-card h5 {
+.results-kpi h5 {
     font-size: 1.3rem;
     font-weight: 700;
-    color: var(--og-primary) !important;
+    color: var(--og-text-main);
 }
 
-/* ---------- DARK MODE OVERRIDE ---------- */
-body.dark-mode .kpi-card,
-body.dark-mode .section-card .p-3.border.rounded.bg-light {
-    background: #1e293b !important;
-    color: #e2e8f0 !important;
-    border: 1px solid #334155 !important;
+/* Dark mode */
+body.dark-mode .results-kpi {
+    background: #1e293b;
+    color: #fff;
 }
 
-body.dark-mode .kpi-card h6,
-body.dark-mode .section-card h6 {
-    color: #94a3b8 !important;
+body.dark-mode .results-kpi h6 {
+    color: #cbd5e1;
 }
 
-body.dark-mode .kpi-card h5,
-body.dark-mode .section-card h5 {
-    color: #38bdf8 !important;  /* bright cyan for visibility */
+body.dark-mode .results-kpi h5 {
+    color: #f8fafc;
 }
