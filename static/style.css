@@ -414,17 +414,22 @@ body.dark-mode .results-kpi h5 {
     color: #f8fafc;
 }
 
-/* =========================================================
-   FIX: Force KPI text visibility (ignore Bootstrap colors)
-   ========================================================= */
-
-/* Light mode numbers */
+/* FORCE KPI text visibility */
+.results-kpi h5,
 .results-kpi-value {
-    color: #0f172a !important; /* strong dark navy */
-    font-weight: 700;
+    color: var(--og-text-main) !important;
 }
 
-/* Dark mode numbers */
+body.dark-mode .results-kpi h5,
 body.dark-mode .results-kpi-value {
-    color: #f8fafc !important; /* bright white */
+    color: #ffffff !important;
+}
+
+/* Proper background */
+.results-kpi {
+    background: var(--og-surface-elevated) !important;
+}
+
+body.dark-mode .results-kpi {
+    background: #1e293b !important;
 }
