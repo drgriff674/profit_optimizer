@@ -344,3 +344,33 @@ body.dark-mode .card {
     backdrop-filter: blur(8px);
     color: #f1f5f9 !important;
 }
+
+/* =========================================================
+   RESULTS / SECONDARY PAGES – SECTION CARDS
+   ========================================================= */
+
+.section-card {
+  background: var(--og-surface);
+  padding: 24px;
+  border-radius: var(--og-radius-lg);
+  box-shadow: var(--og-shadow-soft);
+  margin-top: 24px;
+}
+
+body.dark-mode .section-card {
+  background: #020617; /* very dark slate */
+  color: #e5e7eb;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+.section-card h3,
+.section-card h4,
+.section-card h5 {
+  color: var(--og-text-main);
+}
+
+body.dark-mode .section-card h3,
+body.dark-mode .section-card h4,
+body.dark-mode .section-card h5 {
+  color: #e5e7eb;
+}
