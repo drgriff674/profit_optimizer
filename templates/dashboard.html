@@ -5,21 +5,24 @@
     <meta http-equiv="refresh" content="60">
     <title>Dashboard - Profit Optimizer</title>
 
-    <!-- ✅ Bootstrap CSS -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- ✅ Your custom CSS (must come after Bootstrap so it overrides styles) -->
+    <!-- Custom CSS (after Bootstrap) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <!-- ✅ Bootstrap JS -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plotly (once) -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body class="dashboard-body">
 
-<!-- 🌟 Sidebar -->
+<!-- 🌟 SIDEBAR -->
 <div class="sidebar">
     <div class="sidebar-header">
-        <img src="{{ url_for('static', filename='logo.png') }}" class="sidebar-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="sidebar-logo" alt="OptiGain Logo">
         <h2 class="sidebar-title">OptiGain</h2>
     </div>
 
@@ -36,465 +39,428 @@
     </ul>
 </div>
 
-<!-- 🌟 Main content wrapper -->
+<!-- 🌟 MAIN CONTENT -->
 <div class="main-content">
 
-    <!-- Top Bar -->
+    <!-- Topbar -->
     <div class="topbar">
-        <h1>Welcome, {{ session['user'] }}</h1>
+        <h1 class="mb-0">Welcome, {{ session['user'] }}</h1>
         <button id="darkToggle" class="dark-toggle">🌙</button>
     </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-<!-- 💰 Live Balance Section -->
-<div class="container my-3">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card text-center shadow-sm border-0">
-        <div class="card-body">
-          <h5 class="card-title">💰 Live M-Pesa Business Balance</h5>
-          <h3 id="balance-amount" class="fw-bold text-success">Loading...</h3>
-          <p id="balance-updated" class="text-muted small mt-2">last updated: just now</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="container my-4">
-  <div class="row g-3 text-center">
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="card-title">Total Profit</h5>
-        <h3>{{ kpis.total_profit }}</h3>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="card-title">Average Profit</h5>
-        <h3>{{ kpis.avg_profit }}</h3>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="card-title">Profit Growth</h5>
-        <h3>{{ kpis.profit_growth }}</h3>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="card shadow-sm p-3">
-        <h5 class="card-title">Largest Expense</h5>
-        <h3>{{ kpis.largest_expense }}</h3>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="card">
-  <h2>📈 Revenue Forecast (Next 6 Months)</h2>
-  <ul>
-    {% for item in forecast_data %}
-      <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
-    {% endfor %}
-  </ul>
-</div>
+    <div class="container-fluid mt-3">
 
-<div class="card mt-4 p-3 shadow rounded-3">
-  <h4 class="mb-3 text-center">📈 Live Financial Performance</h4>
-  <div id="liveChart" style="height: 400px;"></div>
-</div>
-
-<div class="card mt-4 p-3 shadow rounded-3">
-  <h4 class="mb-3 text-center">📈 Live Financial Performance</h4>
-  <div id="liveChart" style="height: 400px;"></div>
-</div>
-
-<!-- 🧠 Smart AI Insights Section -->
-{% if notifications %}
-    <div class="notification" style="background:#fff; padding:15px; border-radius:10px; margin:5px 0; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-        <strong>🧠 Smart Notifications:</strong>
-        <ul style="margin-top:10px;">
-            {% for note in notifications %}
-                <li>{{ note }}</li>
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} mt-2">{{ message }}</div>
             {% endfor %}
-        </ul>
-    </div>
-{% endif %}
+          {% endif %}
+        {% endwith %}
 
-{% if notifications %}
-    <div class="notification">
-        <strong>Smart Notifications:</strong>
-        <ul>
-            {% for note in notifications %}
-                <li>{{ note }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-{% endif %}
-
-<div id="mpesaBalance" style="background:#fff;padding:10px;margin:10px 0;border-radius:8px;">
-  <h3>📱 M-Pesa Business Balance</h3>
-  <p id="balanceValue">Fetching balance...</p>
-</div>
-
-<script>
-fetch("/api/mpesa_balance")
-  .then(r => r.json())
-  .then(data => {
-      const balanceEl = document.getElementById("balance-amount");
-      const timeEl = document.getElementById("balance-updated");
-
-      if (data.Result) {
-          balanceEl.innerText =
-              data.Result.ResultParameters.ResultParameter[0].Value + " KSh" || "Unavailable";
-      } else if (data.balance) {
-          balanceEl.innerText = `${data.balance.toLocaleString()} KSh`;
-      } else {
-          balanceEl.innerText = "Unavailable";
-      }
-
-      // 🕒 Update timestamp
-      if (timeEl) {
-          timeEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
-      }
-  })
-  .catch(err => {
-      document.getElementById("balance-amount").innerText = "Error loading balance";
-  });
-</script>
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-async function loadChart() {
-  const res = await fetch('/api/financial_data');
-  const data = await res.json();
-
-  const months = data.month || [];
-  const revenue = data.revenue || [];
-  const expenses = data.expenses || [];
-  const profit = data.profit || [];
-
-  const trace1 = { x: months, y: revenue, type: 'scatter', name: 'Revenue' };
-  const trace2 = { x: months, y: expenses, type: 'scatter', name: 'Expenses' };
-  const trace3 = { x: months, y: profit, type: 'scatter', name: 'Profit' };
-
-  const layout = {
-    title: 'Company Financial Trends',
-    xaxis: { title: 'Month' },
-    yaxis: { title: 'Amount (KSh)' },
-    plot_bgcolor: '#f9f9f9',
-    paper_bgcolor: '#fff',
-    margin: { t: 40, l: 50, r: 30, b: 50 }
-  };
-
-  Plotly.newPlot('liveChart', [trace1, trace2, trace3], layout);
-}
-
-// Refresh every 10 seconds
-loadChart();
-setInterval(loadChart, 10000);
-</script>
-
-<h3>📊 Revenue Forecast Trend</h3>
-<div id="forecastPlotly" style="width: 100%; height: 500px;"></div>
-
-<!-- Dropdown Filter -->
-<div style="margin:10px 0;">
-  <label for="metricSelect">Select Metric:</label>
-  <select id="metricSelect">
-      <option value="predicted_revenue">Revenue</option>
-      <option value="profit">Profit</option>
-      <option value="expenses">Expenses</option>
-  </select>
-</div>
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const forecastData = JSON.parse('{{ forecast_chart | safe }}') || [];
-
-    // Extract arrays for plotting
-    const labels = forecastData.map(item => item.date);
-    const revenue = forecastData.map(item => parseFloat(item.predicted_revenue || 0));
-    const profit = forecastData.map(item => parseFloat(item.profit || 0));
-    const expenses = forecastData.map(item => parseFloat(item.expenses || 0));
-
-    const metricMap = { 'predicted_revenue': revenue, 'profit': profit, 'expenses': expenses };
-
-    const plotData = [{
-        x: labels,
-        y: revenue,
-        type: 'bar',
-        name: 'Revenue',
-        marker: { color: 'rgba(0, 123, 255, 0.7)' }
-    }];
-
-    const layout = {
-        title: 'Financial Forecast',
-        plot_bgcolor: document.body.classList.contains('dark-mode') ? '#222' : '#fff',
-        paper_bgcolor: document.body.classList.contains('dark-mode') ? '#222' : '#fff',
-        font: { color: document.body.classList.contains('dark-mode') ? '#fff' : '#000' }
-    };
-
-    Plotly.newPlot('forecastPlotly', plotData, layout);
-
-// 🧠 Add AI Insight Overlays
-const notificationsList = {{ notifications | tojson | safe }};
-const annotations = [];
-
-if (notificationsList && notificationsList.length > 0) {
-    notificationsList.forEach((note, idx) => {
-        // Position the annotation evenly along the chart
-        const xIndex = idx % labels.length;
-        annotations.push({
-            x: labels[xIndex],
-            y: revenue[xIndex] || 0,
-            text: note.length > 60 ? note.slice(0, 60) + "…" : note,
-            showarrow: true,
-            arrowhead: 5,
-            ax: 0,
-            ay: -40,
-            bgcolor: 'rgba(255,255,0,0.2)',
-            bordercolor: '#ffcc00',
-            font: { color: '#222', size: 12 }
-        });
-    });
-
-    Plotly.relayout('forecastPlotly', { annotations });
-}
-
-    // Dropdown Filter
-    document.getElementById('metricSelect').addEventListener('change', (e) => {
-        const selected = e.target.value;
-        const newY = metricMap[selected] || revenue;
-        Plotly.update('forecastPlotly', { y: [newY], name: selected }, { title: `Financial Forecast - ${selected.replace('_', ' ').toUpperCase()}` });
-    });
-
-    // Dark Mode toggle sync
-    const toggleBtn = document.getElementById('darkToggle');
-    toggleBtn?.addEventListener('click', () => {
-        const isDark = document.body.classList.contains('dark-mode');
-        Plotly.update('forecastPlotly', {}, {
-            plot_bgcolor: isDark ? '#222' : '#fff',
-            paper_bgcolor: isDark ? '#222' : '#fff',
-            font: { color: isDark ? '#fff' : '#000' }
-        });
-    });
-// Update annotations in dark mode
-const updateAnnotationColors = (isDark) => {
-    const annos = annotations.map(a => ({
-        ...a,
-        bgcolor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,0,0.2)',
-        font: { color: isDark ? '#fff' : '#222', size: 12 }
-    }));
-    Plotly.relayout('forecastPlotly', { annotations: annos });
-};
-
-toggleBtn?.addEventListener('click', () => {
-    const isDark = document.body.classList.contains('dark-mode');
-    updateAnnotationColors(isDark);
-});
-});
-</script>
-    {% if notifications %}
-        <div class="notification">
-            <strong>Smart Notifications:</strong>
-            <ul>
-                {% for note in notifications %}
-                    <li>{{ note }}</li>
-                {% endfor %}
-            </ul>
+        <!-- 💰 Live M-Pesa Balance -->
+        <div class="row justify-content-center mb-3">
+          <div class="col-lg-6 col-md-8">
+            <div class="card text-center shadow-sm border-0">
+              <div class="card-body">
+                <h5 class="card-title mb-2">💰 Live M-Pesa Business Balance</h5>
+                <h3 id="balance-amount" class="fw-bold text-success">Loading...</h3>
+                <p id="balance-updated" class="text-muted small mt-2">Last updated: just now</p>
+              </div>
+            </div>
+          </div>
         </div>
-    {% endif %}
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+        <!-- KPI CARDS -->
+        <div id="kpi-row" class="row g-3 text-center mb-3">
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm p-3 kpi-card" data-kpi="total_profit">
+              <h5 class="card-title mb-1">Total Profit</h5>
+              <p class="card-value h4 mb-0">{{ kpis.total_profit }} KSh</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm p-3 kpi-card" data-kpi="avg_profit">
+              <h5 class="card-title mb-1">Average Profit</h5>
+              <p class="card-value h4 mb-0">{{ kpis.avg_profit }} KSh</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm p-3 kpi-card" data-kpi="profit_growth">
+              <h5 class="card-title mb-1">Profit Growth</h5>
+              <p class="card-value h4 mb-0">{{ kpis.profit_growth }}</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm p-3 kpi-card" data-kpi="largest_expense">
+              <h5 class="card-title mb-1">Largest Expense</h5>
+              <p class="card-value h4 mb-0">{{ kpis.largest_expense }}</p>
+            </div>
+          </div>
+        </div>
 
-    <!-- ✅ Uploaded Files -->
-    <div class="file-list">
-        <h2>Your Uploaded Files:</h2>
-        {% if files %}
-            <ul>
-                {% for file in files %}
-                    <li><a href="{{ url_for('view_file', filename=file) }}">{{ file }}</a></li>
-                {% endfor %}
+        <!-- REVENUE FORECAST (TEXT LIST) -->
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <h4 class="card-title mb-3">📈 Revenue Forecast (Next 6 Months)</h4>
+            <ul class="mb-0">
+              {% for item in forecast_data %}
+                <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
+              {% endfor %}
             </ul>
-        {% else %}
-            <p>No files uploaded yet.</p>
+          </div>
+        </div>
+
+        <!-- LIVE FINANCIAL PERFORMANCE (LINE CHART) -->
+        <div class="card mt-3 p-3 shadow rounded-3">
+          <h4 class="mb-3 text-center">📉 Live Financial Performance</h4>
+          <div id="liveChart" style="height: 400px;"></div>
+        </div>
+
+        <!-- FORECAST CHART + METRIC DROPDOWN -->
+        <div class="card mt-4 p-3 shadow rounded-3">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <h4 class="mb-0">📊 Forecast Explorer</h4>
+            <div>
+              <label for="metricSelect" class="me-2">Metric:</label>
+              <select id="metricSelect" class="form-select d-inline-block w-auto">
+                <option value="predicted_revenue">Revenue</option>
+                <option value="profit">Profit</option>
+                <option value="expenses">Expenses</option>
+              </select>
+            </div>
+          </div>
+          <div id="forecastPlotly" style="width: 100%; height: 420px;"></div>
+        </div>
+
+        <!-- SMART AI NOTIFICATIONS -->
+        {% if notifications %}
+          <div class="card mt-4 p-3 shadow notification">
+            <h4 class="mb-2">🧠 Smart Insights</h4>
+            <ul class="mb-0">
+              {% for note in notifications %}
+                <li>{{ note }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         {% endif %}
-    </div>
 
-<!-- 📊 Revenue vs Expenses Graph -->
-<div class="card">
-    <h3 style="text-align:center;">Financial Performance</h3>
-    <div>{{ graph_html|safe }}</div>
-</div>
+        <!-- UPLOADED FILES -->
+        <div class="card mt-4 p-3 shadow-sm">
+          <h4>Your Uploaded Files</h4>
+          {% if files %}
+            <ul class="mb-0">
+              {% for file in files %}
+                <li><a href="{{ url_for('view_file', filename=file) }}">{{ file }}</a></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="mb-0 text-muted">No files uploaded yet.</p>
+          {% endif %}
+        </div>
 
- <!-- ✅ Feature Buttons (Bootstrap Responsive Layout) -->
-<div class="container my-4">
-  <div class="row g-2">
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('upload') }}" class="btn btn-primary w-100">Upload New CSV</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('manual_entry') }}" class="btn btn-success w-100">Manual Entry</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('use_demo_data') }}" class="btn btn-info w-100">Use Demo Data</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('profile') }}" class="btn btn-secondary w-100">My Profile</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('ask') }}" class="btn btn-info w-100">Business Assistant</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('admin') }}" class="btn btn-warning w-100">Admin Panel</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('profit_calculator') }}" class="btn btn-success w-100">Profit Calculator</a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning w-100">Trend Forecaster</a>
-    </div>
+        <!-- STATIC GRAPH (graph_html) -->
+        <div class="card mt-4 p-3 shadow-sm">
+          <h4 class="text-center mb-3">📊 Financial Performance (Static View)</h4>
+          <div>{{ graph_html | safe }}</div>
+        </div>
 
-    <!-- 📄 Download Report Button -->
-    <div class="col-md-3 col-sm-6">
-      <form action="{{ url_for('download_report') }}" method="POST" class="d-grid">
-        <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
-        <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
-        <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
-        <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
-        <input type="hidden" name="advice" value="{{ advice }}">
-        <button type="submit" class="btn btn-secondary w-100">📄 Download Report</button>
-      </form>
-    </div>
-  </div>
-</div>
+        <!-- FEATURE BUTTONS -->
+        <div class="card mt-4 p-3 shadow-sm">
+          <h4 class="mb-3 text-center">Financial Tools</h4>
+          <div class="row g-2">
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('upload') }}" class="btn btn-primary w-100">Upload New CSV</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('manual_entry') }}" class="btn btn-success w-100">Manual Entry</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('use_demo_data') }}" class="btn btn-info w-100">Use Demo Data</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('profile') }}" class="btn btn-secondary w-100">My Profile</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('ask') }}" class="btn btn-info w-100">Business Assistant</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('admin') }}" class="btn btn-warning w-100">Admin Panel</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('profit_calculator') }}" class="btn btn-success w-100">Profit Calculator</a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <a href="{{ url_for('trend_forecaster') }}" class="btn btn-warning w-100">Trend Forecaster</a>
+            </div>
 
-<form action="{{ url_for('send_report') }}" method="POST" style="margin-top: 15px;">
+            <!-- Download PDF Report -->
+            <div class="col-md-3 col-sm-6">
+              <form action="{{ url_for('download_report') }}" method="POST" class="d-grid">
+                <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+                <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
+                <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
+                <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
+                <input type="hidden" name="advice" value="{{ advice }}">
+                <button type="submit" class="btn btn-outline-secondary w-100">📄 Download Report</button>
+              </form>
+            </div>
+          </div>
+        </div>
 
-  <!-- Hidden financial data -->
-  <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
-  <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
-  <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
-  <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
-  <input type="hidden" name="advice" value="{{ advice }}">
+        <!-- SEND REPORT BY EMAIL -->
+        <div class="card mt-4 p-3 shadow-sm">
+          <h4 class="mb-3">📧 Send Latest Summary</h4>
+          <form action="{{ url_for('send_report') }}" method="POST" class="row g-2 align-items-center">
 
-  <input type="email" name="email" placeholder="Enter recipient email" required 
-         style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+            <input type="hidden" name="revenue" value="{{ kpis.total_revenue }}">
+            <input type="hidden" name="expenses" value="{{ kpis.total_expenses }}">
+            <input type="hidden" name="profit" value="{{ kpis.total_profit }}">
+            <input type="hidden" name="margin" value="{{ kpis.profit_margin }}">
+            <input type="hidden" name="advice" value="{{ advice }}">
 
-  <button type="submit" class="btn btn-info">📧 Send Report</button>
-</form>    
+            <div class="col-md-5 col-sm-8">
+              <input type="email" name="email" class="form-control" placeholder="Recipient email" required>
+            </div>
+            <div class="col-md-3 col-sm-4">
+              <button type="submit" class="btn btn-info w-100">📧 Send Report</button>
+            </div>
+          </form>
+        </div>
 
+        <!-- EXTRA: LIVE PERFORMANCE (second chart) -->
+        <div class="card mt-4 p-3 shadow-sm">
+          <h4 class="mb-3">📊 Live Performance (Revenue vs Expenses)</h4>
+          <div id="performanceChart" style="height:400px;"></div>
+        </div>
 
+        <!-- FOOTER -->
+        <footer class="text-center py-3 mt-4 text-muted border-top">
+          © {{ current_year }} OptiGain. All rights reserved.
+        </footer>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-  <div class="container-fluid d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-2">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" height="40">
-      <href="{{ url_for ('dashboard') }}" class="navbar-brand mb-0 hi text-white text-decoration-none">OptiGain<a>
-    </div>
-    <form action="{{ url_for('logout') }}" method="get" class="m-0">
-      <button type="submit" class="btn btn-light btn-sm">Logout</button>
-    </form>
-  </div>
-</nav>
+    </div> <!-- /container-fluid -->
+</div> <!-- /main-content -->
 
+<!-- ======================= SCRIPTS ======================= -->
 <script>
+// 🌙 Dark Mode + persistence
 document.addEventListener('DOMContentLoaded', () => {
   const toggleBtn = document.getElementById('darkToggle');
   const savedTheme = localStorage.getItem('theme');
-
-  // Apply saved mode on load
   if (savedTheme === 'dark') {
     document.body.classList.add('dark-mode');
   }
-
-  // Toggle and save mode
   toggleBtn?.addEventListener('click', () => {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 });
-</script>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  // 💰 Fetch and update M-Pesa balance
-  async function fetchMpesaBalance() {
-    try {
-      const res = await fetch("/api/mpesa_balance");
-      const data = await res.json();
-      const balanceElement = document.getElementById("balance-amount");
-      if (data.balance) {
-        balanceElement.textContent = `${data.balance.toLocaleString()} KSh`;
-      } else {
-        balanceElement.textContent = "Unavailable";
-      }
-    } catch (err) {
-      console.error("⚠️ Failed to fetch M-Pesa balance:", err);
-      document.getElementById("balance-amount").textContent = "Unavailable";
+// 💰 M-Pesa Balance
+async function fetchMpesaBalance() {
+  try {
+    const res = await fetch("/api/mpesa_balance");
+    const data = await res.json();
+    const balanceEl = document.getElementById("balance-amount");
+    const timeEl = document.getElementById("balance-updated");
+
+    if (data.Result && data.Result.ResultParameters) {
+      const val = data.Result.ResultParameters.ResultParameter[0].Value;
+      balanceEl.textContent = `${val} KSh`;
+    } else if (data.balance) {
+      balanceEl.textContent = `${Number(data.balance).toLocaleString()} KSh`;
+    } else {
+      balanceEl.textContent = "Unavailable";
     }
+    if (timeEl) {
+      timeEl.textContent = "Last updated: " + new Date().toLocaleTimeString();
+    }
+  } catch (err) {
+    console.error("⚠️ Failed to fetch M-Pesa balance:", err);
+    document.getElementById("balance-amount").textContent = "Unavailable";
+  }
+}
+
+// 🔢 KPI Summary
+async function loadKpiSummary() {
+  try {
+    const res = await fetch("/api/transactions_summary");
+    const data = await res.json();
+    if (data.error) return;
+
+    document.querySelectorAll("#kpi-row .kpi-card").forEach(card => {
+      const key = card.getAttribute("data-kpi");
+      const valueEl = card.querySelector(".card-value");
+      if (!valueEl) return;
+
+      if (key === "total_profit" && data.total_profit != null) {
+        valueEl.textContent = `${Number(data.total_profit).toLocaleString()} KSh`;
+      }
+      if (key === "avg_profit" && data.avg_profit != null) {
+        valueEl.textContent = `${Number(data.avg_profit).toLocaleString()} KSh`;
+      }
+      if (key === "profit_growth" && data.profit_growth != null) {
+        valueEl.textContent = `${data.profit_growth}`;
+      }
+      if (key === "largest_expense" && data.largest_expense != null) {
+        valueEl.textContent = `${Number(data.largest_expense).toLocaleString()} KSh`;
+      }
+    });
+  } catch (err) {
+    console.error("⚠️ Failed to load KPI summary:", err);
+  }
+}
+
+// 📉 Live Financial Performance chart
+async function loadLiveChart() {
+  try {
+    const res = await fetch('/api/financial_data');
+    const data = await res.json();
+
+    const months   = data.month    || [];
+    const revenue  = data.revenue  || [];
+    const expenses = data.expenses || [];
+    const profit   = data.profit   || [];
+
+    const traces = [
+      { x: months, y: revenue,  type: 'scatter', name: 'Revenue' },
+      { x: months, y: expenses, type: 'scatter', name: 'Expenses' },
+      { x: months, y: profit,   type: 'scatter', name: 'Profit' }
+    ];
+
+    const layout = {
+      title: 'Company Financial Trends',
+      xaxis: { title: 'Period' },
+      yaxis: { title: 'Amount (KSh)' },
+      margin: { t: 40, l: 50, r: 30, b: 50 }
+    };
+
+    Plotly.newPlot('liveChart', traces, layout);
+  } catch (err) {
+    console.error("⚠️ Failed to load live chart:", err);
+  }
+}
+
+// 📊 Forecast chart + AI annotations
+function initForecastChart() {
+  const raw = '{{ forecast_chart | safe }}';
+  let forecastData = [];
+  try { forecastData = JSON.parse(raw) || []; } catch(e) { forecastData = []; }
+
+  const labels   = forecastData.map(i => i.date);
+  const revenue  = forecastData.map(i => Number(i.predicted_revenue || 0));
+  const profit   = forecastData.map(i => Number(i.profit || 0));
+  const expenses = forecastData.map(i => Number(i.expenses || 0));
+
+  const metricMap = { predicted_revenue: revenue, profit, expenses };
+
+  const initial = {
+    x: labels,
+    y: revenue,
+    type: 'bar',
+    name: 'Revenue'
+  };
+
+  const isDark = document.body.classList.contains('dark-mode');
+  const baseLayout = {
+    title: 'Financial Forecast',
+    plot_bgcolor: isDark ? '#222' : '#fff',
+    paper_bgcolor: isDark ? '#222' : '#fff',
+    font: { color: isDark ? '#fff' : '#000' }
+  };
+
+  Plotly.newPlot('forecastPlotly', [initial], baseLayout);
+
+  // AI annotations
+  const notificationsList = {{ notifications | tojson | safe }};
+  let annotations = [];
+  if (notificationsList && notificationsList.length > 0 && labels.length > 0) {
+    annotations = notificationsList.map((note, idx) => {
+      const xIndex = idx % labels.length;
+      return {
+        x: labels[xIndex],
+        y: revenue[xIndex] || 0,
+        text: note.length > 60 ? note.slice(0, 60) + "…" : note,
+        showarrow: true,
+        arrowhead: 5,
+        ax: 0,
+        ay: -40,
+        bgcolor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,0,0.2)',
+        bordercolor: '#ffcc00',
+        font: { color: isDark ? '#fff' : '#222', size: 12 }
+      };
+    });
+    Plotly.relayout('forecastPlotly', { annotations });
   }
 
-  // 📊 Fetch and update live transaction summary (real DB)
-  async function loadTransactionSummary() {
-    try {
-      const res = await fetch("/api/transactions_summary");
-      const data = await res.json();
+  // metric dropdown
+  const select = document.getElementById('metricSelect');
+  select?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    const newY = metricMap[val] || revenue;
+    Plotly.update('forecastPlotly',
+      { y: [newY], name: val },
+      { title: `Financial Forecast - ${val.replace('_',' ').toUpperCase()}` }
+    );
+  });
 
-      if (data.error) {
-        console.warn("⚠️ Error loading summary:", data.error);
-        return;
-      }
+  // react to dark-mode toggle
+  const toggleBtn = document.getElementById('darkToggle');
+  toggleBtn?.addEventListener('click', () => {
+    const darkNow = document.body.classList.contains('dark-mode');
+    const newLayout = {
+      plot_bgcolor: darkNow ? '#222' : '#fff',
+      paper_bgcolor: darkNow ? '#222' : '#fff',
+      font: { color: darkNow ? '#fff' : '#000' }
+    };
+    const newAnnotations = annotations.map(a => ({
+      ...a,
+      bgcolor: darkNow ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,0,0.2)',
+      font: { ...(a.font || {}), color: darkNow ? '#fff' : '#222' }
+    }));
+    Plotly.relayout('forecastPlotly', { ...newLayout, annotations: newAnnotations });
+  });
+}
 
-      document.querySelectorAll(".card").forEach(card => {
-        const title = card.querySelector("h5, h3")?.innerText?.trim();
-        const valueEl = card.querySelector("h3, p");
+// 📊 Second chart: Revenue vs Expenses only
+async function loadPerformanceChart() {
+  try {
+    const res = await fetch('/api/financial_data');
+    const data = await res.json();
 
-        if (title === "Total Profit") {
-          valueEl.innerText = `${data.total_profit?.toLocaleString() || "0"} KSh`;
-        }
-        if (title === "Average Profit") {
-          valueEl.innerText = `${data.average_profit?.toLocaleString() || "0"} KSh`;
-        }
-        if (title === "Profit Growth") {
-          valueEl.innerText = `${data.profit_growth?.toFixed(1) || 0}%`;
-        }
-        if (title === "Largest Expense") {
-          valueEl.innerText = `${data.largest_expense?.toLocaleString() || "0"} KSh`;
-        }
-      });
-    } catch (err) {
-      console.error("⚠️ Failed to load transaction summary:", err);
+    const months   = data.month    || [];
+    const revenue  = data.revenue  || [];
+    const expenses = data.expenses || [];
+
+    if (months.length === 0) {
+      document.getElementById('performanceChart').innerHTML =
+        "<p class='text-center text-muted'>No data available yet.</p>";
+      return;
     }
+
+    const trace1 = { x: months, y: revenue,  type: 'scatter', name: 'Revenue' };
+    const trace2 = { x: months, y: expenses, type: 'scatter', name: 'Expenses' };
+
+    const layout = {
+      title: 'Live Performance (Revenue vs Expenses)',
+      xaxis: { title: 'Period' },
+      yaxis: { title: 'Amount (KSh)' },
+      margin: { t: 40, l: 60, r: 30, b: 40 }
+    };
+
+    Plotly.newPlot('performanceChart', [trace1, trace2], layout);
+  } catch (err) {
+    console.error("⚠️ Failed to load performance chart:", err);
   }
+}
 
-  // ⏱ Refresh both every 20 seconds
-  loadTransactionSummary();
-  fetchMpesaBalance();
-  setInterval(loadTransactionSummary, 20000);
-  setInterval(fetchMpesaBalance, 20000);
-});
-</script>
-
-
-<script>
+// 🔁 AI insights auto-refresh (list text)
 async function loadInsights() {
   try {
     const res = await fetch('/api/ai_insights');
     const data = await res.json();
-
     const container = document.querySelector('.notification ul');
     if (container && Array.isArray(data)) {
       container.innerHTML = '';
@@ -509,114 +475,23 @@ async function loadInsights() {
   }
 }
 
-// Refresh AI insights every 20 seconds
-loadInsights();
-setInterval(loadInsights, 20000);
+// INIT
+document.addEventListener('DOMContentLoaded', () => {
+  fetchMpesaBalance();
+  loadKpiSummary();
+  loadLiveChart();
+  initForecastChart();
+  loadPerformanceChart();
+  loadInsights();
+
+  // refresh intervals
+  setInterval(fetchMpesaBalance, 20000);
+  setInterval(loadKpiSummary, 20000);
+  setInterval(loadLiveChart, 10000);
+  setInterval(loadPerformanceChart, 5 * 60 * 1000);
+  setInterval(loadInsights, 20000);
+});
 </script>
 
-<!-- 📊 Live Performance Graph (Revenue vs Expenses) -->
-<div class="card" style="margin-top: 40px;">
-    <h3>📊 Live Performance (Revenue vs Expenses)</h3>
-    <div id="performanceChart"></div>
-</div>
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
-async function loadPerformanceChart() {
-  try {
-    const res = await fetch('/api/financial_data'); // or your Google Sheets route if different
-    const data = await res.json();
-
-    // 🧩 Ensure your backend returns the correct keys: month, revenue, expenses
-    const months = data.month || [];
-    const revenue = data.revenue || [];
-    const expenses = data.expenses || [];
-
-    if (months.length === 0) {
-      document.getElementById('performanceChart').innerHTML =
-        "<p style='text-align:center; color:gray;'>No data available yet.</p>";
-      return;
-    }
-
-    const trace1 = {
-      x: months,
-      y: revenue,
-      type: 'scatter',
-      name: 'Revenue',
-      line: { color: 'green', width: 3 }
-    };
-
-    const trace2 = {
-      x: months,
-      y: expenses,
-      type: 'scatter',
-      name: 'Expenses',
-      line: { color: 'red', width: 3 }
-    };
-
-    const layout = {
-      title: '📊 Live Performance (Revenue vs Expenses)',
-      xaxis: { title: 'Month' },
-      yaxis: { title: 'Amount (KSh)' },
-      margin: { t: 40, l: 60, r: 30, b: 40 },
-      plot_bgcolor: '#f9f9f9',
-      paper_bgcolor: '#fff'
-    };
-
-    Plotly.react('performanceChart', [trace1, trace2], layout);
-  } catch (err) {
-    console.error("⚠️ Failed to load performance chart:", err);
-  }
-}
-
-// Initial load + refresh every 5 min (same as Google Sheets sync)
-loadPerformanceChart();
-setInterval(loadPerformanceChart, 5 * 60 * 1000);
-</script>
-
-<script>
-async function loadTransactionSummary() {
-  try {
-    const res = await fetch('/api/transactions_summary');
-    const data = await res.json();
-
-    if (data.error) {
-      console.warn("⚠️ Error loading summary:", data.error);
-      return;
-    }
-
-    // Dynamically update KPI cards
-    document.querySelectorAll('.kpi-card').forEach(card => {
-      const title = card.querySelector('h3').innerText.trim();
-      const valueEl = card.querySelector('p');
-
-      if (title === 'Total Profit') {
-        valueEl.innerText = `${data.total_profit?.toLocaleString() || '0'} KSh`;
-      }
-      if (title === 'Average Profit') {
-        valueEl.innerText = `${data.average_profit?.toLocaleString() || '0'} KSh`;
-      }
-      if (title === 'Profit Growth') {
-        valueEl.innerText = `${data.profit_growth?.toFixed(1) || 0}%`;
-      }
-      if (title === 'Largest Expense') {
-        valueEl.innerText = `${data.largest_expense?.toLocaleString() || '0'} KSh`;
-      }
-    });
-
-  } catch (err) {
-    console.error("⚠️ Failed to load transaction summary:", err);
-  }
-}
-
-// Load once and refresh every 30 seconds
-loadTransactionSummary();
-setInterval(loadTransactionSummary, 30000);
-</script>
-
-<footer class="text-center py-3 mt-5 text-muted border-top">
-  © {{ current_year }} OptiGain. All rights reserved.
-</footer>
-</div>
 </body>
 </html>
