@@ -433,3 +433,124 @@ body.dark-mode .results-kpi-value {
 body.dark-mode .results-kpi {
     background: #1e293b !important;
 }
+
+/* =========================================================
+   OPTIGAIN AUTH PAGES — Unified with Dashboard Theme
+   ========================================================= */
+
+/* PAGE LAYOUT */
+.auth-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--og-bg-gradient);
+    margin: 0;
+}
+
+/* AUTH CARD */
+.auth-card {
+    width: 380px;
+    padding: 34px 32px;
+    border-radius: var(--og-radius-lg);
+    text-align: center;
+    background: var(--og-surface);
+    box-shadow: var(--og-shadow-soft);
+    transition: 0.25s ease;
+}
+
+.dark-mode .auth-card {
+    background: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+}
+
+/* LOGO */
+.auth-logo {
+    width: 130px;
+    margin-bottom: 10px;
+}
+
+/* HEADINGS */
+.auth-card h2 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 22px;
+    color: var(--og-text-main);
+}
+
+.dark-mode .auth-card h2 {
+    color: #e2e8f0;
+}
+
+/* LABELS */
+.auth-card label {
+    font-weight: 600;
+    color: var(--og-text-main);
+}
+
+.dark-mode .auth-card label {
+    color: #d1d5db;
+}
+
+/* INPUTS */
+.auth-card .form-control {
+    padding: 12px;
+    border-radius: var(--og-radius-sm);
+    background: var(--og-surface-elevated);
+    border: 1px solid var(--og-border-subtle);
+    color: var(--og-text-main);
+}
+
+.dark-mode .auth-card .form-control {
+    background: #334155;
+    border-color: #475569;
+    color: #fff;
+}
+
+.auth-card .form-control:focus {
+    border-color: var(--og-primary);
+    box-shadow: 0 0 0 1px var(--og-primary-soft);
+}
+
+/* BUTTONS */
+.auth-card .btn-primary {
+    background: var(--og-primary);
+    border-radius: var(--og-radius-md);
+    padding: 12px;
+    font-weight: 600;
+}
+
+.auth-card .btn-primary:hover {
+    background: var(--og-primary-strong);
+}
+
+.dark-mode .auth-card .btn-primary {
+    background: #3b82f6;
+}
+
+/* LINKS */
+.auth-card a {
+    color: var(--og-primary);
+    font-weight: 600;
+}
+
+.dark-mode .auth-card a {
+    color: #60a5fa;
+}
+
+/* DARK MODE TOGGLE */
+.auth-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--og-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: var(--og-shadow-soft);
+}
