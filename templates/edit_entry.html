@@ -1,82 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Entry - OptiGain</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #4facfe, #00f2fe);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            padding: 30px;
-            width: 400px;
-            text-align: center;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        label {
-            float: left;
-            font-weight: bold;
-            margin: 8px 0 5px;
-            color: #444;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #4facfe;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #00c6ff;
-        }
-        a {
-            color: #4facfe;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiGain • Edit Entry</title>
+
+  <!-- Tailwind output -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
-<body>
-    <div class="container">
-        <h2>Edit Entry</h2>
-        <form method="POST">
-            <label>Month</label>
-            <input type="text" name="month" value="{{ entry.month }}" required>
 
-            <label>Revenue</label>
-            <input type="number" name="revenue" value="{{ entry.revenue }}" required>
+<body class="min-h-screen flex items-center justify-center bg-sky-50 dark:bg-slate-950 transition-colors">
 
-            <label>Expenses</label>
-            <input type="number" name="expenses" value="{{ entry.expenses }}" required>
+  <!-- Edit Card -->
+  <div
+    class="w-full max-w-md mx-4
+           bg-white dark:bg-slate-900
+           border border-slate-200 dark:border-slate-800
+           rounded-2xl shadow-lg p-8"
+  >
 
-            <label>Description</label>
-            <input type="text" name="description" value="{{ entry.description }}">
-
-            <button type="submit">Save Changes</button>
-        </form>
-        <p><a href="{{ url_for('dashboard') }}">⬅ Back to Dashboard</a></p>
+    <!-- Header -->
+    <div class="mb-6 text-center">
+      <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+        ✏ Edit Financial Entry
+      </h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+        Update the values below and save your changes
+      </p>
     </div>
+
+    <!-- Form -->
+    <form method="POST" class="space-y-4">
+
+      <!-- Month -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Month
+        </label>
+        <input
+          type="text"
+          name="month"
+          value="{{ entry.month }}"
+          required
+          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                 bg-white dark:bg-slate-800
+                 px-3 py-2 text-sm
+                 text-slate-900 dark:text-white
+                 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <!-- Revenue -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Revenue
+        </label>
+        <input
+          type="number"
+          name="revenue"
+          value="{{ entry.revenue }}"
+          required
+          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                 bg-white dark:bg-slate-800
+                 px-3 py-2 text-sm
+                 text-slate-900 dark:text-white
+                 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+      </div>
+
+      <!-- Expenses -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Expenses
+        </label>
+        <input
+          type="number"
+          name="expenses"
+          value="{{ entry.expenses }}"
+          required
+          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                 bg-white dark:bg-slate-800
+                 px-3 py-2 text-sm
+                 text-slate-900 dark:text-white
+                 focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          Description
+        </label>
+        <input
+          type="text"
+          name="description"
+          value="{{ entry.description }}"
+          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                 bg-white dark:bg-slate-800
+                 px-3 py-2 text-sm
+                 text-slate-900 dark:text-white
+                 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pt-4">
+        <button
+          type="submit"
+          class="flex-1 rounded-lg bg-blue-600 hover:bg-blue-700
+                 text-white font-medium py-2 transition"
+        >
+          Save Changes
+        </button>
+
+        <a
+          href="{{ url_for('dashboard') }}"
+          class="flex-1 rounded-lg
+                 border border-slate-300 dark:border-slate-700
+                 text-slate-700 dark:text-slate-200
+                 text-center py-2
+                 hover:bg-slate-100 dark:hover:bg-slate-800
+                 transition"
+        >
+          Cancel
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+
 </body>
 </html>

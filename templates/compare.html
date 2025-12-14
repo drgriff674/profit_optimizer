@@ -1,38 +1,105 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-    <title>Compare Financials</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body class="container mt-5">
-    <h2>📊 Comparison of Financial Files</h2>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary mb-3">⬅ Back to Dashboard</a>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiGain • Compare Financials</title>
 
-    <table class="table table-bordered">
-        <thead class="thead-dark">
+  <!-- Tailwind output -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+
+  <!-- Top Bar -->
+  <header class="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-900 shadow">
+    <h1 class="text-xl font-semibold text-slate-900 dark:text-white">
+      📊 Financial Comparison
+    </h1>
+
+    <a
+      href="{{ url_for('dashboard') }}"
+      class="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700
+             hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+    >
+      ← Dashboard
+    </a>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Card -->
+    <section
+      class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800
+             rounded-2xl shadow-sm overflow-hidden"
+    >
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+          Comparison of Uploaded Financial Files
+        </h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Review revenue, expenses, profit, and margins side by side.
+        </p>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+          <thead class="bg-slate-50 dark:bg-slate-800">
             <tr>
-                <th>File</th>
-                <th>Total Revenue</th>
-                <th>Total Expenses</th>
-                <th>Profit</th>
-                <th>Profit Margin (%)</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                File
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Revenue
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Expenses
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Profit
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Margin
+              </th>
             </tr>
-        </thead>
-        <tbody>
+          </thead>
+
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
             {% for item in summaries %}
-                <tr>
-                    <td>{{ item.filename }}</td>
-                    {% if item.error %}
-                        <td colspan="4" class="text-danger">{{ item.error }}</td>
-                    {% else %}
-                        <td>${{ item.revenue }}</td>
-                        <td>${{ item.expenses }}</td>
-                        <td>${{ item.profit }}</td>
-                        <td>{{ item.margin }}%</td>
-                    {% endif %}
-                </tr>
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+              <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                {{ item.filename }}
+              </td>
+
+              {% if item.error %}
+                <td colspan="4" class="px-6 py-4 text-red-600 dark:text-red-400 font-semibold">
+                  {{ item.error }}
+                </td>
+              {% else %}
+                <td class="px-6 py-4">KSh {{ item.revenue }}</td>
+                <td class="px-6 py-4">KSh {{ item.expenses }}</td>
+                <td class="px-6 py-4 font-semibold text-green-600 dark:text-green-400">
+                  KSh {{ item.profit }}
+                </td>
+                <td class="px-6 py-4">
+                  {{ item.margin }}%
+                </td>
+              {% endif %}
+            </tr>
             {% endfor %}
-        </tbody>
-    </table>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 dark:text-slate-400 py-6">
+    © {{ current_year }} OptiGain
+  </footer>
+
 </body>
 </html>

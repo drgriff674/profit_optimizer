@@ -1,233 +1,206 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel - OptiGain</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>OptiGain • Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ✅ Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #4facfe, #00f2fe);
-      margin: 0;
-      min-height: 100vh;
-      transition: background 0.4s, color 0.4s;
-    }
-
-    nav {
-      background-color: #0275d8;
-      color: white;
-      padding: 12px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    nav img {
-      height: 45px;
-      margin-right: 10px;
-    }
-
-    nav h2 {
-      margin: 0;
-      font-weight: 600;
-      font-size: 22px;
-    }
-
-    .admin-container {
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      max-width: 900px;
-      margin: 60px auto;
-    }
-
-    h1 {
-      color: #0275d8;
-      font-weight: 600;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-
-    h2 {
-      margin-top: 30px;
-      color: #444;
-      font-size: 20px;
-    }
-
-    .stats-box {
-      background: #e9f7ff;
-      border-left: 5px solid #0275d8;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 25px;
-      font-size: 16px;
-    }
-
-    .btn-action {
-      margin: 3px;
-      padding: 6px 12px;
-      font-size: 14px;
-      border-radius: 6px;
-    }
-
-    .dark-toggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #0275d8;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 45px;
-      height: 45px;
-      font-size: 20px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 1000;
-    }
-
-    .dark-toggle:hover {
-      background: #025bb5;
-    }
-
-    /* 🌙 Dark Mode */
-    body.dark-mode {
-      background: #121212;
-      color: #e0e0e0;
-    }
-
-    body.dark-mode nav {
-      background: #1f1f1f;
-    }
-
-    body.dark-mode .admin-container {
-      background: #1e1e1e;
-      color: #e0e0e0;
-      box-shadow: 0 6px 20px rgba(255,255,255,0.08);
-    }
-
-    body.dark-mode .stats-box {
-      background: #1a1a1a;
-      border-left-color: #00c6ff;
-    }
-
-    body.dark-mode table {
-      color: #fff;
-      background: #222;
-    }
-
-    body.dark-mode .btn {
-      color: #fff !important;
-    }
-
-    footer {
-      text-align: center;
-      color: #777;
-      font-size: 13px;
-      margin-top: 30px;
-    }
-  </style>
+  <!-- Tailwind output -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body>
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
 
-  <!-- 🌙 Dark Mode Button -->
-  <button id="darkToggle" class="dark-toggle">🌙</button>
-
-  <!-- ✅ Navbar -->
-  <nav>
-    <div class="d-flex align-items-center">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo">
-      <h2>OptiGain Admin Panel</h2>
-    </div>
-    <div>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-sm">⬅ Dashboard</a>
-    </div>
-  </nav>
-
-  <!-- ✅ Main Admin Container -->
-  <div class="admin-container">
-    <h1>🔑 Administrator Dashboard</h1>
-    <p class="text-center text-muted">Welcome, <strong>{{ user }}</strong></p>
-
-    <!-- 📊 System Stats -->
-    <div class="stats-box">
-      <strong>Total Registered Users:</strong> {{ total_users }}
+  <!-- Top Bar -->
+  <header class="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-900 shadow">
+    <div class="flex items-center gap-3">
+      <img
+        src="{{ url_for('static', filename='logo.png') }}"
+        alt="OptiGain"
+        class="w-10 h-10 rounded"
+      />
+      <h1 class="text-xl font-semibold text-slate-900 dark:text-white">
+        Admin Panel
+      </h1>
     </div>
 
-    <!-- 🧠 AI Control Section -->
-    <h2>🤖 AI Feature Control</h2>
-    <form action="{{ url_for('toggle_ai') }}" method="POST" class="mb-4">
-      <button type="submit" class="btn {{ 'btn-danger' if ai_disabled else 'btn-success' }}">
-        {{ 'Enable AI for Users' if ai_disabled else 'Disable AI for Users' }}
+    <div class="flex items-center gap-3">
+      <a
+        href="{{ url_for('dashboard') }}"
+        class="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700
+               hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+      >
+        ← Dashboard
+      </a>
+
+      <button
+        id="darkToggle"
+        aria-pressed="false"
+        title="Toggle theme"
+        class="w-10 h-10 rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition"
+      >
+        🌙
       </button>
-    </form>
+    </div>
+  </header>
 
-    <!-- 📩 Broadcast Reports -->
-    <h2>📩 Weekly Reports</h2>
-    <form action="{{ url_for('send_reports') }}" method="POST" class="mb-4">
-      <button type="submit" class="btn btn-primary">📤 Send Weekly AI Reports to All Users</button>
-    </form>
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
 
-    <!-- 👥 User Management -->
-    <h2>👥 Registered Users</h2>
-    {% if users %}
-      <div class="table-responsive">
-        <table class="table table-bordered align-middle">
-          <thead class="table-primary">
-            <tr>
-              <th>Username</th>
-              <th>Role</th>
-              <th>Actions</th>
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Administrator Dashboard
+      </h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        Logged in as <strong>{{ user }}</strong>
+      </p>
+    </div>
+
+    <!-- Stats -->
+    <div class="mb-8">
+      <div
+        class="rounded-xl border border-slate-200 dark:border-slate-800
+               bg-white dark:bg-slate-900 p-5 shadow-sm"
+      >
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Total Registered Users
+        </p>
+        <p class="text-2xl font-bold text-slate-900 dark:text-white">
+          {{ total_users }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+      <!-- AI Control -->
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-3 text-slate-900 dark:text-white">
+          AI Feature Control
+        </h3>
+
+        <form method="POST" action="{{ url_for('toggle_ai') }}">
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-lg font-medium text-white
+              {% if ai_disabled %}
+                bg-green-600 hover:bg-green-700
+              {% else %}
+                bg-red-600 hover:bg-red-700
+              {% endif %}
+              transition"
+          >
+            {{ 'Enable AI for Users' if ai_disabled else 'Disable AI for Users' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Reports -->
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-3 text-slate-900 dark:text-white">
+          Weekly Reports
+        </h3>
+
+        <form method="POST" action="{{ url_for('send_reports') }}">
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-lg bg-blue-600 text-white font-medium
+                   hover:bg-blue-700 transition"
+          >
+            Send Weekly AI Reports
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- User Management -->
+    <section class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+
+      <h3 class="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
+        User Management
+      </h3>
+
+      {% if users %}
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-700 text-left">
+              <th class="py-3 px-2 font-semibold">Username</th>
+              <th class="py-3 px-2 font-semibold">Role</th>
+              <th class="py-3 px-2 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+
             {% for username, info in users.items() %}
             <tr>
-              <td>{{ username }}</td>
-              <td>{{ info.role }}</td>
-              <td>
-                <form action="{{ url_for('delete_user', username=username) }}" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-action">🗑 Delete</button>
-                </form>
-                <form action="{{ url_for('promote_user', username=username) }}" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-success btn-action">⭐ Promote</button>
-                </form>
-                <form action="{{ url_for('reset_password', username=username) }}" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-info btn-action">🔁 Reset</button>
-                </form>
+              <td class="py-3 px-2">{{ username }}</td>
+              <td class="py-3 px-2 capitalize">{{ info.role }}</td>
+              <td class="py-3 px-2">
+                <div class="flex flex-wrap gap-2">
+
+                  <form action="{{ url_for('delete_user', username=username) }}" method="POST">
+                    <button class="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700">
+                      Delete
+                    </button>
+                  </form>
+
+                  <form action="{{ url_for('promote_user', username=username) }}" method="POST">
+                    <button class="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700">
+                      Promote
+                    </button>
+                  </form>
+
+                  <form action="{{ url_for('reset_password', username=username) }}" method="POST">
+                    <button class="px-3 py-1.5 text-xs rounded bg-sky-600 text-white hover:bg-sky-700">
+                      Reset
+                    </button>
+                  </form>
+
+                </div>
               </td>
             </tr>
             {% endfor %}
+
           </tbody>
         </table>
       </div>
-    {% else %}
-      <p class="text-muted">No registered users yet.</p>
-    {% endif %}
+      {% else %}
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          No registered users yet.
+        </p>
+      {% endif %}
 
-    <div class="text-center mt-4">
-      <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">⬅ Back to Dashboard</a>
-    </div>
-  </div>
+    </section>
 
-  <footer>© {{ current_year }} OptiGain | Admin Panel</footer>
+  </main>
 
-  <!-- 🌙 Dark Mode Script -->
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 dark:text-slate-400 py-6">
+    © {{ current_year }} OptiGain • Admin Panel
+  </footer>
+
+  <!-- Dark Mode Script (shared system) -->
   <script>
-    const darkToggle = document.getElementById('darkToggle');
-    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById("darkToggle");
+      const saved = localStorage.getItem("theme");
 
-    darkToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      if (saved === "dark") {
+        document.documentElement.classList.add("dark");
+        toggle.setAttribute("aria-pressed", "true");
+      }
+
+      toggle.addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+        toggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+      });
     });
   </script>
+
 </body>
 </html>

@@ -1,136 +1,155 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
-  <title>OptiGain Profit Calculator</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
-    .calculator-container {
-      max-width: 500px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-    .calculator-container h2 {
-      color: #0275d8;
-      margin-bottom: 20px;
-    }
-    .calc-input {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-    .result-box {
-      background: #e6f3ff;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-      font-weight: bold;
-      color: #0275d8;
-      font-size: 18px;
-    }
-    .currency-select {
-      width: 95%;
-      padding: 10px;
-      border-radius: 8px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-    }
-    .btn {
-      width: 95%;
-      margin-top: 15px;
-    }
-    body.dark-mode .calculator-container {
-      background: #1e1e1e;
-      color: #fff;
-    }
-    body.dark-mode .result-box {
-      background: #333;
-      color: #00f2fe;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OptiGain • Profit Calculator</title>
+
+  <!-- Tailwind CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body>
-  <!-- Navbar -->
-  <nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
-      <h2 style="margin:0;">OptiGain</h2>
-    </div>
-    <div>
-      <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
-    </div>
-  </nav>
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
 
-  <!-- Calculator -->
-  <div class="calculator-container">
-    <h2>📊 Profit Calculator</h2>
-    <form id="profitForm" method="POST">
-      <input type="number" step="0.01" name="revenue" id="revenue" class="calc-input" placeholder="Enter Revenue" required>
-      <input type="number" step="0.01" name="expenses" id="expenses" class="calc-input" placeholder="Enter Expenses" required>
+<!-- HEADER -->
+<header class="flex items-center justify-between px-6 py-4
+               bg-white dark:bg-slate-900
+               border-b border-slate-200 dark:border-slate-800">
 
-      <select id="currency" class="currency-select">
+  <div class="flex items-center gap-3">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="h-8" alt="OptiGain">
+    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+      Profit Calculator
+    </h1>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('dashboard') }}"
+       class="text-sm font-medium text-slate-600 dark:text-slate-300
+              hover:text-blue-600 dark:hover:text-blue-400 transition">
+      ⬅ Dashboard
+    </a>
+
+    <button id="darkToggle"
+            class="w-9 h-9 rounded-full bg-blue-600 text-white shadow">
+      🌙
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="flex items-center justify-center px-4 py-10">
+  <section class="w-full max-w-md
+                   bg-white dark:bg-slate-900
+                   border border-slate-200 dark:border-slate-800
+                   rounded-xl shadow p-6">
+
+    <h2 class="text-2xl font-bold text-center text-slate-900 dark:text-white">
+      📊 Profit Calculator
+    </h2>
+
+    <p class="text-sm text-center text-slate-600 dark:text-slate-400 mt-2 mb-6">
+      Calculate net profit and convert currencies instantly.
+    </p>
+
+    <!-- FORM -->
+    <div class="space-y-4">
+
+      <input id="revenue" type="number" step="0.01" placeholder="Revenue"
+        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
+               bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+        required>
+
+      <input id="expenses" type="number" step="0.01" placeholder="Expenses"
+        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
+               bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+        required>
+
+      <select id="currency"
+        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
+               bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
         <option value="USD">USD ($)</option>
         <option value="KES">KES (KSh)</option>
         <option value="EUR">EUR (€)</option>
         <option value="GBP">GBP (£)</option>
       </select>
 
-      <button type="submit" class="btn btn-primary">Calculate Profit</button>
-    </form>
-
-    <div class="result-box" id="resultBox" style="display:none;">
-      ✅ Profit: <span id="profitValue"></span>
+      <button id="calculateBtn"
+        class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700
+               text-white font-semibold transition">
+        Calculate Profit
+      </button>
     </div>
-<!-- ✅ Add Back to Dashboard button -->
-<div style="margin-top:30px;">
-  <a href="{{ url_for('dashboard') }}" class="btn btn-primary">⬅ Back to Dashboard</a>
-</div>
-  </div>
 
-  <button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
+    <!-- RESULT -->
+    <div id="resultBox"
+      class="hidden mt-6 rounded-lg p-4 text-center
+             bg-blue-50 dark:bg-blue-900/30
+             border border-blue-200 dark:border-blue-800">
 
-  <script>
-    const rates = {
-      USD: 1,
-      KES: 128.5,
-      EUR: 0.93,
-      GBP: 0.81
-    };
+      <p class="text-sm text-blue-700 dark:text-blue-300">Net Profit</p>
+      <p id="profitValue"
+         class="text-2xl font-bold text-blue-600 dark:text-blue-400"></p>
+    </div>
 
-    document.getElementById('profitForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const revenue = parseFloat(document.getElementById('revenue').value);
-      const expenses = parseFloat(document.getElementById('expenses').value);
-      const currency = document.getElementById('currency').value;
+  </section>
+</main>
 
-      if (isNaN(revenue) || isNaN(expenses)) {
-        alert('Please enter valid numbers');
-        return;
-      }
+<!-- SCRIPTS -->
+<script>
+  /* ===== DARK MODE ===== */
+  const toggle = document.getElementById("darkToggle");
 
-      const profitUSD = revenue - expenses;
-      const convertedProfit = profitUSD * rates[currency];
+  if (localStorage.getItem("theme") === "dark") {
+    document.documentElement.classList.add("dark");
+  }
 
-      document.getElementById('resultBox').style.display = 'block';
-      document.getElementById('profitValue').textContent = 
-        `${convertedProfit.toFixed(2)} ${currency}`;
-    });
+  toggle.addEventListener("click", () => {
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem(
+      "theme",
+      document.documentElement.classList.contains("dark") ? "dark" : "light"
+    );
+  });
 
-    // Dark mode toggle
-    const darkToggle = document.getElementById('darkToggle');
-    if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
-    darkToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    });
-  </script>
+  /* ===== PROFIT CALCULATOR ===== */
+  const rates = {
+    USD: 1,
+    KES: 128.5,
+    EUR: 0.93,
+    GBP: 0.81
+  };
+
+  let profitUSD = null;
+
+  const calculateBtn = document.getElementById("calculateBtn");
+  const resultBox = document.getElementById("resultBox");
+  const profitValue = document.getElementById("profitValue");
+  const currencySelect = document.getElementById("currency");
+
+  function updateDisplay() {
+    const currency = currencySelect.value;
+    const converted = profitUSD * rates[currency];
+    profitValue.textContent = converted.toFixed(2) + " " + currency;
+  }
+
+  calculateBtn.addEventListener("click", () => {
+    const revenue = Number(document.getElementById("revenue").value);
+    const expenses = Number(document.getElementById("expenses").value);
+
+    if (isNaN(revenue) || isNaN(expenses)) return;
+
+    profitUSD = revenue - expenses;
+    resultBox.classList.remove("hidden");
+    updateDisplay();
+  });
+
+  currencySelect.addEventListener("change", () => {
+    if (profitUSD !== null) {
+      updateDisplay();
+    }
+  });
+</script>
+
 </body>
 </html>

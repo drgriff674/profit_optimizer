@@ -1,17 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-    <title>File Comparison</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiGain • File Comparison</title>
+
+  <!-- Tailwind output -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
-<body>
-    <h2>Comparison Between Two Financial Reports</h2>
-    <div>
+
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+
+  <!-- Header -->
+  <header class="flex items-center justify-between px-6 py-4 bg-white dark:bg-slate-900 shadow">
+    <h1 class="text-xl font-semibold text-slate-900 dark:text-white">
+      📊 Financial Report Comparison
+    </h1>
+
+    <a
+      href="{{ url_for('dashboard') }}"
+      class="px-4 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700
+             hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+    >
+      ← Dashboard
+    </a>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- Comparison Card -->
+    <section
+      class="bg-white dark:bg-slate-900
+             border border-slate-200 dark:border-slate-800
+             rounded-2xl shadow-sm overflow-hidden"
+    >
+      <!-- Card Header -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+          Comparison Between Financial Reports
+        </h2>
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          Side-by-side financial performance overview.
+        </p>
+      </div>
+
+      <!-- Table -->
+      <div class="p-6 overflow-x-auto">
         {{ table_html | safe }}
-    </div>
-<div class="btn-group mt-3">
-    <a href="{{ url_for('download_comparison_csv') }}" class="btn btn-success">⬇ Download as CSV</a>
-    <a href="{{ url_for('download_comparison_pdf') }}" class="btn btn-primary">⬇ Download as PDF</a>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">⬅ Back to Dashboard</a>
-</div>
+      </div>
+
+      <!-- Action Bar -->
+      <div
+        class="px-6 py-4 border-t border-slate-200 dark:border-slate-800
+               flex flex-col sm:flex-row gap-3 justify-between items-center"
+      >
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Export comparison for reporting or offline review
+        </p>
+
+        <div class="flex flex-wrap gap-2">
+          <a
+            href="{{ url_for('download_comparison_csv') }}"
+            class="px-4 py-2 text-sm font-medium rounded-lg
+                   bg-green-600 hover:bg-green-700 text-white transition"
+          >
+            ⬇ CSV
+          </a>
+
+          <a
+            href="{{ url_for('download_comparison_pdf') }}"
+            class="px-4 py-2 text-sm font-medium rounded-lg
+                   bg-blue-600 hover:bg-blue-700 text-white transition"
+          >
+            ⬇ PDF
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 dark:text-slate-400 py-6">
+    © {{ current_year }} OptiGain
+  </footer>
+
 </body>
 </html>

@@ -1,149 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <title>OptiGain Trend Forecaster</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <style>
-    .forecaster-container {
-      max-width: 700px;
-      margin: 60px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-      text-align: center;
-    }
-    .forecaster-container h2 {
-      color: #0275d8;
-      margin-bottom: 20px;
-    }
-    .upload-input {
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 16px;
-      width: 90%;
-    }
-    .btn {
-      width: 95%;
-      margin-top: 15px;
-    }
-    .chart-container {
-      margin-top: 30px;
-      background: #f9f9f9;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .forecast-img {
-      margin-top: 20px;
-      border-radius: 10px;
-      max-width: 100%;
-      height: auto;
-    }
-    body.dark-mode .forecaster-container {
-      background: #1e1e1e;
-      color: #fff;
-    }
-    body.dark-mode .chart-container {
-      background: #222;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OptiGain • Trend Forecaster</title>
+
+    <!-- Tailwind output -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+
+    <!-- Plotly (kept for future interactive charts if needed) -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
-<body>
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
 
-<!-- Navbar -->
-<nav style="background-color:#0275d8; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; color:white;">
-  <div style="display:flex; align-items:center; gap:10px;">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain Logo" style="height:40px;">
-    <h2 style="margin:0;">OptiGain</h2>
+<!-- HEADER -->
+<header
+  class="flex items-center justify-between px-6 py-4
+         bg-white dark:bg-slate-900
+         border-b border-slate-200 dark:border-slate-800"
+>
+  <div class="flex items-center gap-3">
+    <img
+      src="{{ url_for('static', filename='logo.png') }}"
+      alt="OptiGain"
+      class="h-8"
+    >
+    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+      Trend Forecaster
+    </h1>
   </div>
-  <div>
-    <a href="{{ url_for('dashboard') }}" class="btn btn-light">⬅ Dashboard</a>
+
+  <div class="flex items-center gap-3">
+    <a
+      href="{{ url_for('dashboard') }}"
+      class="text-sm font-medium text-slate-600 dark:text-slate-300
+             hover:text-blue-600 dark:hover:text-blue-400 transition"
+    >
+      ⬅ Dashboard
+    </a>
+
+    <button
+      id="darkToggle"
+      title="Toggle theme"
+      class="w-9 h-9 rounded-full bg-blue-600 text-white shadow"
+    >
+      🌙
+    </button>
   </div>
-</nav>
+</header>
 
-<!-- Main Content -->
-<div class="forecaster-container">
-  <h2>📈 Trend Forecaster</h2>
-  <p>Upload your revenue CSV or connect to your live business data feed to visualize trends and forecast growth.</p>
+<!-- MAIN -->
+<main class="px-4 py-10 flex justify-center">
+  <section
+    class="w-full max-w-2xl
+           bg-white dark:bg-slate-900
+           border border-slate-200 dark:border-slate-800
+           rounded-xl shadow p-6 md:p-8"
+  >
 
-  <form method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".csv" class="upload-input" required>
-    <button type="submit" class="btn btn-primary">Generate Forecast</button>
-  </form>
+    <!-- Title -->
+    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+      📈 Revenue Trend Forecaster
+    </h2>
 
-  {% if forecast_plot %}
-    <div class="chart-container">
-      <h3>✅ Forecast Generated</h3>
-      <img src="{{ url_for('static', filename='forecast.png') }}" class="forecast-img" alt="Forecast Graph">
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+      Upload a CSV file containing historical revenue data to generate
+      future projections and growth insights.
+    </p>
+
+    <!-- Upload -->
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+
+      <div
+        class="rounded-lg border border-dashed
+               border-slate-300 dark:border-slate-600
+               bg-slate-50 dark:bg-slate-800
+               p-5"
+      >
+        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          Upload CSV file
+        </label>
+
+        <input
+          type="file"
+          name="file"
+          accept=".csv"
+          required
+          class="block w-full text-sm
+                 text-slate-700 dark:text-slate-200
+                 file:mr-4 file:py-2 file:px-4
+                 file:rounded-lg file:border-0
+                 file:bg-blue-600 file:text-white
+                 hover:file:bg-blue-700 transition"
+        >
+      </div>
+
+      <button
+        type="submit"
+        class="w-full py-2.5 rounded-lg
+               bg-blue-600 text-white font-semibold
+               hover:bg-blue-700 transition"
+      >
+        Generate Forecast
+      </button>
+    </form>
+
+    <!-- Forecast Result -->
+    {% if forecast_plot %}
+    <div class="mt-8">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">
+        📊 Forecast Result
+      </h3>
+
+      <div
+        class="rounded-lg border border-slate-200 dark:border-slate-800
+               bg-white dark:bg-slate-950 p-3"
+      >
+        <img
+          src="{{ url_for('static', filename='forecast.png') }}"
+          alt="Forecast Chart"
+          class="w-full rounded-md"
+        >
+      </div>
     </div>
-  {% endif %}
+    {% endif %}
 
-  <!-- Future Live Forecast Section -->
-  <div class="chart-container" id="liveForecastContainer" style="display:none;">
-    <h3>📊 Live Forecast Updates</h3>
-    <div id="liveForecastChart" style="height:400px;"></div>
-  </div>
-<!-- ✅ Add Back to Dashboard button here -->
-  <div style="margin-top:30px;">
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">⬅ Back to Dashboard</a>
-  </div>
-</div>
-</div>
+  </section>
+</main>
 
-<button id="darkToggle" class="dark-toggle">🌙 Dark Mode</button>
-
+<!-- DARK MODE SCRIPT (Tailwind standard) -->
 <script>
-  // 🌙 Dark Mode toggle (consistent with dashboard)
-  const darkToggle = document.getElementById('darkToggle');
-  if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
-  darkToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-  });
+  const toggle = document.getElementById("darkToggle");
+  const saved = localStorage.getItem("theme");
 
-  // 🚀 Future: Fetch live trend data (after M-Pesa shortcode integration)
-  // This will auto-update the forecast chart every few seconds
-  async function loadLiveForecast() {
-    try {
-      const res = await fetch('/api/live_forecast');
-      const data = await res.json();
-
-      if (!data || !data.dates) return;
-
-      document.getElementById('liveForecastContainer').style.display = 'block';
-
-      const trace = {
-        x: data.dates,
-        y: data.values,
-        mode: 'lines+markers',
-        name: 'Live Forecast',
-        line: { color: '#00c6ff', width: 3 }
-      };
-
-      const layout = {
-        title: 'Real-time Revenue Trend',
-        xaxis: { title: 'Date' },
-        yaxis: { title: 'Revenue (KSh)' },
-        plot_bgcolor: document.body.classList.contains('dark-mode') ? '#222' : '#f9f9f9',
-        paper_bgcolor: document.body.classList.contains('dark-mode') ? '#222' : '#fff',
-        font: { color: document.body.classList.contains('dark-mode') ? '#fff' : '#000' }
-      };
-
-      Plotly.newPlot('liveForecastChart', [trace], layout);
-    } catch (err) {
-      console.error('Live forecast load failed:', err);
-    }
+  if (saved === "dark") {
+    document.documentElement.classList.add("dark");
   }
 
-  // Refresh every 20 seconds once live
-  // (This will automatically work once you have your shortcode + API live)
-  // setInterval(loadLiveForecast, 20000);
+  toggle.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.toggle("dark");
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  });
 </script>
 
 </body>

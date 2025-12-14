@@ -70,26 +70,36 @@ def allowed_file(filename):
 
 
 # 📧 Mail configuration (uses environment variables)
-app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
-app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
+mail_port = os.getenv("MAIL_PORT")
+
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER") or "smtp.gmail.com"
+app.config["MAIL_PORT"] = int(mail_port)if mail_port else 587
 app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
 app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL") == "True"
 app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = ("OptiGain Reports",os.getenv("MAIL_USERNAME"))
+app.config["MAIL_DEFAULT_SENDER"] = ("OptiGain Reports",os.getenv("MAIL_USERNAME")or "noreply@optigain.local")
 
 mail = Mail(app)
 
 init_db()
 
-# ✅ Disable AI if not needed
+# Load OpenAI only if API key exists
+# Load environment variables
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-if not os.getenv("OPENAI_KEY"):
-    print("WARNING: No OpenAI API key found - AI features will be limited.")
-DISABLE_AI = False
 
-AI_ENABLED = True
+# Optional AI setup (works both local + Render)
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
+if OPENAI_KEY:
+    from openai import OpenAI
+    client = OpenAI(api_key=OPENAI_KEY)
+    AI_ENABLED = True
+    print("AI Enabled (API key detected)")
+else:
+    client = None
+    AI_ENABLED = False
+    print("⚠️ No OpenAI API key found — AI features disabled locally.")
 
 
 def generate_ai_insights(kpis):

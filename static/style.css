@@ -1,6 +1,6 @@
 /* =========================================================
    OPTIGAIN UI V2 – Hybrid Fintech + Analytics SaaS Styles
-   Full, Clean, Production-Ready Version
+   NORMALIZED FOR html.dark (Tailwind-compatible)
    ========================================================= */
 
 /* ---------- Design Tokens ---------- */
@@ -31,12 +31,9 @@
 
   --og-shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.10);
   --og-shadow-strong: 0 18px 45px rgba(15, 23, 42, 0.20);
-
-  --og-transition-fast: 0.18s ease-out;
-  --og-transition-med: 0.25s ease-out;
 }
 
-/* ---------- Global Layout ---------- */
+/* ---------- Global ---------- */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -45,215 +42,14 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--og-text-main);
   letter-spacing: 0.01em;
 }
 
-/* ------------------ AUTH PAGES ------------------ */
-body.auth-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: var(--og-bg-gradient);
-}
-
-.auth-container,
-.register-container {
-  background: radial-gradient(circle at top left, #eff6ff, #ffffff);
-  padding: 32px 30px;
-  border-radius: var(--og-radius-lg);
-  box-shadow: var(--og-shadow-soft);
-  text-align: center;
-  width: 360px;
-  position: relative;
-}
-
-.auth-container::before,
-.register-container::before {
-  content: "";
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.10), transparent 55%);
-}
-
-.auth-container .logo,
-.register-container .logo {
-  width: 150px;
-  margin-bottom: 15px;
-}
-
-.auth-container input,
-.register-container input {
-  padding: 10px;
-  border-radius: var(--og-radius-sm);
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-}
-
-/* ------------------ BUTTONS ------------------ */
-.btn {
-  border: none;
-  border-radius: var(--og-radius-md);
-  padding: 10px 18px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: var(--og-transition-fast);
-}
-
-/* Primary */
-.btn-primary {
-  background: var(--og-primary);
-  color: #fff;
-}
-.btn-primary:hover {
-  background: var(--og-primary-strong);
-}
-
-/* Success */
-.btn-success {
-  background: var(--og-success);
-  color: #fff;
-}
-.btn-success:hover {
-  background: #15803d;
-}
-
-/* Warning */
-.btn-warning {
-  background: var(--og-warning);
-  color: #fff;
-}
-.btn-warning:hover {
-  background: #d97706;
-}
-
-/* Danger */
-.btn-danger {
-  background: var(--og-danger);
-  color: #fff;
-}
-.btn-danger:hover {
-  background: #b91c1c;
-}
-
-/* Info */
-.btn-info {
-  background: var(--og-info);
-  color: #fff;
-}
-.btn-info:hover {
-  background: #0284c7;
-}
-
-/* Secondary */
-.btn-secondary {
-  background: #6b7280;
-  color: #fff;
-}
-.btn-secondary:hover {
-  background: #4b5563;
-}
-
 /* =========================================================
-   DASHBOARD LAYOUT
+   DARK MODE — SINGLE SOURCE OF TRUTH
    ========================================================= */
 
-.dashboard-body {
-  display: flex;
-  background: var(--og-surface-soft);
-}
-
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  background: #ffffff;
-  height: 100vh;
-  position: fixed;
-  padding: 25px 15px;
-  box-shadow: 4px 0 18px rgba(0,0,0,0.08);
-  z-index: 999;
-}
-
-.sidebar-logo {
-  width: 90px;
-  margin: 0 auto 10px;
-  display: block;
-}
-
-.sidebar-title {
-  margin-top: 5px;
-  text-align: center;
-  font-size: 22px;
-  color: var(--og-primary);
-  font-weight: 700;
-}
-
-.sidebar-menu {
-  margin-top: 30px;
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar-menu a {
-  padding: 12px;
-  display: block;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #333;
-  text-decoration: none;
-  transition: var(--og-transition-fast);
-}
-
-.sidebar-menu a:hover {
-  background: var(--og-primary);
-  color: #fff;
-}
-
-/* Main Content */
-.main-content {
-  margin-left: 260px;
-  padding: 30px 40px;
-  width: calc(100% - 260px);
-}
-
-/* Topbar */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 25px;
-  align-items: center;
-}
-
-.topbar h1 {
-  font-size: 28px;
-  font-weight: 700;
-}
-
-/* KPIs */
-.card {
-  background: var(--og-surface);
-  padding: 20px;
-  border-radius: var(--og-radius-md);
-  box-shadow: var(--og-shadow-soft);
-  border: 1px solid var(--og-border-subtle);
-}
-
-.card h5 {
-  font-weight: 600;
-  color: var(--og-text-muted);
-}
-
-.card h3 {
-  font-size: 26px;
-  font-weight: 700;
-}
-
-/* =========================================================
-   DARK MODE
-   ========================================================= */
-
-.dark-mode {
+html.dark {
   --og-surface: #0f172a;
   --og-surface-soft: #1e293b;
   --og-surface-elevated: #1e293b;
@@ -261,296 +57,46 @@ body.auth-page {
   --og-text-main: #f1f5f9;
   --og-text-muted: #94a3b8;
   --og-border-subtle: #334155;
-
-  background: #0f172a !important;
-  color: var(--og-text-main);
-}
-
-.dark-mode .sidebar {
-  background: #1e293b;
-}
-
-.dark-mode .sidebar-menu a {
-  color: #e2e8f0;
-}
-.dark-mode .sidebar-menu a:hover {
-  background: var(--og-primary);
-  color: #fff;
-}
-
-.dark-mode .card {
-  background: #1e293b;
-  border-color: #334155;
-}
-
-.dark-mode .topbar h1 {
-  color: #f1f5f9;
-}
-
-/* Dark mode toggle */
-.dark-toggle {
-  background: var(--og-primary);
-  border: none;
-  color: white;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
 }
 
 /* =========================================================
-   FINAL TOUCHES
+   RESULTS KPI CARDS (MATCH DASHBOARD)
    ========================================================= */
 
-.notification {
-  background: var(--og-surface);
-  padding: 15px;
+.results-kpi {
+  background: var(--og-surface-elevated);
+  padding: 18px;
   border-radius: var(--og-radius-md);
   box-shadow: var(--og-shadow-soft);
-}
-
-.file-list ul {
-  padding-left: 20px;
-}
-
-footer {
-  margin-top: 40px;
-  padding: 25px 0;
   text-align: center;
-  font-size: 14px;
+}
+
+/* KPI LABELS — ALWAYS VISIBLE */
+.results-kpi h6 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
   color: var(--og-text-muted);
 }
 
-/* -------------------------------------------------
-   KPI CARDS FIX — Ensures text is visible always
--------------------------------------------------- */
-
-.kpi-card,
-.kpi-card h3,
-.kpi-card h5,
-.card h3,
-.card h5 {
-    color: #ffffff !important;
-}
-
-body:not(.dark-mode) .kpi-card,
-body:not(.dark-mode) .card {
-    background: #ffffff !important;
-    color: #0f172a !important;
-}
-
-body.dark-mode .kpi-card,
-body.dark-mode .card {
-    background: rgba(255,255,255,0.06) !important;
-    backdrop-filter: blur(8px);
-    color: #f1f5f9 !important;
-}
-
-/* =========================================================
-   RESULTS / SECONDARY PAGES – SECTION CARDS
-   ========================================================= */
-
-.section-card {
-  background: var(--og-surface);
-  padding: 24px;
-  border-radius: var(--og-radius-lg);
-  box-shadow: var(--og-shadow-soft);
-  margin-top: 24px;
-}
-
-body.dark-mode .section-card {
-  background: #020617; /* very dark slate */
-  color: #e5e7eb;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-}
-
-.section-card h3,
-.section-card h4,
-.section-card h5 {
+/* KPI VALUES */
+.results-kpi h5 {
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--og-text-main);
 }
 
-body.dark-mode .section-card h3,
-body.dark-mode .section-card h4,
-body.dark-mode .section-card h5 {
-  color: #e5e7eb;
+/* Dark mode clarity */
+html.dark .results-kpi {
+  background: #1e293b;
 }
 
-/* =========================================================
-   FIX: KPI Cards on Results Page (match dashboard styling)
-   ========================================================= */
-
-.results-kpi {
-    background: var(--og-surface-elevated);
-    padding: 18px;
-    border-radius: var(--og-radius-md);
-    box-shadow: var(--og-shadow-soft);
-    transition: 0.25s ease;
-    text-align: center;
+html.dark .results-kpi h6 {
+  color: #cbd5e1; /* slate-300 — readable but quiet */
 }
 
-.results-kpi h6 {
-    font-size: 0.85rem;
-    margin-bottom: 6px;
-    color: var(--og-text-muted);
-}
-
-.results-kpi h5 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--og-text-main);
-}
-
-/* Dark mode */
-body.dark-mode .results-kpi {
-    background: #1e293b;
-    color: #fff;
-}
-
-body.dark-mode .results-kpi h6 {
-    color: #cbd5e1;
-}
-
-body.dark-mode .results-kpi h5 {
-    color: #f8fafc;
-}
-
-/* FORCE KPI text visibility */
-.results-kpi h5,
-.results-kpi-value {
-    color: var(--og-text-main) !important;
-}
-
-body.dark-mode .results-kpi h5,
-body.dark-mode .results-kpi-value {
-    color: #ffffff !important;
-}
-
-/* Proper background */
-.results-kpi {
-    background: var(--og-surface-elevated) !important;
-}
-
-body.dark-mode .results-kpi {
-    background: #1e293b !important;
-}
-
-/* =========================================================
-   OPTIGAIN AUTH PAGES — Unified with Dashboard Theme
-   ========================================================= */
-
-/* PAGE LAYOUT */
-.auth-page {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: var(--og-bg-gradient);
-    margin: 0;
-}
-
-/* AUTH CARD */
-.auth-card {
-    width: 380px;
-    padding: 34px 32px;
-    border-radius: var(--og-radius-lg);
-    text-align: center;
-    background: var(--og-surface);
-    box-shadow: var(--og-shadow-soft);
-    transition: 0.25s ease;
-}
-
-.dark-mode .auth-card {
-    background: #1e293b;
-    color: #f1f5f9;
-    border: 1px solid #334155;
-}
-
-/* LOGO */
-.auth-logo {
-    width: 130px;
-    margin-bottom: 10px;
-}
-
-/* HEADINGS */
-.auth-card h2 {
-    font-size: 26px;
-    font-weight: 700;
-    margin-bottom: 22px;
-    color: var(--og-text-main);
-}
-
-.dark-mode .auth-card h2 {
-    color: #e2e8f0;
-}
-
-/* LABELS */
-.auth-card label {
-    font-weight: 600;
-    color: var(--og-text-main);
-}
-
-.dark-mode .auth-card label {
-    color: #d1d5db;
-}
-
-/* INPUTS */
-.auth-card .form-control {
-    padding: 12px;
-    border-radius: var(--og-radius-sm);
-    background: var(--og-surface-elevated);
-    border: 1px solid var(--og-border-subtle);
-    color: var(--og-text-main);
-}
-
-.dark-mode .auth-card .form-control {
-    background: #334155;
-    border-color: #475569;
-    color: #fff;
-}
-
-.auth-card .form-control:focus {
-    border-color: var(--og-primary);
-    box-shadow: 0 0 0 1px var(--og-primary-soft);
-}
-
-/* BUTTONS */
-.auth-card .btn-primary {
-    background: var(--og-primary);
-    border-radius: var(--og-radius-md);
-    padding: 12px;
-    font-weight: 600;
-}
-
-.auth-card .btn-primary:hover {
-    background: var(--og-primary-strong);
-}
-
-.dark-mode .auth-card .btn-primary {
-    background: #3b82f6;
-}
-
-/* LINKS */
-.auth-card a {
-    color: var(--og-primary);
-    font-weight: 600;
-}
-
-.dark-mode .auth-card a {
-    color: #60a5fa;
-}
-
-/* DARK MODE TOGGLE */
-.auth-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--og-primary);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 46px;
-    height: 46px;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: var(--og-shadow-soft);
+html.dark .results-kpi h5 {
+  color: #f8fafc;
 }

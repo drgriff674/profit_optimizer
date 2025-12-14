@@ -1,17 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-    <title>CSV Preview</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body { padding: 20px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OptiGain • Raw Data Preview</title>
+
+  <!-- Tailwind output -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
-<body>
-    <h2>📄 Raw Data Preview</h2>
-    <a href="{{ url_for('view_file', filename=filename) }}" class="btn btn-secondary">⬅ Back to Analysis</a>
-    <div class="mt-4">
-        {{ table_html | safe }}
+
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
+
+  <!-- Header -->
+  <header
+    class="flex items-center justify-between px-6 py-4
+           bg-white dark:bg-slate-900
+           border-b border-slate-200 dark:border-slate-800"
+  >
+    <div class="flex items-center gap-3">
+      <img
+        src="{{ url_for('static', filename='logo.png') }}"
+        alt="OptiGain"
+        class="h-8"
+      >
+      <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+        Raw Data Preview
+      </h1>
     </div>
+
+    <a
+      href="{{ url_for('view_file', filename=filename) }}"
+      class="text-sm font-medium text-slate-600 dark:text-slate-300
+             hover:text-blue-600 dark:hover:text-blue-400 transition"
+    >
+      ⬅ Back to Analysis
+    </a>
+  </header>
+
+  <!-- Content -->
+  <main class="px-4 py-6">
+
+    <!-- Context -->
+    <div class="max-w-7xl mx-auto mb-4">
+      <p class="text-sm text-slate-600 dark:text-slate-400">
+        📄 Viewing raw, unmodified data as uploaded. This table is read-only.
+      </p>
+    </div>
+
+    <!-- Table container -->
+    <div
+      class="max-w-7xl mx-auto
+             bg-white dark:bg-slate-900
+             border border-slate-200 dark:border-slate-800
+             rounded-xl shadow
+             overflow-auto"
+    >
+      <div class="p-4">
+        {{ table_html | safe }}
+      </div>
+    </div>
+
+  </main>
+
 </body>
 </html>
