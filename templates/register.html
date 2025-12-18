@@ -5,24 +5,30 @@
   <title>Register – OptiGain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Tailwind output -->
+  <!-- Tailwind (layout only) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  <!-- OptiGain theme -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="min-h-screen flex items-center justify-center bg-sky-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors">
+<body class="min-h-screen flex items-center justify-center transition-colors">
 
   <!-- Dark mode toggle -->
   <button
     id="darkToggle"
     aria-pressed="false"
     title="Toggle theme"
-    class="fixed top-5 right-5 w-11 h-11 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition"
+    class="fixed top-5 right-5 w-11 h-11 rounded-full shadow-lg"
+    style="background: var(--og-primary); color: white;"
   >
     🌙
   </button>
 
   <!-- Auth Card -->
-  <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8">
+  <div
+    class="w-full max-w-md rounded-2xl shadow-xl p-8"
+    style="background: var(--og-surface); color: var(--og-text-main);"
+  >
 
     <!-- Branding -->
     <div class="flex flex-col items-center mb-6">
@@ -31,10 +37,10 @@
         alt="OptiGain Logo"
         class="w-24 mb-3"
       />
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+      <h1 class="text-2xl font-bold text-center">
         Create your OptiGain account
       </h1>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+      <p class="text-sm mt-1 opacity-70 text-center">
         Start tracking, analyzing, and optimizing your finances
       </p>
     </div>
@@ -43,54 +49,60 @@
     <form method="POST" class="space-y-4">
 
       <div>
-        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+        <label class="block text-sm font-medium mb-1">
           Username
         </label>
         <input
           type="text"
           name="username"
           required
-          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
-                 bg-white dark:bg-slate-800
-                 px-4 py-2 text-slate-900 dark:text-white
-                 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          style="
+            background: var(--og-surface);
+            color: var(--og-text-main);
+            border-color: var(--og-border-subtle);
+          "
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+        <label class="block text-sm font-medium mb-1">
           Email
         </label>
         <input
           type="email"
           name="email"
           required
-          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
-                 bg-white dark:bg-slate-800
-                 px-4 py-2 text-slate-900 dark:text-white
-                 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          style="
+            background: var(--og-surface);
+            color: var(--og-text-main);
+            border-color: var(--og-border-subtle);
+          "
         />
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+        <label class="block text-sm font-medium mb-1">
           Password
         </label>
         <input
           type="password"
           name="password"
           required
-          class="w-full rounded-lg border border-slate-300 dark:border-slate-700
-                 bg-white dark:bg-slate-800
-                 px-4 py-2 text-slate-900 dark:text-white
-                 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          style="
+            background: var(--og-surface);
+            color: var(--og-text-main);
+            border-color: var(--og-border-subtle);
+          "
         />
       </div>
 
       <button
         type="submit"
-        class="w-full py-2.5 rounded-lg bg-blue-600 text-white font-semibold
-               hover:bg-blue-700 transition shadow"
+        class="w-full py-2.5 rounded-lg font-semibold shadow transition"
+        style="background: var(--og-primary); color: white;"
       >
         Create Account
       </button>
@@ -98,9 +110,11 @@
     </form>
 
     <!-- Links -->
-    <p class="text-sm text-center mt-4 text-slate-600 dark:text-slate-400">
+    <p class="text-sm text-center mt-4 opacity-70">
       Already have an account?
-      <a href="{{ url_for('login') }}" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+      <a href="{{ url_for('login') }}"
+         class="font-semibold hover:underline"
+         style="color: var(--og-primary);">
         Login
       </a>
     </p>
@@ -110,15 +124,10 @@
       {% if messages %}
         <div class="mt-4 space-y-2">
           {% for category, msg in messages %}
-            <div class="rounded-lg px-4 py-2 text-sm
-                        {% if category == 'success' %}
-                          bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                        {% elif category == 'danger' %}
-                          bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
-                        {% else %}
-                          bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200
-                        {% endif %}
-            ">
+            <div
+              class="rounded-lg px-4 py-2 text-sm shadow"
+              style="background: var(--og-surface-elevated);"
+            >
               {{ msg }}
             </div>
           {% endfor %}
@@ -128,19 +137,19 @@
 
   </div>
 
-  <!-- Dark Mode Script (shared behavior) -->
+  <!-- Dark Mode Script (style.css driven) -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const toggle = document.getElementById("darkToggle");
-      const saved = localStorage.getItem("theme");
+      const root = document.documentElement;
 
-      if (saved === "dark") {
-        document.documentElement.classList.add("dark");
+      if (localStorage.getItem("theme") === "dark") {
+        root.classList.add("dark");
         toggle.setAttribute("aria-pressed", "true");
       }
 
       toggle.addEventListener("click", () => {
-        const isDark = document.documentElement.classList.toggle("dark");
+        const isDark = root.classList.toggle("dark");
         localStorage.setItem("theme", isDark ? "dark" : "light");
         toggle.setAttribute("aria-pressed", isDark ? "true" : "false");
       });

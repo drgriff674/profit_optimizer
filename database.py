@@ -5,9 +5,15 @@ from psycopg2.extras import RealDictCursor
 # ✅ Railway PostgreSQL connection string
 DB_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
 
+def get_db_connection(cursor_factory=None):
+    return psycopg2.connect(
+        DB_URL,
+        cursor_factory=cursor_factory
+    )
+
 # ✅ Initialize database and users table if not exists
 def init_db():
-    conn = psycopg2.connect(DB_URL)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -22,7 +28,7 @@ def init_db():
 
 # ✅ Load all users as a dict
 def load_users():
-    conn = psycopg2.connect(DB_URL, cursor_factory=RealDictCursor)
+    conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()
     cursor.execute("SELECT username, password, role FROM users")
     rows = cursor.fetchall()

@@ -36,6 +36,24 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from database import load_users, save_user, init_db
 import pytz
+from flask_caching import Cache
+
+def run_cron_jobs():
+    print("⏰ Running background jobs")
+
+    # 1. Sync Google Sheets
+    sync_google_sheets()
+
+    # 2. Generate AI insights
+    generate_ai_insights()
+
+    # 3. Run forecasts
+    run_forecasts()
+
+    # 4. Clear dashboard cache
+    cache.delete("dashboard_data")
+
+    print("✅ Cron jobs done, cache refreshed")
 
 # ✅ Safe import for pdfkit (Render may not have wkhtmltopdf)
 try:
@@ -56,6 +74,10 @@ def get_connection():
 
 # ✅ Flask app setup
 app = Flask(__name__)
+cache = Cache(app, config={
+    "CACHE_TYPE": "SimpleCache",  # safe for localhost
+    "CACHE_DEFAULT_TIMEOUT": 300  # 5 minutes
+})
 app.secret_key = "your_secret_key"
 
 UPLOAD_FOLDER = "uploads"
@@ -271,122 +293,95 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
+@cache.cached(timeout=300, key_prefix="dashboard_data")
+def get_dashboard_data():
+    """
+    Read-heavy dashboard data only.
+    NO Google Sheets sync.
+    NO AI calls.
+    NO Prophet.
+    """
+    data = {}
+
+    # Example:
+    if os.path.exists("financial_data.csv"):
+        df = pd.read_csv("financial_data.csv")
+        data["df"] = df
+    else:
+        data["df"] = pd.DataFrame()
+
+    return data
 
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # 🔄 Auto-refresh Google Sheets data before loading dashboard
-    try:
-        from sheets_helper import read_data
-        import csv
+    cached_data = get_dashboard_data()
+    
+    df = cached_data.get("df", pd.DataFrame())
+    notifications = cached_data.get("notifications", [])
+    forecast_data = cached_data.get("forecast_data", [])
+    last_synced = cached_data.get("last_synced")
 
-        sheet_name = request.args.get("sheet","sheet1")
-        data = read_data(sheet_name)
-        csv_file = "financial_data.csv"
-        fieldnames = ["Date", "Expenses", "Profit", "Revenue"]
-        with open(csv_file, mode="w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in data:
-                writer.writerow(row)
-        print("✅ Google Sheets auto-sync complete.")
+    answer = None
+    files = []
+    latest_file = None
 
-        # 🔮 Generate AI insights for synced data
-        try:
-            df = pd.read_csv("financial_data.csv")
-            preview = df.head().to_string()
-            prompt = f"""
-            You are a business data analyst AI for OptiGain.
-            Review this synced financial data and provide:
-            - 2 short trend insights
-            - 1 actionable recommendation
-            - 1 one-sentence performance summary
-            Data sample:
-            {preview}
-            """
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are OptiGain's smart financial assistant.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.7,
-                max_tokens=300,
-            )
-            notifications.append(response.choices[0].message.content.strip())
-        except Exception as e:
-            print(f"⚠️ Failed to generate AI insights after sync: {e}")
-        from datetime import datetime
-
-        nairobi_tz = pytz.timezone("Africa/Nairobi")
-        last_synced = datetime.now(nairobi_tz).strftime("%b %d, %y . %I:%M %p")
-    except Exception as e:
-        print(f"⚠️ Google Sheets sync failed: {e}")
-
+    # 📂 Load user's uploaded files (NOT cached)
     user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
     os.makedirs(user_folder, exist_ok=True)
-    files = os.listdir(user_folder)
 
-    latest_file = None
-    notifications = []
-    answer = None
-    forecast_data = []
+    files = sorted(os.listdir(user_folder))
 
-    # ✅ Handle uploaded files
-    if files:
-        if "uploaded_file" in session and session["uploaded_file"] in files:
-            latest_file = session["uploaded_file"]
-        else:
-            latest_file = sorted(files)[-1]
+    active_csv = session.get("active_csv")
 
-        file_path = os.path.join(user_folder, latest_file)
+    if active_csv and active_csv in files:
+        active_file = active_csv
+    elif files:
+        active_file = files[-1]
+    else:
+        active_file = None
 
+    df = pd.DataFrame()
+
+    if active_file:
         try:
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            file_path = os.path.join(user_folder, active_file)
             df = pd.read_csv(file_path)
-
-            # Merge with manual entries
-            manual_path = os.path.join(user_folder, "manual_entries.csv")
-            if os.path.exists(manual_path):
-                manual_df = pd.read_csv(manual_path)
-                df = pd.concat([df, manual_df], ignore_index=True)
-
-            preview = df.head().to_string()
-            prompt = f"""
-            You are a business data analyst AI for OptiGain. Review the latest uploaded company data below.
-            Generate:
-            1. 2 short trend insights (e.g. revenue uptrend, expense spike)
-            2. 1 actionable recommendation (e.g. optimize marketing, reduce overhead)
-            3. 1 performance summary (1 sentence, professional tone)
-
-            Data sample:
-            {preview}
-            """
-
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are OptiGain's smart business assistant. Give data-driven, clear financial insights.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=0.7,
-                max_tokens=300,
-            )
-
-            insights = response.choices[0].message.content.strip()
-            notifications.append(insights)
+            df.columns = df.columns.str.lower().str.strip()
         except Exception as e:
-            notifications.append(f"Error generating insights: {str(e)}")
+            print("Failed to load active CSV:", e)
 
+    # 📊 KPI calculation (LIVE from active CSV)
+    kpis = {
+        "total_profit": "N/A",
+        "avg_profit": "N/A",
+        "profit_growth": "N/A",
+        "largest_expense": "N/A",
+    }
+
+    if not df.empty and "revenue" in df.columns and "expenses" in df.columns:
+        df["revenue"] = pd.to_numeric(df["revenue"], errors="coerce")
+        df["expenses"] = pd.to_numeric(df["expenses"], errors="coerce")
+        df["profit"] = df["revenue"] - df["expenses"]
+
+        total_profit = df["profit"].sum()
+        avg_profit = df["profit"].mean()
+
+        kpis["total_profit"] = f" KSh{total_profit:,.0f}"
+        kpis["avg_profit"] = f" KSh{avg_profit:,.0f}"
+
+        if len(df) > 1 and df["profit"].iloc[0] != 0:
+            growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
+            kpis["profit_growth"] = f"{growth:.2f}%"
+
+        if "description" in df.columns:
+            kpis["largest_expense"] = (
+                df.groupby("description")["expenses"].sum().idxmax()
+            )        
+
+   
     # ✅ Handle question form submission
     if request.method == "POST":
         question = request.form.get("question", "").strip()
@@ -404,94 +399,8 @@ def dashboard():
             except Exception as e:
                 notifications.append(f"Error generating insights: {str(e)}")
 
-    # ✅ KPI Calculation
-    kpis = {}
-    try:
-        df = pd.read_csv("financial_data.csv")
-        print("📊 Loaded data from Google Sheets")
-    except Exception:
-        if latest_file:
-            filepath = os.path.join(user_folder, latest_file)
-            df = pd.read_csv(filepath)
-            print("📂 Fallback to uploaded CSV")
-        else:
-            df = pd.DataFrame()
-
-    if not df.empty:
-        df.columns = df.columns.str.lower().str.strip()
-        if "revenue" in df.columns and "expenses" in df.columns:
-            df["profit"] = df["revenue"] - df["expenses"]
-
-            total_profit = df["profit"].sum()
-            avg_profit = df["profit"].mean()
-            profit_growth = (
-                ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0])
-                * 100
-                if df["profit"].iloc[0] != 0
-                else 0
-            )
-
-            largest_expense = "Unknown"
-            if "description" in df.columns:
-                largest_expense = df.groupby("description")["expenses"].sum().idxmax()
-
-            kpis = {
-                "total_profit": f"${total_profit:,.2f}",
-                "avg_profit": f"${avg_profit:,.2f}",
-                "profit_growth": f"{profit_growth:.2f}%",
-                "largest_expense": largest_expense,
-            }
-        else:
-            kpis = {
-                "total_profit": "N/A",
-                "avg_profit": "N/A",
-                "profit_growth": "N/A",
-                "largest_expense": "N/A",
-            }
-    else:
-        kpis = {
-            "total_profit": "N/A",
-            "avg_profit": "N/A",
-            "profit_growth": "N/A",
-            "largest_expense": "N/A",
-        }
-
-    # 🔮 Forecasting with Prophet
-    try:
-        # Always use the latest synced Google Sheets data
-        df = pd.read_csv("financial_data.csv")
-
-        # Merge with manual entries if they exist
-        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-        manual_path = os.path.join(user_folder, "manual_entries.csv")
-        if os.path.exists(manual_path):
-            manual_df = pd.read_csv(manual_path)
-            df = pd.concat([df, manual_df], ignore_index=True)
-
-        # Normalize column names
-        df.columns = df.columns.str.lower().str.strip()
-
-        if "date" in df.columns and "revenue" in df.columns:
-            df["ds"] = pd.to_datetime(df["date"], errors="coerce")
-            df = df.dropna(subset=["ds"])
-            df["y"] = df["revenue"]
-
-            model = Prophet()
-            model.fit(df[["ds", "y"]])
-            future = model.make_future_dataframe(periods=6, freq="M")
-            forecast = model.predict(future)
-            future_forecast = forecast.tail(6)
-
-            forecast_data = [
-                {
-                    "date": row["ds"].strftime("%b %Y"),
-                    "predicted_revenue": f"${row['yhat']:,.2f}",
-                }
-                for _, row in future_forecast.iterrows()
-            ]
-    except Exception as e:
-        forecast_data = [{"date": "Error", "predicted_revenue": str(e)}]
-
+   
+   
     # 📊 Prepare forecast chart data
     forecast_chart = []
     for item in forecast_data:
@@ -506,38 +415,13 @@ def dashboard():
         except Exception:
             continue
 
-    # 📊 Live Performance (Revenue vs Expenses)
-    performance_chart = []
-    try:
-        df = pd.read_csv("financial_data.csv")
-        df.columns = df.columns.str.lower().str.strip()
-
-        if (
-            "date" in df.columns
-            and "revenue" in df.columns
-            and "expenses" in df.columns
-        ):
-            # Prepare data (limit to 12 most recent months)
-            df["date"] = pd.to_datetime(df["date"], errors="coerce")
-            df = df.dropna(subset=["date"])
-            df = df.sort_values("date").tail(12)
-
-            performance_chart = [
-                {
-                    "month": d.strftime("%b %Y"),
-                    "revenue": float(r),
-                    "expenses": float(e),
-                }
-                for d, r, e in zip(df["date"], df["revenue"], df["expenses"])
-            ]
-    except Exception as e:
-        print(f"⚠️ Performance chart load failed: {e}")
-
+    
     # ✅ Render dashboard
     return render_template(
         "dashboard.html",
         files=files,
         latest_file=latest_file,
+        active_file=latest_file,
         notifications=notifications,
         answer=answer,
         kpis=kpis,
@@ -928,6 +812,9 @@ def upload():
             file.save(filepath)
             uploaded_csvs[username].append(filename)
             saved_paths.append(filepath)
+            session["active_csv"] = filename
+
+        cache.delete(f"dashboard_data_{session['username']}")    
 
         # ✅ If only one file uploaded → just show summary, no comparison
         if len(saved_paths) == 1:
@@ -1809,7 +1696,12 @@ def profile():
         return redirect(url_for("login"))
 
     username = session["username"]
-    uploaded_files = uploaded_csvs.get(username, [])
+    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
+
+    if os.path.exists(user_folder):
+        uploaded_files = sorted(os.listdir(user_folder))
+    else:
+        uploaded_files = []
 
     return render_template("profile.html", uploaded_files=uploaded_files)
 
