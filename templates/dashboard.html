@@ -35,7 +35,7 @@
         {% for label, icon, endpoint in [
           ('Dashboard','📊','dashboard'),
           ('Upload CSV','📤','upload'),
-          ('Manual Entry','➕','manual_entry'),
+          ('Add Expense','➕','expense_entry'),
           ('Trend Forecaster','📈','trend_forecaster'),
           ('Profit Calculator','💵','profit_calculator'),
           ('Business Assistant','🤖','ask'),
@@ -94,10 +94,11 @@
     </section>
 
     <!-- KPI CARDS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {% for title, value in [
           ('Total Profit',kpis.total_profit),
           ('Average Profit',kpis.avg_profit),
+          ('Total Expenses',kpis.total_expenses),
           ('Profit Growth',kpis.profit_growth),
           ('Largest Expense',kpis.largest_expense)
         ] %}
@@ -132,12 +133,12 @@
 
     {% call section("📊 Forecast Explorer") %}
       <select
-  	class="border rounded p-2 mb-4"
-  	style="
-    	 background: var(--og-surface);
-    	 color: var(--og-text-main);
-    	 border-color: var(--og-border-subtle);
-  	"
+        class="border rounded p-2 mb-4"
+        style="
+          background: var(--og-surface);
+          color: var(--og-text-main);
+          border-color: var(--og-border-subtle);
+        "
       >
         <option>Revenue</option>
         <option>Profit</option>
@@ -160,8 +161,12 @@
       {% if files %}
         <ul class="list-disc ml-5">
           {% for file in files %}
-            <li><a href="{{ url_for('view_file', filename=file) }}"
-                   style="color: var(--og-primary);">{{ file }}</a></li>
+            <li>
+              <a href="{{ url_for('view_file', filename=file) }}"
+                 style="color: var(--og-primary);">
+                 {{ file }}
+              </a>
+            </li>
           {% endfor %}
         </ul>
       {% else %}

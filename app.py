@@ -34,7 +34,7 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from database import load_users, save_user, init_db
+from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection
 import pytz
 from flask_caching import Cache
 
@@ -294,7 +294,7 @@ def logout():
     return redirect(url_for("login"))
 
 @cache.cached(timeout=300, key_prefix="dashboard_data")
-def get_dashboard_data():
+def get_dashboard_data(username):
     """
     Read-heavy dashboard data only.
     NO Google Sheets sync.
@@ -317,77 +317,76 @@ def dashboard():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    cached_data = get_dashboard_data()
-    
-    df = cached_data.get("df", pd.DataFrame())
+    username = session["username"]
+
+    # 🔹 Cached dashboard data
+    cached_data = get_dashboard_data(username)
     notifications = cached_data.get("notifications", [])
     forecast_data = cached_data.get("forecast_data", [])
     last_synced = cached_data.get("last_synced")
 
     answer = None
-    files = []
-    latest_file = None
 
-    # 📂 Load user's uploaded files (NOT cached)
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
+    # 🔹 User files (not cached)
+    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
     os.makedirs(user_folder, exist_ok=True)
-
     files = sorted(os.listdir(user_folder))
 
-    active_csv = session.get("active_csv")
-
-    if active_csv and active_csv in files:
-        active_file = active_csv
-    elif files:
-        active_file = files[-1]
-    else:
-        active_file = None
-
-    df = pd.DataFrame()
-
-    if active_file:
-        try:
-            file_path = os.path.join(user_folder, active_file)
-            df = pd.read_csv(file_path)
-            df.columns = df.columns.str.lower().str.strip()
-        except Exception as e:
-            print("Failed to load active CSV:", e)
-
-    # 📊 KPI calculation (LIVE from active CSV)
+    # ===============================
+    # 📊 KPI LOGIC (DEFENSIVE)
+    # ===============================
     kpis = {
-        "total_profit": "N/A",
-        "avg_profit": "N/A",
-        "profit_growth": "N/A",
+        "total_profit": "KSh 0",
+        "avg_profit": "KSh 0",
+        "profit_growth": "0%",
         "largest_expense": "N/A",
     }
 
-    if not df.empty and "revenue" in df.columns and "expenses" in df.columns:
-        df["revenue"] = pd.to_numeric(df["revenue"], errors="coerce")
-        df["expenses"] = pd.to_numeric(df["expenses"], errors="coerce")
-        df["profit"] = df["revenue"] - df["expenses"]
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
 
-        total_profit = df["profit"].sum()
-        avg_profit = df["profit"].mean()
+    # 🔹 Revenue (MPesa) — SAFE
+    cur.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS total_revenue
+        FROM mpesa_transactions
+        WHERE amount IS NOT NULL
+    """)
+    total_revenue = cur.fetchone()["total_revenue"]
 
-        kpis["total_profit"] = f" KSh{total_profit:,.0f}"
-        kpis["avg_profit"] = f" KSh{avg_profit:,.0f}"
+    # 🔹 Expenses — SAFE SANITIZATION
+    cur.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS total_expenses
+        FROM expenses
+        WHERE username = %s
+    """, (username,))
+    total_expenses = cur.fetchone()["total_expenses"]
+    # 🔹 Largest expense category — SAFE
+    cur.execute("""
+        SELECT
+            COALESCE(category, 'Uncategorized') AS category,
+            SUM(amount) AS total
+        FROM expenses
+        WHERE username = %s
+        GROUP BY category
+        ORDER BY total DESC
+        LIMIT 1
+    """, (username,))
+    largest = cur.fetchone()
+    cur.close()
+    conn.close()
 
-        if len(df) > 1 and df["profit"].iloc[0] != 0:
-            growth = ((df["profit"].iloc[-1] - df["profit"].iloc[0]) / df["profit"].iloc[0]) * 100
-            kpis["profit_growth"] = f"{growth:.2f}%"
+    profit = total_revenue - total_expenses
 
-        if "description" in df.columns:
-            kpis["largest_expense"] = (
-                df.groupby("description")["expenses"].sum().idxmax()
-            )        
+    kpis["total_profit"] = f"KSh {profit:,.0f}"
+    kpis["avg_profit"] = f"KSh {profit:,.0f}"
+    kpis["largest_expense"] = largest["category"] if largest else "N/A"
 
-   
-    # ✅ Handle question form submission
+    # ===============================
+    # 🤖 AI INSIGHTS
+    # ===============================
     if request.method == "POST":
         question = request.form.get("question", "").strip()
-        if not question:
-            notifications.append("Please enter a question before submitting.")
-        else:
+        if question:
             try:
                 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
                 response = client.chat.completions.create(
@@ -397,41 +396,32 @@ def dashboard():
                 answer = response.choices[0].message.content.strip()
                 notifications.append(f"💡 Smart Insight: {answer}")
             except Exception as e:
-                notifications.append(f"Error generating insights: {str(e)}")
+                notifications.append(f"AI error: {str(e)}")
 
-   
-   
-    # 📊 Prepare forecast chart data
+    # ===============================
+    # 📈 Forecast chart prep
+    # ===============================
     forecast_chart = []
     for item in forecast_data:
         try:
-            if "predicted_revenue" in item:
-                value = item["predicted_revenue"]
-                if isinstance(value, str):
-                    value = value.replace("$", "").replace(",", "")
-                forecast_chart.append(
-                    {"date": item["date"], "predicted_revenue": float(value)}
-                )
+            forecast_chart.append({
+                "date": item["date"],
+                "predicted_revenue": float(item["predicted_revenue"])
+            })
         except Exception:
             continue
 
-    
-    # ✅ Render dashboard
     return render_template(
         "dashboard.html",
         files=files,
-        latest_file=latest_file,
-        active_file=latest_file,
         notifications=notifications,
         answer=answer,
         kpis=kpis,
         forecast_data=forecast_data,
         forecast_chart=json.dumps(forecast_chart),
         last_synced=last_synced,
-        current_year=datetime.now().year
+        current_year=datetime.now().year,
     )
-
-
 @app.route("/api/financial_data")
 def financial_data():
     import psycopg2, os
@@ -1925,42 +1915,97 @@ def profit_calculator():
     return render_template("profit_calculator.html", profit=profit)
 
 
-@app.route("/trend_forecaster", methods=["GET", "POST"])
+@app.route("/trend_forecaster", methods=["GET"])
 def trend_forecaster():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
     forecast_plot = None
 
-    if request.method == "POST":
-        file = request.files["file"]
-        if file and file.filename.endswith(".csv"):
-            df = pd.read_csv(file)
+    try:
+        conn = get_db_connection(cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
 
-            # Ensure correct column names
-            df.columns = [c.lower() for c in df.columns]
-            if "date" not in df or "revenue" not in df:
-                flash("⚠️ CSV must have 'date' and 'revenue' columns.", "error")
-                return redirect(url_for("trend_forecaster"))
+        # 1️⃣ Get revenue from MPesa (grouped monthly)
+        cursor.execute("""
+            SELECT
+                DATE_TRUNC('month', created_at) AS month,
+                SUM(amount) AS revenue
+            FROM mpesa_transactions
+            WHERE result_code = 0
+            GROUP BY month
+            ORDER BY month
+        """)
+        revenue_rows = cursor.fetchall()
 
-            # Prepare data
-            df["date"] = pd.to_datetime(df["date"])
-            prophet_df = df.rename(columns={"date": "ds", "revenue": "y"})
+        cursor.close()
+        conn.close()
 
-            # Fit Prophet model
-            model = Prophet()
-            model.fit(prophet_df)
+        if not revenue_rows:
+            flash("Not enough revenue data to generate forecast.", "warning")
+            return render_template("trend_forecaster.html", forecast_plot=None)
 
-            # Forecast next 30 days
-            future = model.make_future_dataframe(periods=30)
-            forecast = model.predict(future)
+        revenue_df = pd.DataFrame(revenue_rows)
+        revenue_df["month"] = pd.to_datetime(revenue_df["month"])
+        revenue_df["revenue"] = pd.to_numeric(revenue_df["revenue"], errors="coerce")
 
-            # Plot
-            fig = model.plot(forecast)
-            img_path = os.path.join("static", "forecast.png")
-            fig.savefig(img_path)
-            forecast_plot = img_path
+        # 2️⃣ Load manual expenses (CSV for now)
+        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
+        manual_path = os.path.join(user_folder, "manual_entries.csv")
+
+        if os.path.exists(manual_path):
+            expenses_df = pd.read_csv(manual_path)
+            expenses_df["Month"] = pd.to_datetime(expenses_df["Month"])
+            expenses_df["Expenses"] = pd.to_numeric(expenses_df["Expenses"], errors="coerce")
+
+            expenses_df = (
+                expenses_df
+                .groupby(pd.Grouper(key="Month", freq="M"))["Expenses"]
+                .sum()
+                .reset_index()
+                .rename(columns={"Month": "month"})
+            )
+        else:
+            expenses_df = pd.DataFrame(columns=["month", "Expenses"])
+
+        # 3️⃣ Merge revenue and expenses
+        merged = pd.merge(
+            revenue_df,
+            expenses_df,
+            on="month",
+            how="left"
+        )
+
+        merged["Expenses"] = merged["Expenses"].fillna(0)
+        merged["net_revenue"] = merged["revenue"] - merged["Expenses"]
+
+        # 4️⃣ Prepare Prophet data
+        prophet_df = merged.rename(
+            columns={"month": "ds", "net_revenue": "y"}
+        )[["ds", "y"]]
+
+        if len(prophet_df) < 2:
+            flash("Not enough historical data for forecasting.", "warning")
+            return render_template("trend_forecaster.html", forecast_plot=None)
+
+        # 5️⃣ Train Prophet
+        model = Prophet()
+        model.fit(prophet_df)
+
+        future = model.make_future_dataframe(periods=6, freq="M")
+        forecast = model.predict(future)
+
+        # 6️⃣ Save plot
+        fig = model.plot(forecast)
+        img_path = os.path.join("static", "forecast.png")
+        fig.savefig(img_path)
+        forecast_plot = img_path
+
+    except Exception as e:
+        print("Trend forecast error:", e)
+        flash("Error generating forecast.", "danger")
 
     return render_template("trend_forecaster.html", forecast_plot=forecast_plot)
-
-
 # 🗑 Delete a user
 @app.route("/delete_user/<username>", methods=["POST"])
 def delete_user(username):
@@ -2127,45 +2172,6 @@ def send_reports():
     return redirect(url_for("admin"))
 
 
-@app.route("/manual_entry", methods=["GET", "POST"])
-def manual_entry():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    os.makedirs(user_folder, exist_ok=True)
-    manual_path = os.path.join(user_folder, "manual_entries.csv")
-
-    # ✅ Load existing data
-    if os.path.exists(manual_path):
-        df = pd.read_csv(manual_path)
-    else:
-        df = pd.DataFrame(columns=["Month", "Revenue", "Expenses", "Description"])
-
-    # ✅ Handle form submission
-    if request.method == "POST":
-        month = request.form.get("month")
-        revenue = request.form.get("revenue")
-        expenses = request.form.get("expenses")
-        description = request.form.get("description")
-
-        if not month or not revenue or not expenses:
-            flash("Please fill in all required fields.", "error")
-        else:
-            new_entry = {
-                "Month": month,
-                "Revenue": float(revenue),
-                "Expenses": float(expenses),
-                "Description": description,
-            }
-            df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
-            df.to_csv(manual_path, index=False)
-            flash("✅ Data added successfully!", "success")
-            return redirect(url_for("manual_entry"))
-
-    return render_template("manual_entry.html", entries=df.to_dict(orient="records"))
-
-
 @app.route("/edit_entry/<int:index>", methods=["GET", "POST"])
 def edit_entry(index):
     if "username" not in session:
@@ -2190,12 +2196,12 @@ def edit_entry(index):
         df.at[index, "Expenses"] = float(request.form.get("expenses"))
         df.at[index, "Description"] = request.form.get("description")
         df.to_csv(manual_path, index=False)
+
         flash("✅ Entry updated successfully!", "success")
         return redirect(url_for("manual_entry"))
 
     entry = df.iloc[index].to_dict()
     return render_template("edit_entry.html", entry=entry, index=index)
-
 
 @app.route("/delete_entry/<int:index>")
 def delete_entry(index):
@@ -2210,14 +2216,46 @@ def delete_entry(index):
         return redirect(url_for("manual_entry"))
 
     df = pd.read_csv(manual_path)
+
     if index < len(df):
-        df = df.drop(index)
+        df = df.drop(index).reset_index(drop=True)
         df.to_csv(manual_path, index=False)
         flash("🗑️ Entry deleted successfully!", "success")
     else:
         flash("Invalid entry selected.", "error")
 
     return redirect(url_for("manual_entry"))
+
+
+@app.route("/expense_entry", methods=["GET", "POST"])
+def expense_entry():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        try:
+            save_expense(
+                username=session["username"],
+                amount=float(request.form["amount"]),
+                category=request.form.get("category"),
+                description=request.form.get("description"),
+                expense_date=request.form["date"]
+            )
+            flash("✅ Expense added successfully!", "success")
+            return redirect(url_for("dashboard"))
+        except Exception as e:
+            print(e)
+            flash("❌ Failed to save expense.", "error")
+
+    return render_template("expense_entry.html")
+
+@app.route("/delete_expense")
+def delete_expense():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    expenses = load_expenses(session["username"])
+    return render_template("delete_expense.html", entries=expenses)
 
 
 if __name__ == "__main__":

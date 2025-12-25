@@ -8,7 +8,7 @@
     <!-- Tailwind output -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 
-    <!-- Plotly (kept for future interactive charts if needed) -->
+    <!-- Plotly (reserved for future interactive charts) -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
@@ -61,56 +61,36 @@
 
     <!-- Title -->
     <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-      📈 Revenue Trend Forecaster
+      📈 Revenue Trend Forecast
     </h2>
 
     <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-      Upload a CSV file containing historical revenue data to generate
-      future projections and growth insights.
+      OptiGain automatically generates revenue forecasts using your uploaded data,
+      manual entries, and transaction history. No uploads required.
     </p>
 
-    <!-- Upload -->
-    <form method="POST" enctype="multipart/form-data" class="space-y-4">
-
+    <!-- EMPTY STATE -->
+    {% if not forecast_plot %}
       <div
         class="rounded-lg border border-dashed
-               border-slate-300 dark:border-slate-600
+               border-slate-300 dark:border-slate-700
                bg-slate-50 dark:bg-slate-800
-               p-5"
+               p-6 text-center"
       >
-        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Upload CSV file
-        </label>
-
-        <input
-          type="file"
-          name="file"
-          accept=".csv"
-          required
-          class="block w-full text-sm
-                 text-slate-700 dark:text-slate-200
-                 file:mr-4 file:py-2 file:px-4
-                 file:rounded-lg file:border-0
-                 file:bg-blue-600 file:text-white
-                 hover:file:bg-blue-700 transition"
-        >
+        <p class="text-slate-700 dark:text-slate-300 font-medium">
+          No forecast available yet
+        </p>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
+          Add revenue data via uploads or manual entries to enable forecasting.
+        </p>
       </div>
+    {% endif %}
 
-      <button
-        type="submit"
-        class="w-full py-2.5 rounded-lg
-               bg-blue-600 text-white font-semibold
-               hover:bg-blue-700 transition"
-      >
-        Generate Forecast
-      </button>
-    </form>
-
-    <!-- Forecast Result -->
+    <!-- FORECAST RESULT -->
     {% if forecast_plot %}
     <div class="mt-8">
       <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-3">
-        📊 Forecast Result
+        📊 Forecast Projection
       </h3>
 
       <div
@@ -119,7 +99,7 @@
       >
         <img
           src="{{ url_for('static', filename='forecast.png') }}"
-          alt="Forecast Chart"
+          alt="Revenue Forecast Chart"
           class="w-full rounded-md"
         >
       </div>
@@ -129,7 +109,7 @@
   </section>
 </main>
 
-<!-- DARK MODE SCRIPT (Tailwind standard) -->
+<!-- DARK MODE SCRIPT -->
 <script>
   const toggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("theme");
