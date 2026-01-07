@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body class="min-h-screen flex items-center justify-center transition-colors">
+<body class="min-h-screen flex items-center justify-center transition-colors"
+  style="background: var(--og-bg);">
 
   <!-- Dark mode toggle -->
   <button
@@ -27,7 +28,7 @@
   <!-- Auth Card -->
   <div
     class="w-full max-w-md rounded-2xl shadow-xl p-8"
-    style="background: var(--og-surface); color: var(--og-text-main);"
+    style="background: var(--og-surface); color: var(--og-text-main); border-color: var(--og-border-subtle);"
   >
 
     <!-- Branding -->
@@ -56,7 +57,7 @@
           type="text"
           name="username"
           required
-          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)] focus:border-transparent"
           style="
             background: var(--og-surface);
             color: var(--og-text-main);
@@ -73,7 +74,7 @@
           type="email"
           name="email"
           required
-          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)] focus:border-transparent"
           style="
             background: var(--og-surface);
             color: var(--og-text-main);
@@ -81,6 +82,56 @@
           "
         />
       </div>
+
+<div>
+  <label class="block text-sm font-medium mb-1">Business Name</label>
+  <input
+    type="text"
+    name="business_name"
+    required
+    maxlength="100"
+    class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-[var(--og-primary)] focus:border-transparent"
+    style="
+      background: var(--og-surface);
+      color: var(--og-text-main);
+      border-color: var(--og-border-subtle);
+    "
+  />
+</div>
+
+<div>
+  <label class="block text-sm font-medium mb-1">Paybill Number</label>
+  <input
+    type="text"
+    name="paybill"
+    required
+    pattern="[0-9]{5,7}"
+    title="Paybill must be 5–7 digits"
+    class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-[var(--og-primary)] focus:border-transparent"
+    style="
+      background: var(--og-surface);
+      color: var(--og-text-main);
+      border-color: var(--og-border-subtle);
+    "
+  />
+</div>
+
+<div>
+  <label class="block text-sm font-medium mb-1">
+    Account Number <span class="opacity-60">(optional)</span>
+  </label>
+  <input
+    type="text"
+    name="account_number"
+    maxlength="20"
+    class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-[var(--og-primary)] focus:border-transparent"
+    style="
+      background: var(--og-surface);
+      color: var(--og-text-main);
+      border-color: var(--og-border-subtle);
+    "
+  />
+</div>
 
       <div>
         <label class="block text-sm font-medium mb-1">
@@ -90,7 +141,7 @@
           type="password"
           name="password"
           required
-          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2"
+          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)] focus:border-transparent"
           style="
             background: var(--og-surface);
             color: var(--og-text-main);
@@ -101,7 +152,7 @@
 
       <button
         type="submit"
-        class="w-full py-2.5 rounded-lg font-semibold shadow transition"
+        class="w-full py-2.5 rounded-lg font-semibold shadow transition hover:opacity-90 active:scale-[0.99]"
         style="background: var(--og-primary); color: white;"
       >
         Create Account

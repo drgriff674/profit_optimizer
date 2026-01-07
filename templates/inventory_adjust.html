@@ -1,0 +1,70 @@
+<div class="max-w-md mx-auto space-y-6">
+
+  <h2 class="text-xl font-semibold">Inventory Adjustment</h2>
+
+  {% if items|length == 0 %}
+    <div class="p-4 bg-yellow-100 border border-yellow-300 rounded">
+      <p class="text-sm text-yellow-800">
+        No inventory items found.<br>
+        Please set up inventory before making adjustments.
+      </p>
+
+      <a href="{{ url_for('inventory_setup') }}"
+         class="inline-block mt-3 text-blue-600 underline">
+        Go to Inventory Setup
+      </a>
+    </div>
+  {% else %}
+
+  <form method="POST" class="space-y-4">
+
+    <div>
+      <label class="block text-sm font-medium">Item</label>
+      <select name="item_id" required class="w-full border rounded p-2">
+        {% for item in items %}
+          <option value="{{ item.id }}">
+            {{ item.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium">Movement Type</label>
+      <select name="movement_type" required class="w-full border rounded p-2">
+        <option value="sale">Sale (customer purchase)</option>
+        <option value="usage">Usage / Waste</option>
+        <option value="restock">Restock / Refill</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium">Quantity</label>
+      <input type="number" step="0.01" name="quantity" required
+             class="w-full border rounded p-2"
+             placeholder="e.g. 1, 0.5, 12">
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium">Note (optional)</label>
+      <input type="text" name="note"
+             class="w-full border rounded p-2"
+             placeholder="Reason, reference, or comment">
+    </div>
+
+    <div class="flex items-center gap-4">
+      <button class="bg-blue-600 text-white px-4 py-2 rounded">
+        Save Adjustment
+      </button>
+
+      <a href="{{ url_for('dashboard') }}"
+         class="text-gray-600 underline">
+        Back to Dashboard
+      </a>
+    </div>
+
+  </form>
+
+  {% endif %}
+
+</div>

@@ -34,9 +34,11 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection
+from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection, load_revenue_entries_for_day, load_expense_categories, save_revenue_entry
 import pytz
 from flask_caching import Cache
+from datetime import date
+import re
 
 def run_cron_jobs():
     print("⏰ Running background jobs")
@@ -217,6 +219,10 @@ def register():
         new_email = request.form["email"].strip()
         new_pass = request.form["password"].strip()
 
+        business_name = request.form["business_name"].strip()
+        paybill = request.form["paybill"].strip()
+        account_number = request.form.get("account_number","").strip()
+
         try:
             conn = get_connection()
             cursor = conn.cursor()
@@ -255,6 +261,20 @@ def register():
                 conn.close()
                 return redirect(url_for("register"))
 
+            # ✅ Validate paybill (5–7 digits only)
+            if not re.fullmatch(r"\d{5,7}", paybill):
+                flash("⚠️ Invalid paybill number. Must be 5–7 digits.", "error")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("register"))
+
+            # ✅ Validate account number (optional, but digits only if provided)
+            if account_number and not re.fullmatch(r"\d{3,12}", account_number):
+                flash("⚠️ Invalid account number.", "error")
+                cursor.close()
+                conn.close()
+                return redirect(url_for("register"))
+
             # ✅ Determine role
             cursor.execute("SELECT COUNT(*) FROM users")
             user_count = cursor.fetchone()["count"]
@@ -262,13 +282,27 @@ def register():
 
             # ✅ Hash password and save new user
             hashed_password = generate_password_hash(new_pass)
+
             cursor.execute(
-                "INSERT INTO users (username, email, password, role) VALUES (%s, %s, %s, %s)",
+                """
+                INSERT INTO users (username, email, password, role)
+                VALUES (%s, %s, %s, %s)
+                """,
                 (new_user, new_email, hashed_password, role),
             )
+
+            # ✅ Save business details
+            cursor.execute(
+                """
+                INSERT INTO businesses (username, business_name, paybill, account_number)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (new_user, business_name, paybill, account_number or None),
+            )
+
             conn.commit()
             cursor.close()
-            conn.close()
+            conn.close() 
 
             # ✅ Create upload folder
             os.makedirs(
@@ -2232,22 +2266,30 @@ def expense_entry():
     if "username" not in session:
         return redirect(url_for("login"))
 
+    username = session["username"]
+
     if request.method == "POST":
         try:
             save_expense(
-                username=session["username"],
+                username=username,
                 amount=float(request.form["amount"]),
                 category=request.form.get("category"),
                 description=request.form.get("description"),
                 expense_date=request.form["date"]
             )
             flash("✅ Expense added successfully!", "success")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("expense_entry"))
         except Exception as e:
             print(e)
             flash("❌ Failed to save expense.", "error")
 
-    return render_template("expense_entry.html")
+    # 🔹 NEW: load user-defined categories
+    categories = load_expense_categories(username)
+
+    return render_template(
+        "expense_entry.html",
+        categories=categories
+    )
 
 @app.route("/delete_expense")
 def delete_expense():
@@ -2256,6 +2298,211 @@ def delete_expense():
 
     expenses = load_expenses(session["username"])
     return render_template("delete_expense.html", entries=expenses)
+
+@app.route("/revenue_entry", methods=["GET", "POST"])
+def revenue_entry():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    # ✅ Determine selected date
+    selected_date = request.form.get("date") or request.args.get("date")
+    if not selected_date:
+        selected_date = date.today().isoformat()
+
+    if request.method == "POST":
+        save_revenue_entry(
+            username=username,
+            category=request.form["category"],
+            amount=float(request.form["amount"]),
+            revenue_date=selected_date
+        )
+        flash("✅ Revenue entry added", "success")
+
+        # 🔑 Redirect WITH date preserved
+        return redirect(url_for("revenue_entry", date=selected_date))
+
+    # ✅ Load entries for that date
+    entries = load_revenue_entries_for_day(session["username"], selected_date)
+
+    return render_template(
+        "revenue_entry.html",
+        entries=entries,
+        selected_date=selected_date
+    )
+
+@app.route("/inventory_setup", methods=["GET", "POST"])
+def inventory_setup():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    # 🔹 GET business_id FIRST (REQUIRED)
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id FROM businesses
+        WHERE username = %s
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (username,))
+
+    business = cur.fetchone()
+
+    if not business:
+        flash("❌ No business found. Please create a business first.", "error")
+        return redirect(url_for("dashboard"))
+
+    business_id = business["id"]
+
+    cur.close()
+    conn.close()
+
+    # 🔹 HANDLE FORM SUBMIT
+    if request.method == "POST":
+        try:
+            name = request.form["item_name"].strip().title()
+            category = request.form["category"].strip().title()
+            unit = request.form["unit"].strip().lower()
+            quantity = float(request.form["starting_quantity"])
+            snapshot_date = request.form["snapshot_date"]
+
+            if not name or not unit:
+                flash("⚠️ Item name and unit are required.", "error")
+                return redirect(url_for("inventory_setup"))
+
+            conn = get_db_connection()
+            cur = conn.cursor()
+
+            # 1️⃣ Insert item
+            cur.execute("""
+                INSERT INTO inventory_items (business_id, name, category, unit)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+            """, (business_id, name, category, unit))
+
+            item_id = cur.fetchone()[0]
+
+            # 2️⃣ Create snapshot
+            cur.execute("""
+                INSERT INTO inventory_snapshots
+                (business_id, snapshot_date, snapshot_type, created_by)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+            """, (business_id, snapshot_date, "initial", username))
+
+            snapshot_id = cur.fetchone()[0]
+
+            # 3️⃣ Snapshot quantity
+            cur.execute("""
+                INSERT INTO inventory_snapshot_items
+                (snapshot_id, item_id, quantity)
+                VALUES (%s, %s, %s)
+            """, (snapshot_id, item_id, quantity))
+
+            conn.commit()
+            cur.close()
+            conn.close()
+
+            flash("✅ Inventory item added.", "success")
+            return redirect(url_for("inventory_setup"))
+
+        except Exception as e:
+            print("Inventory error:", e)
+            flash("❌ Failed to save inventory item.", "error")
+
+    # 🔹 LOAD INVENTORY FOR DISPLAY
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            i.name,
+            i.category,
+            i.unit,
+            s.snapshot_date,
+            si.quantity
+        FROM inventory_items i
+        JOIN inventory_snapshot_items si ON si.item_id = i.id
+        JOIN inventory_snapshots s ON s.id = si.snapshot_id
+        WHERE i.business_id = %s
+        ORDER BY s.snapshot_date DESC
+    """, (business_id,))
+
+    items = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template("inventory_setup.html", items=items)
+
+
+@app.route("/inventory/adjust", methods=["GET", "POST"])
+def inventory_adjust():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    # Get business_id for user
+    cur.execute(
+        "SELECT id FROM businesses WHERE username = %s",
+        (username,)
+    )
+    business = cur.fetchone()
+    if not business:
+        flash("No business found.", "error")
+        return redirect(url_for("dashboard"))
+
+    business_id = business["id"]
+
+    if request.method == "POST":
+        item_id = request.form["item_id"]
+        movement_type = request.form["movement_type"]
+        quantity = float(request.form["quantity"])
+        note = request.form.get("note")
+
+        # Normalize quantity direction
+        if movement_type in ("sale", "usage"):
+            quantity = -abs(quantity)
+        else:
+            quantity = abs(quantity)
+
+        cur.execute("""
+            INSERT INTO inventory_movements
+            (business_id, item_id, quantity_change, movement_type, source)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            business_id,
+            item_id,
+            quantity,
+            movement_type,
+            note
+        ))
+
+        conn.commit()
+        flash("Inventory updated successfully.", "success")
+
+    # Load items for dropdown
+    cur.execute("""
+        SELECT id, name
+        FROM inventory_items
+        WHERE business_id = %s
+        ORDER BY name
+    """, (business_id,))
+    items = cur.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "inventory_adjust.html",
+        items=items
+    )
 
 
 if __name__ == "__main__":

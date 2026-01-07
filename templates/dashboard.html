@@ -5,12 +5,8 @@
     <meta http-equiv="refresh" content="60">
     <title>Dashboard - OptiGain</title>
 
-    <!-- Tailwind (layout only) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
-    <!-- OptiGain theme controller -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-    <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
@@ -18,7 +14,8 @@
 <body class="min-h-screen flex transition-colors">
 
 <!-- MOBILE SIDEBAR OVERLAY -->
-<div id="mobileSidebarOverlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
+<div id="mobileSidebarOverlay"
+     class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
 
 <!-- SIDEBAR -->
 <aside id="sidebar"
@@ -27,66 +24,151 @@
        style="background: var(--og-surface); color: var(--og-text-main);">
 
     <div class="p-6 flex flex-col items-center">
-        <img src="{{ url_for('static', filename='logo.png') }}" class="w-20 mb-2" alt="OptiGain Logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="w-20 mb-2">
         <h2 class="font-bold text-xl" style="color: var(--og-primary);">OptiGain</h2>
     </div>
 
-    <nav class="mt-4 px-4 space-y-1">
-        {% for label, icon, endpoint in [
-          ('Dashboard','📊','dashboard'),
-          ('Upload CSV','📤','upload'),
-          ('Add Expense','➕','expense_entry'),
-          ('Trend Forecaster','📈','trend_forecaster'),
-          ('Profit Calculator','💵','profit_calculator'),
-          ('Business Assistant','🤖','ask'),
-          ('Admin Panel','🛠','admin'),
-          ('My Profile','👤','profile'),
-          ('Logout','🚪','logout')
-        ] %}
-        <a href="{{ url_for(endpoint) }}"
+    <nav class="mt-4 px-4 space-y-2">
+
+        <a href="{{ url_for('dashboard') }}"
            class="block p-3 rounded-md font-semibold transition hover:text-white"
-           style="color: var(--og-text-main);"
            onmouseover="this.style.background='var(--og-primary)'"
            onmouseout="this.style.background='transparent'">
-           {{ icon }} {{ label }}
+          
+           📊 Dashboard
         </a>
-        {% endfor %}
+
+        <!-- REVENUE -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('revenueMenu',this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>💰 Revenue</span><span>▾</span>
+            </button>
+
+            <div id="revenueMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('dashboard') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Overview
+              
+                            
+                <a href="{{ url_for('revenue_entry') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Split revenue
+               <a href="{{ url_for('inventory_adjust') }}"
+                  class="block p-2 text-sm rounded hover:text-white"
+                  onmouseover="this.style.background='var(--og-primary)'"
+                  onmouseout="this.style.background='transparent'">
+                 🧾 Inventory Adjustment
+               </a>
+            </div>
+        </div>
+
+        <!-- EXPENSES -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('expensesMenu', this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>➖ Expenses</span><span>▾</span>
+            </button>
+
+            <div id="expensesMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('expense_entry') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Add Expense
+                </a>
+            </div>
+        </div>
+
+<!-- INVENTORY -->
+<div>
+  <a href="{{ url_for('inventory_setup') }}"
+     class="block p-3 rounded-md font-semibold transition hover:text-white"
+     onmouseover="this.style.background='var(--og-primary)'"
+     onmouseout="this.style.background='transparent'">
+     📦 Inventory Setup
+  </a>
+</div>
+
+        <!-- FORECASTING -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('forecastMenu',this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>📈 Forecasting</span><span>▾</span>
+            </button>
+
+            <div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('trend_forecaster') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Trend Forecaster
+                <a href="{{ url_for('profit_calculator') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Profit Calculator
+              </a>
+            </div>
+        </div>
+
+        <a href="{{ url_for('ask') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   🤖 Business Assistant
+</a>
+
+<a href="{{ url_for('profile') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   👤 My Profile
+</a>
+
+<a href="{{ url_for('logout') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   🚪 Logout
+</a>
+
     </nav>
 </aside>
 
-<!-- MAIN CONTENT -->
-<div class="flex-1 md:ml-60 p-4 md:p-6 transition-all">
+<!-- MAIN CONTENT (SCROLL FIX APPLIED HERE) -->
+<div class="flex-1 md:ml-60 p-4 md:p-6 transition-all overflow-y-auto h-screen">
 
-    <!-- Topbar -->
+    <!-- TOP BAR -->
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
-            <button id="sidebarToggle" class="md:hidden text-2xl p-1">☰</button>
-            <h1 class="text-lg font-semibold" style="color: var(--og-text-main);">
-                Welcome, {{ session['user'] }}
-            </h1>
+            <button id="sidebarToggle" class="md:hidden text-2xl">☰</button>
+            <h1 class="text-lg font-semibold">Welcome, {{ session['user'] }}</h1>
         </div>
-
         <button id="darkToggle"
                 class="w-10 h-10 rounded-full shadow"
-                style="background: var(--og-primary); color: white;">
-            🌙
-        </button>
+                style="background: var(--og-primary); color:white;">🌙</button>
     </div>
-
-    <!-- FLASH -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for _, message in messages %}
-        <div class="p-3 mb-4 rounded shadow"
-             style="background: var(--og-surface); color: var(--og-text-main);">
-            {{ message }}
-        </div>
-      {% endfor %}
-    {% endwith %}
 
     <!-- MPESA -->
     <section class="max-w-sm mb-4">
-        <div class="rounded-lg px-3 py-2 shadow"
-             style="background: var(--og-surface);">
+        <div class="rounded-lg px-3 py-2 shadow" style="background: var(--og-surface);">
             <h5 class="text-sm">💰 Live M-Pesa Business Balance</h5>
             <h3 class="text-xl text-green-600">Loading...</h3>
             <p class="text-xs opacity-70">Last updated: just now</p>
@@ -94,7 +176,7 @@
     </section>
 
     <!-- KPI CARDS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-6">
         {% for title, value in [
           ('Total Profit',kpis.total_profit),
           ('Average Profit',kpis.avg_profit),
@@ -102,85 +184,74 @@
           ('Profit Growth',kpis.profit_growth),
           ('Largest Expense',kpis.largest_expense)
         ] %}
-        <div class="p-5 rounded-xl shadow"
-             style="background: var(--og-surface);">
-            <h5 class="text-xs uppercase opacity-70">{{ title }}</h5>
-            <p class="text-2xl font-semibold">{{ value }}</p>
+        <div class="p-5 rounded-xl shadow" style="background: var(--og-surface);">
+            <h5 class="text-[11px] uppercase opacity-60 tracking-wide">{{ title }}</h5>
+            <p class="text-2xl font-semibold leading-tight tracking-tight">{{ value }}</p>
         </div>
         {% endfor %}
+
+        <div class="p-5 rounded-xl shadow border-l-4 border-yellow-400"
+             style="background: var(--og-surface);">
+            <h5 class="text-xs uppercase opacity-70">Revenue Split Status</h5>
+            <p class="text-sm mt-1">Today: <strong>KSh —</strong></p>
+            <p class="mt-2 text-yellow-500 font-semibold">⏳ Not split yet</p>
+            <p class="text-xs opacity-70 mt-1">
+                Split today’s revenue to unlock category insights
+            </p>
+        </div>
     </div>
 
-    <!-- REUSABLE SECTION TEMPLATE -->
-    {% macro section(title) %}
-    <div class="rounded-lg shadow p-6 mb-6"
-         style="background: var(--og-surface);">
-        <h4 class="text-xl font-semibold mb-3">{{ title }}</h4>
-        {{ caller() }}
-    </div>
-    {% endmacro %}
-
-    {% call section("📈 Revenue Forecast (Next 6 Months)") %}
-      <ul class="list-disc ml-4">
-        {% for item in forecast_data %}
-          <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
-        {% endfor %}
-      </ul>
-    {% endcall %}
-
-    {% call section("📉 Live Financial Performance") %}
-      <div id="liveChart" class="h-[320px] md:h-[400px]"></div>
-    {% endcall %}
-
-    {% call section("📊 Forecast Explorer") %}
-      <select
-        class="border rounded p-2 mb-4"
-        style="
-          background: var(--og-surface);
-          color: var(--og-text-main);
-          border-color: var(--og-border-subtle);
-        "
-      >
-        <option>Revenue</option>
-        <option>Profit</option>
-        <option>Expenses</option>
-      </select>
-      <div id="forecastPlotly" class="h-[360px] md:h-[420px]"></div>
-    {% endcall %}
-
-    {% if notifications %}
-    {% call section("🧠 Smart Insights") %}
-      <ul class="list-disc ml-5">
-        {% for note in notifications %}
-          <li>{{ note }}</li>
-        {% endfor %}
-      </ul>
-    {% endcall %}
-    {% endif %}
-
-    {% call section("Your Uploaded Files") %}
-      {% if files %}
+    <!-- 📈 Revenue Forecast -->
+    <div class="rounded-lg shadow p-6 mb-6" style="background: var(--og-surface);">
+        <h4 class="text-xl font-semibold mb-3">📈 Revenue Forecast (Next 6 Months)</h4>
         <ul class="list-disc ml-5">
-          {% for file in files %}
-            <li>
-              <a href="{{ url_for('view_file', filename=file) }}"
-                 style="color: var(--og-primary);">
-                 {{ file }}
-              </a>
-            </li>
-          {% endfor %}
+            {% for item in forecast_data %}
+              <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
+            {% endfor %}
         </ul>
-      {% else %}
-        <p>No files uploaded yet.</p>
-      {% endif %}
-    {% endcall %}
+    </div>
 
-    <footer class="text-center py-6 opacity-70">
-        © {{ current_year }} OptiGain. All rights reserved.
-    </footer>
+    <!-- 📉 Live Chart -->
+    <div class="rounded-lg shadow p-6 mb-6" style="background: var(--og-surface);">
+        <h4 class="text-xl font-semibold mb-3">📉 Live Financial Performance</h4>
+        <div id="liveChart" class="h-[400px]"></div>
+    </div>
+
 </div>
+<section class="mt-8 p-5 rounded-xl shadow"
+         style="background: var(--og-surface);">
 
-<!-- SIDEBAR JS -->
+  <h2 class="text-lg font-semibold mb-3">
+    📂 Your Uploaded Files
+  </h2>
+
+  {% if files %}
+    <ul class="list-disc ml-5">
+      {% for file in files %}
+        <li>
+          <a href="{{ url_for('view_file', filename=file) }}"
+             class="font-medium"
+             style="color: var(--og-primary);">
+             {{ file }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="opacity-70">No files uploaded yet.</p>
+  {% endif %}
+
+</section>
+
 <script>
+function toggleMenu(id,btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  
+  el.classList.toggle("hidden");
+  btn.classList.toggle("active-menu");
+}
+
 const sidebar = document.getElementById("sidebar");
 const toggle = document.getElementById("sidebarToggle");
 const overlay = document.getElementById("mobileSidebarOverlay");
@@ -193,18 +264,11 @@ overlay?.addEventListener("click", () => {
   sidebar.classList.add("-translate-x-full");
   overlay.classList.add("hidden");
 });
-</script>
 
-<!-- DARK MODE (STYLE.CSS ONLY) -->
-<script>
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("darkToggle");
   const root = document.documentElement;
-
-  if (localStorage.getItem("theme") === "dark") {
-    root.classList.add("dark");
-  }
-
+  if (localStorage.getItem("theme") === "dark") root.classList.add("dark");
   btn.addEventListener("click", () => {
     const dark = root.classList.toggle("dark");
     localStorage.setItem("theme", dark ? "dark" : "light");

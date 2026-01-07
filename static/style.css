@@ -116,3 +116,8 @@ html.dark .forecast-select option {
   background-color: #1e293b;
   color: #f1f5f9;
 }
+
+.active-menu }
+  background:var(--og-primary);
+  color: white;
+}

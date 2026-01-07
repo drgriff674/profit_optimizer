@@ -14,43 +14,149 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
 </head>
 
-<body class="min-h-screen flex transition-colors">
+<body class="min-h-screen flex bg-sky-50 dark:bg-slate-950 transition-colors">
 
 <!-- MOBILE SIDEBAR OVERLAY -->
-<div id="mobileSidebarOverlay" class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
+<div id="mobileSidebarOverlay"
+     class="fixed inset-0 bg-black bg-opacity-40 hidden z-40"></div>
 
 <!-- SIDEBAR -->
 <aside id="sidebar"
-       class="fixed inset-y-0 left-0 w-60 shadow-xl z-50 transform 
+       class="fixed z-50 inset-y-0 left-0 w-60 shadow-xl transform 
               -translate-x-full md:translate-x-0 transition-all duration-300"
        style="background: var(--og-surface); color: var(--og-text-main);">
 
-  <div class="p-6 flex flex-col items-center">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="w-20 mb-2" alt="OptiGain Logo">
-    <h2 class="font-bold text-xl" style="color: var(--og-primary);">OptiGain</h2>
-  </div>
+    <div class="p-6 flex flex-col items-center">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="w-20 mb-2">
+        <h2 class="font-bold text-xl" style="color: var(--og-primary);">OptiGain</h2>
+    </div>
 
-  <nav class="mt-4 px-4 space-y-1">
-    {% for label, icon, endpoint in [
-      ('Dashboard','📊','dashboard'),
-      ('Upload CSV','📤','upload'),
-      ('Add Expense','➕','expense_entry'),
-      ('Trend Forecaster','📈','trend_forecaster'),
-      ('Profit Calculator','💵','profit_calculator'),
-      ('Business Assistant','🤖','ask'),
-      ('Admin Panel','🛠','admin'),
-      ('My Profile','👤','profile'),
-      ('Logout','🚪','logout')
-    ] %}
-    <a href="{{ url_for(endpoint) }}"
-       class="block p-3 rounded-md font-semibold transition hover:text-white"
-       style="color: var(--og-text-main);"
-       onmouseover="this.style.background='var(--og-primary)'"
-       onmouseout="this.style.background='transparent'">
-       {{ icon }} {{ label }}
-    </a>
-    {% endfor %}
-  </nav>
+    <nav class="mt-4 px-4 space-y-2">
+
+        <a href="{{ url_for('dashboard') }}"
+           class="block p-3 rounded-md font-semibold transition hover:text-white"
+           onmouseover="this.style.background='var(--og-primary)'"
+           onmouseout="this.style.background='transparent'">
+          
+           📊 Dashboard
+        </a>
+
+        <!-- REVENUE -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('revenueMenu',this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>💰 Revenue</span><span>▾</span>
+            </button>
+
+            <div id="revenueMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('dashboard') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Overview
+              
+                            
+                <a href="{{ url_for('revenue_entry') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Split revenue
+               <a href="{{ url_for('inventory_adjust') }}"
+                  class="block p-2 text-sm rounded hover:text-white"
+                  onmouseover="this.style.background='var(--og-primary)'"
+                  onmouseout="this.style.background='transparent'">
+                 🧾 Inventory Adjustment
+               </a>
+            </div>
+        </div>
+
+        <!-- EXPENSES -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('expensesMenu', this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>➖ Expenses</span><span>▾</span>
+            </button>
+
+            <div id="expensesMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('expense_entry') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Add Expense
+              </a>
+            </div>
+        </div>
+
+
+<!-- INVENTORY -->
+<div>
+  <a href="{{ url_for('inventory_setup') }}"
+     class="block p-3 rounded-md font-semibold transition hover:text-white"
+     onmouseover="this.style.background='var(--og-primary)'"
+     onmouseout="this.style.background='transparent'">
+     📦 Inventory Setup
+  </a>
+</div>
+
+
+        <!-- FORECASTING -->
+        <div>
+            <button type="button"
+                onclick="toggleMenu('forecastMenu',this)"
+                class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+                       transition hover:text-white"
+                onmouseover="this.style.background='var(--og-primary)'"
+                onmouseout="this.style.background='transparent'">
+                <span>📈 Forecasting</span><span>▾</span>
+            </button>
+
+            <div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
+                <a href="{{ url_for('trend_forecaster') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Trend Forecaster
+                <a href="{{ url_for('profit_calculator') }}"
+                   class="block p-2 text-sm rounded hover:text-white"
+                   onmouseover="this.style.background='var(--og-primary)'"
+                   onmouseout="this.style.background='transparent'">
+                   Profit Calculator
+              </a>
+            </div>
+        </div>
+      
+
+
+        <a href="{{ url_for('ask') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   🤖 Business Assistant
+</a>
+
+<a href="{{ url_for('profile') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   👤 My Profile
+</a>
+
+<a href="{{ url_for('logout') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   🚪 Logout
+</a>
+
+    </nav>
 </aside>
 
 <!-- MAIN CONTENT -->
@@ -106,7 +212,9 @@
         </button>
 
         <div id="actionMenu"
-             class="hidden absolute left-0 mt-2 w-56 rounded-lg shadow-lg z-50"
+             class="block p-3 rounded-md font-semibold transition hover:text-white"
+             onmouseover="this.style.background='var(--og-primary)'"
+             onmouseout="this.style.background='transparent'"
              style="background: var(--og-surface);">
           {% for label, endpoint in [
             ('👁 View Raw Data','preview_file'),
@@ -116,6 +224,7 @@
             ('📕 PDF Summary','download_raw_pdf'),
             ('🧾 Full Report','download_full_report')
           ] %}
+          <a/>
           <a href="{{ url_for(endpoint, filename=filename) }}"
              class="block px-4 py-2 hover:opacity-80">
             {{ label }}
@@ -218,6 +327,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", () => m?.classList.add("hidden"));
 });
 </script>
+
+<script>
+function toggleMenu(id,btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  
+  el.classList.toggle("hidden");
+  btn.classList.toggle("active-menu");
+}
+
+const sidebar = document.getElementById("sidebar");
+const toggle = document.getElementById("sidebarToggle");
+const overlay = document.getElementById("mobileSidebarOverlay");
+
+toggle?.addEventListener("click", () => {
+  sidebar.classList.toggle("-translate-x-full");
+  overlay.classList.toggle("hidden");
+});
+overlay?.addEventListener("click", () => {
+  sidebar.classList.add("-translate-x-full");
+  overlay.classList.add("hidden");
+});
+
+</script>
+
 
 </body>
 </html>

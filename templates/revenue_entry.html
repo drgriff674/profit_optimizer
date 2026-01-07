@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OptiGain • Expense Entry</title>
+  <title>OptiGain • Revenue Split</title>
 
   <!-- Tailwind output -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
@@ -20,7 +20,7 @@
   <div class="flex items-center gap-3">
     <img src="{{ url_for('static', filename='logo.png') }}" alt="OptiGain" class="h-9">
     <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-      Expense Entry
+      Revenue Split
     </h1>
   </div>
 
@@ -56,17 +56,22 @@
     <!-- Title -->
     <div class="text-center mb-6">
       <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-        🧾 Add Expense
+        💰 Split Today’s Revenue
       </h2>
       <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
-        Record business expenses for accurate insights and forecasting
+        Assign today’s total revenue into business categories
       </p>
     </div>
 
-    <!-- FORM -->
-    <form method="POST" action="{{ url_for('expense_entry') }}" class="space-y-4">
+    <!-- INFO NOTE -->
+    <div class="mb-5 text-sm text-slate-600 dark:text-slate-400 text-center">
+      Make sure the total of all entries equals today’s collected revenue.
+    </div>
 
-      <!-- Date -->
+    <!-- FORM -->
+    <form method="POST" action="{{ url_for('revenue_entry') }}" class="space-y-4">
+
+      <!-- Revenue Date -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
           Date
@@ -83,59 +88,34 @@
         >
       </div>
 
-      <!-- Expense Amount -->
+      <!-- Revenue Amount -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Expense Amount (KSh)
+          Revenue Amount (KSh)
         </label>
         <input
           type="number"
           name="amount"
           required
-          placeholder="e.g. 2500"
+          placeholder="e.g. 10000"
           class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                  bg-white dark:bg-slate-800
                  px-3 py-2 text-sm
                  text-slate-900 dark:text-white
-                 focus:outline-none focus:ring-2 focus:ring-red-500"
+                 focus:outline-none focus:ring-2 focus:ring-green-500"
         >
       </div>
 
       <!-- Category -->
-<div>
-  <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-    Category
-  </label>
-
-  <input
-    type="text"
-    name="category"
-    list="expenseCategories"
-    required
-    placeholder="e.g. Fuel, Office Supplies"
-    class="w-full rounded-lg border border-slate-300 dark:border-slate-700
-           bg-white dark:bg-slate-800
-           px-3 py-2 text-sm
-           text-slate-900 dark:text-white
-           focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-
-  <datalist id="expenseCategories">
-    {% for cat in categories %}
-      <option value="{{ cat }}">
-    {% endfor %}
-  </datalist>
-</div>
-
-      <!-- Description -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Description <span class="text-slate-400">(optional)</span>
+          Category
         </label>
         <input
           type="text"
-          name="description"
-          placeholder="Optional notes"
+          name="category"
+          required
+          placeholder="e.g. Kitchen, Bar, Events"
           class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                  bg-white dark:bg-slate-800
                  px-3 py-2 text-sm
@@ -150,7 +130,7 @@
         class="w-full rounded-lg bg-blue-600 hover:bg-blue-700
                text-white font-medium py-2 transition"
       >
-        Save Expense
+        Add Revenue Entry
       </button>
     </form>
 
@@ -166,6 +146,35 @@
         </div>
       {% endif %}
     {% endwith %}
+
+{% if entries %}
+  <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+    <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+      Today’s Entries
+    </h3>
+
+    <div class="space-y-2">
+      {% for e in entries %}
+        <div
+          class="flex justify-between items-center
+                 bg-slate-100 dark:bg-slate-800
+                 rounded-lg px-3 py-2 text-sm"
+        >
+          <span class="text-slate-700 dark:text-slate-300">
+            {{ e.category }}
+          </span>
+          <span class="font-semibold text-slate-900 dark:text-white">
+            KSh {{ e.amount }}
+          </span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% else %}
+  <p class="mt-6 text-sm text-center text-slate-500 dark:text-slate-400">
+    No revenue entries yet for this date.
+  </p>
+{% endif %}
 
   </div>
 </main>
