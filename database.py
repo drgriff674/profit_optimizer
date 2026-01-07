@@ -217,7 +217,7 @@ def load_expense_categories(username):
         WHERE username = %s
           AND category IS NOT NULL
           AND category <> ''
-        ORDER BY id ASC
+        ORDER BY category ASC
         """,
         (username,)
     )
