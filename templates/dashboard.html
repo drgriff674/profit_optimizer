@@ -200,24 +200,43 @@
             </p>
         </div>
     </div>
+<!-- 📊 CHART SHORTCUTS -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
-    <!-- 📈 Revenue Forecast -->
-    <div class="rounded-lg shadow p-6 mb-6" style="background: var(--og-surface);">
-        <h4 class="text-xl font-semibold mb-3">📈 Revenue Forecast (Next 6 Months)</h4>
-        <ul class="list-disc ml-5">
-            {% for item in forecast_data %}
-              <li>{{ item.date }} → {{ item.predicted_revenue }}</li>
-            {% endfor %}
-        </ul>
-    </div>
+  <!-- Revenue Forecast Card -->
+  <a href="{{ url_for('revenue_forecast') }}"
+     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
+     style="background: var(--og-surface);">
 
-    <!-- 📉 Live Chart -->
-    <div class="rounded-lg shadow p-6 mb-6" style="background: var(--og-surface);">
-        <h4 class="text-xl font-semibold mb-3">📉 Live Financial Performance</h4>
-        <div id="liveChart" class="h-[400px]"></div>
+    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
+    <p class="text-sm opacity-70 mb-3">
+      Next 6 months projection
+    </p>
+
+    <div class="text-sm font-medium"
+         style="color: var(--og-primary);">
+      Tap to view chart →
     </div>
+  </a>
+
+  <!-- Live Performance Card -->
+  <a href="{{ url_for('live_performance') }}"
+     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
+     style="background: var(--og-surface);">
+
+    <h4 class="text-lg font-semibold mb-1">📉 Live Financial Performance</h4>
+    <p class="text-sm opacity-70 mb-3">
+      Revenue vs expenses over time
+    </p>
+
+    <div class="text-sm font-medium"
+         style="color: var(--og-primary);">
+      Tap to view chart →
+    </div>
+  </a>
 
 </div>
+
 <section class="mt-8 p-5 rounded-xl shadow"
          style="background: var(--og-surface);">
 

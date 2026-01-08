@@ -199,7 +199,6 @@ def login():
 
             if user and check_password_hash(user["password"], password):
                 session["username"] = username
-                flash("✅ Login successful!", "success")
                 return redirect(url_for("dashboard"))
 
             flash("❌ Invalid username or password", "error")
@@ -312,7 +311,6 @@ def register():
             # ✅ Save session info
             session["username"] = new_user
             session["email"] = new_email
-            flash("✅ Registration successful! You are now logged in.", "success")
             return redirect(url_for("dashboard"))
 
         except Exception as e:
@@ -2407,7 +2405,6 @@ def inventory_setup():
             cur.close()
             conn.close()
 
-            flash("✅ Inventory item added.", "success")
             return redirect(url_for("inventory_setup"))
 
         except Exception as e:
@@ -2502,6 +2499,47 @@ def inventory_adjust():
     return render_template(
         "inventory_adjust.html",
         items=items
+    )
+
+@app.route("/charts/revenue-forecast")
+def revenue_forecast():
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    # Example data
+    forecast_dates = ["Feb", "Mar", "Apr", "May", "Jun", "Jul"]
+    forecast_values = [120000, 135000, 150000, 160000, 175000, 190000]
+
+    return render_template(
+        "charts/revenue_forecast.html",
+        forecast_dates=forecast_dates,
+        forecast_values=forecast_values
+    )
+
+@app.route("/charts/live-performance")
+def live_performance():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT revenue_date, amount
+        FROM revenue_entries
+        WHERE username = %s
+        ORDER BY revenue_date ASC
+    """, (session["username"],))
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Safe defaults 
+    dates = [str(r[0]) for r in rows] if rows else []
+    values = [float(r[1]) for r in rows] if rows else []
+
+    return render_template(
+        "charts/live_performance.html",
+        dates=dates,
+        values=values
     )
 
 

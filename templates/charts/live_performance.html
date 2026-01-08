@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live Financial Performance – OptiGain</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body class="min-h-screen transition-colors"
+      style="background: var(--og-bg); color: var(--og-text-main);">
+
+<!-- HEADER -->
+<header class="flex items-center gap-3 px-4 py-4 border-b"
+        style="border-color: var(--og-border); background: var(--og-surface);">
+
+  <a href="{{ url_for('dashboard') }}"
+     class="text-sm font-medium"
+     style="color: var(--og-primary);">
+    ⬅ Dashboard
+  </a>
+
+  <h1 class="text-lg font-semibold">
+    📉 Live Financial Performance
+  </h1>
+</header>
+
+<!-- CONTENT -->
+<main class="p-4">
+
+  <div class="rounded-xl shadow p-4"
+       style="background: var(--og-surface);">
+
+    <p class="text-sm opacity-70 mb-3">
+      Revenue performance over time
+    </p>
+
+    <div id="liveChart" class="w-full h-[70vh]"></div>
+
+  </div>
+
+</main>
+
+<script>
+  const dates = {{ dates | default([]) | tojson | safe }};
+  const values = {{ values | default([]) | tojson | safe }};
+
+  if (!dates.length) {
+    document.getElementById("liveChart").innerHTML =
+      "<p class='text-center opacity-70'>No data available yet</p>";
+  } else {
+    Plotly.newPlot("liveChart", [{
+      x: dates,
+      y: values,
+      type: "scatter",
+      mode: "lines+markers",
+      line: { width: 3 },
+      marker: { size: 6 },
+      name: "Revenue"
+    }], {
+      margin: { t: 30 },
+      xaxis: { title: "Date" },
+      yaxis: { title: "Amount (KSh)" },
+      paper_bgcolor: "transparent",
+      plot_bgcolor: "transparent",
+      font: { size: 14 }
+    }, { responsive: true });
+  }
+</script>
+
+</body>
+</html>

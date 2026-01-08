@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Revenue Forecast – OptiGain</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body class="min-h-screen transition-colors"
+      style="background: var(--og-bg); color: var(--og-text-main);">
+
+<!-- HEADER -->
+<header class="flex items-center gap-3 px-4 py-4 border-b"
+        style="border-color: var(--og-border); background: var(--og-surface);">
+
+  <a href="{{ url_for('dashboard') }}"
+     class="text-sm font-medium"
+     style="color: var(--og-primary);">
+     ⬅ Dashboard
+  </a>
+
+  <h1 class="text-lg font-semibold">
+    📈 Revenue Forecast (Next 6 Months)
+  </h1>
+</header>
+
+<!-- CONTENT -->
+<main class="p-4">
+
+  <div class="rounded-xl shadow p-4"
+       style="background: var(--og-surface);">
+
+    <p class="text-sm opacity-70 mb-3">
+      Predicted revenue trend based on historical data
+    </p>
+
+    <!-- CHART -->
+    <div id="forecastChart" class="w-full h-[70vh]"></div>
+
+  </div>
+
+</main>
+
+<script>
+  /*
+    Backend should pass:
+    forecast_dates
+    forecast_values
+  */
+
+  const dates = {{ forecast_dates | tojson | safe }};
+  const values = {{ forecast_values | tojson | safe }};
+
+  const forecastTrace = {
+    x: dates,
+    y: values,
+    type: 'scatter',
+    mode: 'lines+markers',
+    name: 'Forecasted Revenue',
+    line: { width: 3 }
+  };
+
+  const layout = {
+    margin: { t: 30, l: 50, r: 20, b: 50 },
+    xaxis: { title: "Month" },
+    yaxis: { title: "Revenue (KSh)" },
+    paper_bgcolor: "transparent",
+    plot_bgcolor: "transparent",
+    font: { size: 14 }
+  };
+
+  Plotly.newPlot(
+    "forecastChart",
+    [forecastTrace],
+    layout,
+    { responsive: true }
+  );
+</script>
+
+</body>
+</html>
