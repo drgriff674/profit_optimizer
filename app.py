@@ -459,75 +459,105 @@ def dashboard():
 @app.route("/api/financial_data")
 def financial_data():
     import psycopg2, os
-    from flask import jsonify
+    from flask import jsonify, session
+
+    if "username" not in session:
+        return jsonify({})
+
+    username = session["username"]
 
     try:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
-        # Group totals per day (or month) for your chart
+        # Revenue per day
         cur.execute("""
             SELECT
                 DATE(created_at) AS date,
-                SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) AS revenue,
-                SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END) AS expenses
+                COALESCE(SUM(amount), 0) AS revenue
             FROM mpesa_transactions
+            WHERE username = %s
             GROUP BY DATE(created_at)
-            ORDER BY DATE(created_at)
-            LIMIT 12;
-        """)
+        """, (username,))
+        revenue_rows = cur.fetchall()
 
-        rows = cur.fetchall()
+        # Expenses per day
+        cur.execute("""
+            SELECT
+                DATE(expense_date) AS date,
+                COALESCE(SUM(amount), 0) AS expenses
+            FROM expenses
+            WHERE username = %s
+            GROUP BY DATE(expense_date)
+        """, (username,))
+        expense_rows = cur.fetchall()
+
         cur.close()
         conn.close()
 
-        # Convert DB rows to lists
-        months = [r[0].strftime("%b %d") for r in rows]
-        revenue = [float(r[1]) for r in rows]
-        expenses = [float(r[2]) for r in rows]
-        profit = [r1 - r2 for r1, r2 in zip(revenue, expenses)]
+        # Convert to dicts for easy merge
+        revenue_map = {r[0]: float(r[1]) for r in revenue_rows}
+        expense_map = {e[0]: float(e[1]) for e in expense_rows}
+
+        # Merge all dates
+        all_dates = sorted(set(revenue_map.keys()) | set(expense_map.keys()))
+
+        dates = [d.strftime("%b %d") for d in all_dates]
+        revenue = [revenue_map.get(d, 0) for d in all_dates]
+        expenses = [expense_map.get(d, 0) for d in all_dates]
+        profit = [r - e for r, e in zip(revenue, expenses)]
 
         return jsonify({
-            "month": months,
+            "dates": dates,
             "revenue": revenue,
             "expenses": expenses,
             "profit": profit
         })
 
     except Exception as e:
-        print(f"⚠️ Error generating live financial data: {e}")
-        return jsonify({"error": str(e)})
-
+        print("⚠️ Error generating financial data:", e)
+        return jsonify({})
 
 
 @app.route("/api/transactions_summary")
 def transactions_summary():
     import psycopg2, os
-    from flask import jsonify
+    from flask import jsonify, session
+
+    if "username" not in session:
+        return jsonify({})
+
+    username = session["username"]
 
     try:
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
+
         cur.execute("""
             SELECT 
-                COALESCE(SUM(amount),0) AS total_profit,
-                COALESCE(AVG(amount),0) AS avg_profit,
+                COALESCE(SUM(amount), 0) AS total_revenue,
+                COALESCE(AVG(amount), 0) AS avg_transaction,
                 COUNT(*) AS txn_count
-            FROM mpesa_transactions;
-        """)
-        total_profit, avg_profit, txn_count = cur.fetchone()
+            FROM mpesa_transactions
+            WHERE username = %s
+        """, (username,))
+
+        total_revenue, avg_transaction, txn_count = cur.fetchone()
+
         cur.close()
         conn.close()
 
         return jsonify({
-            "total_profit": round(total_profit, 2),
-            "avg_profit": round(avg_profit, 2),
-            "profit_growth": f"{(avg_profit/total_profit*100 if total_profit else 0):.1f}%",
-            "largest_expense": 0.0  # placeholder until expenses are tracked
+            "total_revenue": round(float(total_revenue), 2),
+            "avg_transaction": round(float(avg_transaction), 2),
+            "txn_count": txn_count,
+            "profit_growth": "N/A"  # real growth comes later
         })
+
     except Exception as e:
-        print(f"⚠️ Error generating summary: {e}")
-        return jsonify({"error": str(e)})
+        print("⚠️ Error generating transaction summary:", e)
+        return jsonify({})
+    
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
 def get_token():
@@ -541,40 +571,45 @@ def get_token():
         return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
 
     try:
-        auth_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(auth_url, auth=(consumer_key, consumer_secret))
+        auth_url = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(auth_url, auth=(consumer_key, consumer_secret), timeout=10)
         response.raise_for_status()
         return jsonify(response.json())
     except Exception as e:
         return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
 
 # ✅ REGISTER CALLBACK URL
-@app.route("/register_url", methods=["GET"])
+@app.route("/register_url", methods=["POST"])
 def register_url():
-    import os, requests, json
+    import os, requests
     from flask import jsonify
+
+    shortcode = os.getenv("MPESA_SHORTCODE")
 
     consumer_key = os.getenv("MPESA_CONSUMER_KEY")
     consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
 
-    # Step 1: Get access token
+    # PRODUCTION OAuth URL
+    token_url = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+
     try:
         token_response = requests.get(
-            "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+            token_url,
             auth=(consumer_key, consumer_secret),
+            timeout=10
         )
         token_response.raise_for_status()
-        access_token = token_response.json().get("access_token")
+        access_token = token_response.json()["access_token"]
     except Exception as e:
-        return jsonify({"error": f"Failed to get token: {str(e)}"}), 400
+        return jsonify({"error": "Token generation failed", "details": str(e)}), 400
 
-    # Step 2: Register callback URLs (avoid using “mpesa” in the URL)
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
     }
+
     payload = {
-        "ShortCode": "600983",  # Sandbox Shortcode (will replace with live shortcode later)
+        "ShortCode": shortcode,
         "ResponseType": "Completed",
         "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/payment/confirm",
         "ValidationURL": "https://profitoptimizer-production.up.railway.app/payment/validate",
@@ -582,21 +617,22 @@ def register_url():
 
     try:
         res = requests.post(
-            "https://sandbox.safaricom.co.ke/mpesa/c2b/v1/registerurl",
+            "https://api.safaricom.co.ke/mpesa/c2b/v1/registerurl",
             headers=headers,
             json=payload,
-            timeout=15,
+            timeout=15
         )
         return jsonify(res.json()), res.status_code
     except Exception as e:
-        return jsonify({"error": f"Failed to register URL: {str(e)}"}), 500
+        return jsonify({"error": "Register URL failed", "details": str(e)}), 500
 
+    
 # ================================
 # C2B VALIDATION (Sandbox)
 # ================================
 @app.route("/payment/validate", methods=["POST"])
 def payment_validate():
-    data = request.get_json()
+    data = request.get_json(silent=True)
     print("📥 VALIDATION Callback:", data)
 
     return jsonify({
@@ -610,22 +646,28 @@ def payment_confirm():
     from datetime import datetime
     from flask import request, jsonify
 
-    data = request.get_json()
-    print("📥 PAYMENT CALLBACK RECEIVED:", json.dumps(data, indent=2))
+    data = request.get_json(silent=True)
+    if not data:
+        print("Empty or invalid JSON received")
+        return jsonify({
+            "ResultCode": 0,
+            "ResultDesc": "No JSON body"
+            })
 
     try:
         # ============================================================
         # 1️⃣ CASE A — C2B SIMULATOR (V1 CALLBACK)
         # ============================================================
-        if "TransID" in data:
-            print("✔ Detected: C2B Simulator (V1)")
+        if "TransID" in data and "TransAmount" in data:
+            print("✔ Detected: C2B Simulator")
 
-            transaction_id = data.get("TransID", "")
+            transaction_id = data.get("TransID")
             amount = float(data.get("TransAmount", 0))
             sender_name = data.get("FirstName", "Unknown")
             sender_phone = data.get("MSISDN", "")
-            description = "C2B Payment (V1)"
+            description = data.get("TransactionType", "C2B Paybill")
             account_ref = data.get("BillRefNumber", "")
+            shortcode = data.get("BusinessShortCode")
 
         # ============================================================
         # 2️⃣ CASE B — DARAJA V2 CALLBACK (STK-STYLE)
@@ -654,6 +696,10 @@ def payment_confirm():
             print("❌ Unknown callback format")
             return jsonify({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
 
+        if not transaction_id or amount <=0:
+            print("Invalid transaction data, skipping insert")
+            return jsonify({"ResultCode": 0, "ResultDesc": "Ignored"})
+
         # ============================================================
         # SAVE TO DATABASE
         # ============================================================
@@ -664,9 +710,9 @@ def payment_confirm():
         cur.execute("""
             SELECT id, username
             FROM businesses
-            WHERE paybill = %s OR account_number = %s
+            WHERE paybill = %s 
             LIMIT 1
-        """, (account_ref, account_ref))
+        """, (shortcode,))
 
         biz = cur.fetchone()
 
@@ -680,7 +726,7 @@ def payment_confirm():
         cur.execute("""
             INSERT INTO mpesa_transactions
             (transaction_id, amount, sender, receiver, transaction_type,
-             account_reference, description, timestamp, raw_payload, origin_ip, business_id, username created_at)
+             account_reference, description, timestamp, raw_payload, origin_ip, business_id, username, created_at)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
         """, (
             transaction_id,
@@ -708,71 +754,32 @@ def payment_confirm():
     except Exception as e:
         print("❌ ERROR in confirm callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
+
+    
 # ✅ Query M-Pesa Account Balance (safe naming)
 @app.route("/api/account_balance")
 def account_balance():
-    try:
-        import os, requests
-        from requests.auth import HTTPBasicAuth
-        from flask import jsonify
+    return jsonify({
+        "status": "disabled",
+        "message": "Account balance will be enabled after Safaricom initiator approval"
+    })
 
-        consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-        consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-        shortcode = os.getenv("MPESA_SHORTCODE")
-        passkey = os.getenv("MPESA_PASSKEY")
-
-        # 1️⃣ Get Access Token
-        token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        token_response = requests.get(
-            token_url, auth=HTTPBasicAuth(consumer_key, consumer_secret)
-        )
-        access_token = token_response.json().get("access_token")
-
-        if not access_token:
-            return jsonify({"error": "Failed to get access token"}), 500
-
-        # 2️⃣ Query Account Balance
-        balance_url = "https://sandbox.safaricom.co.ke/mpesa/accountbalance/v1/query"
-        headers = {"Authorization": f"Bearer {access_token}"}
-
-        payload = {
-            "Initiator": "testapi",
-            "SecurityCredential": "Safaricom123!",
-            "CommandID": "AccountBalance",
-            "PartyA": shortcode,
-            "IdentifierType": "4",
-            "Remarks": "Checking account balance",
-            "QueueTimeOutURL": "https://profit-optimizer.onrender.com/payment/timeout",
-            "ResultURL": "https://profit-optimizer.onrender.com/payment/balance_result",
-        }
-
-        response = requests.post(balance_url, json=payload, headers=headers)
-
-        try:
-            data = response.json()
-        except ValueError:
-            print("⚠️ Invalid JSON from M-Pesa:", response.text)
-            return jsonify({"error": "Invalid or empty JSON response from M-Pesa", "raw": response.text}), 500
-
-        print("✅ M-Pesa raw response:", data)
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 # ✅ Payment Timeout Callback
 @app.route("/payment/timeout", methods=["POST"])
 def payment_timeout():
-    data = request.get_json()
-    print("⏱️ Payment Timeout:", data)
+    data = request.get_json(silent=True)
+    print("⏱️ Payment Timeout:", data or "No payload)
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
 # ✅ Balance Result Callback
 @app.route("/payment/balance_result", methods=["POST"])
 def payment_balance_result():
-    data = request.get_json()
-    print("💰 Account Balance Result:", data)
+    data = request.get_json(silent=True)
+    print("💰 Account Balance Result:", data or "No payload")
     return jsonify({"ResultCode": 0, "ResultDesc": "Balance result received"})
+
+
 # ✅ AI Insight Engine — analyzes latest financial data and generates insights
 @app.route("/api/ai_insights")
 def ai_insights():
@@ -781,6 +788,10 @@ def ai_insights():
             return jsonify([])
 
         user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
+
+        if not os.path.exists(user_folder):
+            return jsonify([])
+
         files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
         if not files:
             return jsonify([])
@@ -791,40 +802,39 @@ def ai_insights():
 
         insights = []
 
-        # --- Trend analysis ---
-        if all(col in df.columns for col in ["revenue", "expenses"]):
-            df["profit"] = df["revenue"] - df["expenses"]
-            recent = df.tail(3)
+        # Require revenue & expenses
+        if "revenue" not in df.columns or "expenses" not in df.columns:
+            return jsonify(["Uploaded file is missing revenue or expenses columns."])
 
-            if recent["profit"].iloc[-1] > recent["profit"].iloc[-2]:
+        df["profit"] = df["revenue"] - df["expenses"]
+
+        # ---- Recent trend (last 2 rows) ----
+        if len(df) >= 2:
+            if df["profit"].iloc[-1] > df["profit"].iloc[-2]:
                 insights.append("Profit increased in the latest period ✅")
-            elif recent["profit"].iloc[-1] < recent["profit"].iloc[-2]:
-                insights.append(
-                    "Profit decreased recently ⚠️ Check expenses or pricing."
-                )
+            elif df["profit"].iloc[-1] < df["profit"].iloc[-2]:
+                insights.append("Profit decreased recently ⚠️ Check expenses or pricing.")
             else:
                 insights.append("Profit remained stable recently.")
 
-            avg_margin = (df["profit"] / df["revenue"]).mean() * 100
+        # ---- Average profit margin (safe) ----
+        valid = df[df["revenue"] > 0]
+        if not valid.empty:
+            avg_margin = (valid["profit"] / valid["revenue"]).mean() * 100
             insights.append(f"Average profit margin: {avg_margin:.1f}%")
+        else:
+            insights.append("Average profit margin unavailable (no revenue data).")
 
-            if avg_margin < 15:
-                insights.append(
-                    "Profit margin is below 15%. Consider reducing costs or revising prices."
-                )
-            elif avg_margin > 30:
-                insights.append(
-                    "Strong profit margin (>30%). Business is performing well! 💪"
-                )
-
-            # Highest & lowest month
-            max_profit_month = df.loc[df["profit"].idxmax(), "month"]
-            insights.append(f"Highest profit recorded in {max_profit_month}.")
+        # ---- Best period (optional month column) ----
+        if "month" in df.columns:
+            best_month = df.loc[df["profit"].idxmax(), "month"]
+            insights.append(f"Highest profit recorded in {best_month}.")
 
         return jsonify(insights)
-    except Exception as e:
-        return jsonify({"error": str(e)})
 
+    except Exception as e:
+        print("AI insight error:", e)
+        return jsonify([])
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
