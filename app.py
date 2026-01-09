@@ -769,7 +769,7 @@ def account_balance():
 @app.route("/payment/timeout", methods=["POST"])
 def payment_timeout():
     data = request.get_json(silent=True)
-    print("⏱️ Payment Timeout:", data or "No payload)
+    print("⏱️ Payment Timeout:", data or "No payload")
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
 # ✅ Balance Result Callback
