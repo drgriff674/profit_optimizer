@@ -121,3 +121,14 @@ html.dark .forecast-select option {
   background:var(--og-primary);
   color: white;
 }
+
+/* Better mobile number input UX */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}

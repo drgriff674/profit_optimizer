@@ -370,6 +370,7 @@ def dashboard():
     kpis = {
         "total_profit": "KSh 0",
         "avg_profit": "KSh 0",
+        "total_expenses":"KSh 0",
         "profit_growth": "0%",
         "largest_expense": "N/A",
     }
@@ -408,9 +409,10 @@ def dashboard():
     conn.close()
 
     profit = total_revenue - total_expenses
-
+    
     kpis["total_profit"] = f"KSh {profit:,.0f}"
     kpis["avg_profit"] = f"KSh {profit:,.0f}"
+    kpis["total_expenses"] = f"KSh{total_expenses:,.0f}"
     kpis["largest_expense"] = largest["category"] if largest else "N/A"
 
     # ===============================
@@ -658,10 +660,27 @@ def payment_confirm():
         conn = psycopg2.connect(os.environ["DATABASE_URL"])
         cur = conn.cursor()
 
+        # 🔍 Find business linked to this payment
+        cur.execute("""
+            SELECT id, username
+            FROM businesses
+            WHERE paybill = %s OR account_number = %s
+            LIMIT 1
+        """, (account_ref, account_ref))
+
+        biz = cur.fetchone()
+
+        if not biz:
+            business_id = None
+            username = None
+        else:
+            business_id = biz[0]
+            username = biz[1]
+
         cur.execute("""
             INSERT INTO mpesa_transactions
             (transaction_id, amount, sender, receiver, transaction_type,
-             account_reference, description, timestamp, raw_payload, origin_ip, created_at)
+             account_reference, description, timestamp, raw_payload, origin_ip, business_id, username created_at)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
         """, (
             transaction_id,
@@ -673,7 +692,9 @@ def payment_confirm():
             description,
             datetime.utcnow(),
             json.dumps(data),
-            request.remote_addr
+            request.remote_addr,
+            business_id,
+            username
         ))
 
         conn.commit()
@@ -2472,14 +2493,15 @@ def inventory_adjust():
 
         cur.execute("""
             INSERT INTO inventory_movements
-            (business_id, item_id, quantity_change, movement_type, source)
-            VALUES (%s, %s, %s, %s, %s)
+            (business_id, item_id, quantity_change, movement_type, source, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (
             business_id,
             item_id,
             quantity,
             movement_type,
-            note
+            note,
+            username
         ))
 
         conn.commit()
@@ -2498,7 +2520,8 @@ def inventory_adjust():
 
     return render_template(
         "inventory_adjust.html",
-        items=items
+        items=items,
+        success=True
     )
 
 @app.route("/charts/revenue-forecast")

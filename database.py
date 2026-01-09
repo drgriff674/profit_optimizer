@@ -38,6 +38,24 @@ def init_db():
     )
     """)
 
+    # --- INVENTORY MOVEMENTS TABLE ---
+    cursor.execute("""
+    DROP TABLE IF EXISTS inventory_movements;
+    CREATE TABLE inventory_movements (
+        id SERIAL PRIMARY KEY,
+        business_id INTEGER NOT NULL,
+        item_id INTEGER NOT NULL,
+        movement_type TEXT NOT NULL,   -- sale, usage, restock
+        quantity_change NUMERIC NOT NULL,
+        note TEXT,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
+        FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+    )
+    """)
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS revenue_entries (
         id SERIAL PRIMARY KEY,
@@ -96,6 +114,11 @@ def init_db():
         FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE,
         UNIQUE (snapshot_id, item_id)
     )
+    """)
+
+    cursor.execute("""
+    ALTER TABLE inventory_movements
+    ADD COLUMN IF NOT EXISTS source TEXT;
     """)
 
 
