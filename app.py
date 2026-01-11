@@ -733,10 +733,9 @@ def payment_confirm():
                 description,
                 raw_payload,
                 origin_ip,
-                business_id,
-                username
+                created_at
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW());
         """, (
             transaction_id,
             amount,
@@ -746,10 +745,8 @@ def payment_confirm():
             account_ref,
             description,
             json.dumps(data),
-            request.remote_addr,
-            business_id,
-            username
-        ))
+            request.remote_addr
+        )
         conn.commit()
         cur.close()
         conn.close()
