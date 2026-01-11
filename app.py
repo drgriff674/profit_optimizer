@@ -746,7 +746,7 @@ def payment_confirm():
             description,
             json.dumps(data),
             request.remote_addr
-        )
+        ))
         conn.commit()
         cur.close()
         conn.close()
