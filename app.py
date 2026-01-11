@@ -67,7 +67,7 @@ except ImportError:
 
 
 # Railway PostgreSQL connection
-DATABASE_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
