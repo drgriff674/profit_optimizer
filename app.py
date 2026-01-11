@@ -617,7 +617,7 @@ def register_url():
 
     try:
         res = requests.post(
-            "https://api.safaricom.co.ke/mpesa/c2b/v1/registerurl",
+            "https://api.safaricom.co.ke/mpesa/c2b/v2/registerurl",
             headers=headers,
             json=payload,
             timeout=15
@@ -627,9 +627,7 @@ def register_url():
         return jsonify({"error": "Register URL failed", "details": str(e)}), 500
 
     
-# ================================
-# C2B VALIDATION (Sandbox)
-# ================================
+
 @app.route("/payment/validate", methods=["POST"])
 def payment_validate():
     data = request.get_json(silent=True)
