@@ -3,11 +3,15 @@ import os
 from psycopg2.extras import RealDictCursor
 
 # ✅ Railway PostgreSQL connection string
-DB_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection(cursor_factory=None):
+    db_url = os.environ.get("DATABASE_URL")
+
+    if not db_url
+        raise RuntimeError("DATABASE_URL environment variable is not set")
+    
     return psycopg2.connect(
-        DB_URL,
+        db_url,
         cursor_factory=cursor_factory
     )
 
