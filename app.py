@@ -723,9 +723,20 @@ def payment_confirm():
 
         cur.execute("""
             INSERT INTO mpesa_transactions
-            (transaction_id, amount, sender, receiver, transaction_type,
-             account_reference, description, timestamp, raw_payload, origin_ip, business_id, username, created_at)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s, NOW())
+            (
+                transaction_id,
+                amount,
+                sender,
+                receiver,
+                transaction_type,
+                account_reference,
+                description,
+                raw_payload,
+                origin_ip,
+                business_id,
+                username
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             transaction_id,
             amount,
@@ -734,13 +745,11 @@ def payment_confirm():
             "C2B Payment",
             account_ref,
             description,
-            datetime.utcnow(),
             json.dumps(data),
             request.remote_addr,
             business_id,
             username
         ))
-
         conn.commit()
         cur.close()
         conn.close()
