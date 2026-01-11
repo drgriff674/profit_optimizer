@@ -3,7 +3,7 @@ import os
 from psycopg2.extras import RealDictCursor
 
 # ✅ Railway PostgreSQL connection string
-DB_URL = "postgresql://postgres:qzniBQaYcEdGRMKMqJessjlVGSLseaam@switchback.proxy.rlwy.net:14105/railway"
+DB_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection(cursor_factory=None):
     return psycopg2.connect(
