@@ -268,8 +268,8 @@ def register():
                 return redirect(url_for("register"))
 
             # ✅ Validate account number (optional, but digits only if provided)
-            if account_number and not re.fullmatch(r"\d{3,12}", account_number):
-                flash("⚠️ Invalid account number.", "error")
+            if account_number and not re.fullmatch(r"[A-Za-z0-9_-]{2,30}", account_number):
+                flash("⚠️ Invalid account number.Use letters and numbers only (2-30 chars).",)
                 cursor.close()
                 conn.close()
                 return redirect(url_for("register"))
@@ -708,9 +708,10 @@ def payment_confirm():
         cur.execute("""
             SELECT id, username
             FROM businesses
-            WHERE paybill = %s 
+            WHERE paybill = %s
+            AND account_number = %s
             LIMIT 1
-        """, (shortcode,))
+        """, (shortcode, account_ref))
 
         biz = cur.fetchone()
 
