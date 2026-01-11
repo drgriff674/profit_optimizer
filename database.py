@@ -121,6 +121,24 @@ def init_db():
     ADD COLUMN IF NOT EXISTS source TEXT;
     """)
 
+    # --- MPESA TRANSACTIONS TABLE ---
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS mpesa_transactions (
+        id SERIAL PRIMARY KEY,
+        transaction_id TEXT UNIQUE NOT NULL,
+        amount NUMERIC(10,2),
+        sender TEXT,
+        receiver TEXT,
+        transaction_type TEXT,
+        account_reference TEXT,
+        description TEXT,
+        status TEXT DEFAULT 'pending',
+        raw_payload JSON,
+        origin_ip TEXT,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
 
     conn.commit()
     cursor.close()
