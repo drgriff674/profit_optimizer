@@ -143,6 +143,11 @@ def init_db():
     );
     """)
 
+    cursor.execute("""
+    ALTER TABLE mpesa_transactions
+    ADD COLUMN IF NOT EXISTS seen BOOLEAN DEFAULT FALSE
+    """)
+
 
     conn.commit()
     cursor.close()

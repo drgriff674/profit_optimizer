@@ -378,13 +378,70 @@ def dashboard():
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cur = conn.cursor()
 
-    # 🔹 Revenue (MPesa) — SAFE
+    # 🔹 Fetch user's business (paybill & account number)
     cur.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS total_revenue
-        FROM mpesa_transactions
-        WHERE amount IS NOT NULL
-    """)
-    total_revenue = cur.fetchone()["total_revenue"]
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+    biz = cur.fetchone()
+
+    paybill = biz["paybill"] if biz else None
+    account_number = biz["account_number"] if biz else None
+
+    # 🔹 Revenue (MPesa) — USER-SCOPED
+    total_revenue = 0
+
+    if paybill:
+        cur.execute("""
+            SELECT COALESCE(SUM(amount), 0) AS total_revenue
+            FROM mpesa_transactions
+            WHERE transaction_type = 'C2B Payment'
+            AND (
+                (%s IS NOT NULL AND account_reference = %s)
+                OR
+                (%s IS NULL AND receiver = %s)
+            )
+        """, (
+            account_number,
+            account_number,
+            account_number,
+            paybill
+        ))
+        total_revenue = cur.fetchone()["total_revenue"]
+
+
+    latest_payment = None
+
+    if paybill:
+        cur.execute("""
+            SELECT id, amount, created_at
+            FROM mpesa_transactions
+            WHERE seen = FALSE
+            AND (
+                (%s IS NOT NULL AND account_reference = %s)
+                OR
+                (%s IS NULL AND receiver = %s)
+            )
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (
+            account_number,
+            account_number,
+            account_number,
+            paybill
+        ))
+
+        latest_payment = cur.fetchone()
+
+        # Mark as seen immediately (so it doesn't repeat)
+        if latest_payment:
+            cur.execute(
+                "UPDATE mpesa_transactions SET seen = TRUE WHERE id = %s",
+                (latest_payment["id"],)
+            )
+            conn.commit()    
 
     # 🔹 Expenses — SAFE SANITIZATION
     cur.execute("""
@@ -455,6 +512,7 @@ def dashboard():
         forecast_chart=json.dumps(forecast_chart),
         last_synced=last_synced,
         current_year=datetime.now().year,
+        latest_payment=latest_payment,
     )
 @app.route("/api/financial_data")
 def financial_data():
