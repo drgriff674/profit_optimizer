@@ -28,6 +28,19 @@ def init_db():
         role TEXT NOT NULL
     )
     """)
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS businesses (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        business_name TEXT NOT NULL,
+        paybill TEXT NOT NULL,
+        account_number TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (paybill, account_number),
+        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+    )
+    """)
 
     # --- EXPENSES TABLE (NEW) ---
     cursor.execute("""
@@ -42,7 +55,35 @@ def init_db():
     )
     """)
 
-    # --- INVENTORY MOVEMENTS TABLE ---
+    
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS revenue_entries (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount NUMERIC NOT NULL,
+        revenue_date DATE NOT NULL,
+        locked BOOLEAN DEFAULT FALSE
+    )
+    """)
+
+    
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS inventory_items (
+        id SERIAL PRIMARY KEY,
+        business_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        unit TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+    )
+    """)
+
+
+     # --- INVENTORY MOVEMENTS TABLE ---
     cursor.execute("""
     DROP TABLE IF EXISTS inventory_movements;
     CREATE TABLE inventory_movements (
@@ -57,42 +98,6 @@ def init_db():
 
         FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
         FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS revenue_entries (
-        id SERIAL PRIMARY KEY,
-        username TEXT NOT NULL,
-        category TEXT NOT NULL,
-        amount NUMERIC NOT NULL,
-        revenue_date DATE NOT NULL,
-        locked BOOLEAN DEFAULT FALSE
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS businesses (
-        id SERIAL PRIMARY KEY,
-        username TEXT NOT NULL,
-        business_name TEXT NOT NULL,
-        paybill TEXT NOT NULL,
-        account_number TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (paybill, account_number),
-        FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS inventory_items (
-        id SERIAL PRIMARY KEY,
-        business_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        category TEXT NOT NULL,
-        unit TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
     )
     """)
 

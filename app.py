@@ -30,6 +30,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from flask_mail import Mail, Message
 from dotenv import load_dotenv
+load_dotenv()
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
