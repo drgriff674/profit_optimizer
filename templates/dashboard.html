@@ -13,21 +13,6 @@
 
 <body class="min-h-screen flex transition-colors">
 
-{% if latest_payment %}
-<div
-  id="payment-popup"
-  class="fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-opacity"
->
-  💰 Payment received: KSh {{ latest_payment.amount }}
-</div>
-
-<script>
-  setTimeout(() => {
-    const popup = document.getElementById("payment-popup");
-    if (popup) popup.style.opacity = "0";
-  }, 4000);
-</script>
-{% endif %}
 
 <!-- MOBILE SIDEBAR OVERLAY -->
 <div id="mobileSidebarOverlay"
@@ -309,6 +294,41 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 });
+</script>
+
+<script>
+  async function pollLatestPayment() {
+    try {
+      const res = await fetch("/api/latest-payment");
+      const data = await res.json();
+
+      if (data.payment) {
+        showPaymentPopup(data.payment.amount);
+        refreshKPIs();
+      }
+    } catch (e) {
+      console.error("Polling error:", e);
+    }
+  }
+
+  function showPaymentPopup(amount) {
+    const popup = document.createElement("div");
+    popup.className =
+      "fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50";
+    popup.innerText = `💰 Payment received: KSh ${amount}`;
+
+    document.body.appendChild(popup);
+
+    setTimeout(() => popup.remove(), 4000);
+  }
+
+  function refreshKPIs() {
+    // simplest approach for now
+    window.location.reload();
+  }
+
+  // Poll every 5 seconds
+  setInterval(pollLatestPayment, 5000);
 </script>
 
 </body>

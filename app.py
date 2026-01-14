@@ -515,6 +515,40 @@ def dashboard():
         current_year=datetime.now().year,
         latest_payment=latest_payment,
     )
+
+
+@app.route("/api/latest-payment")
+def latest_payment():
+    if "username" not in session:
+        return jsonify({"payment": None})
+
+    username = session["username"]
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, amount, created_at
+        FROM mpesa_transactions
+        WHERE seen = FALSE
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)
+    payment = cur.fetchone()
+
+    if payment:
+        # Mark as seen immediately
+        cur.execute(
+            "UPDATE mpesa_transactions SET seen = TRUE WHERE id = %s",
+            (payment["id"],)
+        )
+        conn.commit()
+
+    cur.close()
+    conn.close()
+
+    return jsonify({"payment": payment})
+
 @app.route("/api/financial_data")
 def financial_data():
     import psycopg2, os
