@@ -10,6 +10,7 @@ from flask import (
     send_file,
     jsonify,
 )
+from functools import wraps
 from xhtml2pdf import pisa
 import json
 import os
@@ -35,11 +36,20 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection, load_revenue_entries_for_day, load_expense_categories, save_revenue_entry
+from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection, load_revenue_entries_for_day, load_expense_categories, save_revenue_entry, lock_manual_entries_for_the_day, load_revenue_days
 import pytz
 from flask_caching import Cache
 from datetime import date
 import re
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "username" not in session:
+            flash("Please log in first.", "error")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def run_cron_jobs():
     print("⏰ Running background jobs")
@@ -2458,6 +2468,12 @@ def revenue_entry():
         entries=entries,
         selected_date=selected_date
     )
+
+@app.route("/revenue/overview")
+@login_required
+def revenue_overview():
+    days = load_revenue_days(session["username"])
+    return render_template("revenue_overview.html", days=days)
 
 @app.route("/inventory_setup", methods=["GET", "POST"])
 def inventory_setup():

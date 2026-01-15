@@ -176,7 +176,7 @@ def load_users():
 
 # ✅ Save a new user
 def save_user(username, password, role):
-    conn = psycopg2.connect(DB_URL)
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -189,11 +189,11 @@ def save_user(username, password, role):
     conn.commit()
     cursor.close()
     conn.close()
-    debug_print_users()
+    
 
 # ✅ Debug: print all users directly from DB
 def debug_print_users():
-    conn = psycopg2.connect(DB_URL)
+    conn = conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT username, role FROM users")
     rows = cursor.fetchall()
@@ -284,7 +284,7 @@ def load_expense_categories(username):
     # rows is like [('Food',), ('Transport',)]
     return [row[0] for row in rows]
 
-def lock_revenue_day(username, revenue_date):
+def lock_manual_entries_for_the_day(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -432,3 +432,67 @@ def load_snapshot_items(snapshot_id):
     cursor.close()
     conn.close()
     return rows
+
+def lock_business_day(username, business_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Calculate final total (manual + mpesa)
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM revenue_entries
+        WHERE username = %s AND revenue_date = %s
+    """, (username, business_date))
+    manual_total = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (business_date,))
+    mpesa_total = cursor.fetchone()[0]
+
+    final_total = manual_total + mpesa_total
+
+    # Lock the day
+    cursor.execute("""
+        UPDATE daily_revenue_status
+        SET is_locked = TRUE,
+            total_revenue = %s
+        WHERE username = %s AND business_date = %s
+    """, (final_total, username, business_date))
+
+    # Lock manual entries too (secondary)
+    cursor.execute("""
+        UPDATE revenue_entries
+        SET locked = TRUE
+        WHERE username = %s AND revenue_date = %s
+    """, (username, business_date))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def load_revenue_days(username):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT
+            revenue_date,
+            SUM(amount) AS total_amount,
+            BOOL_AND(locked) AS locked
+        FROM revenue_entries
+        WHERE username = %s
+        GROUP BY revenue_date
+        ORDER BY revenue_date DESC
+    """, (username,))
+
+    days = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+    return days
+

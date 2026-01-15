@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <title>OptiGain • Revenue Overview</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950">
+
+<header class="px-6 py-4 bg-white dark:bg-slate-900 border-b">
+  <div class="flex justify-between items-center">
+    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+      📊 Revenue Overview
+    </h1>
+    <a href="{{ url_for('dashboard') }}"
+       class="text-sm text-blue-600 hover:underline">
+      ⬅ Dashboard
+    </a>
+  </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-6 py-8">
+
+  {% if days %}
+    <div class="overflow-x-auto">
+      <table class="w-full border border-slate-200 dark:border-slate-700 rounded-lg">
+        <thead class="bg-slate-100 dark:bg-slate-800 text-sm">
+          <tr>
+            <th class="px-4 py-2 text-left">Date</th>
+            <th class="px-4 py-2 text-right">Total Revenue</th>
+            <th class="px-4 py-2 text-center">Status</th>
+            <th class="px-4 py-2 text-center">Action</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+          {% for d in days %}
+            <tr class="bg-white dark:bg-slate-900">
+              <td class="px-4 py-2">
+                {{ d.business_date }}
+              </td>
+
+              <td class="px-4 py-2 text-right font-semibold">
+                KSh {{ d.total_revenue }}
+              </td>
+
+              <td class="px-4 py-2 text-center">
+                {% if d.is_locked %}
+                  <span class="text-green-600 font-medium">🔒 Locked</span>
+                {% else %}
+                  <span class="text-yellow-600 font-medium">🔓 Open</span>
+                {% endif %}
+              </td>
+
+              <td class="px-4 py-2 text-center">
+                {% if not d.is_locked %}
+                  <a href="{{ url_for('revenue_entry') }}"
+                     class="text-blue-600 hover:underline">
+                    Edit
+                  </a>
+                {% else %}
+                  <span class="text-slate-400">View</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-center text-slate-500">
+      No revenue days recorded yet.
+    </p>
+  {% endif %}
+
+</main>
+
+</body>
+</html>
