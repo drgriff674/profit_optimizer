@@ -59,14 +59,15 @@
 
   <!-- Lock -->
   {% if not is_locked %}
-    <form method="POST" action="{{ url_for('lock_revenue_day_route', date=date) }}">
-      <button class="w-full bg-red-600 text-white py-2 rounded">
-        🔒 Lock This Day
-      </button>
-    </form>
-  {% else %}
-    <p class="text-center text-green-600 font-semibold">🔒 Day Locked</p>
-  {% endif %}
+  <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">
+    <input type="hidden" name="revenue_date" value="{{ date }}">
+    <button class="w-full bg-red-600 text-white py-2 rounded">
+      🔒 Lock This Day
+    </button>
+  </form>
+{% else %}
+  <p class="text-center text-green-600 font-semibold">🔒 Day Locked</p>
+{% endif %}
 
 </main>
 </body>
