@@ -2689,44 +2689,43 @@ def live_performance():
         values=values
     )
 
-@app.route("/revenue/day/<revenue_date>")
+@app.route("/revenue/day/<date>")
 @login_required
-def revenue_day_detail(revenue_date):
+def revenue_day_detail(date):
     username = session["username"]
 
-    manual_entries = load_revenue_entries_for_day(username, revenue_date)
+    manual_entries = load_revenue_entries_for_day(username, date)
 
-    # total manual
-    manual_total = sum(e["amount"] for e in manual_entries)
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # mpesa for that day
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cursor = conn.cursor()
     cursor.execute("""
-        SELECT transaction_id, amount, sender, created_at
+        SELECT amount, sender, transaction_id, created_at
         FROM mpesa_transactions
         WHERE status = 'confirmed'
           AND DATE(created_at) = %s
-    """, (revenue_date,))
+    """, (date,))
     mpesa_entries = cursor.fetchall()
+
     cursor.close()
     conn.close()
 
-    mpesa_total = sum(m["amount"] for m in mpesa_entries)
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+    grand_total = manual_total + mpesa_total
 
     is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
 
     return render_template(
         "revenue_day_detail.html",
-        revenue_date=revenue_date,
+        date=date,
         manual_entries=manual_entries,
         mpesa_entries=mpesa_entries,
         manual_total=manual_total,
         mpesa_total=mpesa_total,
-        combined_total=manual_total + mpesa_total,
+        grand_total=grand_total,
         is_locked=is_locked
     )
-
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
 def lock_revenue_day_route():

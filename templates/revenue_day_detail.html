@@ -1,147 +1,73 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Revenue Details • {{ revenue_date }}</title>
+  <title>Revenue • {{ date }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen bg-sky-50 dark:bg-slate-950">
+<body class="bg-sky-50 min-h-screen">
 
-<!-- HEADER -->
-<header class="px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-  <div class="flex justify-between items-center max-w-6xl mx-auto">
-    <div>
-      <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-        📅 Revenue for {{ revenue_date }}
-      </h1>
-      <p class="text-sm text-slate-500">
-        {% if is_locked %}
-          🔒 Locked (finalized)
-        {% else %}
-          🔓 Open (editable)
-        {% endif %}
-      </p>
-    </div>
-
-    <a href="{{ url_for('revenue_overview') }}"
-       class="text-sm text-blue-600 hover:underline">
-      ⬅ Revenue Overview
-    </a>
-  </div>
+<header class="px-6 py-4 bg-white border-b flex justify-between">
+  <h1 class="font-semibold text-lg">📅 Revenue — {{ date }}</h1>
+  <a href="{{ url_for('revenue_overview') }}" class="text-blue-600">⬅ Back</a>
 </header>
 
-<!-- MAIN -->
-<main class="max-w-6xl mx-auto px-6 py-8 space-y-8">
+<main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
 
-  <!-- MANUAL REVENUE -->
-  <section>
-    <h2 class="text-md font-semibold text-slate-800 dark:text-slate-200 mb-3">
-      💰 Manual Revenue Entries
-    </h2>
-
-    {% if manual_entries %}
-      <div class="bg-white dark:bg-slate-900 border rounded-lg overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-slate-100 dark:bg-slate-800">
-            <tr>
-              <th class="px-4 py-2 text-left">Category</th>
-              <th class="px-4 py-2 text-right">Amount (KSh)</th>
-              <th class="px-4 py-2 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y">
-            {% for e in manual_entries %}
-            <tr>
-              <td class="px-4 py-2">{{ e.category }}</td>
-              <td class="px-4 py-2 text-right">{{ e.amount }}</td>
-              <td class="px-4 py-2 text-center">
-                {% if e.locked %}
-                  🔒
-                {% else %}
-                  ✏️
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="text-sm text-slate-500">No manual revenue entries.</p>
-    {% endif %}
-  </section>
-
-  <!-- MPESA TRANSACTIONS -->
-  <section>
-    <h2 class="text-md font-semibold text-slate-800 dark:text-slate-200 mb-3">
-      📲 M-Pesa Transactions
-    </h2>
-
-    {% if mpesa_entries %}
-      <div class="bg-white dark:bg-slate-900 border rounded-lg overflow-hidden">
-        <table class="w-full text-sm">
-          <thead class="bg-slate-100 dark:bg-slate-800">
-            <tr>
-              <th class="px-4 py-2 text-left">Transaction ID</th>
-              <th class="px-4 py-2 text-left">Sender</th>
-              <th class="px-4 py-2 text-right">Amount</th>
-              <th class="px-4 py-2 text-right">Time</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y">
-            {% for m in mpesa_entries %}
-            <tr>
-              <td class="px-4 py-2">{{ m.transaction_id }}</td>
-              <td class="px-4 py-2">{{ m.sender }}</td>
-              <td class="px-4 py-2 text-right">{{ m.amount }}</td>
-              <td class="px-4 py-2 text-right">
-                {{ m.created_at.strftime("%H:%M") }}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="text-sm text-slate-500">No M-Pesa transactions.</p>
-    {% endif %}
-  </section>
-
-  <!-- TOTALS -->
-  <section class="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-      <div>
-        <span class="text-slate-500">Manual Total</span>
-        <p class="font-semibold">KSh {{ manual_total }}</p>
-      </div>
-      <div>
-        <span class="text-slate-500">M-Pesa Total</span>
-        <p class="font-semibold">KSh {{ mpesa_total }}</p>
-      </div>
-      <div>
-        <span class="text-slate-500">Combined Total</span>
-        <p class="font-semibold text-green-600">
-          KSh {{ combined_total }}
-        </p>
-      </div>
+  <!-- Totals -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="p-4 bg-white rounded shadow">
+      <p class="text-sm text-slate-500">Manual</p>
+      <p class="font-semibold">KSh {{ manual_total }}</p>
     </div>
-  </section>
+    <div class="p-4 bg-white rounded shadow">
+      <p class="text-sm text-slate-500">MPesa</p>
+      <p class="font-semibold">KSh {{ mpesa_total }}</p>
+    </div>
+    <div class="p-4 bg-white rounded shadow">
+      <p class="text-sm text-slate-500">Total</p>
+      <p class="font-bold text-lg">KSh {{ grand_total }}</p>
+    </div>
+  </div>
 
-  <!-- LOCK BUTTON -->
+  <!-- Manual entries -->
+  <div class="bg-white rounded shadow p-4">
+    <h2 class="font-semibold mb-2">Manual Entries</h2>
+    {% for e in manual_entries %}
+      <div class="flex justify-between text-sm py-1">
+        <span>{{ e.category }}</span>
+        <span>KSh {{ e.amount }}</span>
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-400">No manual entries</p>
+    {% endfor %}
+  </div>
+
+  <!-- MPesa -->
+  <div class="bg-white rounded shadow p-4">
+    <h2 class="font-semibold mb-2">MPesa Transactions</h2>
+    {% for m in mpesa_entries %}
+      <div class="flex justify-between text-sm py-1">
+        <span>{{ m.sender }}</span>
+        <span>KSh {{ m.amount }}</span>
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-400">No MPesa transactions</p>
+    {% endfor %}
+  </div>
+
+  <!-- Lock -->
   {% if not is_locked %}
-  <section class="text-right">
-    <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">
-      <input type="hidden" name="revenue_date" value="{{ revenue_date }}">
-      <button
-        class="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+    <form method="POST" action="{{ url_for('lock_revenue_day_route', date=date) }}">
+      <button class="w-full bg-red-600 text-white py-2 rounded">
         🔒 Lock This Day
       </button>
     </form>
-  </section>
+  {% else %}
+    <p class="text-center text-green-600 font-semibold">🔒 Day Locked</p>
   {% endif %}
 
 </main>
-
 </body>
 </html>

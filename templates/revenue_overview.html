@@ -61,18 +61,14 @@
               </td>
 
               <!-- ACTION -->
-              <td class="px-4 py-2 text-center">
-                {% if not d.locked %}
-                  <a
-                    href="{{ url_for('revenue_entry', date=d.revenue_date) }}"
-                    class="text-blue-600 hover:underline"
-                  >
-                    Edit
-                  </a>
-                {% else %}
-                  <span class="text-slate-400">View</span>
-                {% endif %}
-              </td>
+<td class="px-4 py-2 text-center">
+  <a
+    href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
+    class="text-blue-600 hover:underline"
+  >
+    View
+  </a>
+</td>
             </tr>
           {% endfor %}
         </tbody>
