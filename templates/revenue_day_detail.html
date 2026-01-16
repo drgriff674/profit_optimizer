@@ -57,6 +57,26 @@
     {% endfor %}
   </div>
 
+  <div class="bg-white rounded shadow p-4">
+  <h2 class="font-semibold mb-2">⚠️ Anomalies</h2>
+
+  {% if anomalies %}
+    {% for a in anomalies %}
+      <div class="text-sm mb-1
+        {% if a.severity == 'critical' %}
+          text-red-600
+        {% else %}
+          text-yellow-600
+        {% endif %}
+      ">
+        • {{ a.message }}
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-sm text-slate-400">No anomalies detected</p>
+  {% endif %}
+</div>
+
   <!-- Lock -->
   {% if not is_locked %}
   <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">

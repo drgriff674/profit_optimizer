@@ -154,6 +154,19 @@ def init_db():
     """)
 
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS revenue_anomalies (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        revenue_date DATE NOT NULL,
+        anomaly_type TEXT NOT NULL,
+        severity TEXT NOT NULL, -- info, warning, critical
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved BOOLEAN DEFAULT FALSE
+    );
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -336,6 +349,84 @@ def load_user_business(username):
     cursor.close()
     conn.close()
     return business
+
+def detect_revenue_anomalies(username, revenue_date):
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+
+    # --- totals ---
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS manual_total
+        FROM revenue_entries
+        WHERE username = %s AND revenue_date = %s
+    """, (username, revenue_date))
+    manual_total = float(cursor.fetchone()["manual_total"])
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS mpesa_total
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (revenue_date,))
+    mpesa_total = float(cursor.fetchone()["mpesa_total"])
+
+    total = manual_total + mpesa_total
+
+    anomalies = []
+
+    # --- Rule A ---
+    if manual_total > 0:
+        diff_ratio = abs(mpesa_total - manual_total) / manual_total
+        if diff_ratio > 0.2:
+            anomalies.append((
+                "MPESA_MISMATCH",
+                "warning",
+                f"MPesa differs from manual by {int(diff_ratio*100)}%"
+            ))
+
+    # --- Rule C ---
+    if total == 0:
+        anomalies.append((
+            "ZERO_REVENUE",
+            "critical",
+            "Revenue day locked with zero total"
+        ))
+
+    # --- Rule B ---
+    cursor.execute("""
+        SELECT AVG(day_total) AS avg_total
+        FROM (
+            SELECT revenue_date, SUM(amount) AS day_total
+            FROM revenue_entries
+            WHERE username = %s
+              AND revenue_date < %s
+            GROUP BY revenue_date
+            ORDER BY revenue_date DESC
+            LIMIT 7
+        ) t
+    """, (username, revenue_date))
+
+    avg_row = cursor.fetchone()
+    if avg_row and avg_row["avg_total"]:
+        avg_total = float(avg_row["avg_total"])
+        if avg_total > 0 and total < avg_total * 0.7:
+            anomalies.append((
+                "SUDDEN_DROP",
+                "warning",
+                "Revenue dropped more than 30% vs recent average"
+            ))
+
+    # --- Save anomalies ---
+    for a in anomalies:
+        cursor.execute("""
+            INSERT INTO revenue_anomalies
+            (username, revenue_date, anomaly_type, severity, message)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (username, revenue_date, *a))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 # =====================================================
 # ✅ INVENTORY HELPERS

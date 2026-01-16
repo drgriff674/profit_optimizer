@@ -2707,6 +2707,13 @@ def revenue_day_detail(date):
     """, (date,))
     mpesa_entries = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT anomaly_type, severity, message
+        FROM revenue_anomalies
+        WHERE username = %s AND revenue_date = %s
+    """, (username, date))
+    anomalies = cursor.fetchall()
+
     cursor.close()
     conn.close()
 
@@ -2724,7 +2731,8 @@ def revenue_day_detail(date):
         manual_total=manual_total,
         mpesa_total=mpesa_total,
         grand_total=grand_total,
-        is_locked=is_locked
+        is_locked=is_locked,
+        anomalies=anomalies
     )
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
@@ -2733,7 +2741,7 @@ def lock_revenue_day_route():
     revenue_date = request.form["revenue_date"]
 
     lock_manual_entries_for_the_day(username, revenue_date)
-
+    detect_revenue_anomalies(username, revenue_date)
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
 
