@@ -77,7 +77,6 @@
   {% endif %}
 </div>
 
-  <!-- Lock -->
   {% if not is_locked %}
   <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">
     <input type="hidden" name="revenue_date" value="{{ date }}">
@@ -86,7 +85,16 @@
     </button>
   </form>
 {% else %}
-  <p class="text-center text-green-600 font-semibold">🔒 Day Locked</p>
+  <div class="space-y-3 text-center">
+    <p class="text-green-600 font-semibold">🔒 Day Locked</p>
+
+    <a
+      href="{{ url_for('export_revenue_day_csv', date=date) }}"
+      class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    >
+      ⬇ Export CSV
+    </a>
+  </div>
 {% endif %}
 
 </main>

@@ -42,6 +42,40 @@ from flask_caching import Cache
 from datetime import date
 import re
 
+# ============================
+# Revenue helpers
+# ============================
+
+def get_revenue_day_export_data(username, date):
+    manual_entries = load_revenue_entries_for_day(username, date)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT amount, sender, transaction_id, created_at
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (date,))
+    mpesa_entries = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+    grand_total = manual_total + mpesa_total
+
+    return {
+        "date": date,
+        "manual_entries": manual_entries,
+        "mpesa_entries": mpesa_entries,
+        "manual_total": manual_total,
+        "mpesa_total": mpesa_total,
+        "grand_total": grand_total,
+    }
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -525,6 +559,60 @@ def dashboard():
         current_year=datetime.now().year,
         latest_payment=latest_payment,
     )
+
+@app.route("/revenue/day/<date>/export/csv")
+@login_required
+def export_revenue_day_csv(date):
+    username = session["username"]
+
+    data = get_revenue_day_export_data(username, date)
+
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow(["Revenue Report"])
+    writer.writerow(["Date", data["date"]])
+    writer.writerow([])
+    
+    # Totals
+    writer.writerow(["Totals"])
+    writer.writerow(["Manual Total", data["manual_total"]])
+    writer.writerow(["MPesa Total", data["mpesa_total"]])
+    writer.writerow(["Grand Total", data["grand_total"]])
+    writer.writerow([])
+
+    # Manual entries
+    writer.writerow(["Manual Entries"])
+    writer.writerow(["Category", "Amount"])
+    for e in data["manual_entries"]:
+        writer.writerow([e["category"], e["amount"]])
+
+    writer.writerow([])
+
+    # MPesa entries
+    writer.writerow(["MPesa Transactions"])
+    writer.writerow(["Sender", "Amount", "Transaction ID", "Time"])
+    for m in data["mpesa_entries"]:
+        writer.writerow([
+            m["sender"],
+            m["amount"],
+            m["transaction_id"],
+            m["created_at"]
+        ])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    response = Response(
+        csv_data,
+        mimetype="text/csv"
+    )
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename=revenue_{date}.csv"
+    )
+
+    return response
 
 
 @app.route("/api/latest-payment")
