@@ -10,6 +10,7 @@ from flask import (
     send_file,
     jsonify,
 )
+from io import StringIO
 from functools import wraps
 from xhtml2pdf import pisa
 import json
