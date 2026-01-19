@@ -77,6 +77,16 @@
   {% endif %}
 </div>
 
+{% if ai_summary %}
+<div class="bg-white rounded shadow p-4">
+  <h2 class="font-semibold mb-2">🧠 AI Summary</h2>
+  <p class="text-sm text-slate-700 whitespace-pre-line">
+    {{ ai_summary }}
+  </p>
+</div>
+{% endif %}
+</div>
+
   {% if not is_locked %}
   <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">
     <input type="hidden" name="revenue_date" value="{{ date }}">
@@ -84,6 +94,12 @@
       🔒 Lock This Day
     </button>
   </form>
+
+<form method="POST" action="{{ url_for('generate_ai_summary_for_day', date=date) }}">
+  <button class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+    🧠 Generate AI Summary
+  </button>
+</form>
 {% else %}
   <div class="space-y-3 text-center">
     <p class="text-green-600 font-semibold">🔒 Day Locked</p>

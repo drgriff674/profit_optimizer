@@ -166,6 +166,16 @@ def init_db():
         resolved BOOLEAN DEFAULT FALSE
     );
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS revenue_ai_summaries (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL,
+    revenue_date DATE NOT NULL,
+    summary TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (username, revenue_date)
+);
+""")
 
     conn.commit()
     cursor.close()
@@ -349,6 +359,37 @@ def load_user_business(username):
     cursor.close()
     conn.close()
     return business
+
+def get_ai_summary_for_day(username, revenue_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT summary
+        FROM revenue_ai_summaries
+        WHERE username = %s AND revenue_date = %s
+    """, (username, revenue_date))
+
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return row[0] if row else None
+
+def save_ai_summary_for_day(username, revenue_date, summary):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO revenue_ai_summaries (username, revenue_date, summary)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (username, revenue_date)
+        DO UPDATE SET summary = EXCLUDED.summary
+    """, (username, revenue_date, summary))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 def detect_revenue_anomalies(username, revenue_date):
     conn = get_db_connection(cursor_factory=RealDictCursor)

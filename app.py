@@ -79,6 +79,42 @@ def get_revenue_day_export_data(username, date):
         "grand_total": grand_total,
     }
 
+def generate_revenue_ai_summary(date, manual_total, mpesa_total, manual_entries):
+    categories = {}
+    for e in manual_entries:
+        categories[e["category"]] = categories.get(e["category"], 0) + float(e["amount"])
+
+    category_lines = "\n".join(
+        f"- {k}: KSh {v}" for k, v in categories.items()
+    )
+
+    prompt = f"""
+You are a financial analyst.
+
+Analyze the following daily revenue:
+
+Date: {date}
+Manual revenue: KSh {manual_total}
+MPesa revenue: KSh {mpesa_total}
+Total revenue: KSh {manual_total + mpesa_total}
+
+Breakdown by category:
+{category_lines}
+
+Tasks:
+- Explain performance in simple business language
+- Mention anomalies (spikes, drops, imbalance)
+- Keep it under 120 words
+- Be factual, not motivational
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return response.choices[0].message.content.strip()
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -562,6 +598,42 @@ def dashboard():
         current_year=datetime.now().year,
         latest_payment=latest_payment,
     )
+
+@app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
+@login_required
+def generate_ai_summary_for_day(date):
+    username = session["username"]
+
+    manual_entries = load_revenue_entries_for_day(username, date)
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT amount
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (date,))
+    mpesa_entries = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
+
+    summary = generate_revenue_ai_summary(
+        date,
+        manual_total,
+        mpesa_total,
+        manual_entries
+    )
+
+    save_ai_summary_for_day(username, date, summary)
+
+    flash("AI summary generated.")
+    return redirect(url_for("revenue_day_detail", date=date))
 
 @app.route("/revenue/day/<date>/export/csv")
 @login_required
@@ -2867,7 +2939,8 @@ def revenue_day_detail(date):
         mpesa_total=mpesa_total,
         grand_total=grand_total,
         is_locked=is_locked,
-        anomalies=anomalies
+        anomalies=anomalies,
+        ai_summary=ai_summary
     )
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
