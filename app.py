@@ -2929,7 +2929,7 @@ def revenue_day_detail(date):
     grand_total = manual_total + mpesa_total
 
     is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-
+    ai_summary = get_ai_summary_for_day(username,date)
     return render_template(
         "revenue_day_detail.html",
         date=date,
