@@ -617,6 +617,50 @@ def export_revenue_day_csv(date):
 
     return response
 
+@app.route("/revenue/day/<date>/export/pdf")
+@login_required
+def export_revenue_day_pdf(date):
+    username = session["username"]
+
+    manual_entries = load_revenue_entries_for_day(username, date)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT amount, sender, created_at
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (date,))
+    mpesa_entries = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+    grand_total = manual_total + mpesa_total
+
+    html = render_template(
+        "revenue_day_pdf.html",
+        date=date,
+        manual_entries=manual_entries,
+        mpesa_entries=mpesa_entries,
+        manual_total=manual_total,
+        mpesa_total=mpesa_total,
+        grand_total=grand_total
+    )
+
+    pdf_buffer = io.BytesIO()
+    pisa.CreatePDF(html, dest=pdf_buffer)
+
+    response = make_response(pdf_buffer.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f"attachment; filename=revenue_{date}.pdf"
+
+    return response
+
 
 @app.route("/api/latest-payment")
 def latest_payment():

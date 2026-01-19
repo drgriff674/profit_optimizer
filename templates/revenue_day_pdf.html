@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .section {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Revenue Report</h1>
+<p><strong>Date:</strong> {{ date }}</p>
+
+<div class="section">
+  <h3>Totals</h3>
+  <table>
+    <tr><th>Type</th><th>Amount (KSh)</th></tr>
+    <tr><td>Manual</td><td>{{ manual_total }}</td></tr>
+    <tr><td>MPesa</td><td>{{ mpesa_total }}</td></tr>
+    <tr><td><strong>Grand Total</strong></td><td><strong>{{ grand_total }}</strong></td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Manual Entries</h3>
+  <table>
+    <tr><th>Category</th><th>Amount (KSh)</th></tr>
+    {% for e in manual_entries %}
+      <tr>
+        <td>{{ e.category }}</td>
+        <td>{{ e.amount }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="section">
+  <h3>MPesa Transactions</h3>
+  <table>
+    <tr><th>Sender</th><th>Amount (KSh)</th><th>Time</th></tr>
+    {% for m in mpesa_entries %}
+      <tr>
+        <td>{{ m.sender }}</td>
+        <td>{{ m.amount }}</td>
+        <td>{{ m.created_at }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">No MPesa transactions</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+</body>
+</html>
