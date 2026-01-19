@@ -747,6 +747,53 @@ def export_revenue_day_pdf(date):
 
     return response
 
+@app.route("/revenue/day/<date>")
+@login_required
+def revenue_day_detail(date):
+    username = session["username"]
+
+    manual_entries = load_revenue_entries_for_day(username, date)
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT amount, sender, transaction_id, created_at
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (date,))
+    mpesa_entries = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT anomaly_type, severity, message
+        FROM revenue_anomalies
+        WHERE username = %s AND revenue_date = %s
+    """, (username, date))
+    anomalies = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+    grand_total = manual_total + mpesa_total
+
+    is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
+    ai_summary = generate_ai_summary_for_day(username,date)
+    return render_template(
+        "revenue_day_detail.html",
+        date=date,
+        manual_entries=manual_entries,
+        mpesa_entries=mpesa_entries,
+        manual_total=manual_total,
+        mpesa_total=mpesa_total,
+        grand_total=grand_total,
+        is_locked=is_locked,
+        anomalies=anomalies,
+        ai_summary=ai_summary
+    )
+
 
 @app.route("/api/latest-payment")
 def latest_payment():
@@ -2910,52 +2957,7 @@ def live_performance():
         values=values
     )
 
-@app.route("/revenue/day/<date>")
-@login_required
-def revenue_day_detail(date):
-    username = session["username"]
 
-    manual_entries = load_revenue_entries_for_day(username, date)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    cursor.execute("""
-        SELECT amount, sender, transaction_id, created_at
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
-    """, (date,))
-    mpesa_entries = cursor.fetchall()
-
-    cursor.execute("""
-        SELECT anomaly_type, severity, message
-        FROM revenue_anomalies
-        WHERE username = %s AND revenue_date = %s
-    """, (username, date))
-    anomalies = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
-    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
-    grand_total = manual_total + mpesa_total
-
-    is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-    ai_summary = generate_ai_summary_for_day(username,revenue_date)
-    return render_template(
-        "revenue_day_detail.html",
-        date=date,
-        manual_entries=manual_entries,
-        mpesa_entries=mpesa_entries,
-        manual_total=manual_total,
-        mpesa_total=mpesa_total,
-        grand_total=grand_total,
-        is_locked=is_locked,
-        anomalies=anomalies,
-        ai_summary=ai_summary
-    )
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
 def lock_revenue_day_route():
