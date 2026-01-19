@@ -39,7 +39,21 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from database import load_users, save_user, init_db, save_expense, load_expenses, get_db_connection, load_revenue_entries_for_day, load_expense_categories, save_revenue_entry, lock_manual_entries_for_the_day, load_revenue_days
+from database import(
+    load_users,
+    save_user,
+    init_db,
+    save_expense,
+    load_expenses,
+    get_db_connection,
+    load_revenue_entries_for_day,
+    load_expense_categories,
+    save_revenue_entry,
+    lock_manual_entries_for_the_day,
+    load_revenue_days,
+    get_ai_summary_for_day,
+    detect_revenue_anomalies,
+)
 import pytz
 from flask_caching import Cache
 from datetime import date
@@ -2929,7 +2943,7 @@ def revenue_day_detail(date):
     grand_total = manual_total + mpesa_total
 
     is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-    ai_summary = get_ai_summary_for_day(username,date)
+    ai_summary = generate_ai_summary_for_day(username,date)
     return render_template(
         "revenue_day_detail.html",
         date=date,
