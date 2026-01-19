@@ -63,7 +63,7 @@ import re
 # Revenue helpers
 # ============================
 
-def get_revenue_day_export_data(username, date):
+def generate_revenue_day_export_data(username, revenue_date):
     manual_entries = load_revenue_entries_for_day(username, date)
 
     conn = get_db_connection()
@@ -2943,7 +2943,7 @@ def revenue_day_detail(date):
     grand_total = manual_total + mpesa_total
 
     is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-    ai_summary = generate_ai_summary_for_day(username,date)
+    ai_summary = generate_ai_summary_for_day(username,revenue_date)
     return render_template(
         "revenue_day_detail.html",
         date=date,
