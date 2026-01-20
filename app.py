@@ -94,6 +94,9 @@ def generate_revenue_day_export_data(username, revenue_date):
     }
 
 def generate_revenue_ai_summary(date, manual_total, mpesa_total, manual_entries):
+    if not AI_ENABLED or client is None:
+        return "AI summary unavailable. OpenAI API key not configured."
+
     categories = {}
     for e in manual_entries:
         categories[e["category"]] = categories.get(e["category"], 0) + float(e["amount"])
@@ -128,7 +131,6 @@ Tasks:
     )
 
     return response.choices[0].message.content.strip()
-
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -616,6 +618,10 @@ def dashboard():
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
 def generate_ai_summary_for_day_route(date):
+    if not AI_ENABLED:
+        flash("AI summary is unavailable. Please configure on OpenAI API key.","warning")
+        return redirect(url_for("revenue_day_detail", date=date))
+    
     username = session["username"]
 
     manual_entries = load_revenue_entries_for_day(username, date)
