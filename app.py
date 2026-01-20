@@ -65,7 +65,7 @@ import re
 # ============================
 
 def generate_revenue_day_export_data(username, revenue_date):
-    manual_entries = load_revenue_entries_for_day(username, date)
+    manual_entries = load_revenue_entries_for_day(username, revenue_date)
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -75,25 +75,24 @@ def generate_revenue_day_export_data(username, revenue_date):
         FROM mpesa_transactions
         WHERE status = 'confirmed'
           AND DATE(created_at) = %s
-    """, (date,))
+    """, (revenue_date,))
     mpesa_entries = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
     manual_total = sum(float(e["amount"]) for e in manual_entries)
-    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+    mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
     grand_total = manual_total + mpesa_total
 
     return {
-        "date": date,
+        "date": revenue_date,
         "manual_entries": manual_entries,
         "mpesa_entries": mpesa_entries,
         "manual_total": manual_total,
         "mpesa_total": mpesa_total,
         "grand_total": grand_total,
     }
-
 def generate_revenue_ai_summary(date, manual_total, mpesa_total, manual_entries):
     if not AI_ENABLED or client is None:
         return "AI summary unavailable. OpenAI API key not configured."
