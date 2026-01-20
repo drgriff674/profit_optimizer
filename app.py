@@ -52,6 +52,7 @@ from database import(
     lock_manual_entries_for_the_day,
     load_revenue_days,
     get_ai_summary_for_day,
+    save_ai_summary_for_day,
     detect_revenue_anomalies,
 )
 import pytz
@@ -660,7 +661,7 @@ def generate_ai_summary_for_day_route(date):
 def export_revenue_day_csv(date):
     username = session["username"]
 
-    data = get_revenue_day_export_data(username, date)
+    data = generate_revenue_day_export_data(username, date)
 
     output = StringIO()
     writer = csv.writer(output)
