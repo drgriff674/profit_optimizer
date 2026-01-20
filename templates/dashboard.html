@@ -200,7 +200,24 @@
                 Split today’s revenue to unlock category insights
             </p>
         </div>
-    </div>
+      </div>
+
+   <!-- 🧠 INTELLIGENCE ROW -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+
+  <div class="p-5 rounded-xl shadow"
+       style="background: var(--og-surface);">
+    <h3 class="text-lg font-semibold mb-2">
+      📊 Revenue Intelligence (Last 7 Days)
+    </h3>
+
+    <p><strong>Anomaly days:</strong> {{ intelligence.anomaly_days }}</p>
+    <p><strong>Manual revenue days:</strong> {{ intelligence.manual_days | length }}</p>
+    <p><strong>MPesa revenue days:</strong> {{ intelligence.mpesa_days | length }}</p>
+  </div>
+
+</div>
+
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 

@@ -487,6 +487,55 @@ def create_inventory_item(business_id, name, category, unit):
     cursor.close()
     conn.close()
 
+def get_dashboard_revenue_intelligence(username):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Last 7 days revenue (locked only)
+    cursor.execute("""
+        SELECT
+            revenue_date,
+            SUM(amount) AS manual_total
+        FROM revenue_entries
+        WHERE username = %s
+          AND locked = TRUE
+          AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY revenue_date
+        ORDER BY revenue_date DESC
+    """, (username,))
+    manual_days = cursor.fetchall()
+
+    # MPesa totals for last 7 days
+    cursor.execute("""
+        SELECT
+            DATE(created_at) AS revenue_date,
+            SUM(amount) AS mpesa_total
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY DATE(created_at)
+    """)
+    mpesa_days = cursor.fetchall()
+
+    # Anomaly count
+    cursor.execute("""
+        SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
+        FROM revenue_anomalies
+        WHERE username = %s
+          AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
+    """, (username,))
+    anomaly_count = cursor.fetchone()["anomaly_days"]
+
+    cursor.close()
+    conn.close()
+
+    return {
+        "manual_days": manual_days,
+        "mpesa_days": mpesa_days,
+        "anomaly_days": anomaly_count,
+    }
+
+
 
 def create_inventory_snapshot(business_id, snapshot_date, snapshot_type, created_by):
     conn = get_db_connection()

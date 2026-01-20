@@ -54,6 +54,7 @@ from database import(
     get_ai_summary_for_day,
     save_ai_summary_for_day,
     detect_revenue_anomalies,
+    get_dashboard_revenue_intelligence,
 )
 import pytz
 from flask_caching import Cache
@@ -601,6 +602,7 @@ def dashboard():
             })
         except Exception:
             continue
+    intelligence = get_dashboard_revenue_intelligence(username)
 
     return render_template(
         "dashboard.html",
@@ -613,6 +615,7 @@ def dashboard():
         last_synced=last_synced,
         current_year=datetime.now().year,
         latest_payment=latest_payment,
+        intelligence=intelligence
     )
 
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
