@@ -615,7 +615,7 @@ def dashboard():
 
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
-def generate_ai_summary_for_day(date):
+def generate_ai_summary_for_day_route(date):
     username = session["username"]
 
     manual_entries = load_revenue_entries_for_day(username, date)
@@ -780,7 +780,7 @@ def revenue_day_detail(date):
     grand_total = manual_total + mpesa_total
 
     is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-    ai_summary = generate_ai_summary_for_day(username,date)
+    ai_summary = get_ai_summary_for_day(username,date)
     return render_template(
         "revenue_day_detail.html",
         date=date,
