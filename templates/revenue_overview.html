@@ -41,35 +41,31 @@
         <tbody class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
           {% for d in days %}
             <tr class="bg-white dark:bg-slate-900">
-              <!-- DATE -->
-              <td class="px-4 py-2">
-                {{ d.revenue_date }}
-              </td>
+  <!-- DATE -->
+  <td class="px-4 py-2">
+    {{ d }}
+  </td>
 
-              <!-- TOTAL -->
-              <td class="px-4 py-2 text-right font-semibold">
-                KSh {{ d.total_amount }}
-              </td>
+  <!-- TOTAL -->
+  <td class="px-4 py-2 text-right font-semibold">
+    KSh —
+  </td>
 
-              <!-- STATUS -->
-              <td class="px-4 py-2 text-center">
-                {% if d.locked %}
-                  <span class="text-green-600 font-medium">🔒 Locked</span>
-                {% else %}
-                  <span class="text-yellow-600 font-medium">🔓 Open</span>
-                {% endif %}
-              </td>
+  <!-- STATUS -->
+  <td class="px-4 py-2 text-center">
+    <span class="text-yellow-600 font-medium">🔓 Open</span>
+  </td>
 
-              <!-- ACTION -->
-<td class="px-4 py-2 text-center">
-  <a
-    href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
-    class="text-blue-600 hover:underline"
-  >
-    View
-  </a>
-</td>
-            </tr>
+  <!-- ACTION -->
+  <td class="px-4 py-2 text-center">
+    <a
+      href="{{ url_for('revenue_day_detail', date=d) }}"
+      class="text-blue-600 hover:underline"
+    >
+      View
+    </a>
+  </td>
+</tr>
           {% endfor %}
         </tbody>
       </table>
