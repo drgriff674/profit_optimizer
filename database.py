@@ -383,6 +383,7 @@ def get_existing_revenue_days(username):
 
     cur.execute("""
         SELECT DISTINCT day FROM (
+            -- MPesa-driven days
             SELECT DATE(created_at) AS day
             FROM mpesa_transactions
             WHERE
@@ -392,8 +393,9 @@ def get_existing_revenue_days(username):
 
             UNION
 
+            -- Manual revenue days
             SELECT revenue_date AS day
-            FROM revenue_days
+            FROM revenue_entries
             WHERE username = %s
         ) d
         ORDER BY day DESC
