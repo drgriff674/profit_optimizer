@@ -65,6 +65,15 @@
       View
     </a>
   </td>
+
+{% if not is_locked %}
+<form method="POST" action="{{ url_for('delete_revenue_day', date=date) }}"
+      onsubmit="return confirm('Delete this day and all its entries? This cannot be undone.')">
+  <button class="bg-red-600 text-white px-4 py-2 rounded mt-4">
+    🗑️ Delete Day
+  </button>
+</form>
+{% endif %}
 </tr>
           {% endfor %}
         </tbody>

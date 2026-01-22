@@ -73,12 +73,49 @@ def generate_revenue_day_export_data(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+    # 1️⃣ Get business identifiers
+    cursor.execute("""
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+    biz = cursor.fetchone()
+
+    if not biz:
+        cursor.close()
+        conn.close()
+        return {
+            "date": revenue_date,
+            "manual_entries": manual_entries,
+            "mpesa_entries": [],
+            "manual_total": sum(float(e["amount"]) for e in manual_entries),
+            "mpesa_total": 0,
+            "grand_total": sum(float(e["amount"]) for e in manual_entries),
+        }
+
+    paybill = biz["paybill"]
+    account_number = biz["account_number"]
+
+    # 2️⃣ Pull MPesa scoped to THIS business + THIS day
     cursor.execute("""
         SELECT amount, sender, transaction_id, created_at
         FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
-    """, (revenue_date,))
+        WHERE DATE(created_at) = %s
+          AND (
+                (%s IS NOT NULL AND account_reference = %s)
+                OR
+                (%s IS NULL AND receiver = %s)
+          )
+        ORDER BY created_at ASC
+    """, (
+        revenue_date,
+        account_number,
+        account_number,
+        account_number,
+        paybill
+    ))
+
     mpesa_entries = cursor.fetchall()
 
     cursor.close()
@@ -624,6 +661,46 @@ def dashboard():
         intelligence=intelligence
     )
 
+@app.route("/revenue/day/<date>/delete", methods=["POST"])
+@login_required
+def delete_revenue_day(date):
+    username = session["username"]
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Block delete if day is locked
+    cur.execute("""
+        SELECT 1 FROM revenue_days
+        WHERE username = %s AND revenue_date = %s AND locked = TRUE
+    """, (username, date))
+
+    if cur.fetchone():
+        cur.close()
+        conn.close()
+        abort(403)
+
+    # Delete manual entries
+    cur.execute("""
+        DELETE FROM revenue_entries
+        WHERE username = %s AND revenue_date = %s
+    """, (username, date))
+
+    # Optional: delete MPesa links for that day (ONLY if you want)
+    # Usually better to keep MPesa immutable
+
+    # Delete revenue day
+    cur.execute("""
+        DELETE FROM revenue_days
+        WHERE username = %s AND revenue_date = %s
+    """, (username, date))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(url_for("revenue_overview"))
+
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
 def generate_ai_summary_for_day_route(date):
@@ -728,14 +805,41 @@ def export_revenue_day_pdf(date):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+    # 1️⃣ Get business identifiers
     cursor.execute("""
-        SELECT amount, sender, created_at
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
-    """, (date,))
-    mpesa_entries = cursor.fetchall()
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+    biz = cursor.fetchone()
 
+    mpesa_entries = []
+
+    if biz:
+        paybill = biz["paybill"]
+        account_number = biz["account_number"]
+
+        cursor.execute("""
+            SELECT amount, sender, created_at
+            FROM mpesa_transactions
+            WHERE
+                (
+                    (%s IS NOT NULL AND account_reference = %s)
+                    OR
+                    (%s IS NULL AND receiver = %s)
+                )
+              AND DATE(created_at) = %s
+            ORDER BY created_at ASC
+        """, (
+            account_number,
+            account_number,
+            account_number,
+            paybill,
+            date
+        ))
+
+        mpesa_entries = cursor.fetchall()
     cursor.close()
     conn.close()
 
