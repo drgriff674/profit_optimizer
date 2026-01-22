@@ -772,17 +772,44 @@ def revenue_day_detail(date):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+    # 🔹 get business identifiers
     cursor.execute("""
-        SELECT amount, sender, transaction_id, created_at
-        FROM mpesa_transactions
+        SELECT paybill, account_number
+        FROM businesses
         WHERE username = %s
-          AND status = 'confirmed'
-          AND created_at >= %s::date
-          AND created_at < (%s::date + INTERVAL '1 day')
-        ORDER BY created_at ASC
-    """, (username, date, date))
-    mpesa_entries = cursor.fetchall()
+        LIMIT 1
+    """, (username,))
+    biz = cursor.fetchone()
 
+    mpesa_entries = []
+
+    if biz:
+        paybill = biz["paybill"]
+        account_number = biz["account_number"]
+
+        cursor.execute("""
+            SELECT amount, sender, transaction_id, created_at
+            FROM mpesa_transactions
+            WHERE (
+                (%s IS NOT NULL AND account_reference = %s)
+                OR
+                (%s IS NULL AND receiver = %s)
+            )
+            AND created_at >= %s::date
+            AND created_at < (%s::date + INTERVAL '1 day')
+            ORDER BY created_at ASC
+        """, (
+            account_number,
+            account_number,
+            account_number,
+            paybill,
+            date,
+            date
+        ))
+
+        mpesa_entries = cursor.fetchall()
+
+    # 🔹 anomalies are user-scoped → username is OK here
     cursor.execute("""
         SELECT anomaly_type, severity, message
         FROM revenue_anomalies
