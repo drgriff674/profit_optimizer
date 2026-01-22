@@ -1154,6 +1154,10 @@ def payment_confirm():
             request.remote_addr
         ))
         conn.commit()
+
+        payment_date = datetime.utcnow().date()
+        ensure_revenue_day_exists(username,payment_date)
+        
         cur.close()
         conn.close()
         if username:
