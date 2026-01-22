@@ -362,7 +362,7 @@ def load_user_business(username):
 
 def get_existing_revenue_days(username):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     # Get business identifiers
     cur.execute("""
@@ -378,25 +378,22 @@ def get_existing_revenue_days(username):
         conn.close()
         return []
 
-    paybill, account_number = biz
+    paybill = biz["paybill"]
+    account_number = biz["account_number"]
 
-    # Pull days from BOTH sources:
-    # 1) MPesa transactions
-    # 2) Manual revenue entries
     cur.execute("""
         SELECT DISTINCT day FROM (
             SELECT DATE(created_at) AS day
             FROM mpesa_transactions
-            WHERE (
+            WHERE
                 (%s IS NOT NULL AND account_reference = %s)
                 OR
                 (%s IS NULL AND receiver = %s)
-            )
 
             UNION
 
             SELECT revenue_date AS day
-            FROM revenue_entries
+            FROM revenue_days
             WHERE username = %s
         ) d
         ORDER BY day DESC
@@ -408,7 +405,7 @@ def get_existing_revenue_days(username):
         username
     ))
 
-    days = [row[0] for row in cur.fetchall()]
+    days = [row["day"] for row in cur.fetchall()]
 
     cur.close()
     conn.close()
