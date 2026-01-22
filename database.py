@@ -360,6 +360,45 @@ def load_user_business(username):
     conn.close()
     return business
 
+def get_existing_revenue_days(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DISTINCT DATE(created_at) AS day
+        FROM mpesa_transactions
+        WHERE username = %s AND status = 'confirmed'
+
+        UNION
+
+        SELECT DISTINCT revenue_date AS day
+        FROM revenue_entries
+        WHERE username = %s
+
+        ORDER BY day DESC
+    """, (username, username))
+
+    days = [row[0].isoformat() for row in cursor.fetchall()]
+
+    cursor.close()
+    conn.close()
+
+    return days
+
+def ensure_revenue_day_exists(username, revenue_date):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO revenue_days (username, revenue_date)
+        VALUES (%s, %s)
+        ON CONFLICT (username, revenue_date) DO NOTHING
+    """, (username, revenue_date))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
 def get_ai_summary_for_day(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor()

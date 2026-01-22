@@ -55,6 +55,8 @@ from database import(
     save_ai_summary_for_day,
     detect_revenue_anomalies,
     get_dashboard_revenue_intelligence,
+    get_existing_revenue_days,
+    ensure_revenue_day_exists,
 )
 import pytz
 from flask_caching import Cache
@@ -426,8 +428,10 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
-@cache.cached(timeout=300, key_prefix="dashboard_data")
+@cache.cached(timeout=300, key_prefix=lambda:f"dashboard_data:{session.get('username')}")
 def get_dashboard_data(username):
+    data={}
+    data["intelligence"] = get_dashboard_revenue_intelligence(username)
     """
     Read-heavy dashboard data only.
     NO Google Sheets sync.
@@ -452,11 +456,13 @@ def dashboard():
 
     username = session["username"]
 
+
     # 🔹 Cached dashboard data
     cached_data = get_dashboard_data(username)
     notifications = cached_data.get("notifications", [])
     forecast_data = cached_data.get("forecast_data", [])
     last_synced = cached_data.get("last_synced")
+    intelligence = cached_data.get("intelligence")
 
     answer = None
 
@@ -602,7 +608,7 @@ def dashboard():
             })
         except Exception:
             continue
-    intelligence = get_dashboard_revenue_intelligence(username)
+    
 
     return render_template(
         "dashboard.html",
@@ -769,15 +775,19 @@ def revenue_day_detail(date):
     cursor.execute("""
         SELECT amount, sender, transaction_id, created_at
         FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
-    """, (date,))
+        WHERE username = %s
+          AND status = 'confirmed'
+          AND created_at >= %s::date
+          AND created_at < (%s::date + INTERVAL '1 day')
+        ORDER BY created_at ASC
+    """, (username, date, date))
     mpesa_entries = cursor.fetchall()
 
     cursor.execute("""
         SELECT anomaly_type, severity, message
         FROM revenue_anomalies
-        WHERE username = %s AND revenue_date = %s
+        WHERE username = %s
+          AND revenue_date = %s
     """, (username, date))
     anomalies = cursor.fetchall()
 
@@ -788,8 +798,13 @@ def revenue_day_detail(date):
     mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
     grand_total = manual_total + mpesa_total
 
-    is_locked = all(e["locked"] for e in manual_entries) if manual_entries else False
-    ai_summary = get_ai_summary_for_day(username,date)
+    ai_summary = get_ai_summary_for_day(username, date)
+
+    is_locked = (
+        (manual_entries and all(e["locked"] for e in manual_entries))
+        or bool(ai_summary)
+    )
+
     return render_template(
         "revenue_day_detail.html",
         date=date,
@@ -802,7 +817,17 @@ def revenue_day_detail(date):
         anomalies=anomalies,
         ai_summary=ai_summary
     )
+@app.route("/revenue/overview")
+@login_required
+def revenue_overview():
+    username = session["username"]
 
+    days = get_existing_revenue_days(username)
+
+    return render_template(
+        "revenue_overview.html",
+        days=days
+    )
 
 @app.route("/api/latest-payment")
 def latest_payment():
@@ -1131,6 +1156,12 @@ def payment_confirm():
         conn.commit()
         cur.close()
         conn.close()
+        if username:
+            today = datetime.utcnow().date()
+            ensure_revenue_day_exists(username, today)
+
+            cache.delete_memoized(get_dashboard_data, username)
+        
 
         print("✅ PAYMENT SAVED:", amount)
 
@@ -2746,11 +2777,6 @@ def revenue_entry():
         selected_date=selected_date
     )
 
-@app.route("/revenue/overview")
-@login_required
-def revenue_overview():
-    days = load_revenue_days(session["username"])
-    return render_template("revenue_overview.html", days=days)
 
 @app.route("/inventory_setup", methods=["GET", "POST"])
 def inventory_setup():
