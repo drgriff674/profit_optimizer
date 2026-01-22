@@ -669,37 +669,51 @@ def delete_revenue_day(date):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Block delete if day is locked
-    cur.execute("""
-        SELECT 1 FROM revenue_days
-        WHERE username = %s AND revenue_date = %s AND locked = TRUE
-    """, (username, date))
-
-    if cur.fetchone():
-        cur.close()
-        conn.close()
-        abort(403)
-
-    # Delete manual entries
+    # 1️⃣ Delete manual revenue entries for that day
     cur.execute("""
         DELETE FROM revenue_entries
-        WHERE username = %s AND revenue_date = %s
+        WHERE username = %s
+          AND revenue_date = %s
     """, (username, date))
 
-    # Optional: delete MPesa links for that day (ONLY if you want)
-    # Usually better to keep MPesa immutable
-
-    # Delete revenue day
+    # 2️⃣ Get business identifiers
     cur.execute("""
-        DELETE FROM revenue_days
-        WHERE username = %s AND revenue_date = %s
-    """, (username, date))
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+    biz = cur.fetchone()
+
+    if biz:
+        paybill, account_number = biz
+
+        # 3️⃣ Delete MPesa transactions for that day (scoped!)
+        cur.execute("""
+            DELETE FROM mpesa_transactions
+            WHERE DATE(created_at) = %s
+              AND (
+                (%s IS NOT NULL AND account_reference = %s)
+                OR
+                (%s IS NULL AND receiver = %s)
+              )
+        """, (
+            date,
+            account_number,
+            account_number,
+            account_number,
+            paybill
+        ))
 
     conn.commit()
     cur.close()
     conn.close()
 
+    # Clear dashboard cache so numbers refresh
+    cache.delete_memoized(get_dashboard_data, username)
+
     return redirect(url_for("revenue_overview"))
+
 
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
