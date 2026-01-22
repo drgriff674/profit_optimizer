@@ -56,24 +56,35 @@
     <span class="text-yellow-600 font-medium">🔓 Open</span>
   </td>
 
-  <!-- ACTION -->
-  <td class="px-4 py-2 text-center">
-    <a
-      href="{{ url_for('revenue_day_detail', date=d) }}"
-      class="text-blue-600 hover:underline"
-    >
-      View
-    </a>
-  </td>
+  
+<!-- ACTION -->
+<td class="px-4 py-2 text-center space-x-3">
 
-{% if not is_locked %}
-<form method="POST" action="{{ url_for('delete_revenue_day', date=date) }}"
-      onsubmit="return confirm('Delete this day and all its entries? This cannot be undone.')">
-  <button class="bg-red-600 text-white px-4 py-2 rounded mt-4">
-    🗑️ Delete Day
-  </button>
-</form>
-{% endif %}
+  <!-- View -->
+  <a
+    href="{{ url_for('revenue_day_detail', date=d) }}"
+    class="text-blue-600 hover:underline"
+  >
+    View
+  </a>
+
+  <!-- Delete -->
+  <form
+    method="POST"
+    action="{{ url_for('delete_revenue_day', date=d) }}"
+    class="inline"
+    onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')"
+  >
+    <button
+      type="submit"
+      class="text-red-600 hover:text-red-800 text-sm"
+      title="Delete day"
+    >
+      🗑
+    </button>
+  </form>
+
+</td>
 </tr>
           {% endfor %}
         </tbody>
