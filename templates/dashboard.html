@@ -167,14 +167,24 @@
                 style="background: var(--og-primary); color:white;">🌙</button>
     </div>
 
-    <!-- MPESA -->
-    <section class="max-w-sm mb-4">
-        <div class="rounded-lg px-3 py-2 shadow" style="background: var(--og-surface);">
-            <h5 class="text-sm">💰 Live M-Pesa Business Balance</h5>
-            <h3 class="text-xl text-green-600">Loading...</h3>
-            <p class="text-xs opacity-70">Last updated: just now</p>
-        </div>
-    </section>
+   <!-- TOTAL REVENUE (LIVE) -->
+<section class="max-w-sm mb-4">
+    <div class="rounded-lg px-4 py-3 shadow"
+         style="background: var(--og-surface); border-left: 4px solid var(--og-primary);">
+        
+        <h5 class="text-xs uppercase opacity-60 tracking-wide">
+            💰 Total Revenue (Live)
+        </h5>
+
+        <p class="text-2xl font-semibold text-green-600 mt-1">
+            KSh {{ live_total_revenue | int }}
+        </p>
+
+        <p class="text-xs opacity-70 mt-1">
+            All confirmed payments received
+        </p>
+    </div>
+</section>
 
     <!-- KPI CARDS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-6">

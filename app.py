@@ -610,6 +610,8 @@ def dashboard():
     conn.close()
 
     profit = total_revenue - total_expenses
+
+    live_total_revenue = total_revenue
     
     kpis["total_profit"] = f"KSh {profit:,.0f}"
     kpis["avg_profit"] = f"KSh {profit:,.0f}"
@@ -658,7 +660,8 @@ def dashboard():
         last_synced=last_synced,
         current_year=datetime.now().year,
         latest_payment=latest_payment,
-        intelligence=intelligence
+        intelligence=intelligence,
+        live_total_revenue=live_total_revenue
     )
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
