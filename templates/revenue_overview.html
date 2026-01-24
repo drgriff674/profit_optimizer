@@ -43,18 +43,26 @@
             <tr class="bg-white dark:bg-slate-900">
   <!-- DATE -->
   <td class="px-4 py-2">
-    {{ d }}
+    {{ d.date }}
   </td>
 
   <!-- TOTAL -->
   <td class="px-4 py-2 text-right font-semibold">
-    KSh —
+   {% if d.locked %}
+    KSh {{"%.2f"|format(d.total) }}
+   {% else %}
+    -
+   {% endif %}
   </td>
 
   <!-- STATUS -->
   <td class="px-4 py-2 text-center">
+  {% if d.locked %}
+    <span class="text-green-600 font-medium">🔒 Closed</span>
+  {% else %}
     <span class="text-yellow-600 font-medium">🔓 Open</span>
-  </td>
+  {% endif %}
+</td>
 
   
 <!-- ACTION -->
@@ -62,7 +70,7 @@
 
   <!-- View -->
   <a
-    href="{{ url_for('revenue_day_detail', date=d) }}"
+    href="{{ url_for('revenue_day_detail', date=d.date) }}"
     class="text-blue-600 hover:underline"
   >
     View
@@ -71,7 +79,7 @@
   <!-- Delete -->
   <form
     method="POST"
-    action="{{ url_for('delete_revenue_day', date=d) }}"
+    action="{{ url_for('delete_revenue_day', date=d.date) }}"
     class="inline"
     onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')"
   >
