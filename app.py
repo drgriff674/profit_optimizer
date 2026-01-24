@@ -719,41 +719,28 @@ def delete_revenue_day(date):
 @login_required
 def generate_ai_summary_for_day_route(date):
     if not AI_ENABLED:
-        flash("AI summary is unavailable. Please configure on OpenAI API key.","warning")
-        return redirect(url_for("revenue_day_detail", date=date))
-    
+        flash("AI summary is unavailable...")
+        return redirect(...)
+
     username = session["username"]
 
-    manual_entries = load_revenue_entries_for_day(username, date)
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    cursor.execute("""
-        SELECT amount
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
-    """, (date,))
-    mpesa_entries = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
+    data = generate_revenue_day_export_data(username, date)
 
     summary = generate_revenue_ai_summary(
         date,
-        manual_total,
-        mpesa_total,
-        manual_entries
+        data["manual_total"],
+        data["mpesa_total"],
+        data["manual_entries"]
     )
 
     save_ai_summary_for_day(username, date, summary)
 
+    # 🔒 LOCK DAY + SNAPSHOT TOTAL
+    
+
     flash("AI summary generated.")
     return redirect(url_for("revenue_day_detail", date=date))
+
 
 @app.route("/revenue/day/<date>/export/csv")
 @login_required
