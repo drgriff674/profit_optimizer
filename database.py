@@ -168,14 +168,25 @@ def init_db():
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS revenue_ai_summaries (
-    id SERIAL PRIMARY KEY,
-    username TEXT NOT NULL,
-    revenue_date DATE NOT NULL,
-    summary TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (username, revenue_date)
-);
-""")
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        revenue_date DATE NOT NULL,
+        summary TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (username, revenue_date)
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS revenue_days (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        revenue_date DATE NOT NULL,
+        locked BOOLEAN DEFAULT FALSE,
+        total_amount NUMERIC(12,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE (username, revenue_date)
+    );
+    """)
 
     conn.commit()
     cursor.close()
