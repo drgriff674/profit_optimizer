@@ -22,10 +22,10 @@ th, td {
   padding: 6px;
   text-align: left;
   vertical-align: top;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-all; /* 🔑 forces long MPesa IDs to wrap */
-}
+  font-size: 11px;
+  max-width: 0;
+  white-space: normal;
+ }
     th {
       background: #f0f0f0;
     }
@@ -73,7 +73,11 @@ th, td {
 </tr>
     {% for m in mpesa_entries %}
       <tr>
-        <td>{{ m.sender }}</td>
+        <td>
+         <div style="word-wrap: break-word; font-size: 10px;">
+           {{ m.sender }}
+         </div>
+        </td>
         <td>{{ m.amount }}</td>
         <td>{{ m.created_at }}</td>
       </tr>
