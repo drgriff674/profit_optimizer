@@ -927,10 +927,9 @@ def revenue_day_detail(date):
             date,
             date
         ))
-
         mpesa_entries = cursor.fetchall()
 
-    # 🔹 anomalies are user-scoped → username is OK here
+    # 🔹 anomalies
     cursor.execute("""
         SELECT anomaly_type, severity, message
         FROM revenue_anomalies
@@ -939,6 +938,18 @@ def revenue_day_detail(date):
     """, (username, date))
     anomalies = cursor.fetchall()
 
+    # 🔒 CHECK LOCK STATUS (MUST BE BEFORE CLOSE)
+    cursor.execute("""
+        SELECT locked
+        FROM revenue_days
+        WHERE username = %s
+          AND revenue_date = %s
+        LIMIT 1
+    """, (username, date))
+    row = cursor.fetchone()
+    is_locked = row["locked"] if row else False
+
+    # ✅ NOW CLOSE
     cursor.close()
     conn.close()
 
@@ -947,17 +958,6 @@ def revenue_day_detail(date):
     grand_total = manual_total + mpesa_total
 
     ai_summary = get_ai_summary_for_day(username, date)
-
-    cursor.execute("""
-        SELECT locked
-        FROM revenue_days
-        WHERE username = %s
-            AND revenue_date = %s
-        LIMIT 1
-    """,(username, date))
-
-    row = cursor.fetchone()
-    is_locked = row["locked"] if row else False
 
     return render_template(
         "revenue_day_detail.html",
@@ -971,6 +971,8 @@ def revenue_day_detail(date):
         anomalies=anomalies,
         ai_summary=ai_summary
     )
+
+
 @app.route("/revenue/overview")
 @login_required
 def revenue_overview():
