@@ -70,7 +70,7 @@
 
   <!-- View -->
   <a
-    href="{{ url_for('revenue_day_detail', date=d.date|string) }}"
+    href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
     class="text-blue-600 hover:underline"
   >
     View
@@ -79,7 +79,7 @@
   <!-- Delete -->
   <form
     method="POST"
-    action="{{ url_for('delete_revenue_day', date=d.date) }}"
+    action="{{ url_for('delete_revenue_day', date=d.revenue_date) }}"
     class="inline"
     onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')"
   >
