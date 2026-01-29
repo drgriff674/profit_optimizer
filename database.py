@@ -253,6 +253,28 @@ def save_expense(username, amount, category, description, expense_date):
     cursor.close()
     conn.close()
 
+def get_expenses_for_day(username, date):
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT amount, category, description
+        FROM expenses
+        WHERE username = %s
+          AND expense_date = %s
+    """, (username, date))
+
+    rows = cursor.fetchall()
+    total = sum(float(r["amount"]) for r in rows)
+
+    cursor.close()
+    conn.close()
+
+    return {
+        "entries": rows,
+        "total": total
+    }
+
 def load_expenses(username):
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()

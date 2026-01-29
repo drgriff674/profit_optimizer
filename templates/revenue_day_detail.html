@@ -16,20 +16,35 @@
 <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
 
   <!-- Totals -->
-  <div class="grid grid-cols-3 gap-4">
-    <div class="p-4 bg-white rounded shadow">
-      <p class="text-sm text-slate-500">Manual</p>
-      <p class="font-semibold">KSh {{ manual_total }}</p>
-    </div>
-    <div class="p-4 bg-white rounded shadow">
-      <p class="text-sm text-slate-500">MPesa</p>
-      <p class="font-semibold">KSh {{ mpesa_total }}</p>
-    </div>
-    <div class="p-4 bg-white rounded shadow">
-      <p class="text-sm text-slate-500">Total</p>
-      <p class="font-bold text-lg">KSh {{ grand_total }}</p>
-    </div>
+<div class="grid grid-cols-4 gap-4">
+
+  <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">MPesa (Gross)</p>
+    <p class="font-semibold">KSh {{ mpesa_total }}</p>
   </div>
+
+  <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">Expenses</p>
+    <p class="font-semibold text-red-600">
+      - KSh {{ expense_total }}
+    </p>
+  </div>
+
+  <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">Net Revenue</p>
+    <p class="font-bold text-lg">
+      KSh {{ net_total }}
+    </p>
+  </div>
+
+  <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">Manual Split</p>
+    <p class="font-semibold">
+      KSh {{ manual_total }}
+    </p>
+  </div>
+
+</div>
 
   <!-- Manual entries -->
   <div class="bg-white rounded shadow p-4">
@@ -43,6 +58,20 @@
       <p class="text-sm text-slate-400">No manual entries</p>
     {% endfor %}
   </div>
+
+<!-- Expenses -->
+<div class="bg-white rounded shadow p-4">
+  <h2 class="font-semibold mb-2">Expenses</h2>
+
+  {% for e in expense_entries %}
+    <div class="flex justify-between text-sm py-1">
+      <span>{{ e.category }}{% if e.description %} — {{ e.description }}{% endif %}</span>
+      <span class="text-red-600">- KSh {{ e.amount }}</span>
+    </div>
+  {% else %}
+    <p class="text-sm text-slate-400">No expenses recorded</p>
+  {% endfor %}
+</div>
 
   <!-- MPesa -->
   <div class="bg-white rounded shadow p-4">

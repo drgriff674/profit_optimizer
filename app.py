@@ -57,6 +57,7 @@ from database import(
     get_dashboard_revenue_intelligence,
     get_existing_revenue_days,
     ensure_revenue_day_exists,
+    get_expenses_for_day,
 )
 import pytz
 from flask_caching import Cache
@@ -959,6 +960,12 @@ def revenue_day_detail(date):
 
     ai_summary = get_ai_summary_for_day(username, date)
 
+    expenses = get_expenses_for_day(username, date)
+    expense_total = expenses["total"]
+    expense_entries = expenses["entries"]
+
+    net_total = grand_total-expense_total
+
     return render_template(
         "revenue_day_detail.html",
         date=date,
@@ -969,7 +976,9 @@ def revenue_day_detail(date):
         grand_total=grand_total,
         is_locked=is_locked,
         anomalies=anomalies,
-        ai_summary=ai_summary
+        ai_summary=ai_summary,
+        expense_total=expense_total,
+        expense_entries=expense_entries
     )
 
 
