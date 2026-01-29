@@ -964,24 +964,17 @@ def revenue_overview():
         SELECT
             rd.revenue_date,
             rd.locked,
-            COALESCE(SUM(mt.amount), 0) AS total_revenue
+            COALESCE(SUM(mt.amount),0) AS total_revenue
         FROM revenue_days rd
         LEFT JOIN mpesa_transactions mt
             ON DATE(mt.created_at) = rd.revenue_date
-           AND mt.status = 'confirmed'
+            AND mt.status = 'confirmed'
         WHERE rd.username = %s
         GROUP BY rd.revenue_date, rd.locked
         ORDER BY rd.revenue_date DESC
     """, (username,))
 
-    days = []
-    for row in cur.fetchall():
-        days.append({
-            "date": row["revenue_date"],
-            "locked": row["locked"],
-            # only expose totals if the day is locked
-            "total": row["total_revenue"] if row["locked"] else None
-        })
+    days = cur.fetchall()
 
     cur.close()
     conn.close()
@@ -990,7 +983,6 @@ def revenue_overview():
         "revenue_overview.html",
         days=days
     )
-
 @app.route("/api/latest-payment")
 def latest_payment():
     if "username" not in session:

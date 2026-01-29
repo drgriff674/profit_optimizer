@@ -43,13 +43,13 @@
             <tr class="bg-white dark:bg-slate-900">
   <!-- DATE -->
   <td class="px-4 py-2">
-    {{ d.date }}
+    {{ d.revenue_date }}
   </td>
 
   <!-- TOTAL -->
   <td class="px-4 py-2 text-right font-semibold">
    {% if d.locked %}
-    KSh {{"%.2f"|format(d.total) }}
+    KSh {{"%.2f"|format(d.total_revenue) }}
    {% else %}
     -
    {% endif %}
