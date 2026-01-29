@@ -1010,6 +1010,72 @@ def revenue_overview():
         "revenue_overview.html",
         days=days
     )
+
+@app.route("/revenue/lock", methods=["POST"])
+@login_required
+def lock_revenue_day_route():
+    username = session["username"]
+    revenue_date = request.form["revenue_date"]
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1️⃣ Manual total
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM revenue_entries
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, revenue_date))
+    manual_total = float(cursor.fetchone()[0])
+
+    # 2️⃣ MPesa total
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (revenue_date,))
+    mpesa_total = float(cursor.fetchone()[0])
+
+    gross_total = manual_total + mpesa_total
+
+    # 3️⃣ Expenses total
+    expenses = get_expenses_for_day(username, revenue_date)
+    expense_total = float(expenses["total"])
+
+    # 4️⃣ NET revenue (this is the truth)
+    net_total = gross_total - expense_total
+
+    # 5️⃣ Ensure revenue_day exists
+    cursor.execute("""
+        INSERT INTO revenue_days (username, revenue_date)
+        VALUES (%s, %s)
+        ON CONFLICT (username, revenue_date) DO NOTHING
+    """, (username, revenue_date))
+
+    # 6️⃣ Lock day + store NET revenue
+    cursor.execute("""
+        UPDATE revenue_days
+        SET locked = TRUE,
+            total_amount = %s
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (net_total, username, revenue_date))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    # 7️⃣ Lock manual entries (secondary safety)
+    lock_manual_entries_for_the_day(username, revenue_date)
+
+    # 8️⃣ Detect anomalies AFTER final numbers are known
+    detect_revenue_anomalies(username, revenue_date)
+
+    flash("Revenue day locked successfully.")
+    return redirect(url_for("revenue_overview"))
+
 @app.route("/api/latest-payment")
 def latest_payment():
     if "username" not in session:
@@ -3176,18 +3242,6 @@ def live_performance():
         dates=dates,
         values=values
     )
-
-
-@app.route("/revenue/lock", methods=["POST"])
-@login_required
-def lock_revenue_day_route():
-    username = session["username"]
-    revenue_date = request.form["revenue_date"]
-
-    lock_manual_entries_for_the_day(username, revenue_date)
-    detect_revenue_anomalies(username, revenue_date)
-    flash("Revenue day locked successfully.")
-    return redirect(url_for("revenue_overview"))
 
 
 if __name__ == "__main__":
