@@ -1111,6 +1111,27 @@ def lock_revenue_day_route():
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
 
+@app.route("/revenue/add", methods=["GET", "POST"])
+@login_required
+def add_revenue():
+    username = session["username"]
+
+    if request.method == "POST":
+        try:
+            save_revenue_entry(
+                username=username,
+                category=request.form.get("category", "cash"),
+                amount=float(request.form["amount"]),
+                revenue_date=request.form["date"]
+            )
+            flash("✅ Revenue added successfully!", "success")
+            return redirect(url_for("add_revenue"))
+        except Exception as e:
+            print(e)
+            flash("❌ Failed to save revenue.", "error")
+
+    return render_template("revenue_add.html")
+
 @app.route("/api/latest-payment")
 def latest_payment():
     if "username" not in session:
