@@ -43,10 +43,13 @@ th, td {
 <div class="section">
   <h3>Totals</h3>
   <table>
-    <tr><th>Type</th><th>Amount (KSh)</th></tr>
     <tr><td>Manual</td><td>{{ manual_total }}</td></tr>
-    <tr><td>MPesa</td><td>{{ mpesa_total }}</td></tr>
-    <tr><td><strong>Grand Total</strong></td><td><strong>{{ grand_total }}</strong></td></tr>
+<tr><td>MPesa (Gross)</td><td>{{ mpesa_total }}</td></tr>
+<tr><td>Expenses</td><td>- {{ expense_total }}</td></tr>
+<tr>
+  <td><strong>Net Revenue</strong></td>
+  <td><strong>{{ net_total }}</strong></td>
+</tr>
   </table>
 </div>
 
@@ -59,6 +62,21 @@ th, td {
         <td>{{ e.category }}</td>
         <td>{{ e.amount }}</td>
       </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="section">
+  <h3>Expenses</h3>
+  <table>
+    <tr><th>Category</th><th>Amount (KSh)</th></tr>
+    {% for e in expense_entries %}
+      <tr>
+        <td>{{ e.category }}</td>
+        <td>- {{ e.amount }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="2">No expenses recorded</td></tr>
     {% endfor %}
   </table>
 </div>

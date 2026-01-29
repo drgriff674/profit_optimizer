@@ -86,15 +86,23 @@ def generate_revenue_day_export_data(username, revenue_date):
     if not biz:
         cursor.close()
         conn.close()
+        manual_total = sum(float(e["amount"]) for e in manual_entries)
+
+        expenses = get_expenses_for_day(username, revenue_date)
+        expense_total = float(expenses["total"])
+
+        net_total = manual_total - expense_total
+
         return {
             "date": revenue_date,
             "manual_entries": manual_entries,
             "mpesa_entries": [],
-            "manual_total": sum(float(e["amount"]) for e in manual_entries),
+            "expense_entries": expenses["entries"],
+            "manual_total": manual_total,
             "mpesa_total": 0,
-            "grand_total": sum(float(e["amount"]) for e in manual_entries),
+            "expense_total": expense_total,
+            "net_total": net_total,
         }
-
     paybill = biz["paybill"]
     account_number = biz["account_number"]
 
@@ -124,16 +132,24 @@ def generate_revenue_day_export_data(username, revenue_date):
 
     manual_total = sum(float(e["amount"]) for e in manual_entries)
     mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
-    grand_total = manual_total + mpesa_total
+
+    expenses = get_expenses_for_day(username, revenue_date)
+    expense_total = float(expenses["total"])
+
+    gross_total = manual_total + mpesa_total
+    net_total = gross_total - expense_total
 
     return {
         "date": revenue_date,
         "manual_entries": manual_entries,
         "mpesa_entries": mpesa_entries,
+        "expense_entries": expenses["entries"],
         "manual_total": manual_total,
         "mpesa_total": mpesa_total,
-        "grand_total": grand_total,
+        "expense_total": expense_total,
+        "net_total": net_total,
     }
+
 def generate_revenue_ai_summary(date, manual_total, mpesa_total, manual_entries):
     if not AI_ENABLED or client is None:
         return "AI summary unavailable. OpenAI API key not configured."
@@ -776,9 +792,10 @@ def export_revenue_day_csv(date):
     
     # Totals
     writer.writerow(["Totals"])
-    writer.writerow(["Manual Total", data["manual_total"]])
-    writer.writerow(["MPesa Total", data["mpesa_total"]])
-    writer.writerow(["Grand Total", data["grand_total"]])
+    writer.writerow(["MPesa (Gross)", data["mpesa_total"]])
+    writer.writerow(["Manual Split", data["manual_total"]])
+    writer.writerow(["Expenses", -data["expense_total"]])
+    writer.writerow(["Net Revenue", data["net_total"]])
     writer.writerow([])
 
     # Manual entries
@@ -786,6 +803,14 @@ def export_revenue_day_csv(date):
     writer.writerow(["Category", "Amount"])
     for e in data["manual_entries"]:
         writer.writerow([e["category"], e["amount"]])
+
+    writer.writerow([])
+
+    # Expenses
+    writer.writerow(["Expenses"])
+    writer.writerow(["Category", "Amount"])
+    for e in data["expense_entries"]:
+        writer.writerow([e["category"], -e["amount"]])
 
     writer.writerow([])
 
@@ -865,14 +890,24 @@ def export_revenue_day_pdf(date):
     mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
     grand_total = manual_total + mpesa_total
 
+    # Expenses
+    expenses = get_expenses_for_day(username, date)
+    expense_total = float(expenses["total"])
+    expense_entries = expenses["entries"]
+
+    # Net revenue
+    net_total = grand_total - expense_total
+
     html = render_template(
         "revenue_day_pdf.html",
         date=date,
         manual_entries=manual_entries,
         mpesa_entries=mpesa_entries,
+        expense_entries=expense_entries,
         manual_total=manual_total,
         mpesa_total=mpesa_total,
-        grand_total=grand_total
+        expense_total=expense_total,
+        net_total=net_total
     )
 
     pdf_buffer = io.BytesIO()
