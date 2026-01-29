@@ -964,7 +964,7 @@ def revenue_day_detail(date):
     expense_total = expenses["total"]
     expense_entries = expenses["entries"]
 
-    net_total = grand_total-expense_total
+    net_revenue = grand_total-expense_total
 
     return render_template(
         "revenue_day_detail.html",
@@ -978,7 +978,8 @@ def revenue_day_detail(date):
         anomalies=anomalies,
         ai_summary=ai_summary,
         expense_total=expense_total,
-        expense_entries=expense_entries
+        expense_entries=expense_entries,
+        net_revenue=net_revenue
     )
 
 

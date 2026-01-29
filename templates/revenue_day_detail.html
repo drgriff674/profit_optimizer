@@ -26,21 +26,21 @@
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Expenses</p>
     <p class="font-semibold text-red-600">
-      - KSh {{ expense_total }}
+      - KSh {{ "%.2f"|format(expense_total) }}
     </p>
   </div>
 
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Net Revenue</p>
     <p class="font-bold text-lg">
-      KSh {{ net_total }}
+      KSh {{ "%.2f"|format(net_revenue) }}
     </p>
   </div>
 
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Manual Split</p>
     <p class="font-semibold">
-      KSh {{ manual_total }}
+      KSh {{ "%.2f"|format(manual_total) }}
     </p>
   </div>
 
