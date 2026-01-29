@@ -70,7 +70,7 @@
 
   <!-- View -->
   <a
-    href="{{ url_for('revenue_day_detail', date=d.date) }}"
+    href="{{ url_for('revenue_day_detail', date=d.date|string) }}"
     class="text-blue-600 hover:underline"
   >
     View
