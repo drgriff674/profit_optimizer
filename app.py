@@ -672,49 +672,43 @@ def delete_revenue_day(date):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 1️⃣ Delete manual revenue entries for that day
+    # 🔒 BLOCK deletion if day is locked
+    cur.execute("""
+        SELECT locked
+        FROM revenue_days
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, date))
+    row = cur.fetchone()
+
+    if row and row[0]:
+        cur.close()
+        conn.close()
+        flash("This revenue day is locked and cannot be deleted.", "error")
+        return redirect(url_for("revenue_overview"))
+
+    # ✅ Delete manual revenue entries only
     cur.execute("""
         DELETE FROM revenue_entries
         WHERE username = %s
           AND revenue_date = %s
     """, (username, date))
 
-    # 2️⃣ Get business identifiers
+    # ✅ Delete the revenue day container
     cur.execute("""
-        SELECT paybill, account_number
-        FROM businesses
+        DELETE FROM revenue_days
         WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cur.fetchone()
-
-    if biz:
-        paybill, account_number = biz
-
-        # 3️⃣ Delete MPesa transactions for that day (scoped!)
-        cur.execute("""
-            DELETE FROM mpesa_transactions
-            WHERE DATE(created_at) = %s
-              AND (
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-              )
-        """, (
-            date,
-            account_number,
-            account_number,
-            account_number,
-            paybill
-        ))
+          AND revenue_date = %s
+    """, (username, date))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    # Clear dashboard cache so numbers refresh
+    # Refresh dashboard numbers
     cache.delete_memoized(get_dashboard_data, username)
 
+    flash("Revenue day deleted.", "success")
     return redirect(url_for("revenue_overview"))
 
 
@@ -739,6 +733,25 @@ def generate_ai_summary_for_day_route(date):
     save_ai_summary_for_day(username, date, summary)
 
     # 🔒 LOCK DAY + SNAPSHOT TOTAL
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE revenue_days
+        SET locked = TRUE,
+            total_amount = %s
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (
+        data["manual_total"] + data["mpesa_total"],
+        username,
+        date
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
     
 
     flash("AI summary generated.")
@@ -935,10 +948,16 @@ def revenue_day_detail(date):
 
     ai_summary = get_ai_summary_for_day(username, date)
 
-    is_locked = (
-        (manual_entries and all(e["locked"] for e in manual_entries))
-        or bool(ai_summary)
-    )
+    cursor.execute("""
+        SELECT locked
+        FROM revenue_days
+        WHERE username = %s
+            AND revenue_date = %s
+        LIMIT 1
+    """,(username, date))
+
+    row = cursor.fetchone()
+    is_locked = row["locked"] if row else False
 
     return render_template(
         "revenue_day_detail.html",
@@ -962,16 +981,12 @@ def revenue_overview():
 
     cur.execute("""
         SELECT
-            rd.revenue_date,
-            rd.locked,
-            COALESCE(SUM(mt.amount),0) AS total_revenue
-        FROM revenue_days rd
-        LEFT JOIN mpesa_transactions mt
-            ON DATE(mt.created_at) = rd.revenue_date
-            AND mt.status = 'confirmed'
-        WHERE rd.username = %s
-        GROUP BY rd.revenue_date, rd.locked
-        ORDER BY rd.revenue_date DESC
+            revenue_date,
+            locked,
+            total_amount AS total_revenue
+        FROM revenue_days
+        WHERE username = %s
+        ORDER BY revenue_date DESC
     """, (username,))
 
     days = cur.fetchall()
