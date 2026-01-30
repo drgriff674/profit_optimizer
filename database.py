@@ -614,7 +614,7 @@ def get_dashboard_revenue_intelligence(username):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Last 7 days revenue (locked only)
+    # --- Manual revenue (locked only, last 7 days) ---
     cursor.execute("""
         SELECT
             revenue_date,
@@ -628,24 +628,26 @@ def get_dashboard_revenue_intelligence(username):
     """, (username,))
     manual_days = cursor.fetchall()
 
-    # MPesa totals for last 7 days
+    # --- MPesa totals (timezone-safe, last 7 days) ---
     cursor.execute("""
         SELECT
-            DATE(created_at) AS revenue_date,
+            DATE(created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date,
             SUM(amount) AS mpesa_total
         FROM mpesa_transactions
         WHERE status = 'confirmed'
-          AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
-          AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
+          AND DATE(created_at AT TIME ZONE 'Africa/Nairobi') >=
+              CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY revenue_date
+        ORDER BY revenue_date DESC
     """)
     mpesa_days = cursor.fetchall()
 
-    # Anomaly count
+    # --- Anomaly count (last 7 days, timezone-safe) ---
     cursor.execute("""
         SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
         FROM revenue_anomalies
         WHERE username = %s
-          AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
+          AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
     """, (username,))
     anomaly_count = cursor.fetchone()["anomaly_days"]
 
@@ -657,7 +659,6 @@ def get_dashboard_revenue_intelligence(username):
         "mpesa_days": mpesa_days,
         "anomaly_days": anomaly_count,
     }
-
 
 
 def create_inventory_snapshot(business_id, snapshot_date, snapshot_type, created_by):
