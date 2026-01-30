@@ -1095,8 +1095,9 @@ def lock_revenue_day_route():
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
         FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at) = %s
+        WHERE username = %s
+            AND status = 'confirmed'
+            AND DATE(created_at) = %s
     """, (revenue_date,))
     mpesa_total = float(cursor.fetchone()[0])
 
