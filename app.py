@@ -1043,6 +1043,7 @@ def revenue_day_detail(date):
     return render_template(
         "revenue_day_detail.html",
         date=date,
+        manual_total=manual_total,
         manual_entries=manual_entries,
         mpesa_entries=mpesa_entries,
         mpesa_total=mpesa_total,
