@@ -451,57 +451,22 @@ def load_user_business(username):
     return business
 
 def get_existing_revenue_days(username):
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
 
-    # Get business identifiers
-    cur.execute("""
-        SELECT paybill, account_number
-        FROM businesses
+    cursor.execute("""
+        SELECT revenue_date AS day
+        FROM revenue_days
         WHERE username = %s
-        LIMIT 1
+        ORDER BY revenue_date DESC
     """, (username,))
-    biz = cur.fetchone()
 
-    if not biz:
-        cur.close()
-        conn.close()
-        return []
+    days = [row["day"] for row in cursor.fetchall()]
 
-    paybill = biz["paybill"]
-    account_number = biz["account_number"]
-
-    cur.execute("""
-        SELECT DISTINCT day FROM (
-            -- MPesa-driven days
-            SELECT DATE(created_at) AS day
-            FROM mpesa_transactions
-            WHERE
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-
-            UNION
-
-            -- Manual revenue days
-            SELECT revenue_date AS day
-            FROM revenue_entries
-            WHERE username = %s
-        ) d
-        ORDER BY day DESC
-    """, (
-        account_number,
-        account_number,
-        account_number,
-        paybill,
-        username
-    ))
-
-    days = [row["day"] for row in cur.fetchall()]
-
-    cur.close()
+    cursor.close()
     conn.close()
     return days
+
 def ensure_revenue_day_exists(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor()

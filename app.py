@@ -1138,7 +1138,7 @@ def lock_revenue_day_route():
             total_amount = %s
         WHERE username = %s
           AND revenue_date = %s
-    """, (gross_total, username, revenue_date))
+    """, (net_total, username, revenue_date))
 
     conn.commit()
     cursor.close()
