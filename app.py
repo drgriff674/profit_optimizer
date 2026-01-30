@@ -953,33 +953,7 @@ def revenue_day_detail(date):
     """, (username,))
     biz = cursor.fetchone()
 
-    mpesa_entries = []
-
-    if biz:
-        paybill = biz["paybill"]
-        account_number = biz["account_number"]
-
-        cursor.execute("""
-            SELECT amount, sender, transaction_id, created_at
-            FROM mpesa_transactions
-            WHERE (
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-            )
-            AND created_at >= %s::date
-            AND created_at < (%s::date + INTERVAL '1 day')
-            ORDER BY created_at ASC
-        """, (
-            account_number,
-            account_number,
-            account_number,
-            paybill,
-            date,
-            date
-        ))
-        mpesa_entries = cursor.fetchall()
-
+    
     # 💵 CASH revenue for the day (NOT manual splits)
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0) AS cash_total
@@ -1011,6 +985,17 @@ def revenue_day_detail(date):
     row = cursor.fetchone()
     is_locked = row["locked"] if row else False
 
+    # 🔐 Fetch locked total if exists
+    cursor.execute("""
+        SELECT total_amount
+        FROM revenue_days
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, date))
+
+    day_row = cursor.fetchone()
+    locked_total = float(day_row["total_amount"]) if day_row else 0
+
     # ✅ NOW CLOSE
     cursor.close()
     conn.close()
@@ -1025,23 +1010,49 @@ def revenue_day_detail(date):
     expense_total = expenses["total"]
     expense_entries = expenses["entries"]
 
-    net_revenue = gross_total - expense_total
+    if is_locked:
+        # 🔒 LOCKED: single source of truth
+        gross_total = locked_total
+        net_revenue = locked_total
+        mpesa_total = max(0, locked_total - cash_total + expense_total)
+        mpesa_entries = []
+    else:
+        # 🔓 UNLOCKED: live computation
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+        cursor.execute("""
+            SELECT amount, sender, transaction_id, created_at
+            FROM mpesa_transactions
+            WHERE status = 'confirmed'
+              AND created_at >= %s::date
+              AND created_at < (%s::date + INTERVAL '1 day')
+            ORDER BY created_at ASC
+        """, (date, date))
+
+        mpesa_entries = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+        gross_total = mpesa_total + cash_total
+        net_revenue = gross_total - expense_total
+
+    
     return render_template(
         "revenue_day_detail.html",
         date=date,
         manual_entries=manual_entries,
         mpesa_entries=mpesa_entries,
-        manual_total=manual_total,
         mpesa_total=mpesa_total,
+        cash_total=cash_total,
+        gross_total=gross_total,
+        net_revenue=net_revenue,
         is_locked=is_locked,
         anomalies=anomalies,
         ai_summary=ai_summary,
         expense_total=expense_total,
-        expense_entries=expense_entries,
-        net_revenue=net_revenue,
-        cash_total=cash_total,
-        gross_total=gross_total
+        expense_entries=expense_entries
     )
 
 
