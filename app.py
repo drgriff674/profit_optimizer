@@ -267,7 +267,8 @@ app.config["MAIL_DEFAULT_SENDER"] = ("OptiGain Reports",os.getenv("MAIL_USERNAME
 
 mail = Mail(app)
 
-init_db()
+def initialize_database():
+    init_db()
 
 # Load OpenAI only if API key exists
 # Load environment variables
