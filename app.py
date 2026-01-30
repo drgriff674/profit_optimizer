@@ -1082,7 +1082,22 @@ def lock_revenue_day_route():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1️⃣ cash revenue total
+    # 🚫 0️⃣ Stop if already locked
+    cursor.execute("""
+        SELECT locked
+        FROM revenue_days
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, revenue_date))
+
+    row = cursor.fetchone()
+    if row and row[0]:
+        flash("This day is already locked and cannot be changed.", "warning")
+        cursor.close()
+        conn.close()
+        return redirect(url_for("revenue_overview"))
+
+    # 1️⃣ Cash total
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
         FROM cash_revenue
@@ -1091,23 +1106,23 @@ def lock_revenue_day_route():
     """, (username, revenue_date))
     cash_total = float(cursor.fetchone()[0])
 
-    # 2️⃣ MPesa total
+    # 2️⃣ MPesa total (FIXED)
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
         FROM mpesa_transactions
         WHERE username = %s
-            AND status = 'confirmed'
-            AND DATE(created_at) = %s
-    """, (revenue_date,))
+          AND status = 'confirmed'
+          AND DATE(created_at) = %s
+    """, (username, revenue_date))
     mpesa_total = float(cursor.fetchone()[0])
 
-    gross_total = mpesa_total + cash_total
+    gross_total = cash_total + mpesa_total
 
-    # 3️⃣ Expenses total
+    # 3️⃣ Expenses
     expenses = get_expenses_for_day(username, revenue_date)
     expense_total = float(expenses["total"])
 
-    # 4️⃣ NET revenue (this is the truth)
+    # 4️⃣ NET revenue (single source of truth)
     net_total = gross_total - expense_total
 
     # 5️⃣ Ensure revenue_day exists
@@ -1117,7 +1132,7 @@ def lock_revenue_day_route():
         ON CONFLICT (username, revenue_date) DO NOTHING
     """, (username, revenue_date))
 
-    # 6️⃣ Lock day + store NET revenue
+    # 6️⃣ Lock once and store NET
     cursor.execute("""
         UPDATE revenue_days
         SET locked = TRUE,
@@ -1130,14 +1145,15 @@ def lock_revenue_day_route():
     cursor.close()
     conn.close()
 
-    # 7️⃣ Lock manual entries (secondary safety)
+    # 7️⃣ Lock manual entries
     lock_manual_entries_for_the_day(username, revenue_date)
 
-    # 8️⃣ Detect anomalies AFTER final numbers are known
+    # 8️⃣ Detect anomalies AFTER lock
     detect_revenue_anomalies(username, revenue_date)
 
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
+
 
 @app.route("/revenue/cash", methods=["GET", "POST"])
 @login_required
