@@ -563,14 +563,24 @@ def detect_revenue_anomalies(username, revenue_date):
 
     anomalies = []
 
-    # --- Rule A ---
+    # --- Rule A: MPesa dominance (safe & aligned) ---
     if total > 0:
-        diff_ratio = abs(mpesa_total - total) / total
-        if diff_ratio > 0.2:
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount), 0) AS mpesa_total
+            FROM mpesa_transactions
+            WHERE status = 'confirmed'
+              AND DATE(created_at) = %s
+        """, (revenue_date,))
+
+        mpesa_total = float(cursor.fetchone()["mpesa_total"])
+
+        ratio = mpesa_total / total if total > 0 else 0
+
+        if ratio > 0.8:
             anomalies.append((
-                "MPESA_MISMATCH",
-                "warning",
-                f"MPesa differs from manual by {int(diff_ratio*100)}%"
+                "MPESA_DOMINANCE",
+                "info",
+                "MPesa accounts for more than 80% of total revenue"
             ))
 
     # --- Rule C ---
