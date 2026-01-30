@@ -1111,8 +1111,9 @@ def lock_revenue_day_route():
         SELECT COALESCE(SUM(amount), 0)
         FROM mpesa_transactions
         WHERE status = 'confirmed'
-            AND DATE(created_at) = %s
-        """,(revenue_date,))
+            AND created_at >= %s::date
+            AND created_at <(%s::date + INTERVAL '1 day')
+        """,(revenue_date, revenue_date))
     mpesa_total = float(cursor.fetchone()[0])
 
     gross_total = cash_total + mpesa_total
