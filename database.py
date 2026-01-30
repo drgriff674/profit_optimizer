@@ -28,6 +28,21 @@ def init_db():
         role TEXT NOT NULL
     )
     """)
+
+    # --- CASH REVENUE ---
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS cash_revenue (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+        revenue_date DATE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_cash_revenue_user_date
+    ON cash_revenue(username, revenue_date);
+    """)
     
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS businesses (
@@ -191,6 +206,48 @@ def init_db():
     conn.commit()
     cursor.close()
     conn.close()
+
+
+#revenue cash functions
+def add_cash_revenue(username, amount, revenue_date, description=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO cash_revenue (username, amount, revenue_date, description)
+        VALUES (%s, %s, %s, %s)
+    """, (username, amount, revenue_date, description))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_cash_revenue_for_day(username, revenue_date):
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT amount, description
+        FROM cash_revenue
+        WHERE username = %s
+          AND revenue_date = %s
+        ORDER BY created_at ASC
+    """, (username, revenue_date))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
+
+def get_cash_revenue_total_for_day(username, revenue_date):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM cash_revenue
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, revenue_date))
+    total = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return float(total)
 
 # ✅ Load all users as a dict
 def load_users():

@@ -58,6 +58,9 @@ from database import(
     get_existing_revenue_days,
     ensure_revenue_day_exists,
     get_expenses_for_day,
+    add_cash_revenue,
+    get_cash_revenue_for_day,
+    get_cash_revenue_total_for_day,
 )
 import pytz
 from flask_caching import Cache
@@ -551,27 +554,38 @@ def dashboard():
     paybill = biz["paybill"] if biz else None
     account_number = biz["account_number"] if biz else None
 
-    # 🔹 Revenue (MPesa) — USER-SCOPED
-    total_revenue = 0
+    # 🔹 MPesa Revenue (USER-SCOPED)
+    mpesa_total = 0
 
     if paybill:
         cur.execute("""
-            SELECT COALESCE(SUM(amount), 0) AS total_revenue
+            SELECT COALESCE(SUM(amount), 0) AS mpesa_total
             FROM mpesa_transactions
             WHERE transaction_type = 'C2B Payment'
-            AND (
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-            )
+              AND (
+                    (%s IS NOT NULL AND account_reference = %s)
+                    OR
+                    (%s IS NULL AND receiver = %s)
+              )
         """, (
             account_number,
             account_number,
             account_number,
             paybill
         ))
-        total_revenue = cur.fetchone()["total_revenue"]
+        row = cur.fetchone()
+        mpesa_total = float(row["mpesa_total"]) if row else 0
 
+    # 🔹 Cash Revenue (NEW)
+    cur.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS cash_total
+        FROM cash_revenue
+        WHERE username = %s
+    """, (username,))
+    row = cur.fetchone()
+    cash_total=float(row["cash_total"]) if row and "cash_total" in row else 0
+
+    live_total_revenue = mpesa_total + cash_total
 
     latest_payment = None
 
@@ -610,7 +624,7 @@ def dashboard():
         FROM expenses
         WHERE username = %s
     """, (username,))
-    total_expenses = cur.fetchone()["total_expenses"]
+    total_expenses = float(cur.fetchone()["total_expenses"])
     # 🔹 Largest expense category — SAFE
     cur.execute("""
         SELECT
@@ -626,9 +640,8 @@ def dashboard():
     cur.close()
     conn.close()
 
-    profit = total_revenue - total_expenses
-
-    live_total_revenue = total_revenue
+    profit = (mpesa_total + cash_total)-total_expenses
+    
     
     kpis["total_profit"] = f"KSh {profit:,.0f}"
     kpis["avg_profit"] = f"KSh {profit:,.0f}"
@@ -965,6 +978,15 @@ def revenue_day_detail(date):
         ))
         mpesa_entries = cursor.fetchall()
 
+    # 💵 CASH revenue for the day (NOT manual splits)
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM cash_revenue
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, date))
+    cash_total = float(cursor.fetchone()[0])
+
     # 🔹 anomalies
     cursor.execute("""
         SELECT anomaly_type, severity, message
@@ -991,7 +1013,7 @@ def revenue_day_detail(date):
 
     manual_total = sum(float(e["amount"]) for e in manual_entries)
     mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
-    grand_total = manual_total + mpesa_total
+    gross_total = mpesa_total + cash_total
 
     ai_summary = get_ai_summary_for_day(username, date)
 
@@ -999,7 +1021,7 @@ def revenue_day_detail(date):
     expense_total = expenses["total"]
     expense_entries = expenses["entries"]
 
-    net_revenue = grand_total-expense_total
+    net_revenue = gross_total - expense_total
 
     return render_template(
         "revenue_day_detail.html",
@@ -1008,13 +1030,14 @@ def revenue_day_detail(date):
         mpesa_entries=mpesa_entries,
         manual_total=manual_total,
         mpesa_total=mpesa_total,
-        grand_total=grand_total,
         is_locked=is_locked,
         anomalies=anomalies,
         ai_summary=ai_summary,
         expense_total=expense_total,
         expense_entries=expense_entries,
-        net_revenue=net_revenue
+        net_revenue=net_revenue,
+        cash_total=cash_total,
+        gross_total=gross_total
     )
 
 
@@ -1055,14 +1078,14 @@ def lock_revenue_day_route():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1️⃣ Manual total
+    # 1️⃣ cash revenue total
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
-        FROM revenue_entries
+        FROM cash_revenue
         WHERE username = %s
           AND revenue_date = %s
     """, (username, revenue_date))
-    manual_total = float(cursor.fetchone()[0])
+    cash_total = float(cursor.fetchone()[0])
 
     # 2️⃣ MPesa total
     cursor.execute("""
@@ -1073,7 +1096,7 @@ def lock_revenue_day_route():
     """, (revenue_date,))
     mpesa_total = float(cursor.fetchone()[0])
 
-    gross_total = manual_total + mpesa_total
+    gross_total = mpesa_total + cash_total
 
     # 3️⃣ Expenses total
     expenses = get_expenses_for_day(username, revenue_date)
@@ -1111,26 +1134,30 @@ def lock_revenue_day_route():
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
 
-@app.route("/revenue/add", methods=["GET", "POST"])
+@app.route("/revenue/cash", methods=["GET", "POST"])
 @login_required
-def add_revenue():
+def cash_revenue_entry():
     username = session["username"]
 
     if request.method == "POST":
-        try:
-            save_revenue_entry(
-                username=username,
-                category=request.form.get("category", "cash"),
-                amount=float(request.form["amount"]),
-                revenue_date=request.form["date"]
-            )
-            flash("✅ Revenue added successfully!", "success")
-            return redirect(url_for("add_revenue"))
-        except Exception as e:
-            print(e)
-            flash("❌ Failed to save revenue.", "error")
+        amount = float(request.form["amount"])
+        date = request.form["date"]
+        description = request.form.get("description")
 
-    return render_template("revenue_add.html")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO cash_revenue (username, amount, description, revenue_date)
+            VALUES (%s, %s, %s, %s)
+        """, (username, amount, description, date))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("✅ Cash revenue added", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("cash_revenue_entry.html")
 
 @app.route("/api/latest-payment")
 def latest_payment():

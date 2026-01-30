@@ -16,12 +16,17 @@
 <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
 
   <!-- Totals -->
-<div class="grid grid-cols-4 gap-4">
+<div class="grid grid-cols-5 gap-4">
 
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">MPesa (Gross)</p>
-    <p class="font-semibold">KSh {{ mpesa_total }}</p>
+    <p class="font-semibold">KSh {{ "%.2f"|format(mpesa_total) }}</p>
   </div>
+
+ <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">Cash</p>
+    <p class="font-semibold">KSh {{ "%.2f"|format(cash_total) }}</p>
+ </div>
 
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Expenses</p>
