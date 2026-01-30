@@ -528,13 +528,13 @@ def detect_revenue_anomalies(username, revenue_date):
 
     anomalies = []
 
-    # --- Rule A: MPesa dominance (safe & aligned) ---
+    # --- Rule A: MPesa dominance (FIXED TIMEZONE) ---
     if total > 0:
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS mpesa_total
             FROM mpesa_transactions
             WHERE status = 'confirmed'
-              AND DATE(created_at) = %s
+              AND DATE(created_at AT TIME ZONE 'Africa/Nairobi') = %s
         """, (revenue_date,))
 
         mpesa_total = float(cursor.fetchone()["mpesa_total"])

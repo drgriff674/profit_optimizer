@@ -1026,8 +1026,8 @@ def revenue_day_detail(date):
             SELECT amount, sender, transaction_id, created_at
             FROM mpesa_transactions
             WHERE status = 'confirmed'
-              AND created_at >= %s::date
-              AND created_at < (%s::date + INTERVAL '1 day')
+                AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
+                AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
             ORDER BY created_at ASC
         """, (date, date))
 
@@ -1124,8 +1124,8 @@ def lock_revenue_day_route():
         SELECT COALESCE(SUM(amount), 0)
         FROM mpesa_transactions
         WHERE status = 'confirmed'
-            AND created_at >= %s::date
-            AND created_at <(%s::date + INTERVAL '1 day')
+            AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
+            AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
         """,(revenue_date, revenue_date))
     mpesa_total = float(cursor.fetchone()[0])
 
