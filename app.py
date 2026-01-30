@@ -938,6 +938,7 @@ def export_revenue_day_pdf(date):
 @login_required
 def revenue_day_detail(date):
     username = session["username"]
+    mpesa_entries = []
 
     manual_entries = load_revenue_entries_for_day(username, date)
 
