@@ -980,12 +980,14 @@ def revenue_day_detail(date):
 
     # 💵 CASH revenue for the day (NOT manual splits)
     cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0)
+        SELECT COALESCE(SUM(amount), 0) AS cash_total
         FROM cash_revenue
         WHERE username = %s
           AND revenue_date = %s
     """, (username, date))
-    cash_total = float(cursor.fetchone()[0])
+
+    row = cursor.fetchone()
+    cash_total = float(row["cash_total"]) if row else 0.0
 
     # 🔹 anomalies
     cursor.execute("""
