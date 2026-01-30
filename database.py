@@ -635,8 +635,8 @@ def get_dashboard_revenue_intelligence(username):
             SUM(amount) AS mpesa_total
         FROM mpesa_transactions
         WHERE status = 'confirmed'
-          AND DATE(created_at) >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY DATE(created_at)
+          AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
+          AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
     """)
     mpesa_days = cursor.fetchall()
 
@@ -645,7 +645,7 @@ def get_dashboard_revenue_intelligence(username):
         SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
         FROM revenue_anomalies
         WHERE username = %s
-          AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
+          AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
     """, (username,))
     anomaly_count = cursor.fetchone()["anomaly_days"]
 
