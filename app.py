@@ -1514,10 +1514,10 @@ def payment_confirm():
                 description,
                 raw_payload,
                 origin_ip,
+                status,
                 created_at
             )
-            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s NOW())
-            RETURNING DATE(created_at AT TIMEZONE 'Africa/Nairobi')
+            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW());
         """, (
             transaction_id,
             amount,
@@ -1529,9 +1529,10 @@ def payment_confirm():
             json.dumps(data),
             request.remote_addr
         ))
-
-        payment_date = cur.fetchone()[0]
+        
         conn.commit()
+
+        payment_date = datetime.utcnow().date()
        
         
         cur.close()
