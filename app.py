@@ -587,7 +587,7 @@ def dashboard():
 
     if paybill:
         cur.execute("""
-            SELECT id, amount, created_at
+            SELECT id, amount, created_at AT TIME ZONE 'Africa/Nairobi' AS created_at
             FROM mpesa_transactions
             WHERE seen = FALSE
             AND (
@@ -873,7 +873,7 @@ def export_revenue_day_pdf(date):
         account_number = biz["account_number"]
 
         cursor.execute("""
-            SELECT amount, sender, created_at
+            SELECT amount, sender, created_at AT TIME ZONE 'Africa/Nairobi' AS created_at
             FROM mpesa_transactions
             WHERE
                 (
@@ -1489,9 +1489,14 @@ def payment_confirm():
             SELECT id, username
             FROM businesses
             WHERE paybill = %s
-            AND account_number = %s
+            AND (
+                account number = %s
+                OR %s IS NULL
+                OR %s = "
+                )
+            
             LIMIT 1
-        """, (shortcode, account_ref))
+        """, (shortcode, account_ref, account_ref, account_ref))
 
         biz = cur.fetchone()
 
