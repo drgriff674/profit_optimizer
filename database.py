@@ -100,16 +100,16 @@ def init_db():
 
      # --- INVENTORY MOVEMENTS TABLE ---
     cursor.execute("""
-    DROP TABLE IF EXISTS inventory_movements;
-    CREATE TABLE inventory_movements (
+    CREATE TABLE IF NOT EXISTS inventory_movements (
         id SERIAL PRIMARY KEY,
         business_id INTEGER NOT NULL,
         item_id INTEGER NOT NULL,
-        movement_type TEXT NOT NULL,   -- sale, usage, restock
+        movement_type TEXT NOT NULL,
         quantity_change NUMERIC NOT NULL,
         note TEXT,
         created_by TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        source TEXT,
 
         FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE,
         FOREIGN KEY (item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
@@ -531,11 +531,18 @@ def detect_revenue_anomalies(username, revenue_date):
     # --- Rule A: MPesa dominance (FIXED TIMEZONE) ---
     if total > 0:
         cursor.execute("""
-            SELECT COALESCE(SUM(amount), 0) AS mpesa_total
-            FROM mpesa_transactions
-            WHERE status = 'confirmed'
-              AND DATE(created_at AT TIME ZONE 'Africa/Nairobi') = %s
-        """, (revenue_date,))
+            SELECT COALESCE(SUM(m.amount), 0) AS mpesa_total
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                   (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                   OR
+                   (b.account_number IS NULL AND m.receiver = b.paybill)
+                 )
+            WHERE b.username = %s
+              AND m.status = 'confirmed'
+              AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') = %s
+        """, (username, revenue_date))
 
         mpesa_total = float(cursor.fetchone()["mpesa_total"])
 

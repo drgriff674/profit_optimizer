@@ -1490,13 +1490,11 @@ def payment_confirm():
             FROM businesses
             WHERE paybill = %s
             AND (
-                account number = %s
+                account_number = %s
                 OR %s IS NULL
-                OR %s = "
                 )
-            
             LIMIT 1
-        """, (shortcode, account_ref, account_ref, account_ref))
+        """, (shortcode, account_ref, account_ref))
 
         biz = cur.fetchone()
 
@@ -1521,7 +1519,7 @@ def payment_confirm():
                 origin_ip,
                 created_at
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW())
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW())
             RETURNING DATE(created_at AT TIME ZONE 'Africa/Nairobi');
         """, (
             transaction_id,
