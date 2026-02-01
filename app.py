@@ -1419,6 +1419,8 @@ def payment_validate():
         "ResultDesc": "Accepted"
     })
 
+from datetime import datetime
+
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
     import psycopg2, os, json
@@ -1460,6 +1462,7 @@ def payment_confirm():
             sender_phone = ""
             sender_name = "Unknown"
             account_ref = "V2 Callback"
+            shortcode = None
 
             items = stk.get("CallbackMetadata", {}).get("Item", [])
 
@@ -1492,7 +1495,7 @@ def payment_confirm():
             SELECT id, username
             FROM businesses
             WHERE paybill = %s
-            AND account number = %s
+            AND account_number = %s
             LIMIT 1
         """, (shortcode, account_ref))
 
@@ -1536,15 +1539,11 @@ def payment_confirm():
         ))
         
         conn.commit()
-
-        payment_date = datetime.utcnow().date()
-       
-        
         cur.close()
         conn.close()
 
         if username:
-            ensure_revenue_day_exists(username, payment_date)
+            ensure_revenue_day_exists(username, datetime.utcnow().date))
             cache.delete_memoized(get_dashboard_data, username)
         
 
