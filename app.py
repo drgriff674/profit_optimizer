@@ -1543,7 +1543,7 @@ def payment_confirm():
         conn.close()
 
         if username:
-            ensure_revenue_day_exists(username, datetime.utcnow().date))
+            ensure_revenue_day_exists(username, datetime.utcnow().date())
             cache.delete_memoized(get_dashboard_data, username)
         
 
