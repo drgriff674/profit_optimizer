@@ -1489,12 +1489,9 @@ def payment_confirm():
             SELECT id, username
             FROM businesses
             WHERE paybill = %s
-            AND (
-                account_number = %s
-                OR %s IS NULL
-                )
+            AND account number = %s
             LIMIT 1
-        """, (shortcode, account_ref, account_ref))
+        """, (shortcode, account_ref))
 
         biz = cur.fetchone()
 
