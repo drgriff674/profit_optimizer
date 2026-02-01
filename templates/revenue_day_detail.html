@@ -78,18 +78,21 @@
   {% endfor %}
 </div>
 
-  <!-- MPesa -->
-  <div class="bg-white rounded shadow p-4">
-    <h2 class="font-semibold mb-2">MPesa Transactions</h2>
-    {% for m in mpesa_entries %}
-      <div class="flex justify-between text-sm py-1">
-        <span>{{ m.sender }}</span>
-        <span>KSh {{ m.amount }}</span>
-      </div>
-    {% else %}
-      <p class="text-sm text-slate-400">No MPesa transactions</p>
-    {% endfor %}
+  <!-- MPesa Summary -->
+<div class="bg-white rounded shadow p-4">
+  <h2 class="font-semibold mb-2">MPesa</h2>
+
+  <div class="flex justify-between text-sm py-1">
+    <span>Total MPesa payments</span>
+    <span class="font-semibold">
+      KSh {{ "%.2f"|format(mpesa_total) }}
+    </span>
   </div>
+
+  <p class="mt-2 text-xs text-slate-400">
+    Individual transaction details are hidden for privacy.
+  </p>
+</div>
 
   <div class="bg-white rounded shadow p-4">
   <h2 class="font-semibold mb-2">⚠️ Anomalies</h2>

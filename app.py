@@ -1009,8 +1009,8 @@ def revenue_day_detail(date):
         # 🔒 LOCKED: single source of truth
         gross_total = locked_total
         net_revenue = locked_total
-        mpesa_total = max(0, locked_total - cash_total + expense_total)
-        mpesa_entries = []
+        mpesa_total = max(0, locked_total - cash_total + expense_total
+                          )
     else:
         # 🔓 UNLOCKED: live computation
         conn = get_db_connection()
@@ -1020,34 +1020,34 @@ def revenue_day_detail(date):
             paybill = biz["paybill"]
             account_number = biz["account_number"]
 
-            cursor.execute("""
-                SELECT amount, sender, transaction_id, created_at
-                FROM mpesa_transactions
-                WHERE status = 'confirmed'
-                  AND (
-                        (%s IS NOT NULL AND account_reference = %s)
-                        OR
-                        (%s IS NULL AND receiver = %s)
-                  )
-                  AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
-                  AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
-                ORDER BY created_at ASC
-            """, (
-                account_number,
-                account_number,
-                account_number,
-                paybill,
-                date,
-                date
-            ))
+            cursor.execute("""  
+            SELECT COALESCE(SUM(amount), 0) AS mpesa_total  
+            FROM mpesa_transactions  
+            WHERE status = 'confirmed'  
+              AND (  
+                    (%s IS NOT NULL AND account_reference = %s)  
+                    OR  
+                    (%s IS NULL AND receiver = %s)  
+                )  
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date  
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')  
+        """, (  
+            account_number,  
+            account_number,  
+            account_number,  
+            paybill,  
+            date,  
+            date  
+        ))
 
-            mpesa_entries = cursor.fetchall()
-        else:
-            mpesa_entries = []
+        row = cursor.fetchone()
+        mpesa_total = float(row["mpesa_total"]) if row else 0.0
+        
+            
         cursor.close()
         conn.close()
 
-        mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
+        
         gross_total = mpesa_total + cash_total
         net_revenue = gross_total - expense_total
 
@@ -1057,7 +1057,6 @@ def revenue_day_detail(date):
         date=date,
         manual_total=manual_total,
         manual_entries=manual_entries,
-        mpesa_entries=mpesa_entries,
         mpesa_total=mpesa_total,
         cash_total=cash_total,
         gross_total=gross_total,
@@ -1068,7 +1067,6 @@ def revenue_day_detail(date):
         expense_total=expense_total,
         expense_entries=expense_entries
     )
-
 
 @app.route("/revenue/overview")
 @login_required
