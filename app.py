@@ -1474,9 +1474,12 @@ def payment_confirm():
             print("❌ Unknown callback format")
             return jsonify({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
 
-        if not transaction_id or amount <=0:
-            print("Invalid transaction data, skipping insert")
+        if not transaction_id:
+            print("Missing transaction_id, skipping insert")
             return jsonify({"ResultCode": 0, "ResultDesc": "Ignored"})
+        
+        #DEBUG ......
+        print("Callback amount received",amount)
 
         # ============================================================
         # SAVE TO DATABASE
@@ -1501,6 +1504,8 @@ def payment_confirm():
         else:
             business_id = biz[0]
             username = biz[1]
+
+        print("Inserting into MPesa transactions:", transaction_id, amount)
 
         cur.execute("""
             INSERT INTO mpesa_transactions
