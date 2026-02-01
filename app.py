@@ -487,17 +487,11 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
-@cache.cached(timeout=300, key_prefix=lambda:f"dashboard_data:{session.get('username')}")
+@cache.memoize(timeout=300)
 def get_dashboard_data(username):
     data={}
     data["intelligence"] = get_dashboard_revenue_intelligence(username)
-    """
-    Read-heavy dashboard data only.
-    NO Google Sheets sync.
-    NO AI calls.
-    NO Prophet.
-    """
-    data = {}
+    
 
     # Example:
     if os.path.exists("financial_data.csv"):
