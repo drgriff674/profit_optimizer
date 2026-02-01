@@ -1016,16 +1016,34 @@ def revenue_day_detail(date):
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-        cursor.execute("""
-            SELECT amount, sender, transaction_id, created_at
-            FROM mpesa_transactions
-            WHERE status = 'confirmed'
-                AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
-                AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
-            ORDER BY created_at ASC
-        """, (date, date))
+        if biz:
+            paybill = biz["paybill"]
+            account_number = biz["account_number"]
 
-        mpesa_entries = cursor.fetchall()
+            cursor.execute("""
+                SELECT amount, sender, transaction_id, created_at
+                FROM mpesa_transactions
+                WHERE status = 'confirmed'
+                  AND (
+                        (%s IS NOT NULL AND account_reference = %s)
+                        OR
+                        (%s IS NULL AND receiver = %s)
+                  )
+                  AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
+                  AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
+                ORDER BY created_at ASC
+            """, (
+                account_number,
+                account_number,
+                account_number,
+                paybill,
+                date,
+                date
+            ))
+
+            mpesa_entries = cursor.fetchall()
+        else:
+            mpesa_entries = []
         cursor.close()
         conn.close()
 
