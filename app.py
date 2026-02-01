@@ -1516,8 +1516,8 @@ def payment_confirm():
                 origin_ip,
                 created_at
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW())
-            RETURNING DATE(created_at AT TIME ZONE 'Africa/Nairobi');
+            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s NOW())
+            RETURNING DATE(created_at AT TIMEZONE 'Africa/Nairobi')
         """, (
             transaction_id,
             amount,
@@ -1549,7 +1549,6 @@ def payment_confirm():
     except Exception as e:
         print("❌ ERROR in confirm callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
-
     
 # ✅ Query M-Pesa Account Balance (safe naming)
 @app.route("/api/account_balance")
