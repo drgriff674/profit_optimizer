@@ -969,7 +969,7 @@ def revenue_day_detail(date):
     """, (username, date))
     anomalies = cursor.fetchall()
 
-    # 🔒 CHECK LOCK STATUS (MUST BE BEFORE CLOSE)
+    # 🔒 CHECK LOCK STATUS + LOCKED TOTAL (SAFE)
     cursor.execute("""
         SELECT locked
         FROM revenue_days
@@ -977,10 +977,10 @@ def revenue_day_detail(date):
           AND revenue_date = %s
         LIMIT 1
     """, (username, date))
+
     row = cursor.fetchone()
     is_locked = row["locked"] if row else False
 
-    # 🔐 Fetch locked total if exists
     cursor.execute("""
         SELECT total_amount
         FROM revenue_days
@@ -990,7 +990,7 @@ def revenue_day_detail(date):
 
     day_row = cursor.fetchone()
     locked_total = float(day_row["total_amount"]) if day_row else 0
-
+    
     # ✅ NOW CLOSE
     cursor.close()
     conn.close()
@@ -1040,7 +1040,7 @@ def revenue_day_detail(date):
             date  
         ))
 
-        row = cursor.fetchone()
+        row = cursor.fetchone() 
         mpesa_total = float(row["mpesa_total"]) if row else 0.0
         
             
@@ -1050,6 +1050,18 @@ def revenue_day_detail(date):
         
         gross_total = mpesa_total + cash_total
         net_revenue = gross_total - expense_total
+
+        # 🔎 Manual split consistency check (UNLOCKED ONLY)
+        if not is_locked:
+            if abs(manual_total - net_revenue) > 0.01:
+                anomalies.append({
+                    "anomaly_type": "manual_split_mismatch",
+                    "severity": "warning",
+                    "message": (
+                        f"Manual split total (KSh {manual_total:.2f}) "
+                        f"does not match net revenue (KSh {net_revenue:.2f})."
+                    )
+                })
 
     
     return render_template(
