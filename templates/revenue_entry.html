@@ -156,17 +156,28 @@
     <div class="space-y-2">
       {% for e in entries %}
         <div
-          class="flex justify-between items-center
-                 bg-slate-100 dark:bg-slate-800
-                 rounded-lg px-3 py-2 text-sm"
-        >
-          <span class="text-slate-700 dark:text-slate-300">
-            {{ e.category }}
-          </span>
-          <span class="font-semibold text-slate-900 dark:text-white">
-            KSh {{ e.amount }}
-          </span>
-        </div>
+  class="flex justify-between items-center
+         bg-slate-100 dark:bg-slate-800
+         rounded-lg px-3 py-2 text-sm"
+>
+  <div>
+    <span class="text-slate-700 dark:text-slate-300">
+      {{ e.category }}
+    </span>
+    <span class="text-slate-500">
+      — KSh {{ e.amount }}
+    </span>
+  </div>
+
+  {% if not is_locked %}
+    <a
+      href="{{ url_for('edit_revenue_entry', entry_id=e.id) }}"
+      class="text-blue-600 text-xs hover:underline"
+    >
+      Edit
+    </a>
+  {% endif %}
+</div>
       {% endfor %}
     </div>
   </div>

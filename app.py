@@ -1215,6 +1215,57 @@ def cash_revenue_entry():
 
     return render_template("cash_revenue_entry.html")
 
+@app.route("/revenue/entry/<int:entry_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_revenue_entry(entry_id):
+    username = session["username"]
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Fetch entry
+    cursor.execute("""
+        SELECT *
+        FROM revenue_entries
+        WHERE id = %s AND username = %s
+        LIMIT 1
+    """, (entry_id, username))
+
+    entry = cursor.fetchone()
+
+    if not entry:
+        cursor.close()
+        conn.close()
+        abort(404)
+
+    if request.method == "POST":
+        new_category = request.form["category"]
+        new_amount = float(request.form["amount"])
+
+        cursor.execute("""
+            UPDATE revenue_entries
+            SET category = %s,
+                amount = %s
+            WHERE id = %s AND username = %s
+        """, (new_category, new_amount, entry_id, username))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return redirect(url_for(
+            "revenue_day_detail",
+            date=entry["revenue_date"]
+        ))
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "edit_revenue_entry.html",
+        entry=entry
+    )
+
 @app.route("/api/latest-payment")
 def latest_payment():
     if "username" not in session:

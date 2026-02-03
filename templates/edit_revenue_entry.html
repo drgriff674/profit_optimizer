@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Revenue Entry</title>
+</head>
+<body class="bg-slate-100 p-6">
+
+  <h1 class="text-lg font-semibold mb-4">✏️ Edit Revenue Entry</h1>
+
+  <form method="POST" class="space-y-4 bg-white p-4 rounded shadow">
+
+    <div>
+      <label class="block text-sm">Category</label>
+      <input
+        name="category"
+        value="{{ entry.category }}"
+        class="border p-2 w-full"
+        required
+      >
+    </div>
+
+    <div>
+      <label class="block text-sm">Amount (KSh)</label>
+      <input
+        type="number"
+        step="0.01"
+        name="amount"
+        value="{{ entry.amount }}"
+        class="border p-2 w-full"
+        required
+      >
+    </div>
+
+    <button class="bg-blue-600 text-white px-4 py-2 rounded">
+      Save Changes
+    </button>
+
+  </form>
+
+</body>
+</html>
