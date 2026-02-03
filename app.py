@@ -1253,8 +1253,10 @@ def edit_revenue_entry(entry_id):
         cursor.close()
         conn.close()
 
+        flash("Entry updated. You can continue editing","success")
+
         return redirect(url_for(
-            "revenue_day_detail",
+            "revenue_entry",
             date=entry["revenue_date"]
         ))
 
