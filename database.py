@@ -773,13 +773,13 @@ def get_live_financial_performance(username):
 
     cursor.execute("""
         SELECT
-            DATE(created_at) AS date,
-            SUM(amount) AS revenue
+            created_at AT TIME ZONE 'Africa/Nairobi' AS timestamp,
+            amount
         FROM mpesa_transactions
         WHERE status = 'confirmed'
-        GROUP BY date
-        ORDER BY date
-    """)
+        AND username = %s
+        ORDER BY timestamp ASC
+    """,(username,))
     revenue = cursor.fetchall()
 
     cursor.execute("""
