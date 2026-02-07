@@ -1344,7 +1344,7 @@ def live_performance():
         for e in expense_rows
     }
 
-    dates = sorted(set(revenue_map)| set(expense_map))
+    dates = sorted(set(revenue_map) | set(expense_map))
 
     revenue_values = []
     expense_values = []
@@ -1357,13 +1357,9 @@ def live_performance():
         rev = revenue_map.get(d, 0)
         exp = expense_map.get(d, 0)
 
-        running_revenue += rev
-        running_expenses += exp
-
-        revenue_values.append(running_revenue)
-        expense_values.append(running_expenses)
-        profit_values.append(running_revenue - running_expenses)
-        
+        revenue_values.append(rev)
+        expense_values.append(exp)
+        profit_values.append(rev-exp)
     return render_template(
         "charts/live_performance.html",
         dates=dates,
