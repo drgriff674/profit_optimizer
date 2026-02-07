@@ -46,31 +46,45 @@
 </main>
 
 <script>
-  const dates = {{ dates | default([]) | tojson | safe }};
-  const values = {{ values | default([]) | tojson | safe }};
+  const dates = {{ dates | tojson | safe }};
+  const revenue = {{ revenue_values | tojson | safe }};
+  const expenses = {{ expense_values | tojson | safe }};
+  const profit = {{ profit_values | tojson | safe }};
 
   if (!dates.length) {
     document.getElementById("liveChart").innerHTML =
-      "<p class='text-center opacity-70'>No data available yet</p>";
+      "<p class='text-center opacity-70'>No locked financial data yet</p>";
   } else {
-    Plotly.newPlot("liveChart", [{
-      x: dates,
-      y: values,
-      type: "scatter",
-      mode: "lines+markers",
-      line: { width: 3 },
-      marker: { size: 6 },
-      name: "Revenue"
-    }], {
+    Plotly.newPlot("liveChart", [
+      {
+        x: dates,
+        y: revenue,
+        name: "Revenue",
+        mode: "lines+markers",
+        line: { width: 3 }
+      },
+      {
+        x: dates,
+        y: expenses,
+        name: "Expenses",
+        mode: "lines+markers",
+        line: { width: 3, dash: "dot" }
+      },
+      {
+        x: dates,
+        y: profit,
+        name: "Profit",
+        mode: "lines+markers",
+        line: { width: 3 }
+      }
+    ], {
       margin: { t: 30 },
       xaxis: { title: "Date" },
       yaxis: { title: "Amount (KSh)" },
       paper_bgcolor: "transparent",
-      plot_bgcolor: "transparent",
-      font: { size: 14 }
+      plot_bgcolor: "transparent"
     }, { responsive: true });
   }
 </script>
-
 </body>
 </html>

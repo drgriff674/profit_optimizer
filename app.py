@@ -62,6 +62,9 @@ from database import(
     add_cash_revenue,
     get_cash_revenue_for_day,
     get_cash_revenue_total_for_day,
+    get_dashboard_intelligence_snapshot,
+    get_live_financial_performance,
+    get_locked_revenue_for_forecast,
 )
 import pytz
 from flask_caching import Cache
@@ -288,47 +291,27 @@ else:
     print("⚠️ No OpenAI API key found — AI features disabled locally.")
 
 
-def generate_ai_insights(kpis):
-    """Generate smart business insights from KPI metrics."""
+def generate_ai_insights(snapshot):
     insights = []
-    try:
-        total_profit = float(
-            kpis.get("total_profit", "0").replace("$", "").replace(",", "")
-        )
-        avg_profit = float(
-            kpis.get("avg_profit", "0").replace("$", "").replace(",", "")
-        )
-        profit_growth = float(
-            kpis.get("profit_growth", "0").replace("%", "").replace(",", "")
-        )
 
-        if profit_growth > 15:
-            insights.append(
-                "🚀 Profit growth is impressive! Consider reinvesting profits into marketing or expansion."
-            )
-        elif profit_growth < 0:
-            insights.append(
-                "⚠️ Profit is declining. Review cost centers and adjust revenue strategies."
-            )
-        else:
-            insights.append(
-                "📊 Profit growth is steady. Maintain your current operational efficiency."
-            )
-
-        if avg_profit < total_profit * 0.05:
-            insights.append(
-                "💡 Low average profit per period — optimize product pricing or reduce overhead."
-            )
-        else:
-            insights.append(
-                "✅ Average profit margins look healthy. Keep optimizing your revenue streams."
-            )
-
+    if snapshot["locked_days"] < snapshot["window_days"]:
         insights.append(
-            f"📅 Latest KPI snapshot — Growth: {profit_growth:.2f}%, Total Profit: ${total_profit:,.2f}"
+            "📊 Data is still being finalized. Lock all revenue days for stronger insights."
         )
-    except Exception as e:
-        insights.append(f"Error generating insights: {str(e)}")
+
+    if snapshot["anomaly_days"] > 0:
+        insights.append(
+            f"⚠️ {snapshot['anomaly_days']} day(s) show revenue inconsistencies."
+        )
+
+    if snapshot["ready_for_forecast"]:
+        insights.append(
+            "📈 Enough historical data collected. Forecasting confidence is improving."
+        )
+    else:
+        insights.append(
+            "⏳ Forecast model is still learning. More locked days needed."
+        )
 
     return insights
 
@@ -489,11 +472,22 @@ def logout():
 
 @cache.memoize(timeout=300)
 def get_dashboard_data(username):
-    data={}
-    data["intelligence"] = get_dashboard_revenue_intelligence(username)
-    
+    data = {}
 
-    # Example:
+    # 1️⃣ Historical revenue data (for charts)
+    data["revenue_history"] = get_dashboard_revenue_intelligence(username)
+
+    # 2️⃣ Intelligence snapshot (AI + dashboard counters)
+    data["intelligence"] = get_dashboard_intelligence_snapshot(username)
+
+    # 3️⃣ Forecast readiness (LOCKED days only)
+    forecast_snapshot = get_locked_revenue_for_forecast(username)
+    data["forecast_status"] = {
+        "ready": forecast_snapshot["ready"],
+        "days": forecast_snapshot["days"]
+    }
+
+    # Optional legacy / placeholder
     if os.path.exists("financial_data.csv"):
         df = pd.read_csv("financial_data.csv")
         data["df"] = df
@@ -515,7 +509,8 @@ def dashboard():
     notifications = cached_data.get("notifications", [])
     forecast_data = cached_data.get("forecast_data", [])
     last_synced = cached_data.get("last_synced")
-    intelligence = cached_data.get("intelligence")
+    intelligence = cached_data.get("intelligence",{})
+    forecast_status = cached_data.grt("forecast_status", {})
 
     answer = None
 
@@ -687,6 +682,7 @@ def dashboard():
         current_year=datetime.now().year,
         latest_payment=latest_payment,
         intelligence=intelligence,
+        forecast_status=forecast_status,
         live_total_revenue=live_total_revenue
     )
 
@@ -1266,6 +1262,107 @@ def edit_revenue_entry(entry_id):
     return render_template(
         "edit_revenue_entry.html",
         entry=entry
+    )
+
+@app.route("/charts/revenue-forecast")
+@login_required
+def revenue_forecast():
+    username = session["username"]
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT
+            revenue_date,
+            total_amount
+        FROM revenue_days
+        WHERE username = %s
+          AND locked = TRUE
+        ORDER BY revenue_date ASC
+    """, (username,))
+    rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if len(rows) < 7:
+        # Not enough data — dashboard already blocks this
+        return redirect(url_for("dashboard"))
+
+    dates = [str(r["revenue_date"]) for r in rows]
+    values = [float(r["total_amount"]) for r in rows]
+
+    return render_template(
+        "charts/revenue_forecast.html",
+        forecast_dates=dates,
+        forecast_values=values
+    )
+
+@app.route("/charts/live-performance")
+@login_required
+def live_performance():
+    username = session["username"]
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # 1️⃣ Locked revenue per day
+    cursor.execute("""
+        SELECT
+            revenue_date,
+            total_amount AS revenue
+        FROM revenue_days
+        WHERE username = %s
+          AND locked = TRUE
+        ORDER BY revenue_date ASC
+    """, (username,))
+    revenue_rows = cursor.fetchall()
+
+    # 2️⃣ Expenses per day
+    cursor.execute("""
+        SELECT
+            expense_date,
+            SUM(amount) AS expenses
+        FROM expenses
+        WHERE username = %s
+        GROUP BY expense_date
+    """, (username,))
+    expense_rows = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    # ---- Normalize data ----
+    revenue_map = {
+        str(r["revenue_date"]): float(r["revenue"])
+        for r in revenue_rows
+    }
+
+    expense_map = {
+        str(e["expense_date"]): float(e["expenses"])
+        for e in expense_rows
+    }
+
+    dates = sorted(revenue_map.keys())
+
+    revenue_values = []
+    expense_values = []
+    profit_values = []
+
+    for d in dates:
+        rev = revenue_map.get(d, 0)
+        exp = expense_map.get(d, 0)
+        revenue_values.append(rev)
+        expense_values.append(exp)
+        profit_values.append(rev - exp)
+
+    return render_template(
+        "charts/live_performance.html",
+        dates=dates,
+        revenue_values=revenue_values,
+        expense_values=expense_values,
+        profit_values=profit_values
     )
 
 @app.route("/api/latest-payment")

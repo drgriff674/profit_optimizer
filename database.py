@@ -658,6 +658,22 @@ def get_dashboard_revenue_intelligence(username):
     """, (username,))
     anomaly_count = cursor.fetchone()["anomaly_days"]
 
+    # --- Forecast readiness & confidence ---
+    locked_manual_days_count = len(manual_days)
+
+    if locked_manual_days_count >= 7:
+        forecast_ready = True
+        confidence_label = "🟢 Forecast ready — high confidence"
+    elif locked_manual_days_count >= 5:
+        forecast_ready = False
+        confidence_label = "🟡 Almost there — a few more locked days needed"
+    elif locked_manual_days_count >= 3:
+        forecast_ready = False
+        confidence_label = "🟠 Learning in progress — limited data"
+    else:
+        forecast_ready = False
+        confidence_label = "🔴 Forecast locked — system still learning"
+
     cursor.close()
     conn.close()
 
@@ -665,6 +681,124 @@ def get_dashboard_revenue_intelligence(username):
         "manual_days": manual_days,
         "mpesa_days": mpesa_days,
         "anomaly_days": anomaly_count,
+        "forecast_ready":forecast_ready,
+        "confidence_label":confidence_label,
+    }
+
+def get_dashboard_intelligence_snapshot(username, days=7):
+    """
+    High-level intelligence summary for the dashboard.
+    Reads ONLY locked revenue days.
+    Used for AI reasoning & forecast readiness.
+    """
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+
+    # Locked revenue days in window
+    cursor.execute("""
+        SELECT
+            COUNT(*) AS locked_days,
+            COALESCE(SUM(total_amount), 0) AS total_revenue
+        FROM revenue_days
+        WHERE username = %s
+          AND locked = TRUE
+          AND revenue_date >= CURRENT_DATE - INTERVAL '%s days'
+    """, (username, days))
+
+    row = cursor.fetchone()
+    locked_days = row["locked_days"] or 0
+    total_revenue = float(row["total_revenue"] or 0)
+
+    # Anomaly days in window
+    cursor.execute("""
+        SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
+        FROM revenue_anomalies
+        WHERE username = %s
+          AND revenue_date >= CURRENT_DATE - INTERVAL '%s days'
+    """, (username, days))
+
+    anomaly_days = cursor.fetchone()["anomaly_days"] or 0
+
+    cursor.close()
+    conn.close()
+
+    avg_daily_revenue = (
+        total_revenue / locked_days if locked_days > 0 else 0
+    )
+
+    return {
+        "window_days": days,
+        "locked_days": locked_days,
+        "anomaly_days": anomaly_days,
+        "avg_daily_revenue": avg_daily_revenue,
+        "ready_for_forecast": locked_days >= 30
+    }
+
+def get_locked_revenue_for_forecast(username, min_days=7):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT
+            revenue_date AS ds,
+            total_amount AS y
+        FROM revenue_days
+        WHERE username = %s
+          AND locked = TRUE
+        ORDER BY revenue_date ASC
+    """, (username,))
+
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    # Prophet needs enough history
+    if len(rows) < min_days:
+        return {
+            "ready": False,
+            "days": len(rows),
+            "data": []
+        }
+
+    return {
+        "ready": True,
+        "days": len(rows),
+        "data": rows
+    }
+
+def get_live_financial_performance(username):
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    cursor.execute("""
+        SELECT
+            DATE(created_at) AS date,
+            SUM(amount) AS revenue
+        FROM mpesa_transactions
+        WHERE status = 'confirmed'
+        GROUP BY date
+        ORDER BY date
+    """)
+    revenue = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT
+            expense_date AS date,
+            SUM(amount) AS expenses
+        FROM expenses
+        WHERE username = %s
+        GROUP BY expense_date
+        ORDER BY expense_date
+    """, (username,))
+    expenses = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return {
+        "revenue": revenue,
+        "expenses": expenses
     }
 
 

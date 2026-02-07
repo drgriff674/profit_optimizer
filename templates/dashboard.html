@@ -232,6 +232,34 @@
     <p><strong>Anomaly days:</strong> {{ intelligence.anomaly_days }}</p>
     <p><strong>Manual revenue days:</strong> {{ intelligence.manual_days | length }}</p>
     <p><strong>MPesa revenue days:</strong> {{ intelligence.mpesa_days | length }}</p>
+
+    <hr class="my-3 opacity-30">
+
+    {% if intelligence.confidence_level == "low" %}
+  <p class="text-red-500 font-semibold">
+    🔴 System learning — more locked days needed
+  </p>
+  <p class="text-xs opacity-70">
+    Forecasting unavailable until data stabilizes
+  </p>
+
+{% elif intelligence.confidence_level == "medium" %}
+  <p class="text-yellow-500 font-semibold">
+    🟡 Partial confidence — trends forming
+  </p>
+  <p class="text-xs opacity-70">
+    Forecast accuracy improving with more data
+  </p>
+
+{% elif intelligence.confidence_level == "high" %}
+  <p class="text-green-600 font-semibold">
+    🟢 High confidence — forecasts enabled
+  </p>
+  <p class="text-xs opacity-70">
+    Revenue patterns are stable and predictable
+  </p>
+{% endif %}
+
   </div>
 
 </div>
@@ -239,7 +267,8 @@
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
-  <!-- Revenue Forecast Card -->
+ {% if intelligence.forecast_ready %}
+  <!-- Revenue Forecast Card (READY) -->
   <a href="{{ url_for('revenue_forecast') }}"
      class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
      style="background: var(--og-surface);">
@@ -254,6 +283,40 @@
       Tap to view chart →
     </div>
   </a>
+{% else %}
+  {% if not forecast_status.ready %}
+  <!-- Revenue Forecast Card (LOCKED) -->
+  <div class="block p-5 rounded-xl shadow opacity-60 cursor-not-allowed"
+       style="background: var(--og-surface); border-left: 4px solid #ef4444;">
+
+    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
+
+    <p class="text-sm opacity-70 mb-3">
+      Forecast locked — system still learning
+    </p>
+
+    <div class="text-sm text-red-500 font-medium">
+      🔒 {{ forecast_status.days }} / 7 locked days
+    </div>
+  </div>
+
+{% else %}
+  <!-- Revenue Forecast Card (UNLOCKED) -->
+  <a href="{{ url_for('revenue_forecast') }}"
+     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
+     style="background: var(--og-surface); border-left: 4px solid #22c55e;">
+
+    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
+
+    <p class="text-sm opacity-70 mb-3">
+      Model confidence sufficient
+    </p>
+
+    <div class="text-sm font-medium text-green-600">
+      ✅ View 6-month forecast →
+    </div>
+  </a>
+{% endif %}
 
   <!-- Live Performance Card -->
   <a href="{{ url_for('live_performance') }}"
