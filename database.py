@@ -638,15 +638,22 @@ def get_dashboard_revenue_intelligence(username):
     # --- MPesa totals (timezone-safe, last 7 days) ---
     cursor.execute("""
         SELECT
-            DATE(created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date,
-            SUM(amount) AS mpesa_total
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-          AND DATE(created_at AT TIME ZONE 'Africa/Nairobi') >=
-              CURRENT_DATE - INTERVAL '7 days'
+            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date,
+            SUM(m.amount) AS mpesa_total
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+                (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                OR
+                (b.account_number IS NULL AND m.receiver = b.paybill)
+             )
+        WHERE b.username = %s
+          AND m.status = 'confirmed'
+          AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
+              >= CURRENT_DATE - INTERVAL '7 days'
         GROUP BY revenue_date
         ORDER BY revenue_date DESC
-    """)
+    """,(username,))
     mpesa_days = cursor.fetchall()
 
     # --- Anomaly count (last 7 days, timezone-safe) ---
@@ -768,20 +775,30 @@ def get_locked_revenue_for_forecast(username, min_days=7):
     }
 
 def get_live_financial_performance(username):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
 
+    # ✅ Revenue — correctly scoped to the user's business
     cursor.execute("""
         SELECT
-            created_at AT TIME ZONE 'Africa/Nairobi' AS timestamp,
-            amount
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-        AND username = %s
-        ORDER BY timestamp ASC
-    """,(username,))
+            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS date,
+            SUM(m.amount) AS revenue
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+                (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                OR
+                (b.account_number IS NULL AND m.receiver = b.paybill)
+             )
+        WHERE b.username = %s
+          AND m.status = 'confirmed'
+        GROUP BY date
+        ORDER BY date ASC
+    """, (username,))
+
     revenue = cursor.fetchall()
 
+    # ✅ Expenses — already correct
     cursor.execute("""
         SELECT
             expense_date AS date,
@@ -789,8 +806,9 @@ def get_live_financial_performance(username):
         FROM expenses
         WHERE username = %s
         GROUP BY expense_date
-        ORDER BY expense_date
+        ORDER BY expense_date ASC
     """, (username,))
+
     expenses = cursor.fetchall()
 
     cursor.close()
@@ -800,7 +818,6 @@ def get_live_financial_performance(username):
         "revenue": revenue,
         "expenses": expenses
     }
-
 
 def create_inventory_snapshot(business_id, snapshot_date, snapshot_type, created_by):
     conn = get_db_connection()
