@@ -1329,12 +1329,17 @@ def revenue_forecast():
     upper = forecast["yhat_upper"].tolist()
     lower = forecast["yhat_lower"].tolist()
 
+    actual_dates = df["ds"].dt.strftime("%Y-%m-%d").tolist()
+    actual_values = df["y"].tolist()
+
     return render_template(
         "charts/revenue_forecast.html",
         dates=dates,
         predictions=predictions,
         upper=upper,
-        lower=lower
+        lower=lower,
+        actual_dates=actual_dates,
+        actual_values=actual_values
     )
 @app.route("/charts/live-performance")
 @login_required

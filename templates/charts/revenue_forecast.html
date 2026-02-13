@@ -59,6 +59,19 @@ const dates = {{ dates | tojson | safe }};
 const predictions = {{ predictions | tojson | safe }};
 const upper = {{ upper | tojson | safe }};
 const lower = {{ lower | tojson | safe }};
+const actualDates = {{ actual_dates| tojson |safe }};
+const actualValues = {{ actual_values| tojson |safe }};
+
+const actualTrace = {
+  x: actualDates,
+  y: actualValues,
+  type: 'scatter',
+  mode: 'markers',
+  name: 'Actual Revenue',
+  marker: {
+    size: 7
+  }
+};
 
 // ⭐ Main prediction line
 const forecastLine = {
@@ -115,11 +128,10 @@ const layout = {
 
 Plotly.newPlot(
   "forecastChart",
-  [upperBand, lowerBand, forecastLine],
+  [actualTrace, upperBand, lowerBand, forecastLine],
   layout,
   { responsive: true }
 );
-
 </script>
 
 </body>
