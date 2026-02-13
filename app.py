@@ -1288,9 +1288,12 @@ def revenue_forecast():
     cursor.close()
     conn.close()
 
-    if len(rows) < 14:
+    if len(rows) < 7:
 
-        return redirect(url_for("dashboard"))
+        return render_template("charts/revenue_forecast.html",
+                               not_ready=True,
+                               days=len(df)
+        )
 
     # ⭐ Convert to DataFrame
     df = pd.DataFrame(rows)
