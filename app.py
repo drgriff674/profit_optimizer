@@ -1296,19 +1296,21 @@ def revenue_forecast():
 
     df["ds"] = pd.to_datetime(df["ds"])
     df["y"] = df["y"].astype(float)
+    df = df[df["y"] > 0]
 
     # ⭐ Train the model
     model = Prophet(
         daily_seasonality=False,
         weekly_seasonality=True,
         yearly_seasonality=False,
-        changepoint_prior_scale=0.08
+        changepoint_prior_scale=0.03,
+        seasonality_mode='multiplicative'
     )
 
     model.fit(df)
 
     # ⭐ Forecast forward 180 days (~6 months)
-    future = model.make_future_dataframe(periods=90)
+    future = model.make_future_dataframe(periods=60)
 
     forecast = model.predict(future)
 
