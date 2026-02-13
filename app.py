@@ -1299,17 +1299,22 @@ def revenue_forecast():
 
     # ⭐ Train the model
     model = Prophet(
-        daily_seasonality=True,
+        daily_seasonality=False,
         weekly_seasonality=True,
-        yearly_seasonality=False
+        yearly_seasonality=False,
+        changepoint_prior_scale=0.08
     )
 
     model.fit(df)
 
     # ⭐ Forecast forward 180 days (~6 months)
-    future = model.make_future_dataframe(periods=180)
+    future = model.make_future_dataframe(periods=90)
 
     forecast = model.predict(future)
+
+    forecast["yhat"] = forecast["yhat"].clip(lower=0)
+    forecast["yhat_upper"] = forecast["yhat_upper"].clip(lower=0)
+    forecast["yhat_lower"] = forecast["yhat_lower"].clip(lower=0)
 
     # ⭐ Extract columns
     dates = forecast["ds"].dt.strftime("%Y-%m-%d").tolist()
