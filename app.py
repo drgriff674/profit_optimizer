@@ -1267,6 +1267,7 @@ def edit_revenue_entry(entry_id):
 @app.route("/charts/revenue-forecast")
 @login_required
 def revenue_forecast():
+
     username = session["username"]
 
     conn = get_db_connection()
@@ -1274,31 +1275,55 @@ def revenue_forecast():
 
     cursor.execute("""
         SELECT
-            revenue_date,
-            total_amount
+            revenue_date AS ds,
+            total_amount AS y
         FROM revenue_days
         WHERE username = %s
           AND locked = TRUE
         ORDER BY revenue_date ASC
     """, (username,))
+
     rows = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
     if len(rows) < 7:
-        # Not enough data — dashboard already blocks this
         return redirect(url_for("dashboard"))
 
-    dates = [str(r["revenue_date"]) for r in rows]
-    values = [float(r["total_amount"]) for r in rows]
+    # ⭐ Convert to DataFrame
+    df = pd.DataFrame(rows)
+
+    df["ds"] = pd.to_datetime(df["ds"])
+    df["y"] = df["y"].astype(float)
+
+    # ⭐ Train the model
+    model = Prophet(
+        daily_seasonality=True,
+        weekly_seasonality=True,
+        yearly_seasonality=False
+    )
+
+    model.fit(df)
+
+    # ⭐ Forecast forward 180 days (~6 months)
+    future = model.make_future_dataframe(periods=180)
+
+    forecast = model.predict(future)
+
+    # ⭐ Extract columns
+    dates = forecast["ds"].dt.strftime("%Y-%m-%d").tolist()
+    predictions = forecast["yhat"].tolist()
+    upper = forecast["yhat_upper"].tolist()
+    lower = forecast["yhat_lower"].tolist()
 
     return render_template(
         "charts/revenue_forecast.html",
-        forecast_dates=dates,
-        forecast_values=values
+        dates=dates,
+        predictions=predictions,
+        upper=upper,
+        lower=lower
     )
-
 @app.route("/charts/live-performance")
 @login_required
 def live_performance():

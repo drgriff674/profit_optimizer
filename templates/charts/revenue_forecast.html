@@ -38,7 +38,7 @@
        style="background: var(--og-surface);">
 
     <p class="text-sm opacity-70 mb-3">
-      Predicted revenue trend based on historical data
+      AI projection with statistical confidence bands.
     </p>
 
     <!-- CHART -->
@@ -49,39 +49,72 @@
 </main>
 
 <script>
-  /*
-    Backend should pass:
-    forecast_dates
-    forecast_values
-  */
 
-  const dates = {{ forecast_dates | tojson | safe }};
-  const values = {{ forecast_values | tojson | safe }};
+const dates = {{ dates | tojson | safe }};
+const predictions = {{ predictions | tojson | safe }};
+const upper = {{ upper | tojson | safe }};
+const lower = {{ lower | tojson | safe }};
 
-  const forecastTrace = {
-    x: dates,
-    y: values,
-    type: 'scatter',
-    mode: 'lines+markers',
-    name: 'Forecasted Revenue',
-    line: { width: 3 }
-  };
+// ⭐ Main prediction line
+const forecastLine = {
+  x: dates,
+  y: predictions,
+  type: 'scatter',
+  mode: 'lines',
+  name: 'AI Prediction',
+  line: {
+    width: 4
+  }
+};
 
-  const layout = {
-    margin: { t: 30, l: 50, r: 20, b: 50 },
-    xaxis: { title: "Month" },
-    yaxis: { title: "Revenue (KSh)" },
-    paper_bgcolor: "transparent",
-    plot_bgcolor: "transparent",
-    font: { size: 14 }
-  };
+// ⭐ Upper confidence band
+const upperBand = {
+  x: dates,
+  y: upper,
+  type: 'scatter',
+  mode: 'lines',
+  line: { width: 0 },
+  showlegend: false
+};
 
-  Plotly.newPlot(
-    "forecastChart",
-    [forecastTrace],
-    layout,
-    { responsive: true }
-  );
+// ⭐ Lower confidence band (filled)
+const lowerBand = {
+  x: dates,
+  y: lower,
+  type: 'scatter',
+  mode: 'lines',
+  fill: 'tonexty',
+  name: 'Confidence Range',
+  line: { width: 0 }
+};
+
+const layout = {
+
+  margin: { t: 30, l: 60, r: 20, b: 50 },
+
+  xaxis: {
+    title: "Date"
+  },
+
+  yaxis: {
+    title: "Revenue (KSh)"
+  },
+
+  paper_bgcolor: "transparent",
+  plot_bgcolor: "transparent",
+
+  hovermode: "x unified",
+
+  font: { size: 14 }
+};
+
+Plotly.newPlot(
+  "forecastChart",
+  [upperBand, lowerBand, forecastLine],
+  layout,
+  { responsive: true }
+);
+
 </script>
 
 </body>
