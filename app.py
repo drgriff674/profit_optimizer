@@ -1288,7 +1288,8 @@ def revenue_forecast():
     cursor.close()
     conn.close()
 
-    if len(rows) < 7:
+    if len(rows) < 14:
+
         return redirect(url_for("dashboard"))
 
     # ⭐ Convert to DataFrame
@@ -1297,14 +1298,15 @@ def revenue_forecast():
     df["ds"] = pd.to_datetime(df["ds"])
     df["y"] = df["y"].astype(float)
     df = df[df["y"] > 0]
+    df = df.sort_values("ds")
 
     # ⭐ Train the model
     model = Prophet(
         daily_seasonality=False,
-        weekly_seasonality=True,
+        weekly_seasonality=False,
         yearly_seasonality=False,
-        changepoint_prior_scale=0.03,
-        seasonality_mode='multiplicative'
+        changepoint_prior_scale=0.15,
+        seasonality_mode='additive'
     )
 
     model.fit(df)
