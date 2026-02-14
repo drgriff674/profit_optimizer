@@ -82,7 +82,7 @@ def generate_revenue_day_export_data(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Get business identifiers
+    # 1️⃣ Get business identifiers
     cursor.execute("""
         SELECT paybill, account_number
         FROM businesses
@@ -97,7 +97,6 @@ def generate_revenue_day_export_data(username, revenue_date):
         paybill = biz["paybill"]
         account_number = biz["account_number"]
 
-        # 🔒 Removed sender + transaction_id for privacy
         cursor.execute("""
             SELECT amount, created_at
             FROM mpesa_transactions
@@ -118,24 +117,42 @@ def generate_revenue_day_export_data(username, revenue_date):
 
         mpesa_entries = cursor.fetchall()
 
+    # 2️⃣ 🔑 Get LOCKED day total (source of truth)
+    cursor.execute("""
+        SELECT total_amount
+        FROM revenue_days
+        WHERE username = %s
+          AND revenue_date = %s
+          AND locked = TRUE
+        LIMIT 1
+    """, (username, revenue_date))
+
+    day_row = cursor.fetchone()
+
     cursor.close()
     conn.close()
 
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
+    # --- Totals ---
     mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
 
     expenses = get_expenses_for_day(username, revenue_date)
     expense_total = float(expenses["total"])
 
-    gross_total = manual_total + mpesa_total
-    net_total = gross_total - expense_total
+    # Locked revenue is the official gross total
+    locked_total = float(day_row["total_amount"]) if day_row else 0
+
+    # Cash = locked total minus mpesa
+    cash_total = locked_total - mpesa_total
+
+    # Net revenue = gross minus expenses
+    net_total = locked_total - expense_total
 
     return {
         "date": revenue_date,
         "manual_entries": manual_entries,
         "mpesa_entries": mpesa_entries,
         "expense_entries": expenses["entries"],
-        "manual_total": manual_total,
+        "manual_total": cash_total,      # ← this is now CASH
         "mpesa_total": mpesa_total,
         "expense_total": expense_total,
         "net_total": net_total,
