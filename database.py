@@ -742,7 +742,8 @@ def get_dashboard_intelligence_snapshot(username, days=7):
         "ready_for_forecast": locked_days >= 30
     }
 
-def get_locked_revenue_for_forecast(username, min_days=7):
+def get_locked_revenue_for_forecast(username):
+
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -760,20 +761,46 @@ def get_locked_revenue_for_forecast(username, min_days=7):
     cursor.close()
     conn.close()
 
-    # Prophet needs enough history
-    if len(rows) < min_days:
+    days = len(rows)
+
+    # 🚦 Forecast maturity tiers
+    if days < 7:
         return {
             "ready": False,
-            "days": len(rows),
+            "days": days,
+            "confidence": "Insufficient",
+            "horizon": 0,
             "data": []
         }
 
-    return {
-        "ready": True,
-        "days": len(rows),
-        "data": rows
-    }
+    elif days < 14:
+        return {
+            "ready": True,
+            "days": days,
+            "confidence": "Low",
+            "horizon": 7,
+            "data": rows
+        }
 
+    elif days < 30:
+        return {
+            "ready": True,
+            "days": days,
+            "confidence": "Medium",
+            "horizon": 30,
+            "data": rows
+        }
+
+    else:
+        return {
+            "ready": True,
+            "days": days,
+            "confidence": "High",
+            "horizon": 90,
+            "data": rows
+        }
+
+    
 def get_live_financial_performance(username):
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()

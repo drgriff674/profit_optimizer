@@ -267,7 +267,7 @@
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
- {% if intelligence.forecast_ready %}
+ {% if forecast_status.ready %}
   <!-- Revenue Forecast Card (READY) -->
   <a href="{{ url_for('revenue_forecast') }}"
      class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
@@ -331,7 +331,6 @@
     <div class="text-sm font-medium"
          style="color: var(--og-primary);">
       Tap to view chart →
-{% endif %}
     </div>
   </a>
 

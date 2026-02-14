@@ -1225,22 +1225,45 @@ def revenue_forecast():
     cursor.close()
     conn.close()
 
-    if len(rows) < 7:
-
-        return render_template("charts/revenue_forecast.html",
-                               not_ready=True,
-                               days=len(df)
-        )
-
-    # ⭐ Convert to DataFrame
+    # 🔹 Convert to DataFrame FIRST
     df = pd.DataFrame(rows)
+
+    if df.empty:
+        return render_template(
+            "charts/revenue_forecast.html",
+            not_ready=True,
+            days=0
+        )
 
     df["ds"] = pd.to_datetime(df["ds"])
     df["y"] = df["y"].astype(float)
+
+    # Remove zero or invalid revenue days
     df = df[df["y"] > 0]
     df = df.sort_values("ds")
 
-    # ⭐ Train the model
+    locked_days = len(df)
+
+    # 🔒 Not enough usable data
+    if locked_days < 7:
+        return render_template(
+            "charts/revenue_forecast.html",
+            not_ready=True,
+            days=locked_days
+        )
+
+    # 🧠 Maturity logic (based on CLEAN data)
+    if locked_days < 14:
+        forecast_period = 7
+        confidence = "Low"
+    elif locked_days < 30:
+        forecast_period = 30
+        confidence = "Medium"
+    else:
+        forecast_period = 90
+        confidence = "High"
+
+    # ⭐ Train model
     model = Prophet(
         daily_seasonality=False,
         weekly_seasonality=False,
@@ -1251,8 +1274,8 @@ def revenue_forecast():
 
     model.fit(df)
 
-    # ⭐ Forecast forward 180 days (~6 months)
-    future = model.make_future_dataframe(periods=60)
+    # ⭐ Adaptive forecast
+    future = model.make_future_dataframe(periods=forecast_period)
 
     forecast = model.predict(future)
 
@@ -1260,7 +1283,6 @@ def revenue_forecast():
     forecast["yhat_upper"] = forecast["yhat_upper"].clip(lower=0)
     forecast["yhat_lower"] = forecast["yhat_lower"].clip(lower=0)
 
-    # ⭐ Extract columns
     dates = forecast["ds"].dt.strftime("%Y-%m-%d").tolist()
     predictions = forecast["yhat"].tolist()
     upper = forecast["yhat_upper"].tolist()
@@ -1276,8 +1298,12 @@ def revenue_forecast():
         upper=upper,
         lower=lower,
         actual_dates=actual_dates,
-        actual_values=actual_values
+        actual_values=actual_values,
+        confidence=confidence,
+        forecast_period=forecast_period,
+        not_ready=False
     )
+
 @app.route("/charts/live-performance")
 @login_required
 def live_performance():
