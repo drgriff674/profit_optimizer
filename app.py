@@ -471,7 +471,7 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
-@cache.memoize(timeout=300)
+@cache.memoize(timeout=10)
 def get_dashboard_data(username):
     data = {}
 
@@ -482,11 +482,8 @@ def get_dashboard_data(username):
     data["intelligence"] = get_dashboard_intelligence_snapshot(username)
 
     # 3️⃣ Forecast readiness (LOCKED days only)
-    forecast_snapshot = get_locked_revenue_for_forecast(username)
-    data["forecast_status"] = {
-        "ready": forecast_snapshot["ready"],
-        "days": forecast_snapshot["days"]
-    }
+    data["forecast_status"] = get_locked_revenue_for_forecast(username)
+        
 
     # Optional legacy / placeholder
     if os.path.exists("financial_data.csv"):
