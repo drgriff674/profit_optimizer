@@ -142,7 +142,7 @@ def generate_revenue_day_export_data(username, revenue_date):
     locked_total = float(day_row["total_amount"]) if day_row else 0
 
     # Cash = locked total minus mpesa
-    cash_total = locked_total - mpesa_total
+    cash_total = manual_total
 
     # Net revenue = gross minus expenses
     net_total = locked_total - expense_total
