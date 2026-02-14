@@ -133,28 +133,32 @@ def generate_revenue_day_export_data(username, revenue_date):
     conn.close()
 
     # --- Totals ---
+
+    # MPesa total (real payments received digitally)
     mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
 
+    # Cash total (manual entries added by user)
+    cash_total = sum(float(e["amount"]) for e in manual_entries)
+
+    # Expenses
     expenses = get_expenses_for_day(username, revenue_date)
     expense_total = float(expenses["total"])
 
-    # Locked revenue is the official gross total
-    locked_total = float(day_row["total_amount"]) if day_row else 0
+    # Gross revenue
+    gross_total = cash_total + mpesa_total
 
-    # Cash = locked total minus mpesa
-    cash_total = manual_total
-
-    # Net revenue = gross minus expenses
-    net_total = locked_total - expense_total
+    # Net revenue (profit)
+    net_total = gross_total - expense_total
 
     return {
         "date": revenue_date,
         "manual_entries": manual_entries,
         "mpesa_entries": mpesa_entries,
         "expense_entries": expenses["entries"],
-        "manual_total": cash_total,      # ← this is now CASH
+        "manual_total": cash_total,
         "mpesa_total": mpesa_total,
         "expense_total": expense_total,
+        "gross_total": gross_total,
         "net_total": net_total,
     }
 
