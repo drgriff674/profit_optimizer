@@ -769,7 +769,7 @@ def get_locked_revenue_for_forecast(username):
             "ready": False,
             "days": days,
             "confidence": "Insufficient",
-            "horizon": 0,
+            "forecast_period": 0,
             "data": []
         }
 
@@ -778,7 +778,7 @@ def get_locked_revenue_for_forecast(username):
             "ready": True,
             "days": days,
             "confidence": "Low",
-            "horizon": 7,
+            "forecast_period": 7,
             "data": rows
         }
 
@@ -787,7 +787,7 @@ def get_locked_revenue_for_forecast(username):
             "ready": True,
             "days": days,
             "confidence": "Medium",
-            "horizon": 30,
+            "forecast_period": 30,
             "data": rows
         }
 
@@ -796,7 +796,7 @@ def get_locked_revenue_for_forecast(username):
             "ready": True,
             "days": days,
             "confidence": "High",
-            "horizon": 90,
+            "forecast_period": 90,
             "data": rows
         }
 

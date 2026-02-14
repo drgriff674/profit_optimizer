@@ -267,25 +267,9 @@
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
- {% if intelligence.forecast_ready %}
-  <!-- Revenue Forecast Card (READY) -->
-  <a href="{{ url_for('revenue_forecast') }}"
-     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
-     style="background: var(--og-surface);">
-
-    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
-    <p class="text-sm opacity-70 mb-3">
-      Next 6 months projection
-    </p>
-
-    <div class="text-sm font-medium"
-         style="color: var(--og-primary);">
-      Tap to view chart →
-    </div>
-  </a>
-{% else %}
   {% if not forecast_status.ready %}
-  <!-- Revenue Forecast Card (LOCKED) -->
+
+  <!-- LOCKED -->
   <div class="block p-5 rounded-xl shadow opacity-60 cursor-not-allowed"
        style="background: var(--og-surface); border-left: 4px solid #ef4444;">
 
@@ -301,21 +285,35 @@
   </div>
 
 {% else %}
-  <!-- Revenue Forecast Card (UNLOCKED) -->
+
+  <!-- ACTIVE -->
   <a href="{{ url_for('revenue_forecast') }}"
      class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
      style="background: var(--og-surface); border-left: 4px solid #22c55e;">
 
     <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
 
-    <p class="text-sm opacity-70 mb-3">
-      Model confidence sufficient
+    <p class="text-sm opacity-70 mb-2">
+      Forecast horizon: {{ forecast_status.forecast_period }} days
     </p>
 
-    <div class="text-sm font-medium text-green-600">
-      ✅ View 6-month forecast →
+    <p class="text-sm mb-3">
+      Confidence: 
+      {% if forecast_status.confidence == "Low" %}
+        <span class="text-yellow-500 font-medium">Low</span>
+      {% elif forecast_status.confidence == "Medium" %}
+        <span class="text-orange-500 font-medium">Medium</span>
+      {% else %}
+        <span class="text-green-600 font-medium">High</span>
+      {% endif %}
+    </p>
+
+    <div class="text-sm font-medium"
+         style="color: var(--og-primary);">
+      View forecast →
     </div>
   </a>
+
 {% endif %}
 
   <!-- Live Performance Card -->
@@ -333,7 +331,7 @@
       Tap to view chart →
     </div>
   </a>
-{% endif %}
+
 
 </div>
 

@@ -1255,13 +1255,13 @@ def revenue_forecast():
     # 🧠 Maturity logic (based on CLEAN data)
     if locked_days < 14:
         forecast_period = 7
-        confidence = "Low"
+        confidence_level = "Low"
     elif locked_days < 30:
         forecast_period = 30
-        confidence = "Medium"
+        confidence_level = "Medium"
     else:
         forecast_period = 90
-        confidence = "High"
+        confidence_level = "High"
 
     # ⭐ Train model
     model = Prophet(
@@ -1299,7 +1299,7 @@ def revenue_forecast():
         lower=lower,
         actual_dates=actual_dates,
         actual_values=actual_values,
-        confidence=confidence,
+        confidence_level=confidence_level,
         forecast_period=forecast_period,
         not_ready=False
     )
