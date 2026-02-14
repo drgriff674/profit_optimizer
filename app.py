@@ -76,12 +76,13 @@ import re
 # ============================
 
 def generate_revenue_day_export_data(username, revenue_date):
+
     manual_entries = load_revenue_entries_for_day(username, revenue_date)
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # 1️⃣ Get business identifiers
+    # Get business identifiers
     cursor.execute("""
         SELECT paybill, account_number
         FROM businesses
@@ -90,49 +91,32 @@ def generate_revenue_day_export_data(username, revenue_date):
     """, (username,))
     biz = cursor.fetchone()
 
-    if not biz:
-        cursor.close()
-        conn.close()
-        manual_total = sum(float(e["amount"]) for e in manual_entries)
+    mpesa_entries = []
 
-        expenses = get_expenses_for_day(username, revenue_date)
-        expense_total = float(expenses["total"])
+    if biz:
+        paybill = biz["paybill"]
+        account_number = biz["account_number"]
 
-        net_total = manual_total - expense_total
+        # 🔒 Removed sender + transaction_id for privacy
+        cursor.execute("""
+            SELECT amount, created_at
+            FROM mpesa_transactions
+            WHERE DATE(created_at) = %s
+              AND (
+                    (%s IS NOT NULL AND account_reference = %s)
+                    OR
+                    (%s IS NULL AND receiver = %s)
+              )
+            ORDER BY created_at ASC
+        """, (
+            revenue_date,
+            account_number,
+            account_number,
+            account_number,
+            paybill
+        ))
 
-        return {
-            "date": revenue_date,
-            "manual_entries": manual_entries,
-            "mpesa_entries": [],
-            "expense_entries": expenses["entries"],
-            "manual_total": manual_total,
-            "mpesa_total": 0,
-            "expense_total": expense_total,
-            "net_total": net_total,
-        }
-    paybill = biz["paybill"]
-    account_number = biz["account_number"]
-
-    # 2️⃣ Pull MPesa scoped to THIS business + THIS day
-    cursor.execute("""
-        SELECT amount, sender, transaction_id, created_at
-        FROM mpesa_transactions
-        WHERE DATE(created_at) = %s
-          AND (
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-          )
-        ORDER BY created_at ASC
-    """, (
-        revenue_date,
-        account_number,
-        account_number,
-        account_number,
-        paybill
-    ))
-
-    mpesa_entries = cursor.fetchall()
+        mpesa_entries = cursor.fetchall()
 
     cursor.close()
     conn.close()
@@ -783,27 +767,24 @@ def generate_ai_summary_for_day_route(date):
 @app.route("/revenue/day/<date>/export/csv")
 @login_required
 def export_revenue_day_csv(date):
-    username = session["username"]
 
+    username = session["username"]
     data = generate_revenue_day_export_data(username, date)
 
     output = StringIO()
     writer = csv.writer(output)
 
-    # Header
     writer.writerow(["Revenue Report"])
     writer.writerow(["Date", data["date"]])
     writer.writerow([])
-    
-    # Totals
+
     writer.writerow(["Totals"])
     writer.writerow(["MPesa (Gross)", data["mpesa_total"]])
-    writer.writerow(["Manual Split", data["manual_total"]])
+    writer.writerow(["Cash", data["manual_total"]])
     writer.writerow(["Expenses", -data["expense_total"]])
     writer.writerow(["Net Revenue", data["net_total"]])
     writer.writerow([])
 
-    # Manual entries
     writer.writerow(["Manual Entries"])
     writer.writerow(["Category", "Amount"])
     for e in data["manual_entries"]:
@@ -811,7 +792,6 @@ def export_revenue_day_csv(date):
 
     writer.writerow([])
 
-    # Expenses
     writer.writerow(["Expenses"])
     writer.writerow(["Category", "Amount"])
     for e in data["expense_entries"]:
@@ -819,100 +799,40 @@ def export_revenue_day_csv(date):
 
     writer.writerow([])
 
-    # MPesa entries
+    # 🔒 No sender, no transaction ID
     writer.writerow(["MPesa Transactions"])
-    writer.writerow(["Sender", "Amount", "Transaction ID", "Time"])
+    writer.writerow(["Amount", "Time"])
     for m in data["mpesa_entries"]:
         writer.writerow([
-            m["sender"],
             m["amount"],
-            m["transaction_id"],
             m["created_at"]
         ])
 
     csv_data = output.getvalue()
     output.close()
 
-    response = Response(
-        csv_data,
-        mimetype="text/csv"
-    )
-    response.headers["Content-Disposition"] = (
-        f"attachment; filename=revenue_{date}.csv"
-    )
+    response = Response(csv_data, mimetype="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=revenue_{date}.csv"
 
     return response
 
 @app.route("/revenue/day/<date>/export/pdf")
 @login_required
 def export_revenue_day_pdf(date):
+
     username = session["username"]
-
-    manual_entries = load_revenue_entries_for_day(username, date)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    # 1️⃣ Get business identifiers
-    cursor.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cursor.fetchone()
-
-    mpesa_entries = []
-
-    if biz:
-        paybill = biz["paybill"]
-        account_number = biz["account_number"]
-
-        cursor.execute("""
-            SELECT amount, sender, created_at AT TIME ZONE 'Africa/Nairobi' AS created_at
-            FROM mpesa_transactions
-            WHERE
-                (
-                    (%s IS NOT NULL AND account_reference = %s)
-                    OR
-                    (%s IS NULL AND receiver = %s)
-                )
-              AND DATE(created_at) = %s
-            ORDER BY created_at ASC
-        """, (
-            account_number,
-            account_number,
-            account_number,
-            paybill,
-            date
-        ))
-
-        mpesa_entries = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
-    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
-    grand_total = manual_total + mpesa_total
-
-    # Expenses
-    expenses = get_expenses_for_day(username, date)
-    expense_total = float(expenses["total"])
-    expense_entries = expenses["entries"]
-
-    # Net revenue
-    net_total = grand_total - expense_total
+    data = generate_revenue_day_export_data(username, date)
 
     html = render_template(
         "revenue_day_pdf.html",
-        date=date,
-        manual_entries=manual_entries,
-        mpesa_entries=mpesa_entries,
-        expense_entries=expense_entries,
-        manual_total=manual_total,
-        mpesa_total=mpesa_total,
-        expense_total=expense_total,
-        net_total=net_total
+        date=data["date"],
+        manual_entries=data["manual_entries"],
+        mpesa_entries=data["mpesa_entries"],
+        expense_entries=data["expense_entries"],
+        manual_total=data["manual_total"],
+        mpesa_total=data["mpesa_total"],
+        expense_total=data["expense_total"],
+        net_total=data["net_total"]
     )
 
     pdf_buffer = io.BytesIO()

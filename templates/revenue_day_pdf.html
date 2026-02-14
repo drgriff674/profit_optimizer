@@ -7,30 +7,46 @@
       font-family: Arial, sans-serif;
       font-size: 12px;
     }
+
     h1 {
       text-align: center;
+      margin-bottom: 5px;
     }
-    table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  table-layout: fixed; /* 🔑 critical for PDFs */
-}
 
-th, td {
-  border: 1px solid #333;
-  padding: 6px;
-  text-align: left;
-  vertical-align: top;
-  font-size: 11px;
-  max-width: 0;
-  white-space: normal;
- }
+    .subtitle {
+      text-align: center;
+      font-size: 11px;
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 6px;
+      font-size: 11px;
+      word-wrap: break-word;
+    }
+
     th {
       background: #f0f0f0;
     }
+
     .section {
       margin-top: 20px;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .bold {
+      font-weight: bold;
     }
   </style>
 </head>
@@ -38,29 +54,47 @@ th, td {
 <body>
 
 <h1>Revenue Report</h1>
-<p><strong>Date:</strong> {{ date }}</p>
+<div class="subtitle">
+  Date: {{ date }}
+</div>
 
 <div class="section">
-  <h3>Totals</h3>
+  <h3>Financial Summary</h3>
   <table>
-    <tr><td>Manual</td><td>{{ manual_total }}</td></tr>
-<tr><td>MPesa (Gross)</td><td>{{ mpesa_total }}</td></tr>
-<tr><td>Expenses</td><td>- {{ expense_total }}</td></tr>
-<tr>
-  <td><strong>Net Revenue</strong></td>
-  <td><strong>{{ net_total }}</strong></td>
-</tr>
+    <tr>
+      <td>MPesa (Gross)</td>
+      <td class="right">KSh {{ "%.2f"|format(mpesa_total) }}</td>
+    </tr>
+    <tr>
+      <td>Cash</td>
+      <td class="right">KSh {{ "%.2f"|format(manual_total) }}</td>
+    </tr>
+    <tr>
+      <td>Expenses</td>
+      <td class="right">- KSh {{ "%.2f"|format(expense_total) }}</td>
+    </tr>
+    <tr>
+      <td class="bold">Net Revenue</td>
+      <td class="right bold">KSh {{ "%.2f"|format(net_total) }}</td>
+    </tr>
   </table>
 </div>
 
 <div class="section">
-  <h3>Manual Entries</h3>
+  <h3>Cash Breakdown</h3>
   <table>
-    <tr><th>Category</th><th>Amount (KSh)</th></tr>
+    <tr>
+      <th>Category</th>
+      <th class="right">Amount (KSh)</th>
+    </tr>
     {% for e in manual_entries %}
       <tr>
         <td>{{ e.category }}</td>
-        <td>{{ e.amount }}</td>
+        <td class="right">{{ "%.2f"|format(e.amount) }}</td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="2">No manual entries</td>
       </tr>
     {% endfor %}
   </table>
@@ -69,38 +103,39 @@ th, td {
 <div class="section">
   <h3>Expenses</h3>
   <table>
-    <tr><th>Category</th><th>Amount (KSh)</th></tr>
+    <tr>
+      <th>Category</th>
+      <th class="right">Amount (KSh)</th>
+    </tr>
     {% for e in expense_entries %}
       <tr>
         <td>{{ e.category }}</td>
-        <td>- {{ e.amount }}</td>
+        <td class="right">- {{ "%.2f"|format(e.amount) }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="2">No expenses recorded</td></tr>
+      <tr>
+        <td colspan="2">No expenses recorded</td>
+      </tr>
     {% endfor %}
   </table>
 </div>
 
 <div class="section">
-  <h3>MPesa Transactions</h3>
+  <h3>MPesa Transactions (Gross Summary)</h3>
   <table>
     <tr>
-  <th style="width: 50%;">Sender</th>
-  <th style="width: 20%;">Amount (KSh)</th>
-  <th style="width: 30%;">Time</th>
-</tr>
+      <th class="right">Amount (KSh)</th>
+      <th>Time</th>
+    </tr>
     {% for m in mpesa_entries %}
       <tr>
-        <td>
-         <div style="word-wrap: break-word; font-size: 10px;">
-           {{ m.sender }}
-         </div>
-        </td>
-        <td>{{ m.amount }}</td>
+        <td class="right">{{ "%.2f"|format(m.amount) }}</td>
         <td>{{ m.created_at }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="3">No MPesa transactions</td></tr>
+      <tr>
+        <td colspan="2">No MPesa transactions</td>
+      </tr>
     {% endfor %}
   </table>
 </div>
