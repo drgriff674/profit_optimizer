@@ -314,6 +314,8 @@ def get_connection():
 
 # ✅ Flask app setup
 app = Flask(__name__)
+print ("Initializing database on startup...")
+init_db()
 cache = Cache(app, config={
     "CACHE_TYPE": "SimpleCache",  # safe for localhost
     "CACHE_DEFAULT_TIMEOUT": 300  # 5 minutes
