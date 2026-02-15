@@ -913,17 +913,28 @@ def export_revenue_day_pdf(date):
     username = session["username"]
     data = generate_revenue_day_export_data(username, date)
 
+    # --- SAFE VALUES ---
+    manual_entries = data.get("manual_entries", [])
+    mpesa_entries = data.get("mpesa_entries", [])
+    expense_entries = data.get("expense_entries", [])
+
+    cash_total = data.get("cash_total", 0)
+    mpesa_total = data.get("mpesa_total", 0)
+    gross_total = data.get("gross_total", 0)
+    expense_total = data.get("expense_total", 0)
+    net_total = data.get("net_total", 0)
+
     html = render_template(
         "revenue_day_pdf.html",
-        date=data["date"],
-        manual_entries=data["manual_entries"],
-        mpesa_entries=data["mpesa_entries"],
-        expense_entries=data["expense_entries"],
-        cash_total=data["cash_total"],
-        mpesa_total=data["mpesa_total"],
-        gross_total=data["gross_total"],
-        expense_total=data["expense_total"],
-        net_total=data["net_total"]
+        date=data.get("date"),
+        manual_entries=manual_entries,
+        mpesa_entries=mpesa_entries,
+        expense_entries=expense_entries,
+        cash_total=cash_total,
+        mpesa_total=mpesa_total,
+        gross_total=gross_total,
+        expense_total=expense_total,
+        net_total=net_total
     )
 
     pdf_buffer = io.BytesIO()
