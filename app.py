@@ -637,7 +637,7 @@ def dashboard():
     kpis["total_profit"] = f"KSh {profit:,.0f}"
     kpis["avg_profit"] = f"KSh {profit:,.0f}"
     kpis["total_expenses"] = f"KSh {total_expenses:,.0f}"
-    kpis["largest_expense"] = "N/A"
+    kpis["largest_expense"] = snapshot.get("largest_expense","N/A")
 
     live_total_revenue = total_revenue
 
