@@ -209,8 +209,9 @@ def init_db():
         total_revenue NUMERIC(12,2) DEFAULT 0,
         total_expenses NUMERIC(12,2) DEFAULT 0,
         total_profit NUMERIC(12,2) DEFAULT 0,
+        largest_expense TEXT DEFAULT 'N/A',
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+    );
     """)
 
     conn.commit()
@@ -987,16 +988,29 @@ def update_dashboard_snapshot(username):
     profit=revenue-expenses
 
     cursor.execute("""
+        SELECT COALESCE(category,'Uncategorized') AS category
+        FROM expenses
+        WHERE username=%s
+        GROUP BY category
+        ORDER BY SUM(amount) DESC
+        LIMIT 1
+    """,(username,))
+    row = cursor.fetchone()
+
+    largest_expense = row["category"] if row else "N/A"
+
+    cursor.execute("""
         INSERT INTO dashboard_snapshot
-        (username,total_revenue,total_expenses,total_profit)
-        VALUES (%s,%s,%s,%s)
+        (username,total_revenue,total_expenses,total_profit,largest_expense)
+        VALUES (%s,%s,%s,%s,%s)
         ON CONFLICT(username)
         DO UPDATE SET
             total_revenue=EXCLUDED.total_revenue,
             total_expenses=EXCLUDED.total_expenses,
             total_profit=EXCLUDED.total_profit,
+            largest_expense=EXCLUDED.largest_expense,
             updated_at=CURRENT_TIMESTAMP
-    """,(username,revenue,expenses,profit))
+    """,(username,revenue,expenses,profit,largest_expense))
 
     conn.commit()
     cursor.close()
