@@ -166,66 +166,21 @@ def generate_revenue_day_export_data(username, revenue_date):
         gross_total=cash_total + mpesa_total
         net_total=gross_total - expense_total
 
-    return {
-        "date": revenue_date,
-        "manual_entries": manual_entries,
-        "expense_entries": expenses["entries"],
-        "cash_total": cash_total,
-        "mpesa_total": mpesa_total,
-        "expense_total": expense_total,
-        "gross_total": gross_total,
-        "net_total": net_total,
-    }
+    # calculate manual_total (missing before)
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
 
-def generate_revenue_day_export_data(username, revenue_date):
+    # get MPesa entries list (export needs this!)
+    mpesa_entries = []
 
-    manual_entries = load_revenue_entries_for_day(username, revenue_date)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    # --- business identifiers ---
-    cursor.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cursor.fetchone()
-
-    # --- locked day check ---
-    cursor.execute("""
-        SELECT locked, total_amount
-        FROM revenue_days
-        WHERE username=%s AND revenue_date=%s
-        LIMIT 1
-    """,(username,revenue_date))
-
-    day = cursor.fetchone()
-
-    is_locked = day["locked"] if day else False
-    locked_total = float(day["total_amount"]) if day else 0
-
-    # --- cash ---
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount),0) AS cash_total
-        FROM cash_revenue
-        WHERE username=%s AND revenue_date=%s
-    """,(username,revenue_date))
-
-    row=cursor.fetchone()
-    cash_total=float(row["cash_total"]) if row else 0.0
-
-    mpesa_total = 0
-
-    # --- mpesa ONLY if unlocked ---
-    if not is_locked and biz:
+    if biz:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
         paybill=biz["paybill"]
         account_number=biz["account_number"]
 
-        cursor.execute("""
-            SELECT COALESCE(SUM(amount),0) AS mpesa_total
+        cur.execute("""
+            SELECT amount, created_at
             FROM mpesa_transactions
             WHERE status='confirmed'
               AND (
@@ -233,52 +188,84 @@ def generate_revenue_day_export_data(username, revenue_date):
                     OR
                     (%s IS NULL AND receiver=%s)
                   )
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
+              AND DATE(created_at AT TIME ZONE 'Africa/Nairobi')=%s
+            ORDER BY created_at ASC
         """,(
             account_number,
             account_number,
             account_number,
             paybill,
-            revenue_date,
             revenue_date
         ))
 
-        row=cursor.fetchone()
-        mpesa_total=float(row["mpesa_total"]) if row else 0.0
-
-    cursor.close()
-    conn.close()
-
-    # --- expenses ---
-    expenses = get_expenses_for_day(username, revenue_date)
-    expense_total=float(expenses["total"])
-
-    # --- FINAL TOTALS ---
-    if is_locked:
-
-        gross_total = locked_total
-        net_total = locked_total
-
-        # reconstruct mpesa safely
-        mpesa_total=max(0, locked_total - cash_total + expense_total)
-
-    else:
-
-        gross_total=cash_total + mpesa_total
-        net_total=gross_total - expense_total
+        mpesa_entries=cur.fetchall()
+        cur.close()
+        conn.close()
 
     return {
         "date": revenue_date,
+
+        # REQUIRED FOR EXPORT + AI
         "manual_entries": manual_entries,
-        "expense_entries": expenses["entries"],
-        "cash_total": cash_total,
+        "manual_total": manual_total,
+
+        "mpesa_entries": mpesa_entries,
         "mpesa_total": mpesa_total,
+
+        "expense_entries": expenses["entries"],
         "expense_total": expense_total,
+
+        "cash_total": cash_total,
         "gross_total": gross_total,
         "net_total": net_total,
     }
+def generate_revenue_ai_summary(username, date):
 
+    data = generate_revenue_day_export_data(username, date)
+
+    cash_total = data["cash_total"]
+    mpesa_total = data["mpesa_total"]
+    expense_total = data["expense_total"]
+    manual_entries = data["manual_entries"]
+
+    if not AI_ENABLED or client is None:
+        return "AI summary unavailable. OpenAI API key not configured."
+
+    categories={}
+    for e in manual_entries:
+        categories[e["category"]] = categories.get(e["category"],0)+float(e["amount"])
+
+    category_lines="\n".join(
+        f"- {k}: KSh {v:,.0f}" for k,v in categories.items()
+    ) or "No manual category splits recorded."
+
+    gross_total=cash_total+mpesa_total
+    net_total=gross_total-expense_total
+
+    prompt=f"""
+You are a financial analyst.
+
+Date: {date}
+
+Cash revenue: KSh {cash_total:,.0f}
+MPesa revenue: KSh {mpesa_total:,.0f}
+Gross revenue: KSh {gross_total:,.0f}
+Expenses: KSh {expense_total:,.0f}
+Net revenue: KSh {net_total:,.0f}
+
+Revenue category breakdown:
+{category_lines}
+
+Explain performance under 90 words.
+Be factual.
+"""
+
+    response=client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role":"user","content":prompt}]
+    )
+
+    return response.choices[0].message.content.strip()
 
 def login_required(f):
     @wraps(f)
