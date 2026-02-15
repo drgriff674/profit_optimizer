@@ -422,5 +422,15 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(pollLatestPayment, 5000);
 </script>
 
+<script>
+setInterval(function(){
+    fetch("/api/dashboard-snapshot")
+    .then(r=>r.json())
+    .then(data=>{
+        document.getElementById("profit").innerText=data.total_profit;
+    });
+},5000);
+</script>
+
 </body>
 </html>

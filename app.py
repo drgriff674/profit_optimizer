@@ -65,6 +65,8 @@ from database import(
     get_dashboard_intelligence_snapshot,
     get_live_financial_performance,
     get_locked_revenue_for_forecast,
+    get_dashboard_snapshot,
+    update_dashboard_snapshot,
 )
 import pytz
 from flask_caching import Cache
@@ -591,9 +593,12 @@ def dashboard():
 
     username = session["username"]
 
+    latest_payment = None
+
 
     # 🔹 Cached dashboard data
     cached_data = get_dashboard_data(username)
+    snapshot = get_dashboard_snapshot(username)
     notifications = []
     forecast_data = []
     last_synced = None
@@ -618,109 +623,23 @@ def dashboard():
         "largest_expense": "N/A",
     }
 
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
-
-    # 🔹 Fetch user's business (paybill & account number)
-    biz = get_business_info(username)
-
-    paybill = biz["paybill"] if biz else None
-    account_number = biz["account_number"] if biz else None
-
-    # 🔹 MPesa Revenue (USER-SCOPED)
-    mpesa_total = 0
-
-    if paybill:
-        cur.execute("""
-            SELECT COALESCE(SUM(amount), 0) AS mpesa_total
-            FROM mpesa_transactions
-            WHERE transaction_type = 'C2B Payment'
-              AND (
-                    (%s IS NOT NULL AND account_reference = %s)
-                    OR
-                    (%s IS NULL AND receiver = %s)
-              )
-        """, (
-            account_number,
-            account_number,
-            account_number,
-            paybill
-        ))
-        row = cur.fetchone()
-        mpesa_total = float(row["mpesa_total"]) if row else 0
-
-    # 🔹 Cash Revenue (NEW)
-    cur.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS cash_total
-        FROM cash_revenue
-        WHERE username = %s
-    """, (username,))
-    row = cur.fetchone()
-    cash_total=float(row["cash_total"]) if row and "cash_total" in row else 0
-
-    live_total_revenue = mpesa_total + cash_total
-
-    latest_payment = None
-
-    if paybill:
-        cur.execute("""
-            SELECT id, amount, created_at AT TIME ZONE 'Africa/Nairobi' AS created_at
-            FROM mpesa_transactions
-            WHERE seen = FALSE
-            AND (
-                (%s IS NOT NULL AND account_reference = %s)
-                OR
-                (%s IS NULL AND receiver = %s)
-            )
-            ORDER BY created_at DESC
-            LIMIT 1
-        """, (
-            account_number,
-            account_number,
-            account_number,
-            paybill
-        ))
-
-        latest_payment = cur.fetchone()
-
-        # Mark as seen immediately (so it doesn't repeat)
-        if latest_payment:
-            cur.execute(
-                "UPDATE mpesa_transactions SET seen = TRUE WHERE id = %s",
-                (latest_payment["id"],)
-            )
-            conn.commit()    
-
-    # 🔹 Expenses — SAFE SANITIZATION
-    cur.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS total_expenses
-        FROM expenses
-        WHERE username = %s
-    """, (username,))
-    total_expenses = float(cur.fetchone()["total_expenses"])
-    # 🔹 Largest expense category — SAFE
-    cur.execute("""
-        SELECT
-            COALESCE(category, 'Uncategorized') AS category,
-            SUM(amount) AS total
-        FROM expenses
-        WHERE username = %s
-        GROUP BY category
-        ORDER BY total DESC
-        LIMIT 1
-    """, (username,))
-    largest = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    profit = (mpesa_total + cash_total)-total_expenses
     
     
+    if not snapshot:
+        snapshot = {}
+
+    total_revenue = snapshot.get("total_revenue", 0)
+    total_expenses = snapshot.get("total_expenses", 0)
+    profit = snapshot.get("total_profit", 0)
+
     kpis["total_profit"] = f"KSh {profit:,.0f}"
     kpis["avg_profit"] = f"KSh {profit:,.0f}"
-    kpis["total_expenses"] = f"KSh{total_expenses:,.0f}"
-    kpis["largest_expense"] = largest["category"] if largest else "N/A"
+    kpis["total_expenses"] = f"KSh {total_expenses:,.0f}"
+    kpis["largest_expense"] = "N/A"
 
+    live_total_revenue = total_revenue
+
+    
     # ===============================
     # 🤖 AI INSIGHTS
     # ===============================
@@ -767,6 +686,15 @@ def dashboard():
         forecast_status=forecast_status,
         live_total_revenue=live_total_revenue
     )
+
+@app.route("/api/dashboard-snapshot")
+@login_required
+def api_dash():
+
+    username=session["username"]
+    snap=get_dashboard_snapshot(username)
+
+    return jsonify(snap)
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
 @login_required
@@ -1802,6 +1730,7 @@ def payment_confirm():
 
         if username:
             ensure_revenue_day_exists(username, datetime.utcnow().date())
+            update_dashboard_snapshot(username)
             cache.delete_memoized(get_dashboard_data, username)
         
 
@@ -3594,7 +3523,11 @@ def inventory_adjust():
 
 
 if __name__ == "__main__":
-    import os
+
+    print("Initializing database...")
+    init_db()   # ← THIS CREATES ALL TABLES INCLUDING dashboard_snapshot
+
     port = int(os.environ.get("PORT", 5000))
-    print("app is about to start listening on port",port)
+    print("app is about to start listening on port", port)
+
     app.run(host="0.0.0.0", port=port)

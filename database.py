@@ -202,6 +202,16 @@ def init_db():
         UNIQUE (username, revenue_date)
     );
     """)
+    #dashboard snapshot table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS dashboard_snapshot (
+        username TEXT PRIMARY KEY,
+        total_revenue NUMERIC(12,2) DEFAULT 0,
+        total_expenses NUMERIC(12,2) DEFAULT 0,
+        total_profit NUMERIC(12,2) DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
     conn.commit()
     cursor.close()
@@ -935,3 +945,80 @@ def load_revenue_days(username):
     cursor.close()
     conn.close()
     return days
+
+def update_dashboard_snapshot(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+
+    # CASH TOTAL
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount),0) AS total
+        FROM cash_revenue
+        WHERE username=%s
+    """,(username,))
+    cash=float(cursor.fetchone()["total"])
+
+    # MPESA TOTAL
+    cursor.execute("""
+        SELECT COALESCE(SUM(m.amount),0) AS total
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+                (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+                OR
+                (b.account_number IS NULL AND m.receiver=b.paybill)
+             )
+        WHERE b.username=%s
+          AND m.status='confirmed'
+    """,(username,))
+    mpesa=float(cursor.fetchone()["total"])
+
+    revenue=cash+mpesa
+
+    # EXPENSE TOTAL
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount),0) AS total
+        FROM expenses
+        WHERE username=%s
+    """,(username,))
+    expenses=float(cursor.fetchone()["total"])
+
+    profit=revenue-expenses
+
+    cursor.execute("""
+        INSERT INTO dashboard_snapshot
+        (username,total_revenue,total_expenses,total_profit)
+        VALUES (%s,%s,%s,%s)
+        ON CONFLICT(username)
+        DO UPDATE SET
+            total_revenue=EXCLUDED.total_revenue,
+            total_expenses=EXCLUDED.total_expenses,
+            total_profit=EXCLUDED.total_profit,
+            updated_at=CURRENT_TIMESTAMP
+    """,(username,revenue,expenses,profit))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_dashboard_snapshot(username):
+    conn=get_db_connection(cursor_factory=RealDictCursor)
+    cur=conn.cursor()
+
+    cur.execute(
+        "SELECT * FROM dashboard_snapshot WHERE username=%s",
+        (username,)
+    )
+
+    row=cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row or {
+        "total_revenue":0,
+        "total_expenses":0,
+        "total_profit":0
+    }
