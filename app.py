@@ -82,7 +82,7 @@ def generate_revenue_day_export_data(username, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # 1️⃣ Get business identifiers
+    # --- business identifiers ---
     cursor.execute("""
         SELECT paybill, account_number
         FROM businesses
@@ -91,79 +91,84 @@ def generate_revenue_day_export_data(username, revenue_date):
     """, (username,))
     biz = cursor.fetchone()
 
-    mpesa_entries = []
+    # --- locked day check ---
+    cursor.execute("""
+        SELECT locked, total_amount
+        FROM revenue_days
+        WHERE username=%s AND revenue_date=%s
+        LIMIT 1
+    """,(username,revenue_date))
 
-    if biz:
-        paybill = biz["paybill"]
-        account_number = biz["account_number"]
+    day = cursor.fetchone()
+
+    is_locked = day["locked"] if day else False
+    locked_total = float(day["total_amount"]) if day else 0
+
+    # --- cash ---
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount),0) AS cash_total
+        FROM cash_revenue
+        WHERE username=%s AND revenue_date=%s
+    """,(username,revenue_date))
+
+    row=cursor.fetchone()
+    cash_total=float(row["cash_total"]) if row else 0.0
+
+    mpesa_total = 0
+
+    # --- mpesa ONLY if unlocked ---
+    if not is_locked and biz:
+
+        paybill=biz["paybill"]
+        account_number=biz["account_number"]
 
         cursor.execute("""
-            SELECT amount, created_at
+            SELECT COALESCE(SUM(amount),0) AS mpesa_total
             FROM mpesa_transactions
-            WHERE DATE(created_at) = %s
+            WHERE status='confirmed'
               AND (
-                    (%s IS NOT NULL AND account_reference = %s)
+                    (%s IS NOT NULL AND account_reference=%s)
                     OR
-                    (%s IS NULL AND receiver = %s)
-              )
-            ORDER BY created_at ASC
-        """, (
+                    (%s IS NULL AND receiver=%s)
+                  )
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
+        """,(
+            account_number,
+            account_number,
+            account_number,
+            paybill,
             revenue_date,
-            account_number,
-            account_number,
-            account_number,
-            paybill
+            revenue_date
         ))
 
-        mpesa_entries = cursor.fetchall()
-
-    # 2️⃣ 🔑 Get LOCKED day total (source of truth)
-    cursor.execute("""
-        SELECT total_amount
-        FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-          AND locked = TRUE
-        LIMIT 1
-    """, (username, revenue_date))
-
-    day_row = cursor.fetchone()
-
-    # 💵 CASH revenue for the day (NOT manual splits)
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS cash_total
-        FROM cash_revenue
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-
-    row = cursor.fetchone()
-    cash_total = float(row["cash_total"]) if row else 0.0
-
+        row=cursor.fetchone()
+        mpesa_total=float(row["mpesa_total"]) if row else 0.0
 
     cursor.close()
     conn.close()
 
-    # --- Totals ---
-
-    # MPesa total (real payments received digitally)
-    mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
-
-
-    # Expenses
+    # --- expenses ---
     expenses = get_expenses_for_day(username, revenue_date)
-    expense_total = float(expenses["total"])
+    expense_total=float(expenses["total"])
 
-    # Gross revenue
-    gross_total = cash_total + mpesa_total
+    # --- FINAL TOTALS ---
+    if is_locked:
 
-    # Net revenue (profit)
-    net_total = gross_total - expense_total
+        gross_total = locked_total
+        net_total = locked_total
+
+        # reconstruct mpesa safely
+        mpesa_total=max(0, locked_total - cash_total + expense_total)
+
+    else:
+
+        gross_total=cash_total + mpesa_total
+        net_total=gross_total - expense_total
 
     return {
         "date": revenue_date,
         "manual_entries": manual_entries,
-        "mpesa_entries": mpesa_entries,
         "expense_entries": expenses["entries"],
         "cash_total": cash_total,
         "mpesa_total": mpesa_total,
@@ -172,62 +177,109 @@ def generate_revenue_day_export_data(username, revenue_date):
         "net_total": net_total,
     }
 
-def generate_revenue_ai_summary(
-        date,
-        cash_total,
-        mpesa_total,
-        expense_total,
-        manual_entries):
+def generate_revenue_day_export_data(username, revenue_date):
 
-    if not AI_ENABLED or client is None:
-        return "AI summary unavailable. OpenAI API key not configured."
+    manual_entries = load_revenue_entries_for_day(username, revenue_date)
 
-    # --- category breakdown ONLY for insight ---
-    categories = {}
-    for e in manual_entries:
-        categories[e["category"]] = (
-            categories.get(e["category"], 0)
-            + float(e["amount"])
-        )
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    category_lines = "\n".join(
-        f"- {k}: KSh {v:,.0f}" for k, v in categories.items()
-    ) or "No manual category splits recorded."
+    # --- business identifiers ---
+    cursor.execute("""
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+    biz = cursor.fetchone()
 
-    # --- business totals (CORRECT LOGIC) ---
-    gross_total = cash_total + mpesa_total
-    net_total = gross_total - expense_total
+    # --- locked day check ---
+    cursor.execute("""
+        SELECT locked, total_amount
+        FROM revenue_days
+        WHERE username=%s AND revenue_date=%s
+        LIMIT 1
+    """,(username,revenue_date))
 
-    prompt = f"""
-You are a financial analyst.
+    day = cursor.fetchone()
 
-Analyze this daily business performance.
+    is_locked = day["locked"] if day else False
+    locked_total = float(day["total_amount"]) if day else 0
 
-Date: {date}
+    # --- cash ---
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount),0) AS cash_total
+        FROM cash_revenue
+        WHERE username=%s AND revenue_date=%s
+    """,(username,revenue_date))
 
-Cash revenue: KSh {cash_total:,.0f}
-MPesa revenue: KSh {mpesa_total:,.0f}
+    row=cursor.fetchone()
+    cash_total=float(row["cash_total"]) if row else 0.0
 
-Gross revenue (cash + MPesa): KSh {gross_total:,.0f}
-Expenses: KSh {expense_total:,.0f}
-Net revenue: KSh {net_total:,.0f}
+    mpesa_total = 0
 
-Revenue category breakdown:
-{category_lines}
+    # --- mpesa ONLY if unlocked ---
+    if not is_locked and biz:
 
-Tasks:
-- Explain performance in simple business language
-- Mention unusual spikes or risks if present
-- Keep under 90 words
-- Be factual, not motivational
-"""
+        paybill=biz["paybill"]
+        account_number=biz["account_number"]
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount),0) AS mpesa_total
+            FROM mpesa_transactions
+            WHERE status='confirmed'
+              AND (
+                    (%s IS NOT NULL AND account_reference=%s)
+                    OR
+                    (%s IS NULL AND receiver=%s)
+                  )
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
+              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
+        """,(
+            account_number,
+            account_number,
+            account_number,
+            paybill,
+            revenue_date,
+            revenue_date
+        ))
 
-    return response.choices[0].message.content.strip()
+        row=cursor.fetchone()
+        mpesa_total=float(row["mpesa_total"]) if row else 0.0
+
+    cursor.close()
+    conn.close()
+
+    # --- expenses ---
+    expenses = get_expenses_for_day(username, revenue_date)
+    expense_total=float(expenses["total"])
+
+    # --- FINAL TOTALS ---
+    if is_locked:
+
+        gross_total = locked_total
+        net_total = locked_total
+
+        # reconstruct mpesa safely
+        mpesa_total=max(0, locked_total - cash_total + expense_total)
+
+    else:
+
+        gross_total=cash_total + mpesa_total
+        net_total=gross_total - expense_total
+
+    return {
+        "date": revenue_date,
+        "manual_entries": manual_entries,
+        "expense_entries": expenses["entries"],
+        "cash_total": cash_total,
+        "mpesa_total": mpesa_total,
+        "expense_total": expense_total,
+        "gross_total": gross_total,
+        "net_total": net_total,
+    }
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -996,27 +1048,31 @@ def revenue_day_detail(date):
             account_number = biz["account_number"]
 
             cursor.execute("""  
-            SELECT COALESCE(SUM(amount), 0) AS mpesa_total  
-            FROM mpesa_transactions  
-            WHERE status = 'confirmed'  
-              AND (  
-                    (%s IS NOT NULL AND account_reference = %s)  
-                    OR  
-                    (%s IS NULL AND receiver = %s)  
-                )  
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date  
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')  
-        """, (  
-            account_number,  
-            account_number,  
-            account_number,  
-            paybill,  
-            date,  
-            date  
-        ))
+                SELECT COALESCE(SUM(amount), 0) AS mpesa_total  
+                FROM mpesa_transactions  
+                WHERE status = 'confirmed'  
+                  AND (  
+                        (%s IS NOT NULL AND account_reference = %s)  
+                        OR  
+                        (%s IS NULL AND receiver = %s)  
+                    )  
+                  AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date  
+                  AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')  
+            """, (  
+                account_number,  
+                account_number,  
+                account_number,  
+                paybill,  
+                date,  
+                date  
+            ))
 
-        row = cursor.fetchone() 
-        mpesa_total = float(row["mpesa_total"]) if row else 0.0
+            row = cursor.fetchone() 
+            mpesa_total = float(row["mpesa_total"]) if row else 0.0
+            
+        else:
+            mpesa_total = 0.0
+        
         
             
         cursor.close()
