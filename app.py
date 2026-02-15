@@ -832,24 +832,27 @@ def delete_revenue_day(date):
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
 def generate_ai_summary_for_day_route(date):
+
     if not AI_ENABLED:
-        flash("AI summary is unavailable...")
-        return redirect(...)
+        flash("AI summary unavailable")
+        return redirect(url_for("revenue_day_detail", date=date))
 
     username = session["username"]
 
     data = generate_revenue_day_export_data(username, date)
 
     summary = generate_revenue_ai_summary(
-        date,
-        data["manual_total"],
-        data["mpesa_total"],
-        data["manual_entries"]
+        date=date,
+        cash_total=data["cash_total"],
+        mpesa_total=data["mpesa_total"],
+        expense_total=data["expense_total"],
+        manual_entries=data["manual_entries"]
     )
 
     save_ai_summary_for_day(username, date, summary)
 
-    # 🔒 LOCK DAY + SNAPSHOT TOTAL
+    # LOCK using REAL BUSINESS TOTAL (gross revenue)
+    locked_total = data["gross_total"]
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -860,72 +863,14 @@ def generate_ai_summary_for_day_route(date):
             total_amount = %s
         WHERE username = %s
           AND revenue_date = %s
-    """, (
-        data["manual_total"] + data["mpesa_total"],
-        username,
-        date
-    ))
+    """, (locked_total, username, date))
 
     conn.commit()
     cur.close()
     conn.close()
-    
 
     flash("AI summary generated.")
     return redirect(url_for("revenue_day_detail", date=date))
-
-
-@app.route("/revenue/day/<date>/export/csv")
-@login_required
-def export_revenue_day_csv(date):
-
-    username = session["username"]
-    data = generate_revenue_day_export_data(username, date)
-
-    output = StringIO()
-    writer = csv.writer(output)
-
-    writer.writerow(["Revenue Report"])
-    writer.writerow(["Date", data["date"]])
-    writer.writerow([])
-
-    writer.writerow(["Totals"])
-    writer.writerow(["MPesa (Gross)", data["mpesa_total"]])
-    writer.writerow(["Cash", data["manual_total"]])
-    writer.writerow(["Expenses", -data["expense_total"]])
-    writer.writerow(["Net Revenue", data["net_total"]])
-    writer.writerow([])
-
-    writer.writerow(["Manual Entries"])
-    writer.writerow(["Category", "Amount"])
-    for e in data["manual_entries"]:
-        writer.writerow([e["category"], e["amount"]])
-
-    writer.writerow([])
-
-    writer.writerow(["Expenses"])
-    writer.writerow(["Category", "Amount"])
-    for e in data["expense_entries"]:
-        writer.writerow([e["category"], -e["amount"]])
-
-    writer.writerow([])
-
-    # 🔒 No sender, no transaction ID
-    writer.writerow(["MPesa Transactions"])
-    writer.writerow(["Amount", "Time"])
-    for m in data["mpesa_entries"]:
-        writer.writerow([
-            m["amount"],
-            m["created_at"]
-        ])
-
-    csv_data = output.getvalue()
-    output.close()
-
-    response = Response(csv_data, mimetype="text/csv")
-    response.headers["Content-Disposition"] = f"attachment; filename=revenue_{date}.csv"
-
-    return response
 
 @app.route("/revenue/day/<date>/export/pdf")
 @login_required
@@ -940,8 +885,9 @@ def export_revenue_day_pdf(date):
         manual_entries=data["manual_entries"],
         mpesa_entries=data["mpesa_entries"],
         expense_entries=data["expense_entries"],
-        manual_total=data["manual_total"],
+        cash_total=data["cash_total"],
         mpesa_total=data["mpesa_total"],
+        gross_total=data["gross_total"],
         expense_total=data["expense_total"],
         net_total=data["net_total"]
     )
@@ -954,6 +900,7 @@ def export_revenue_day_pdf(date):
     response.headers["Content-Disposition"] = f"attachment; filename=revenue_{date}.pdf"
 
     return response
+
 
 @app.route("/revenue/day/<date>")
 @login_required
