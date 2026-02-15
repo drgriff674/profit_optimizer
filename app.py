@@ -872,6 +872,53 @@ def generate_ai_summary_for_day_route(date):
     flash("AI summary generated.")
     return redirect(url_for("revenue_day_detail", date=date))
 
+@app.route("/revenue/day/<date>/export/csv")
+@login_required
+def export_revenue_day_csv(date):
+
+    username = session["username"]
+    data = generate_revenue_day_export_data(username, date)
+
+    output = StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow(["Revenue Report"])
+    writer.writerow(["Date", data["date"]])
+    writer.writerow([])
+
+    writer.writerow(["Totals"])
+    writer.writerow(["Cash", data["cash_total"]])
+    writer.writerow(["MPesa", data["mpesa_total"]])
+    writer.writerow(["Gross Revenue", data["gross_total"]])
+    writer.writerow(["Expenses", -data["expense_total"]])
+    writer.writerow(["Net Revenue", data["net_total"]])
+    writer.writerow([])
+
+    writer.writerow(["Manual Split Entries"])
+    writer.writerow(["Category", "Amount"])
+    for e in data["manual_entries"]:
+        writer.writerow([e["category"], e["amount"]])
+
+    writer.writerow([])
+    writer.writerow(["Expenses"])
+    writer.writerow(["Category", "Amount"])
+    for e in data["expense_entries"]:
+        writer.writerow([e["category"], -e["amount"]])
+
+    writer.writerow([])
+    writer.writerow(["MPesa Transactions"])
+    writer.writerow(["Amount", "Time"])
+    for m in data["mpesa_entries"]:
+        writer.writerow([m["amount"], m["created_at"]])
+
+    csv_data = output.getvalue()
+    output.close()
+
+    response = Response(csv_data, mimetype="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=revenue_{date}.csv"
+
+    return response
+
 @app.route("/revenue/day/<date>/export/pdf")
 @login_required
 def export_revenue_day_pdf(date):
