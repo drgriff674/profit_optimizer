@@ -665,21 +665,7 @@ def get_dashboard_revenue_intelligence(username):
     """, (username,))
     anomaly_count = cursor.fetchone()["anomaly_days"]
 
-    # --- Forecast readiness & confidence ---
-    locked_manual_days_count = len(manual_days)
-
-    if locked_manual_days_count >= 7:
-        forecast_ready = True
-        confidence_label = "🟢 Forecast ready — high confidence"
-    elif locked_manual_days_count >= 5:
-        forecast_ready = False
-        confidence_label = "🟡 Almost there — a few more locked days needed"
-    elif locked_manual_days_count >= 3:
-        forecast_ready = False
-        confidence_label = "🟠 Learning in progress — limited data"
-    else:
-        forecast_ready = False
-        confidence_label = "🔴 Forecast locked — system still learning"
+    
 
     cursor.close()
     conn.close()
@@ -688,58 +674,72 @@ def get_dashboard_revenue_intelligence(username):
         "manual_days": manual_days,
         "mpesa_days": mpesa_days,
         "anomaly_days": anomaly_count,
-        "forecast_ready":forecast_ready,
-        "confidence_label":confidence_label,
     }
 
 def get_dashboard_intelligence_snapshot(username, days=7):
-    """
-    High-level intelligence summary for the dashboard.
-    Reads ONLY locked revenue days.
-    Used for AI reasoning & forecast readiness.
-    """
 
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()
 
-    # Locked revenue days in window
+    # ✅ TRUE locked days count
     cursor.execute("""
         SELECT
             COUNT(*) AS locked_days,
-            COALESCE(SUM(total_amount), 0) AS total_revenue
+            COALESCE(SUM(total_amount),0) AS total_revenue
         FROM revenue_days
         WHERE username = %s
           AND locked = TRUE
-          AND revenue_date >= CURRENT_DATE - INTERVAL '%s days'
+          AND revenue_date >= CURRENT_DATE - (%s * INTERVAL '1 day')
     """, (username, days))
 
     row = cursor.fetchone()
-    locked_days = row["locked_days"] or 0
+
+    locked_days = int(row["locked_days"] or 0)
     total_revenue = float(row["total_revenue"] or 0)
 
-    # Anomaly days in window
+    # ✅ anomaly count
     cursor.execute("""
         SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
         FROM revenue_anomalies
         WHERE username = %s
-          AND revenue_date >= CURRENT_DATE - INTERVAL '%s days'
+          AND revenue_date >= CURRENT_DATE - (%s * INTERVAL '1 day')
     """, (username, days))
 
-    anomaly_days = cursor.fetchone()["anomaly_days"] or 0
+    anomaly_days = int(cursor.fetchone()["anomaly_days"] or 0)
 
     cursor.close()
     conn.close()
 
-    avg_daily_revenue = (
-        total_revenue / locked_days if locked_days > 0 else 0
-    )
+    avg_daily_revenue = total_revenue / locked_days if locked_days else 0
+
+    # 🧠 PROFESSIONAL FORECAST TIERS
+    if locked_days < 7:
+        confidence = "Insufficient"
+        horizon = 0
+        ready = False
+
+    elif locked_days < 14:
+        confidence = "Low"
+        horizon = 7
+        ready = True
+
+    elif locked_days < 30:
+        confidence = "Medium"
+        horizon = 30
+        ready = True
+
+    else:
+        confidence = "High"
+        horizon = 90
+        ready = True
 
     return {
-        "window_days": days,
         "locked_days": locked_days,
         "anomaly_days": anomaly_days,
         "avg_daily_revenue": avg_daily_revenue,
-        "ready_for_forecast": locked_days >= 30
+        "confidence": confidence,
+        "horizon": horizon,
+        "ready": ready
     }
 
 def get_locked_revenue_for_forecast(username):

@@ -475,7 +475,7 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
-@cache.memoize(timeout=10)
+@cache.memoize(timeout=120)
 def get_dashboard_data(username):
     data = {}
 
@@ -508,9 +508,9 @@ def dashboard():
 
     # 🔹 Cached dashboard data
     cached_data = get_dashboard_data(username)
-    notifications = cached_data.get("notifications", [])
-    forecast_data = cached_data.get("forecast_data", [])
-    last_synced = cached_data.get("last_synced")
+    notifications = []
+    forecast_data = []
+    last_synced = None
     intelligence = cached_data.get("intelligence",{})
     forecast_status = cached_data.get("forecast_status", {})
 
