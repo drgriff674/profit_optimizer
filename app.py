@@ -129,6 +129,18 @@ def generate_revenue_day_export_data(username, revenue_date):
 
     day_row = cursor.fetchone()
 
+    # 💵 CASH revenue for the day (NOT manual splits)
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0) AS cash_total
+        FROM cash_revenue
+        WHERE username = %s
+          AND revenue_date = %s
+    """, (username, date))
+
+    row = cursor.fetchone()
+    cash_total = float(row["cash_total"]) if row else 0.0
+
+
     cursor.close()
     conn.close()
 
@@ -137,8 +149,6 @@ def generate_revenue_day_export_data(username, revenue_date):
     # MPesa total (real payments received digitally)
     mpesa_total = sum(float(m["amount"]) for m in mpesa_entries)
 
-    # Cash total (manual entries added by user)
-    cash_total = sum(float(e["amount"]) for e in manual_entries)
 
     # Expenses
     expenses = get_expenses_for_day(username, revenue_date)
@@ -155,42 +165,60 @@ def generate_revenue_day_export_data(username, revenue_date):
         "manual_entries": manual_entries,
         "mpesa_entries": mpesa_entries,
         "expense_entries": expenses["entries"],
-        "manual_total": cash_total,
+        "cash_total": cash_total,
         "mpesa_total": mpesa_total,
         "expense_total": expense_total,
         "gross_total": gross_total,
         "net_total": net_total,
     }
 
-def generate_revenue_ai_summary(date, manual_total, mpesa_total, manual_entries):
+def generate_revenue_ai_summary(
+        date,
+        cash_total,
+        mpesa_total,
+        expense_total,
+        manual_entries):
+
     if not AI_ENABLED or client is None:
         return "AI summary unavailable. OpenAI API key not configured."
 
+    # --- category breakdown ONLY for insight ---
     categories = {}
     for e in manual_entries:
-        categories[e["category"]] = categories.get(e["category"], 0) + float(e["amount"])
+        categories[e["category"]] = (
+            categories.get(e["category"], 0)
+            + float(e["amount"])
+        )
 
     category_lines = "\n".join(
-        f"- {k}: KSh {v}" for k, v in categories.items()
-    )
+        f"- {k}: KSh {v:,.0f}" for k, v in categories.items()
+    ) or "No manual category splits recorded."
+
+    # --- business totals (CORRECT LOGIC) ---
+    gross_total = cash_total + mpesa_total
+    net_total = gross_total - expense_total
 
     prompt = f"""
 You are a financial analyst.
 
-Analyze the following daily revenue:
+Analyze this daily business performance.
 
 Date: {date}
-Manual revenue: KSh {manual_total}
-MPesa revenue: KSh {mpesa_total}
-Total revenue: KSh {manual_total + mpesa_total}
 
-Breakdown by category:
+Cash revenue: KSh {cash_total:,.0f}
+MPesa revenue: KSh {mpesa_total:,.0f}
+
+Gross revenue (cash + MPesa): KSh {gross_total:,.0f}
+Expenses: KSh {expense_total:,.0f}
+Net revenue: KSh {net_total:,.0f}
+
+Revenue category breakdown:
 {category_lines}
 
 Tasks:
 - Explain performance in simple business language
-- Mention anomalies (spikes, drops, imbalance)
-- Keep it under 120 words
+- Mention unusual spikes or risks if present
+- Keep under 90 words
 - Be factual, not motivational
 """
 
@@ -475,6 +503,25 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
+@cache.memoize(timeout=3600)
+def get_business_info(username):
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT paybill, account_number
+        FROM businesses
+        WHERE username = %s
+        LIMIT 1
+    """, (username,))
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row
+
 @cache.memoize(timeout=120)
 def get_dashboard_data(username):
     data = {}
@@ -536,13 +583,7 @@ def dashboard():
     cur = conn.cursor()
 
     # 🔹 Fetch user's business (paybill & account number)
-    cur.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cur.fetchone()
+    biz = get_business_info(username)
 
     paybill = biz["paybill"] if biz else None
     account_number = biz["account_number"] if biz else None

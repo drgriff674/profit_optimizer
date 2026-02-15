@@ -621,25 +621,21 @@ def get_dashboard_revenue_intelligence(username):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # --- Manual revenue (locked only, last 7 days) ---
+    # ✅ REAL locked business days (SOURCE OF TRUTH)
     cursor.execute("""
-        SELECT
-            revenue_date,
-            SUM(amount) AS manual_total
-        FROM revenue_entries
+        SELECT revenue_date
+        FROM revenue_days
         WHERE username = %s
           AND locked = TRUE
           AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY revenue_date
         ORDER BY revenue_date DESC
     """, (username,))
     manual_days = cursor.fetchall()
 
-    # --- MPesa totals (timezone-safe, last 7 days) ---
+    # ✅ MPesa revenue DAYS (not totals)
     cursor.execute("""
-        SELECT
-            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date,
-            SUM(m.amount) AS mpesa_total
+        SELECT DISTINCT
+            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -651,12 +647,11 @@ def get_dashboard_revenue_intelligence(username):
           AND m.status = 'confirmed'
           AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
               >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY revenue_date
         ORDER BY revenue_date DESC
-    """,(username,))
+    """, (username,))
     mpesa_days = cursor.fetchall()
 
-    # --- Anomaly count (last 7 days, timezone-safe) ---
+    # ✅ anomaly count
     cursor.execute("""
         SELECT COUNT(DISTINCT revenue_date) AS anomaly_days
         FROM revenue_anomalies
@@ -664,8 +659,6 @@ def get_dashboard_revenue_intelligence(username):
           AND revenue_date >= CURRENT_DATE - INTERVAL '7 days'
     """, (username,))
     anomaly_count = cursor.fetchone()["anomaly_days"]
-
-    
 
     cursor.close()
     conn.close()
@@ -675,7 +668,6 @@ def get_dashboard_revenue_intelligence(username):
         "mpesa_days": mpesa_days,
         "anomaly_days": anomaly_count,
     }
-
 def get_dashboard_intelligence_snapshot(username, days=7):
 
     conn = get_db_connection(cursor_factory=RealDictCursor)
