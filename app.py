@@ -67,6 +67,8 @@ from database import(
     get_locked_revenue_for_forecast,
     get_dashboard_snapshot,
     update_dashboard_snapshot,
+    get_dashboard_intelligence,
+    update_dashboard_intelligence,
 )
 import pytz
 from flask_caching import Cache
@@ -1163,6 +1165,10 @@ def cash_revenue_entry():
         cur.close()
         conn.close()
 
+        update_dashboard_snapshot(username)
+        update_dashboard_intelligence(username)
+        cache.delete_memoized(get_dashboard_data, username)
+
         flash("✅ Cash revenue added", "success")
         return redirect(url_for("dashboard"))
 
@@ -1733,6 +1739,7 @@ def payment_confirm():
         if username:
             ensure_revenue_day_exists(username, datetime.utcnow().date())
             update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
             cache.delete_memoized(get_dashboard_data, username)
         
 
@@ -3294,6 +3301,11 @@ def expense_entry():
                 description=request.form.get("description"),
                 expense_date=request.form["date"]
             )
+
+            update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
+            cache.delete_memoized(get_dashboard_data, username)
+            
             flash("✅ Expense added successfully!", "success")
             return redirect(url_for("expense_entry"))
         except Exception as e:
@@ -3335,6 +3347,9 @@ def revenue_entry():
             amount=float(request.form["amount"]),
             revenue_date=selected_date
         )
+
+        update_dashboard_intelligence(username)
+        cache.delete_memoized(get_dashboard_data, username)
         flash("✅ Revenue entry added", "success")
 
         # 🔑 Redirect WITH date preserved

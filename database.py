@@ -214,6 +214,17 @@ def init_db():
     );
     """)
 
+    # dashboard intelligence table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS dashboard_intelligence (
+        username TEXT PRIMARY KEY,
+        locked_days INTEGER DEFAULT 0,
+        anomaly_days INTEGER DEFAULT 0,
+        mpesa_days INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -1018,6 +1029,59 @@ def update_dashboard_snapshot(username):
     conn.close()
 
 
+def update_dashboard_intelligence(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    # locked days
+    cur.execute("""
+        SELECT COUNT(*) AS c
+        FROM revenue_days
+        WHERE username=%s AND locked=TRUE
+    """,(username,))
+    locked_days = cur.fetchone()["c"]
+
+    # anomaly days
+    cur.execute("""
+        SELECT COUNT(DISTINCT revenue_date) AS c
+        FROM revenue_anomalies
+        WHERE username=%s
+    """,(username,))
+    anomaly_days = cur.fetchone()["c"]
+
+    # mpesa days
+    cur.execute("""
+        SELECT COUNT(DISTINCT DATE(m.created_at))
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+              (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+              OR
+              (b.account_number IS NULL AND m.receiver=b.paybill)
+          )
+        WHERE b.username=%s
+          AND m.status='confirmed'
+    """,(username,))
+    mpesa_days = cur.fetchone()["count"]
+
+    cur.execute("""
+        INSERT INTO dashboard_intelligence
+        (username,locked_days,anomaly_days,mpesa_days)
+        VALUES(%s,%s,%s,%s)
+        ON CONFLICT(username)
+        DO UPDATE SET
+            locked_days=EXCLUDED.locked_days,
+            anomaly_days=EXCLUDED.anomaly_days,
+            mpesa_days=EXCLUDED.mpesa_days,
+            updated_at=CURRENT_TIMESTAMP
+    """,(username,locked_days,anomaly_days,mpesa_days))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 def get_dashboard_snapshot(username):
     conn=get_db_connection(cursor_factory=RealDictCursor)
     cur=conn.cursor()
@@ -1036,4 +1100,25 @@ def get_dashboard_snapshot(username):
         "total_revenue":0,
         "total_expenses":0,
         "total_profit":0
+    }
+
+def get_dashboard_intelligence(username):
+
+    conn=get_db_connection(cursor_factory=RealDictCursor)
+    cur=conn.cursor()
+
+    cur.execute(
+        "SELECT * FROM dashboard_intelligence WHERE username=%s",
+        (username,)
+    )
+
+    row=cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row or {
+        "locked_days":0,
+        "anomaly_days":0,
+        "mpesa_days":0
     }
