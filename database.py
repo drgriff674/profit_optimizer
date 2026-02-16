@@ -816,14 +816,15 @@ def get_locked_revenue_for_forecast(username):
 
     
 def get_live_financial_performance(username):
+
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()
 
-    # ✅ Revenue — correctly scoped to the user's business
+    # ---------- MPESA REVENUE ----------
     cursor.execute("""
         SELECT
             DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS timestamp,
-            SUM(m.amount)AS amount
+            SUM(m.amount) AS amount
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -836,12 +837,36 @@ def get_live_financial_performance(username):
           AND m.created_at IS NOT NULL
           AND m.created_at > NOW() - INTERVAL '30 days'
         GROUP BY DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
-        ORDER BY timestamp ASC
     """, (username,))
+    mpesa = cursor.fetchall()
 
-    revenue = cursor.fetchall()
+    # ---------- CASH REVENUE ----------
+    cursor.execute("""
+        SELECT
+            revenue_date::timestamp AS timestamp,
+            SUM(amount) AS amount
+        FROM cash_revenue
+        WHERE username = %s
+          AND revenue_date > CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY revenue_date
+    """, (username,))
+    cash = cursor.fetchall()
 
-    # ✅ Expenses — already correct
+    # ---------- COMBINE BOTH ----------
+    combined = {}
+
+    for r in mpesa:
+        combined[r["timestamp"]] = combined.get(r["timestamp"], 0) + float(r["amount"])
+
+    for r in cash:
+        combined[r["timestamp"]] = combined.get(r["timestamp"], 0) + float(r["amount"])
+
+    revenue = [
+        {"timestamp": k, "amount": v}
+        for k, v in sorted(combined.items())
+    ]
+
+    # ---------- EXPENSES ----------
     cursor.execute("""
         SELECT
             expense_date::timestamp AS timestamp,
@@ -851,7 +876,6 @@ def get_live_financial_performance(username):
         GROUP BY expense_date
         ORDER BY expense_date ASC
     """, (username,))
-
     expenses = cursor.fetchall()
 
     cursor.close()
