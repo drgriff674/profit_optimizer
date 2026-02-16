@@ -812,7 +812,7 @@ def get_live_financial_performance(username):
     cursor.execute("""
         SELECT
             DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS timestamp,
-            m.amount
+            SUM(m.amount)AS amount
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -824,7 +824,8 @@ def get_live_financial_performance(username):
           AND m.status = 'confirmed'
           AND m.created_at IS NOT NULL
           AND m.created_at > NOW() - INTERVAL '30 days'
-        ORDER BY date ASC
+        GROUP BY DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
+        ORDER BY timestamp ASC
     """, (username,))
 
     revenue = cursor.fetchall()
@@ -832,7 +833,7 @@ def get_live_financial_performance(username):
     # ✅ Expenses — already correct
     cursor.execute("""
         SELECT
-            expense_date::timestamp AS timestamp
+            expense_date::timestamp AS timestamp,
             SUM(amount) AS expenses
         FROM expenses
         WHERE username = %s
