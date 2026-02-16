@@ -599,13 +599,13 @@ def dashboard():
 
 
     # 🔹 Cached dashboard data
-    cached_data = get_dashboard_data(username)
+    cached_data = {}
     snapshot = get_dashboard_snapshot(username)
     notifications = []
     forecast_data = []
     last_synced = None
-    intelligence = cached_data.get("intelligence",{})
-    forecast_status = cached_data.get("forecast_status", {})
+    intelligence = {}
+    forecast_status = {}
 
     answer = None
 
