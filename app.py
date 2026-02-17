@@ -3507,17 +3507,39 @@ def inventory_setup():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT
-            i.name,
-            i.category,
-            i.unit,
-            s.snapshot_date,
-            si.quantity
-        FROM inventory_items i
-        JOIN inventory_snapshot_items si ON si.item_id = i.id
-        JOIN inventory_snapshots s ON s.id = si.snapshot_id
-        WHERE i.business_id = %s
-        ORDER BY s.snapshot_date DESC
+    SELECT
+        i.name,
+        i.category,
+        i.unit,
+        s.snapshot_date,
+
+        si.quantity
+        + COALESCE(SUM(m.quantity_change),0) AS quantity
+
+    FROM inventory_items i
+
+    JOIN inventory_snapshot_items si
+        ON si.item_id = i.id
+
+    JOIN inventory_snapshots s
+        ON s.id = si.snapshot_id
+
+    LEFT JOIN inventory_movements m
+        ON m.item_id = i.id
+        AND m.business_id = i.business_id
+        AND m.created_at > s.created_at
+
+    WHERE i.business_id = %s
+
+    GROUP BY
+        i.name,
+        i.category,
+        i.unit,
+        s.snapshot_date,
+        si.quantity,
+        s.created_at
+
+    ORDER BY s.snapshot_date DESC
     """, (business_id,))
 
     items = cur.fetchall()
@@ -3550,7 +3572,7 @@ def inventory_adjust():
     business_id = business["id"]
 
     if request.method == "POST":
-        item_id = request.form["item_id"]
+        item_id = int(request.form["item_id"])
         movement_type = request.form["movement_type"]
         quantity = float(request.form["quantity"])
         note = request.form.get("note")
