@@ -1098,12 +1098,18 @@ def lock_revenue_day_route():
 
     # 2️⃣ MPesa total (FIXED)
     cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0)
-        FROM mpesa_transactions
-        WHERE status = 'confirmed'
-            AND created_at AT TIME ZONE 'Africa/Nairobi' >= %s::date
-            AND created_at AT TIME ZONE 'Africa/Nairobi' <(%s::date + INTERVAL '1 day')
-        """,(revenue_date, revenue_date))
+        SELECT COALESCE(SUM(m.amount), 0)
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+                (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                OR
+                (b.account_number IS NULL AND m.receiver = b.paybill)
+             )
+        WHERE b.username = %s
+          AND m.status = 'confirmed'
+          AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') = %s
+    """, (username, revenue_date))
     mpesa_total = float(cursor.fetchone()[0])
 
     gross_total = cash_total + mpesa_total
@@ -1333,64 +1339,71 @@ def revenue_forecast():
 @app.route("/charts/live-performance")
 @login_required
 def live_performance():
+
     username = session["username"]
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    # 1️⃣ Locked revenue per day
+    # 🟢 CASH per day
     cursor.execute("""
-        SELECT
-            revenue_date,
-            total_amount AS revenue
-        FROM revenue_days
-        WHERE username = %s
-          AND locked = TRUE
-        ORDER BY revenue_date ASC
-    """, (username,))
-    revenue_rows = cursor.fetchall()
+        SELECT revenue_date AS day, SUM(amount) AS cash
+        FROM cash_revenue
+        WHERE username=%s
+        GROUP BY revenue_date
+    """,(username,))
+    cash_rows = cursor.fetchall()
 
-    # 2️⃣ Expenses per day
+    # 🟢 MPESA per day (USER SCOPED — VERY IMPORTANT)
     cursor.execute("""
         SELECT
-            expense_date,
-            SUM(amount) AS expenses
+            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS day,
+            SUM(m.amount) AS mpesa
+        FROM mpesa_transactions m
+        JOIN businesses b
+          ON (
+                (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+                OR
+                (b.account_number IS NULL AND m.receiver=b.paybill)
+             )
+        WHERE b.username=%s
+          AND m.status='confirmed'
+        GROUP BY day
+    """,(username,))
+    mpesa_rows = cursor.fetchall()
+
+    # 🟠 EXPENSES per day
+    cursor.execute("""
+        SELECT expense_date AS day, SUM(amount) AS expenses
         FROM expenses
-        WHERE username = %s
+        WHERE username=%s
         GROUP BY expense_date
-    """, (username,))
+    """,(username,))
     expense_rows = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    # ---- Normalize data ----
-    revenue_map = {
-        str(r["revenue_date"]): float(r["revenue"])
-        for r in revenue_rows
-    }
+    # ---- maps ----
+    cash_map = {str(r["day"]): float(r["cash"]) for r in cash_rows}
+    mpesa_map = {str(r["day"]): float(r["mpesa"]) for r in mpesa_rows}
+    expense_map = {str(r["day"]): float(r["expenses"]) for r in expense_rows}
 
-    expense_map = {
-        str(e["expense_date"]): float(e["expenses"])
-        for e in expense_rows
-    }
+    dates = sorted(set(cash_map)|set(mpesa_map)|set(expense_map))
 
-    dates = sorted(set(revenue_map) | set(expense_map))
-
-    revenue_values = []
-    expense_values = []
-    profit_values = []
-
-    running_revenue = 0
-    running_expenses = 0
+    revenue_values=[]
+    expense_values=[]
+    profit_values=[]
 
     for d in dates:
-        rev = revenue_map.get(d, 0)
-        exp = expense_map.get(d, 0)
 
-        revenue_values.append(rev)
+        gross = cash_map.get(d,0) + mpesa_map.get(d,0)
+        exp = expense_map.get(d,0)
+
+        revenue_values.append(gross)
         expense_values.append(exp)
-        profit_values.append(rev-exp)
+        profit_values.append(gross-exp)
+
     return render_template(
         "charts/live_performance.html",
         dates=dates,
@@ -1398,7 +1411,6 @@ def live_performance():
         expense_values=expense_values,
         profit_values=profit_values
     )
-
 @app.route("/api/latest-payment")
 def latest_payment():
     if "username" not in session:
