@@ -606,8 +606,8 @@ def dashboard():
     notifications = []
     forecast_data = []
     last_synced = None
-    intelligence = {}
-    forecast_status = {}
+    intelligence = get_dashboard_intelligence(username)
+    forecast_status = get_locked_revenue_for_forecast(username)
 
     answer = None
 
@@ -1147,6 +1147,9 @@ def lock_revenue_day_route():
     # 8️⃣ Detect anomalies AFTER lock
     detect_revenue_anomalies(username, revenue_date)
 
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
 
@@ -1421,22 +1424,40 @@ def latest_payment():
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT id, amount, created_at
-        FROM mpesa_transactions
-        WHERE seen = FALSE
-        ORDER BY created_at DESC
-        LIMIT 1
-    """)
+    SQL = """
+    SELECT m.id, m.amount, m.created_at
+    FROM mpesa_transactions m
+    JOIN businesses b
+    ON (
+        (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+        OR
+        (b.account_number IS NULL AND m.receiver = b.paybill)
+    )
+    WHERE b.username = %s
+    AND m.seen = FALSE
+    AND m.status = 'confirmed'
+    ORDER BY m.created_at DESC
+    LIMIT 1
+    """
+
+    cur.execute(SQL, (username,))
     payment = cur.fetchone()
 
     if payment:
-        # Mark as seen immediately
-        cur.execute(
-            "UPDATE mpesa_transactions SET seen = TRUE WHERE id = %s",
-            (payment["id"],)
-        )
-        conn.commit()
+        cur.execute("""
+            UPDATE mpesa_transactions m
+            SET seen = TRUE
+            FROM businesses b
+            WHERE m.id = %s
+            AND (
+                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver = b.paybill)
+                )
+            AND b.username = %s
+        """, (payment["id"], username))
+
+    conn.commit()
 
     cur.close()
     conn.close()
@@ -1454,17 +1475,24 @@ def financial_data():
     username = session["username"]
 
     try:
-        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        conn = get_db_connection()
         cur = conn.cursor()
 
         # Revenue per day
         cur.execute("""
             SELECT
-                DATE(created_at) AS date,
-                COALESCE(SUM(amount), 0) AS revenue
-            FROM mpesa_transactions
-            WHERE username = %s
-            GROUP BY DATE(created_at)
+                DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS date,
+                COALESCE(SUM(m.amount),0) AS revenue
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver = b.paybill)
+                 )
+            WHERE b.username = %s
+              AND m.status = 'confirmed'
+            GROUP BY DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
         """, (username,))
         revenue_rows = cur.fetchall()
 
@@ -1517,16 +1545,23 @@ def transactions_summary():
     username = session["username"]
 
     try:
-        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
             SELECT 
-                COALESCE(SUM(amount), 0) AS total_revenue,
-                COALESCE(AVG(amount), 0) AS avg_transaction,
+                COALESCE(SUM(m.amount), 0) AS total_revenue,
+                COALESCE(AVG(m.amount), 0) AS avg_transaction,
                 COUNT(*) AS txn_count
-            FROM mpesa_transactions
-            WHERE username = %s
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver = b.paybill)
+                 )
+            WHERE b.username = %s
+              AND m.status = 'confirmed'
         """, (username,))
 
         total_revenue, avg_transaction, txn_count = cur.fetchone()
@@ -1693,17 +1728,19 @@ def payment_confirm():
         # ============================================================
         # SAVE TO DATABASE
         # ============================================================
-        conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        conn = get_db_connection()
         cur = conn.cursor()
 
         # 🔍 Find business linked to this payment
         cur.execute("""
             SELECT id, username
             FROM businesses
-            WHERE paybill = %s
-            AND account_number = %s
+            WHERE
+                (account_number IS NOT NULL AND account_number = %s)
+                OR
+                (account_number IS NULL AND paybill = %s)
             LIMIT 1
-        """, (shortcode, account_ref))
+        """, (account_ref, shortcode))
 
         biz = cur.fetchone()
 
@@ -2999,13 +3036,20 @@ def trend_forecaster():
         # 1️⃣ Get revenue from MPesa (grouped monthly)
         cursor.execute("""
             SELECT
-                DATE_TRUNC('month', created_at) AS month,
-                SUM(amount) AS revenue
-            FROM mpesa_transactions
-            WHERE result_code = 0
+                DATE_TRUNC('month', m.created_at AT TIME ZONE 'Africa/Nairobi') AS month,
+                SUM(m.amount) AS revenue
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver = b.paybill)
+                 )
+            WHERE b.username = %s
+              AND m.status = 'confirmed'
             GROUP BY month
             ORDER BY month
-        """)
+        """, (session["username"],))
         revenue_rows = cursor.fetchall()
 
         cursor.close()

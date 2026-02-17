@@ -1076,7 +1076,7 @@ def update_dashboard_intelligence(username):
 
     # mpesa days
     cur.execute("""
-        SELECT COUNT(DISTINCT DATE(m.created_at))
+        SELECT COUNT(DISTINCT DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')) AS c
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -1087,7 +1087,7 @@ def update_dashboard_intelligence(username):
         WHERE b.username=%s
           AND m.status='confirmed'
     """,(username,))
-    mpesa_days = cur.fetchone()["count"]
+    mpesa_days = cur.fetchone()["c"]
 
     cur.execute("""
         INSERT INTO dashboard_intelligence

@@ -168,7 +168,7 @@
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
             <button id="sidebarToggle" class="md:hidden text-2xl">☰</button>
-            <h1 class="text-lg font-semibold">Welcome, {{ session['user'] }}</h1>
+            <h1 class="text-lg font-semibold">Welcome, {{ session['username'] }}</h1>
         </div>
         <button id="darkToggle"
                 class="w-10 h-10 rounded-full shadow"
@@ -218,43 +218,39 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
   <div class="p-5 rounded-xl shadow"
-       style="background: var(--og-surface);">
-    <h3 class="text-lg font-semibold mb-2">
-      📊 Revenue Intelligence (Last 7 Days)
-    </h3>
+     style="background: var(--og-surface);">
 
-    <p><strong>Anomaly days:</strong> {{ intelligence.anomaly_days }}</p>
-    <p><strong>Manual revenue days:</strong> {{ intelligence.manual_days | length }}</p>
-    <p><strong>MPesa revenue days:</strong> {{ intelligence.mpesa_days | length }}</p>
+  <h3 class="text-lg font-semibold mb-2">
+    📊 Revenue Intelligence
+  </h3>
 
-    <hr class="my-3 opacity-30">
+  <p><strong>Locked days:</strong> {{ intelligence.locked_days }}</p>
+  <p><strong>Anomaly days:</strong> {{ intelligence.anomaly_days }}</p>
+  <p><strong>MPesa days:</strong> {{ intelligence.mpesa_days }}</p>
 
-    {% if intelligence.confidence_level == "low" %}
-  <p class="text-red-500 font-semibold">
-    🔴 System learning — more locked days needed
-  </p>
-  <p class="text-xs opacity-70">
-    Forecasting unavailable until data stabilizes
-  </p>
+  <hr class="my-3 opacity-30">
 
-{% elif intelligence.confidence_level == "medium" %}
-  <p class="text-yellow-500 font-semibold">
-    🟡 Partial confidence — trends forming
-  </p>
-  <p class="text-xs opacity-70">
-    Forecast accuracy improving with more data
-  </p>
+  {% if intelligence.locked_days < 7 %}
+      <p class="text-red-500 font-semibold">
+        🔴 System learning — lock more days
+      </p>
 
-{% elif intelligence.confidence_level == "high" %}
-  <p class="text-green-600 font-semibold">
-    🟢 High confidence — forecasts enabled
-  </p>
-  <p class="text-xs opacity-70">
-    Revenue patterns are stable and predictable
-  </p>
-{% endif %}
+      <p class="text-xs opacity-70">
+        AI insights activate after 7 locked days
+      </p>
 
-  </div>
+  {% elif intelligence.locked_days < 14 %}
+      <p class="text-yellow-500 font-semibold">
+        🟡 Forecast building confidence
+      </p>
+
+  {% else %}
+      <p class="text-green-600 font-semibold">
+        🟢 AI fully active
+      </p>
+  {% endif %}
+
+</div>
 
 </div>
 
