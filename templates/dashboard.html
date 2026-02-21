@@ -126,7 +126,18 @@
 
   </div>
 </div>
-        <div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
+        <!-- FORECASTING -->
+<div>
+  <button type="button"
+      onclick="toggleMenu('forecastMenu',this)"
+      class="w-full flex justify-between items-center p-3 font-semibold rounded-md
+             transition hover:text-white"
+      onmouseover="this.style.background='var(--og-primary)'"
+      onmouseout="this.style.background='transparent'">
+      <span>📈 Forecasting</span><span>▾</span>
+  </button>
+
+  <div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
 
     <a href="{{ url_for('trend_forecaster') }}"
        class="block p-2 text-sm rounded hover:text-white"
@@ -142,8 +153,8 @@
        Profit Calculator
     </a>
 
+  </div>
 </div>
-
         <a href="{{ url_for('ask') }}"
    class="block p-3 rounded-md font-semibold transition hover:text-white"
    onmouseover="this.style.background='var(--og-primary)'"
