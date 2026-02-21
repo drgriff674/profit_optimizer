@@ -221,8 +221,14 @@ def init_db():
         locked_days INTEGER DEFAULT 0,
         anomaly_days INTEGER DEFAULT 0,
         mpesa_days INTEGER DEFAULT 0,
+        last_insight_date DATE,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    """)
+
+    cursor.execute("""
+    ALTER TABLE dashboard_intelligence
+    ADD COLUMN IF NOT EXISTS last_insight_date DATE;
     """)
 
     conn.commit()
@@ -1146,6 +1152,55 @@ def get_dashboard_intelligence(username):
         "anomaly_days":0,
         "mpesa_days":0
     }
+
+def maybe_generate_dashboard_insight(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    # get last insight date
+    cur.execute("""
+        SELECT last_insight_date
+        FROM dashboard_intelligence
+        WHERE username=%s
+    """,(username,))
+
+    row = cur.fetchone()
+    last_date = row["last_insight_date"] if row else None
+
+    # count locked days AFTER last insight
+    if last_date:
+        cur.execute("""
+            SELECT COUNT(*) AS c
+            FROM revenue_days
+            WHERE username=%s
+            AND locked=TRUE
+            AND revenue_date > %s
+        """,(username,last_date))
+    else:
+        cur.execute("""
+            SELECT COUNT(*) AS c
+            FROM revenue_days
+            WHERE username=%s
+            AND locked=TRUE
+        """,(username,))
+
+    new_locked = cur.fetchone()["c"]
+
+    # if reached 7 → generate insight cycle
+    if new_locked >= 7:
+
+        # mark new checkpoint
+        cur.execute("""
+            UPDATE dashboard_intelligence
+            SET last_insight_date = CURRENT_DATE
+            WHERE username=%s
+        """,(username,))
+
+        conn.commit()
+
+    cur.close()
+    conn.close()
 
 def run_weekly_intelligence(username):
 

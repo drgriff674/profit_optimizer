@@ -70,6 +70,7 @@ from database import(
     get_dashboard_intelligence,
     update_dashboard_intelligence,
     run_weekly_intelligence,
+    maybe_generate_dashboard_insight,
 )
 import pytz
 from flask_caching import Cache
@@ -1151,6 +1152,7 @@ def lock_revenue_day_route():
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
     run_weekly_intelligence(username)
+    maybe_generate_dashboard_insight(username)
 
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
