@@ -69,6 +69,7 @@ from database import(
     update_dashboard_snapshot,
     get_dashboard_intelligence,
     update_dashboard_intelligence,
+    run_weekly_intelligence,
 )
 import pytz
 from flask_caching import Cache
@@ -1149,6 +1150,7 @@ def lock_revenue_day_route():
 
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
+    run_weekly_intelligence(username)
 
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
@@ -3035,21 +3037,16 @@ def trend_forecaster():
 
         # 1️⃣ Get revenue from MPesa (grouped monthly)
         cursor.execute("""
-            SELECT
-                DATE_TRUNC('month', m.created_at AT TIME ZONE 'Africa/Nairobi') AS month,
-                SUM(m.amount) AS revenue
-            FROM mpesa_transactions m
-            JOIN businesses b
-              ON (
-                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                    OR
-                    (b.account_number IS NULL AND m.receiver = b.paybill)
-                 )
-            WHERE b.username = %s
-              AND m.status = 'confirmed'
-            GROUP BY month
-            ORDER BY month
+        SELECT
+            DATE_TRUNC('month', revenue_date) AS month,
+            SUM(total_amount) AS revenue
+        FROM revenue_days
+        WHERE username = %s
+        AND locked = TRUE
+        GROUP BY DATE_TRUNC('month', revenue_date)
+        ORDER BY month
         """, (session["username"],))
+        
         revenue_rows = cursor.fetchall()
 
         cursor.close()

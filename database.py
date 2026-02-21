@@ -1146,3 +1146,53 @@ def get_dashboard_intelligence(username):
         "anomaly_days":0,
         "mpesa_days":0
     }
+
+def run_weekly_intelligence(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT revenue_date,total_amount
+        FROM revenue_days
+        WHERE username=%s AND locked=TRUE
+        ORDER BY revenue_date DESC
+    """,(username,))
+
+    rows = cur.fetchall()
+
+    if len(rows) < 7:
+        cur.close()
+        conn.close()
+        return
+
+    if len(rows) % 7 != 0:
+        cur.close()
+        conn.close()
+        return
+
+    last7 = rows[:7]
+
+    values=[float(r["total_amount"]) for r in last7]
+
+    avg=sum(values)/7
+    mx=max(values)
+    mn=min(values)
+
+    if mx-mn > avg*0.7:
+        summary="Revenue unstable this week. Large daily fluctuations detected."
+    elif avg>0 and values[0]>values[-1]:
+        summary="Revenue trending upward. Positive business momentum."
+    else:
+        summary="Revenue stable. Business operating normally."
+
+    cur.execute("""
+        INSERT INTO revenue_ai_summaries
+        (username,revenue_date,summary)
+        VALUES(%s,CURRENT_DATE,%s)
+        ON CONFLICT DO NOTHING
+    """,(username,summary))
+
+    conn.commit()
+    cur.close()
+    conn.close()
