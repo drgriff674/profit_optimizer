@@ -72,6 +72,8 @@ from database import(
     run_weekly_intelligence,
     maybe_generate_dashboard_insight,
     generate_weekly_ai_report_if_ready,
+    get_latest_weekly_report,
+    call_openai,
 )
 import pytz
 from flask_caching import Cache
@@ -611,6 +613,7 @@ def dashboard():
     last_synced = None
     intelligence = get_dashboard_intelligence(username)
     forecast_status = get_locked_revenue_for_forecast(username)
+    latest_report = get_latest_weekly_report(username)
 
     answer = None
 
@@ -691,7 +694,8 @@ def dashboard():
         latest_payment=latest_payment,
         intelligence=intelligence,
         forecast_status=forecast_status,
-        live_total_revenue=live_total_revenue
+        live_total_revenue=live_total_revenue,
+        weekly_report=latest_report
     )
 
 @app.route("/api/dashboard-snapshot")

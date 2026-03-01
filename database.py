@@ -1266,12 +1266,14 @@ def generate_weekly_ai_report_if_ready(username):
         SELECT COUNT(*) AS locked_days
         FROM revenue_days
         WHERE username=%s AND locked=TRUE
-    """,(username,))
+    """,(username))
 
     locked = cur.fetchone()["locked_days"]
 
     # only fire every 7 days
     if locked % 7 != 0:
+        cur.close()
+        conn.close()
         return
 
     # check if this report already exists
@@ -1280,7 +1282,9 @@ def generate_weekly_ai_report_if_ready(username):
         WHERE username=%s AND locked_days=%s
     """,(username,locked))
 
-    if cur.fetchone()["count"] > 0:
+    if cur.fetchone()["c"] > 0:
+        cur.close()
+        conn.close()
         return
 
     # LOAD LAST 7 LOCKED DAYS DATA
@@ -1307,3 +1311,39 @@ def generate_weekly_ai_report_if_ready(username):
     """,(username,locked,ai_text))
 
     conn.commit()
+    cur.close()
+    conn.close()
+
+def call_openai(summary):
+
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a financial analyst generating weekly business insights."},
+            {"role": "user", "content": f"Analyze this weekly revenue data and provide short actionable advice:\n{summary}"}
+        ],
+    )
+
+    return response.choices[0].message.content.strip()
+
+def get_latest_weekly_report(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT report, locked_days, created_at
+        FROM weekly_ai_reports
+        WHERE username=%s
+        ORDER BY created_at DESC
+        LIMIT 1
+    """,(username,))
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return row

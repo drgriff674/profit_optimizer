@@ -272,6 +272,27 @@
 
 </div>
 
+{% if weekly_report %}
+
+<div class="p-5 rounded-xl shadow"
+     style="background: var(--og-surface); border-left: 4px solid #6366f1;">
+
+  <h3 class="text-lg font-semibold mb-2">
+    🧠 Weekly AI Insight
+  </h3>
+
+  <p class="text-xs opacity-60 mb-2">
+    Generated after {{ weekly_report.locked_days }} locked days
+  </p>
+
+  <p class="text-sm leading-relaxed">
+    {{ weekly_report.report }}
+  </p>
+
+</div>
+
+{% endif %}
+
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
