@@ -1781,7 +1781,7 @@ def payment_confirm():
                 raw_payload,
                 origin_ip,
                 status,
-                created_at
+                created_at,
                 local_date
             )
             VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW(), %s);
