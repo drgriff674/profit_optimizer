@@ -1369,7 +1369,7 @@ def live_performance():
     # 🟢 MPESA per day (USER SCOPED — VERY IMPORTANT)
     cursor.execute("""
         SELECT
-            m.local_date AS day
+            m.local_date AS day,
             SUM(m.amount) AS mpesa
         FROM mpesa_transactions m
         JOIN businesses b
