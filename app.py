@@ -1789,6 +1789,7 @@ def payment_confirm():
             transaction_id,
             amount,
             sender_phone or sender_name,
+            shortcode,
             "OptiGain",
             "C2B Payment",
             account_ref,
@@ -1803,7 +1804,7 @@ def payment_confirm():
         conn.close()
 
         if username:
-            ensure_revenue_day_exists(username, datetime.utcnow().date())
+            ensure_revenue_day_exists(username, local_date)
             update_dashboard_snapshot(username)
             update_dashboard_intelligence(username)
             cache.delete_memoized(get_dashboard_data, username)
