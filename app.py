@@ -987,8 +987,7 @@ def revenue_day_detail(date):
                         OR  
                         (%s IS NULL AND receiver = %s)  
                     )  
-                  AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date  
-                  AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')  
+                  AND m.local_date = %s  
             """, (  
                 account_number,  
                 account_number,  
@@ -1115,7 +1114,7 @@ def lock_revenue_day_route():
              )
         WHERE b.username = %s
           AND m.status = 'confirmed'
-          AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') = %s
+          AND m.local_date = %s
     """, (username, revenue_date))
     mpesa_total = float(cursor.fetchone()[0])
 
@@ -1370,7 +1369,7 @@ def live_performance():
     # 🟢 MPESA per day (USER SCOPED — VERY IMPORTANT)
     cursor.execute("""
         SELECT
-            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS day,
+            m.local_date AS day
             SUM(m.amount) AS mpesa
         FROM mpesa_transactions m
         JOIN businesses b
@@ -1397,7 +1396,7 @@ def live_performance():
     cursor.close()
     conn.close()
 
-    # ---- maps ----
+    # maps 
     cash_map = {str(r["day"]): float(r["cash"]) for r in cash_rows}
     mpesa_map = {str(r["day"]): float(r["mpesa"]) for r in mpesa_rows}
     expense_map = {str(r["day"]): float(r["expenses"]) for r in expense_rows}
@@ -1491,7 +1490,7 @@ def financial_data():
         # Revenue per day
         cur.execute("""
             SELECT
-                DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS date,
+                m.local_date AS date
                 COALESCE(SUM(m.amount),0) AS revenue
             FROM mpesa_transactions m
             JOIN businesses b
@@ -1502,7 +1501,7 @@ def financial_data():
                  )
             WHERE b.username = %s
               AND m.status = 'confirmed'
-            GROUP BY DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
+            GROUP BY m.local_date AS date
         """, (username,))
         revenue_rows = cur.fetchall()
 
@@ -1670,7 +1669,7 @@ def payment_validate():
         "ResultDesc": "Accepted"
     })
 
-from datetime import datetime
+
 
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
@@ -1763,6 +1762,12 @@ def payment_confirm():
 
         print("Inserting into MPesa transactions:", transaction_id, amount)
 
+        import pytz
+        from datetime import datetime
+
+        nairobi = pytz.timezone("Africa/Nairobi")
+        local_date = datetime.now(nairobi).date()
+
         cur.execute("""
             INSERT INTO mpesa_transactions
             (
@@ -1777,8 +1782,9 @@ def payment_confirm():
                 origin_ip,
                 status,
                 created_at
+                local_date
             )
-            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW());
+            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW(), %s);
         """, (
             transaction_id,
             amount,
@@ -1788,7 +1794,8 @@ def payment_confirm():
             account_ref,
             description,
             json.dumps(data),
-            request.remote_addr
+            request.remote_addr,
+            local_date
         ))
         
         conn.commit()

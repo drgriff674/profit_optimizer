@@ -242,6 +242,48 @@ def init_db():
     );
     """)
 
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_revenue_days_username 
+    ON revenue_days(username);
+
+    CREATE INDEX IF NOT EXISTS idx_revenue_days_username_locked 
+    ON revenue_days(username, locked);
+
+    CREATE INDEX IF NOT EXISTS idx_expenses_username 
+    ON expenses(username);
+
+    CREATE INDEX IF NOT EXISTS idx_revenue_entries_username 
+    ON revenue_entries(username);
+
+    CREATE INDEX IF NOT EXISTS idx_revenue_anomalies_username 
+    ON revenue_anomalies(username);
+
+    CREATE INDEX IF NOT EXISTS idx_businesses_username 
+    ON businesses(username);
+
+    CREATE INDEX IF NOT EXISTS idx_mpesa_status 
+    ON mpesa_transactions(status);
+
+    CREATE INDEX IF NOT EXISTS idx_mpesa_account_reference 
+    ON mpesa_transactions(account_reference);
+
+    CREATE INDEX IF NOT EXISTS idx_mpesa_receiver 
+    ON mpesa_transactions(receiver);
+
+    CREATE INDEX IF NOT EXISTS idx_mpesa_created_at 
+    ON mpesa_transactions(created_at);
+    """)
+    
+    cursor.execute("""
+    ALTER TABLE mpesa_transactions
+    ADD COLUMN IF NOT EXISTS local_date DATE;
+    """)
+
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_mpesa_local_date
+    ON mpesa_transactions(local_date);
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -576,7 +618,7 @@ def detect_revenue_anomalies(username, revenue_date):
                  )
             WHERE b.username = %s
               AND m.status = 'confirmed'
-              AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') = %s
+              AND DATE m.local_date = %s
         """, (username, revenue_date))
 
         mpesa_total = float(cursor.fetchone()["mpesa_total"])
@@ -668,7 +710,7 @@ def get_dashboard_revenue_intelligence(username):
     # ✅ MPesa revenue DAYS (not totals)
     cursor.execute("""
         SELECT DISTINCT
-            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS revenue_date
+            DATE m.local_date AS revenue_date
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -678,8 +720,7 @@ def get_dashboard_revenue_intelligence(username):
              )
         WHERE b.username = %s
           AND m.status = 'confirmed'
-          AND DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
-              >= CURRENT_DATE - INTERVAL '7 days'
+          AND m.local_date >= CURRENT_DATE-INTERVAL '7 days'
         ORDER BY revenue_date DESC
     """, (username,))
     mpesa_days = cursor.fetchall()
@@ -706,7 +747,7 @@ def get_dashboard_intelligence_snapshot(username, days=7):
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()
 
-    # ✅ TRUE locked days count
+    # TRUE locked days count
     cursor.execute("""
         SELECT
             COUNT(*) AS locked_days,
@@ -834,7 +875,7 @@ def get_live_financial_performance(username):
     # ---------- MPESA REVENUE ----------
     cursor.execute("""
         SELECT
-            DATE(m.created_at AT TIME ZONE 'Africa/Nairobi') AS timestamp,
+            m.local_date::timestamp AS timestamp,
             SUM(m.amount) AS amount
         FROM mpesa_transactions m
         JOIN businesses b
@@ -846,8 +887,8 @@ def get_live_financial_performance(username):
         WHERE b.username = %s
           AND m.status = 'confirmed'
           AND m.created_at IS NOT NULL
-          AND m.created_at > NOW() - INTERVAL '30 days'
-        GROUP BY DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')
+          AND m.created_at >=CURRENT_DATE - INTERVAL '30 days' 
+        GROUP BY DATE m.local_date
     """, (username,))
     mpesa = cursor.fetchall()
 
@@ -1087,7 +1128,7 @@ def update_dashboard_intelligence(username):
 
     # mpesa days
     cur.execute("""
-        SELECT COUNT(DISTINCT DATE(m.created_at AT TIME ZONE 'Africa/Nairobi')) AS c
+        SELECT COUNT(DISTINCT m.local_date) AS c
         FROM mpesa_transactions m
         JOIN businesses b
           ON (
@@ -1266,7 +1307,7 @@ def generate_weekly_ai_report_if_ready(username):
         SELECT COUNT(*) AS locked_days
         FROM revenue_days
         WHERE username=%s AND locked=TRUE
-    """,(username))
+    """,(username,))
 
     locked = cur.fetchone()["locked_days"]
 
@@ -1278,11 +1319,14 @@ def generate_weekly_ai_report_if_ready(username):
 
     # check if this report already exists
     cur.execute("""
-        SELECT COUNT(*) FROM weekly_ai_reports
+        SELECT COUNT(*) AS report_count
+        FROM weekly_ai_reports
         WHERE username=%s AND locked_days=%s
     """,(username,locked))
 
-    if cur.fetchone()["c"] > 0:
+    existing = cur.fetchone()["report_count"]
+
+    if existing > 0:
         cur.close()
         conn.close()
         return
