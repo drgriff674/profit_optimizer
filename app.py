@@ -71,6 +71,7 @@ from database import(
     update_dashboard_intelligence,
     run_weekly_intelligence,
     maybe_generate_dashboard_insight,
+    generate_weekly_ai_report_if_ready,
 )
 import pytz
 from flask_caching import Cache
@@ -573,13 +574,13 @@ def get_business_info(username):
 def get_dashboard_data(username):
     data = {}
 
-    # 1️⃣ Historical revenue data (for charts)
+    # 1️Historical revenue data (for charts)
     data["revenue_history"] = get_dashboard_revenue_intelligence(username)
 
-    # 2️⃣ Intelligence snapshot (AI + dashboard counters)
+    # 2️Intelligence snapshot (AI + dashboard counters)
     data["intelligence"] = get_dashboard_intelligence_snapshot(username)
 
-    # 3️⃣ Forecast readiness (LOCKED days only)
+    # 3️Forecast readiness (LOCKED days only)
     data["forecast_status"] = get_locked_revenue_for_forecast(username)
         
 
@@ -602,7 +603,7 @@ def dashboard():
     latest_payment = None
 
 
-    # 🔹 Cached dashboard data
+    #  Cached dashboard data
     cached_data = {}
     snapshot = get_dashboard_snapshot(username)
     notifications = []
@@ -613,14 +614,14 @@ def dashboard():
 
     answer = None
 
-    # 🔹 User files (not cached)
+    #  User files (not cached)
     user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
     os.makedirs(user_folder, exist_ok=True)
     files = sorted(os.listdir(user_folder))
 
-    # ===============================
-    # 📊 KPI LOGIC (DEFENSIVE)
-    # ===============================
+    
+    # kpi logic
+    
     kpis = {
         "total_profit": "KSh 0",
         "avg_profit": "KSh 0",
@@ -646,9 +647,9 @@ def dashboard():
     live_total_revenue = total_revenue
 
     
-    # ===============================
-    # 🤖 AI INSIGHTS
-    # ===============================
+    
+    # AI Insights
+    
     if request.method == "POST":
         question = request.form.get("question", "").strip()
         if question:
@@ -663,9 +664,9 @@ def dashboard():
             except Exception as e:
                 notifications.append(f"AI error: {str(e)}")
 
-    # ===============================
-    # 📈 Forecast chart prep
-    # ===============================
+    
+    # forecast chart
+    
     forecast_chart = []
     for item in forecast_data:
         try:
@@ -1153,6 +1154,7 @@ def lock_revenue_day_route():
     update_dashboard_intelligence(username)
     run_weekly_intelligence(username)
     maybe_generate_dashboard_insight(username)
+    generate_weekly_ai_report_if_ready(username)
 
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))

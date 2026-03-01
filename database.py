@@ -2,7 +2,7 @@ import psycopg2
 import os
 from psycopg2.extras import RealDictCursor
 
-# ✅ Railway PostgreSQL connection string
+#  Railway PostgreSQL connection string
 
 def get_db_connection(cursor_factory=None):
     db_url = os.environ.get("DATABASE_URL")
@@ -15,7 +15,7 @@ def get_db_connection(cursor_factory=None):
         cursor_factory=cursor_factory
     )
 
-# ✅ Initialize database and tables if not exists
+#  Initialize database and tables if not exists
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -231,6 +231,17 @@ def init_db():
     ADD COLUMN IF NOT EXISTS last_insight_date DATE;
     """)
 
+    # weekly ai_reports table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS weekly_ai_reports(
+        id SERIAL PRIMARY KEY,
+        username TEXT,
+        locked_days INTEGER,
+        report TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.commit()
     cursor.close()
     conn.close()
@@ -277,7 +288,7 @@ def get_cash_revenue_total_for_day(username, revenue_date):
     conn.close()
     return float(total)
 
-# ✅ Load all users as a dict
+# Load all users as a dict
 def load_users():
     conn = get_db_connection(cursor_factory=RealDictCursor)
     cursor = conn.cursor()
@@ -293,7 +304,7 @@ def load_users():
         for row in rows
     }
 
-# ✅ Save a new user
+#  Save a new user
 def save_user(username, password, role):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -310,7 +321,7 @@ def save_user(username, password, role):
     conn.close()
     
 
-# ✅ Debug: print all users directly from DB
+#  Debug: print all users directly from DB
 def debug_print_users():
     conn = conn = get_db_connection()
     cursor = conn.cursor()
@@ -319,11 +330,9 @@ def debug_print_users():
     cursor.close()
     conn.close()
     print("📌 Current users in DB:", rows)
+    
 
-# =====================================================
-# ✅ EXPENSE HELPERS (NEW – USED BY MANUAL ENTRY)
-# =====================================================
-
+#  EXPENSE HELPERS (NEW – USED BY MANUAL ENTRY)
 def save_expense(username, amount, category, description, expense_date):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -382,10 +391,8 @@ def load_expenses(username):
     conn.close()
     return rows
 
-# =====================================================
-# ✅ REVENUE ENTRY HELPERS (MANUAL DAILY SPLITS)
-# =====================================================
 
+#  REVENUE ENTRY HELPERS (MANUAL DAILY SPLITS)
 def save_revenue_entry(username, category, amount, revenue_date):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -627,10 +634,8 @@ def detect_revenue_anomalies(username, revenue_date):
     cursor.close()
     conn.close()
 
-# =====================================================
-# ✅ INVENTORY HELPERS
-# =====================================================
 
+# INVENTORY HELPERS
 def create_inventory_item(business_id, name, category, unit):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -783,7 +788,7 @@ def get_locked_revenue_for_forecast(username):
 
     days = len(rows)
 
-    # 🚦 Forecast maturity tiers
+    #  Forecast maturity tiers
     if days < 7:
         return {
             "ready": False,
@@ -1251,3 +1256,54 @@ def run_weekly_intelligence(username):
     conn.commit()
     cur.close()
     conn.close()
+
+def generate_weekly_ai_report_if_ready(username):
+
+    conn = get_db_connection(cursor_factory=RealDictCursor)
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT COUNT(*) AS locked_days
+        FROM revenue_days
+        WHERE username=%s AND locked=TRUE
+    """,(username,))
+
+    locked = cur.fetchone()["locked_days"]
+
+    # only fire every 7 days
+    if locked % 7 != 0:
+        return
+
+    # check if this report already exists
+    cur.execute("""
+        SELECT COUNT(*) FROM weekly_ai_reports
+        WHERE username=%s AND locked_days=%s
+    """,(username,locked))
+
+    if cur.fetchone()["count"] > 0:
+        return
+
+    # LOAD LAST 7 LOCKED DAYS DATA
+    cur.execute("""
+        SELECT revenue_date,total_amount
+        FROM revenue_days
+        WHERE username=%s AND locked=TRUE
+        ORDER BY revenue_date DESC
+        LIMIT 7
+    """,(username,))
+
+    rows = cur.fetchall()
+
+    # build summary text for OpenAI
+    summary = str(rows)
+
+    # ---- CALL OPENAI HERE ----
+    ai_text = call_openai(summary)
+
+    # SAVE REPORT
+    cur.execute("""
+        INSERT INTO weekly_ai_reports(username,locked_days,report)
+        VALUES(%s,%s,%s)
+    """,(username,locked,ai_text))
+
+    conn.commit()
