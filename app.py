@@ -978,25 +978,21 @@ def revenue_day_detail(date):
             paybill = biz["paybill"]
             account_number = biz["account_number"]
 
-            cursor.execute("""  
-                SELECT COALESCE(SUM(amount), 0) AS mpesa_total  
-                FROM mpesa_transactions  
-                WHERE status = 'confirmed'  
-                  AND (  
-                        (%s IS NOT NULL AND account_reference = %s)  
-                        OR  
-                        (%s IS NULL AND receiver = %s)  
-                    )  
-                  AND m.local_date = %s  
-            """, (  
-                account_number,  
-                account_number,  
-                account_number,  
-                paybill,  
-                date,  
-                date  
+            cursor.execute("""
+                SELECT COALESCE(SUM(amount), 0) AS mpesa_total
+                FROM mpesa_transactions
+                WHERE status = 'confirmed'
+                  AND local_date = %s
+                  AND (
+                        (account_reference = %s)
+                        OR
+                        (receiver = %s)
+                      )
+            """, (
+                date,
+                account_number,
+                paybill
             ))
-
             row = cursor.fetchone() 
             mpesa_total = float(row["mpesa_total"]) if row else 0.0
             
