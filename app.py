@@ -18,6 +18,7 @@ from functools import wraps
 from xhtml2pdf import pisa
 import json
 import os
+import threading
 from openai import OpenAI
 import pandas as pd
 import plotly.graph_objs as go
@@ -1065,6 +1066,19 @@ def revenue_overview():
         days=days
     )
 
+
+def run_post_lock_tasks(username, revenue_date):
+    try:
+        lock_manual_entries_for_the_day(username, revenue_date)
+        detect_revenue_anomalies(username, revenue_date)
+        update_dashboard_snapshot(username)
+        update_dashboard_intelligence(username)
+        run_weekly_intelligence(username)
+        maybe_generate_dashboard_insight(username)
+        generate_weekly_ai_report_if_ready(username)
+    except Exception as e:
+        print("Background task error:", e)
+
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
 def lock_revenue_day_route():
@@ -1143,17 +1157,10 @@ def lock_revenue_day_route():
     cursor.close()
     conn.close()
 
-    # 7️⃣ Lock manual entries
-    lock_manual_entries_for_the_day(username, revenue_date)
-
-    # 8️⃣ Detect anomalies AFTER lock
-    detect_revenue_anomalies(username, revenue_date)
-
-    update_dashboard_snapshot(username)
-    update_dashboard_intelligence(username)
-    run_weekly_intelligence(username)
-    maybe_generate_dashboard_insight(username)
-    generate_weekly_ai_report_if_ready(username)
+    threading.Thread(
+        target=run_post_lock_tasks,
+        args=(username, revenue_date)
+    ).start()
 
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
