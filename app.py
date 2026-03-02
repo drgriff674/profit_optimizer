@@ -1790,7 +1790,6 @@ def payment_confirm():
             amount,
             sender_phone or sender_name,
             shortcode,
-            "OptiGain",
             "C2B Payment",
             account_ref,
             description,
