@@ -940,8 +940,8 @@ def revenue_day_detail(date):
     row = cursor.fetchone()
 
     if row:
-        is_locked = row["locked", False]
-        locked_total = float(row.get["total_amount"] or 0)
+        is_locked = row.get("locked", False)
+        locked_total = float(row.get("total_amount") or 0)
     else:
         is_locked = False
         locked_total = 0
