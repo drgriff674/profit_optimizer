@@ -213,6 +213,16 @@ def init_db():
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
+    cursor.execute("""
+    ALTER TABLE dashboard_snapshot
+    ADD COLUMN IF NOT EXISTS profit_growth NUMERIC(6,2);
+    """)
+
+    cursor.execute("""
+    UPDATE dashboard_snapshot
+    SET profit_growth = 0
+    WHERE profit_growth IS NULL;
+    """)
 
     # dashboard intelligence table
     cursor.execute("""
@@ -1075,6 +1085,28 @@ def update_dashboard_snapshot(username):
 
     profit=revenue-expenses
 
+    # PROFIT GROWTH (compare last 2 locked days)
+    cursor.execute("""
+        SELECT total_amount
+        FROM revenue_days
+        WHERE username=%s
+          AND locked=TRUE
+        ORDER BY revenue_date DESC
+        LIMIT 2
+    """,(username,))
+
+    rows = cursor.fetchall()
+
+    if len(rows) >= 2:
+        current = float(rows[0]["total_amount"])
+        previous = float(rows[1]["total_amount"])
+        if previous > 0:
+            growth = ((current - previous) / previous) * 100
+        else:
+            growth = 0
+    else:
+        growth = 0
+
     cursor.execute("""
         SELECT COALESCE(category,'Uncategorized') AS category
         FROM expenses
@@ -1089,17 +1121,18 @@ def update_dashboard_snapshot(username):
 
     cursor.execute("""
         INSERT INTO dashboard_snapshot
-        (username,total_revenue,total_expenses,total_profit,largest_expense)
-        VALUES (%s,%s,%s,%s,%s)
+        (username,total_revenue,total_expenses,total_profit,largest_expense,profit_growth)
+        VALUES (%s,%s,%s,%s,%s,%s)
         ON CONFLICT(username)
         DO UPDATE SET
             total_revenue=EXCLUDED.total_revenue,
             total_expenses=EXCLUDED.total_expenses,
             total_profit=EXCLUDED.total_profit,
             largest_expense=EXCLUDED.largest_expense,
+            profit_growth=EXCLUDED.profit_growth,
             updated_at=CURRENT_TIMESTAMP
-    """,(username,revenue,expenses,profit,largest_expense))
-
+    """,(username,revenue,expenses,profit,largest_expense,growth))
+    
     conn.commit()
     cursor.close()
     conn.close()
