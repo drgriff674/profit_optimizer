@@ -940,19 +940,13 @@ def revenue_day_detail(date):
     row = cursor.fetchone()
     is_locked = row["locked"] if row else False
 
-    cursor.execute("""
-        SELECT total_amount
-        FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-
-    day_row = cursor.fetchone()
-    locked_total = float(day_row["total_amount"]) if day_row else 0
+    if row:
+        is_locked = row["locked"]
+        locked_total = float(row["total_amount"] or 0)
+    else:
+        is_locked = False
+        locked_total = 0
     
-    # ✅ NOW CLOSE
-    cursor.close()
-    conn.close()
 
     manual_total = sum(float(e["amount"]) for e in manual_entries)
     mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
@@ -971,10 +965,7 @@ def revenue_day_detail(date):
         mpesa_total = max(0, locked_total - cash_total + expense_total
                           )
     else:
-        # 🔓 UNLOCKED: live computation
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
+        
         if biz:
             paybill = biz["paybill"]
             account_number = biz["account_number"]
@@ -1001,11 +992,6 @@ def revenue_day_detail(date):
             mpesa_total = 0.0
         
         
-            
-        cursor.close()
-        conn.close()
-
-        
         gross_total = mpesa_total + cash_total
         net_revenue = gross_total - expense_total
 
@@ -1020,6 +1006,9 @@ def revenue_day_detail(date):
                         f"does not match net revenue (KSh {net_revenue:.2f})."
                     )
                 })
+
+        cursor.close()
+        conn.close()
 
     
     return render_template(
