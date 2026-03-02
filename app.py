@@ -930,7 +930,7 @@ def revenue_day_detail(date):
 
     # 🔒 CHECK LOCK STATUS + LOCKED TOTAL (SAFE)
     cursor.execute("""
-        SELECT locked
+        SELECT locked, total_amount
         FROM revenue_days
         WHERE username = %s
           AND revenue_date = %s
@@ -938,11 +938,10 @@ def revenue_day_detail(date):
     """, (username, date))
 
     row = cursor.fetchone()
-    is_locked = row["locked"] if row else False
 
     if row:
-        is_locked = row["locked"]
-        locked_total = float(row["total_amount"] or 0)
+        is_locked = row["locked", False]
+        locked_total = float(row.get["total_amount"] or 0)
     else:
         is_locked = False
         locked_total = 0
