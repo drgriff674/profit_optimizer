@@ -608,13 +608,30 @@ def dashboard():
 
     #  Cached dashboard data
     cached_data = {}
-    snapshot = get_dashboard_snapshot(username)
     notifications = []
     forecast_data = []
     last_synced = None
+    import time
+
+    start_total = time.time()
+
+    start = time.time()
+    snapshot = get_dashboard_snapshot(username)
+    print("Snapshot took:", time.time() - start)
+
+    start = time.time()
     intelligence = get_dashboard_intelligence(username)
+    print("Intelligence took:", time.time() - start)
+
+    start = time.time()
     forecast_status = get_locked_revenue_for_forecast(username)
+    print("Forecast took:", time.time() - start)
+
+    start = time.time()
     latest_report = get_latest_weekly_report(username)
+    print("Weekly report took:", time.time() - start)
+
+    print("TOTAL dashboard time:", time.time() - start_total)
 
     answer = None
 
