@@ -1,19 +1,22 @@
 import psycopg2
 import os
 from psycopg2.extras import RealDictCursor
+from psycopg2 import pool
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+connection_pool = pool.SimpleConnectionPool(
+    1, #min connections
+    10, #max connections
+    DATABASE_URL
+    )
 
 #  Railway PostgreSQL connection string
 
 def get_db_connection(cursor_factory=None):
-    db_url = os.environ.get("DATABASE_URL")
-
-    if not db_url:
-        raise RuntimeError("DATABASE_URL environment variable is not set")
-    
-    return psycopg2.connect(
-        db_url,
-        cursor_factory=cursor_factory
-    )
+    conn = connection_pool.getconn()
+    if cursor_factory:
+        conn.cursor_factory = cursor_factory
+    return conn
 
 #  Initialize database and tables if not exists
 def init_db():
@@ -296,7 +299,7 @@ def init_db():
 
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 
 #revenue cash functions
@@ -309,7 +312,7 @@ def add_cash_revenue(username, amount, revenue_date, description=None):
     """, (username, amount, revenue_date, description))
     conn.commit()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def get_cash_revenue_for_day(username, revenue_date):
     conn = get_db_connection(cursor_factory=RealDictCursor)
@@ -323,7 +326,7 @@ def get_cash_revenue_for_day(username, revenue_date):
     """, (username, revenue_date))
     rows = cur.fetchall()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return rows
 
 def get_cash_revenue_total_for_day(username, revenue_date):
@@ -337,7 +340,7 @@ def get_cash_revenue_total_for_day(username, revenue_date):
     """, (username, revenue_date))
     total = cur.fetchone()[0]
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return float(total)
 
 # Load all users as a dict
@@ -370,7 +373,7 @@ def save_user(username, password, role):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     
 
 #  Debug: print all users directly from DB
@@ -380,7 +383,7 @@ def debug_print_users():
     cursor.execute("SELECT username, role FROM users")
     rows = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     print("📌 Current users in DB:", rows)
     
 
@@ -397,7 +400,7 @@ def save_expense(username, amount, category, description, expense_date):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def get_expenses_for_day(username, date):
     conn = get_db_connection(cursor_factory=RealDictCursor)
@@ -414,7 +417,7 @@ def get_expenses_for_day(username, date):
     total = sum(float(r["amount"]) for r in rows)
 
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return {
         "entries": rows,
@@ -440,7 +443,7 @@ def load_expenses(username):
     )
     rows = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return rows
 
 
@@ -457,7 +460,7 @@ def save_revenue_entry(username, category, amount, revenue_date):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 
 
@@ -479,7 +482,7 @@ def load_expense_categories(username):
 
     rows = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     # rows is like [('Food',), ('Transport',)]
     return [row[0] for row in rows]
@@ -497,7 +500,7 @@ def lock_manual_entries_for_the_day(username, revenue_date):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def load_revenue_entries_for_day(username, revenue_date):
     conn = get_db_connection(cursor_factory=RealDictCursor)
@@ -509,7 +512,7 @@ def load_revenue_entries_for_day(username, revenue_date):
         ORDER BY id ASC
     """, (username, revenue_date))
     rows = cursor.fetchall()
-    conn.close()
+    connection_pool.putconn(conn)
     return rows
 
 def save_business(username, business_name, paybill, account_number):
@@ -521,7 +524,7 @@ def save_business(username, business_name, paybill, account_number):
     """, (username, business_name, paybill, account_number))
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def load_user_business(username):
     conn = get_db_connection(cursor_factory=RealDictCursor)
@@ -534,7 +537,7 @@ def load_user_business(username):
     """, (username,))
     business = cursor.fetchone()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return business
 
 def get_existing_revenue_days(username):
@@ -551,7 +554,7 @@ def get_existing_revenue_days(username):
     days = [row["day"] for row in cursor.fetchall()]
 
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return days
 
 def ensure_revenue_day_exists(username, revenue_date):
@@ -566,7 +569,7 @@ def ensure_revenue_day_exists(username, revenue_date):
 
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def get_ai_summary_for_day(username, revenue_date):
     conn = get_db_connection()
@@ -580,7 +583,7 @@ def get_ai_summary_for_day(username, revenue_date):
 
     row = cursor.fetchone()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return row[0] if row else None
 
@@ -597,7 +600,7 @@ def save_ai_summary_for_day(username, revenue_date, summary):
 
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def detect_revenue_anomalies(username, revenue_date):
     conn = get_db_connection(cursor_factory=RealDictCursor)
@@ -684,7 +687,7 @@ def detect_revenue_anomalies(username, revenue_date):
 
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 
 # INVENTORY HELPERS
@@ -700,7 +703,7 @@ def create_inventory_item(business_id, name, category, unit):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def get_dashboard_revenue_intelligence(username):
     conn = get_db_connection()
@@ -745,7 +748,7 @@ def get_dashboard_revenue_intelligence(username):
     anomaly_count = cursor.fetchone()["anomaly_days"]
 
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return {
         "manual_days": manual_days,
@@ -784,7 +787,7 @@ def get_dashboard_intelligence_snapshot(username, days=7):
     anomaly_days = int(cursor.fetchone()["anomaly_days"] or 0)
 
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     avg_daily_revenue = total_revenue / locked_days if locked_days else 0
 
@@ -835,7 +838,7 @@ def get_locked_revenue_for_forecast(username):
 
     rows = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     days = len(rows)
 
@@ -941,7 +944,7 @@ def get_live_financial_performance(username):
     expenses = cursor.fetchall()
 
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return {
         "revenue": revenue,
@@ -963,7 +966,7 @@ def create_inventory_snapshot(business_id, snapshot_date, snapshot_type, created
     snapshot_id = cursor.fetchone()[0]
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return snapshot_id
 
 def save_snapshot_item(snapshot_id, item_id, quantity):
@@ -979,7 +982,7 @@ def save_snapshot_item(snapshot_id, item_id, quantity):
     )
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 
 def load_latest_inventory_snapshot(business_id):
@@ -999,7 +1002,7 @@ def load_latest_inventory_snapshot(business_id):
 
     snapshot = cursor.fetchone()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return snapshot
 
 def load_snapshot_items(snapshot_id):
@@ -1022,7 +1025,7 @@ def load_snapshot_items(snapshot_id):
 
     rows = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return rows
 
 
@@ -1042,7 +1045,7 @@ def load_revenue_days(username):
 
     days = cursor.fetchall()
     cursor.close()
-    conn.close()
+    connection_pool.putconn(conn)
     return days
 
 def update_dashboard_snapshot(username):
@@ -1135,7 +1138,7 @@ def update_dashboard_snapshot(username):
     
     conn.commit()
     cursor.close()
-    conn.close()
+    connection_Pool.putconn(conn)
 
 
 def update_dashboard_intelligence(username):
@@ -1188,7 +1191,7 @@ def update_dashboard_intelligence(username):
 
     conn.commit()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 
 def get_dashboard_snapshot(username):
@@ -1203,7 +1206,7 @@ def get_dashboard_snapshot(username):
     row=cur.fetchone()
 
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return row or {
         "total_revenue":0,
@@ -1224,7 +1227,7 @@ def get_dashboard_intelligence(username):
     row=cur.fetchone()
 
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return row or {
         "locked_days":0,
@@ -1279,7 +1282,7 @@ def maybe_generate_dashboard_insight(username):
         conn.commit()
 
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def run_weekly_intelligence(username):
 
@@ -1329,7 +1332,7 @@ def run_weekly_intelligence(username):
 
     conn.commit()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def generate_weekly_ai_report_if_ready(username):
 
@@ -1389,7 +1392,7 @@ def generate_weekly_ai_report_if_ready(username):
 
     conn.commit()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
 def call_openai(summary):
 
@@ -1421,6 +1424,6 @@ def get_latest_weekly_report(username):
     row = cur.fetchone()
 
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return row
