@@ -272,12 +272,6 @@ except ImportError:
     pdfkit_available = False
 
 
-# Railway PostgreSQL connection
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-
-def get_connection():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 # ✅ Flask app setup
