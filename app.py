@@ -48,6 +48,7 @@ from database import(
     save_expense,
     load_expenses,
     get_db_connection,
+    run_db_operation,
     load_revenue_entries_for_day,
     load_expense_categories,
     save_revenue_entry,
@@ -89,146 +90,103 @@ def generate_revenue_day_export_data(username, revenue_date):
 
     manual_entries = load_revenue_entries_for_day(username, revenue_date)
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    def operation(cur):
 
-    # --- business identifiers ---
-    cursor.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cursor.fetchone()
-
-    # --- locked day check ---
-    cursor.execute("""
-        SELECT locked, total_amount
-        FROM revenue_days
-        WHERE username=%s AND revenue_date=%s
-        LIMIT 1
-    """,(username,revenue_date))
-
-    day = cursor.fetchone()
-
-    is_locked = day["locked"] if day else False
-    locked_total = float(day["total_amount"]) if day else 0
-
-    # --- cash ---
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount),0) AS cash_total
-        FROM cash_revenue
-        WHERE username=%s AND revenue_date=%s
-    """,(username,revenue_date))
-
-    row=cursor.fetchone()
-    cash_total=float(row["cash_total"]) if row else 0.0
-
-    mpesa_total = 0
-
-    # --- mpesa ONLY if unlocked ---
-    if not is_locked and biz:
-
-        paybill=biz["paybill"]
-        account_number=biz["account_number"]
-
-        cursor.execute("""
-            SELECT COALESCE(SUM(amount),0) AS mpesa_total
-            FROM mpesa_transactions
-            WHERE status='confirmed'
-              AND (
-                    (%s IS NOT NULL AND account_reference=%s)
-                    OR
-                    (%s IS NULL AND receiver=%s)
-                  )
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') >= %s::date
-              AND (created_at AT TIME ZONE 'Africa/Nairobi') < (%s::date + INTERVAL '1 day')
-        """,(
-            account_number,
-            account_number,
-            account_number,
-            paybill,
-            revenue_date,
-            revenue_date
-        ))
-
-        row=cursor.fetchone()
-        mpesa_total=float(row["mpesa_total"]) if row else 0.0
-
-    cursor.close()
-    conn.close()
-
-    # --- expenses ---
-    expenses = get_expenses_for_day(username, revenue_date)
-    expense_total=float(expenses["total"])
-
-    # --- FINAL TOTALS ---
-    if is_locked:
-
-        gross_total = locked_total
-        net_total = locked_total
-
-        # reconstruct mpesa safely
-        mpesa_total=max(0, locked_total - cash_total + expense_total)
-
-    else:
-
-        gross_total=cash_total + mpesa_total
-        net_total=gross_total - expense_total
-
-    # calculate manual_total (missing before)
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
-
-    # get MPesa entries list (export needs this!)
-    mpesa_entries = []
-
-    if biz:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        paybill=biz["paybill"]
-        account_number=biz["account_number"]
-
+        # --- business identifiers ---
         cur.execute("""
-            SELECT amount, created_at
-            FROM mpesa_transactions
-            WHERE status='confirmed'
-              AND (
-                    (%s IS NOT NULL AND account_reference=%s)
-                    OR
-                    (%s IS NULL AND receiver=%s)
-                  )
-              AND DATE(created_at AT TIME ZONE 'Africa/Nairobi')=%s
-            ORDER BY created_at ASC
-        """,(
-            account_number,
-            account_number,
-            account_number,
-            paybill,
-            revenue_date
-        ))
+            SELECT paybill, account_number
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
 
-        mpesa_entries=cur.fetchall()
-        cur.close()
-        conn.close()
+        # --- locked day check ---
+        cur.execute("""
+            SELECT locked, total_amount
+            FROM revenue_days
+            WHERE username=%s AND revenue_date=%s
+            LIMIT 1
+        """,(username,revenue_date))
 
-    return {
-        "date": revenue_date,
+        day = cur.fetchone()
 
-        # REQUIRED FOR EXPORT + AI
-        "manual_entries": manual_entries,
-        "manual_total": manual_total,
+        is_locked = day["locked"] if day else False
+        locked_total = float(day["total_amount"]) if day else 0
 
-        "mpesa_entries": mpesa_entries,
-        "mpesa_total": mpesa_total,
+        # --- cash ---
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS cash_total
+            FROM cash_revenue
+            WHERE username=%s AND revenue_date=%s
+        """,(username,revenue_date))
 
-        "expense_entries": expenses["entries"],
-        "expense_total": expense_total,
+        row=cur.fetchone()
+        cash_total=float(row["cash_total"]) if row else 0.0
 
-        "cash_total": cash_total,
-        "gross_total": gross_total,
-        "net_total": net_total,
-    }
+        mpesa_total = 0
+        mpesa_entries = []
+
+        # --- mpesa if business exists ---
+        if biz:
+
+            paybill=biz["paybill"]
+            account_number=biz["account_number"]
+
+            cur.execute("""
+                SELECT COALESCE(SUM(amount),0) AS mpesa_total
+                FROM mpesa_transactions
+                WHERE status='confirmed'
+                  AND (
+                        (%s IS NOT NULL AND account_reference=%s)
+                        OR
+                        (%s IS NULL AND receiver=%s)
+                      )
+                  AND local_date=%s
+            """,(
+                account_number,
+                account_number,
+                account_number,
+                paybill,
+                revenue_date
+            ))
+
+            row=cur.fetchone()
+            mpesa_total=float(row["mpesa_total"]) if row else 0.0
+
+            cur.execute("""
+                SELECT amount, created_at
+                FROM mpesa_transactions
+                WHERE status='confirmed'
+                  AND (
+                        (%s IS NOT NULL AND account_reference=%s)
+                        OR
+                        (%s IS NULL AND receiver=%s)
+                      )
+                  AND local_date=%s
+                ORDER BY created_at ASC
+            """,(
+                account_number,
+                account_number,
+                account_number,
+                paybill,
+                revenue_date
+            ))
+
+            mpesa_entries = cur.fetchall()
+
+        return {
+            "biz": biz,
+            "is_locked": is_locked,
+            "locked_total": locked_total,
+            "cash_total": cash_total,
+            "mpesa_total": mpesa_total,
+            "mpesa_entries": mpesa_entries
+        }
+
+    db = run_db_operation(operation)
+
+    
 def generate_revenue_ai_summary(username, date):
 
     data = generate_revenue_day_export_data(username, date)
@@ -411,20 +369,15 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         username = request.form["username"].strip()
         password = request.form["password"].strip()
 
         try:
-            conn = get_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                "SELECT username, password, role FROM users WHERE username = %s",
-                (username,),
-            )
-            user = cursor.fetchone()
-            cursor.close()
-            conn.close()
+
+            user = get_user(username)
 
             if user and check_password_hash(user["password"], password):
                 session["username"] = username
@@ -439,7 +392,6 @@ def login():
 
     return render_template("login.html")
 
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -452,86 +404,27 @@ def register():
         account_number = request.form.get("account_number","").strip()
 
         try:
-            conn = get_connection()
-            cursor = conn.cursor()
+            # determine role
+            users = load_users()
+            role = "admin" if len(users) == 0 else "user"
 
-            # ✅ Ensure users table exists (with email column)
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS users (
-                    username TEXT PRIMARY KEY,
-                    email TEXT UNIQUE,
-                    password TEXT NOT NULL,
-                    role TEXT NOT NULL
-                )
-            """
-            )
-
-            # ✅ Check if username or email already exists
-            cursor.execute(
-                "SELECT * FROM users WHERE username = %s OR email = %s",
-                (new_user, new_email),
-            )
-            existing_user = cursor.fetchone()
-            if existing_user:
-                flash(
-                    "⚠️ Username or email already exists, please choose another.",
-                    "error",
-                )
-                cursor.close()
-                conn.close()
-                return redirect(url_for("register"))
-
-            # ✅ Validate password
-            if len(new_pass) < 4:
-                flash("⚠️ Password must be at least 4 characters long.", "error")
-                cursor.close()
-                conn.close()
-                return redirect(url_for("register"))
-
-            # ✅ Validate paybill (5–7 digits only)
-            if not re.fullmatch(r"\d{5,7}", paybill):
-                flash("⚠️ Invalid paybill number. Must be 5–7 digits.", "error")
-                cursor.close()
-                conn.close()
-                return redirect(url_for("register"))
-
-            # ✅ Validate account number (optional, but digits only if provided)
-            if account_number and not re.fullmatch(r"[A-Za-z0-9_-]{2,30}", account_number):
-                flash("⚠️ Invalid account number.Use letters and numbers only (2-30 chars).",)
-                cursor.close()
-                conn.close()
-                return redirect(url_for("register"))
-
-            # ✅ Determine role
-            cursor.execute("SELECT COUNT(*) FROM users")
-            user_count = cursor.fetchone()["count"]
-            role = "admin" if user_count == 0 else "user"
-
-            # ✅ Hash password and save new user
+            # hash password
             hashed_password = generate_password_hash(new_pass)
 
-            cursor.execute(
-                """
-                INSERT INTO users (username, email, password, role)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (new_user, new_email, hashed_password, role),
+            result = create_user_with_business(
+                new_user,
+                new_email,
+                hashed_password,
+                role,
+                business_name,
+                paybill,
+                account_number or None
             )
 
-            # ✅ Save business details
-            cursor.execute(
-                """
-                INSERT INTO businesses (username, business_name, paybill, account_number)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (new_user, business_name, paybill, account_number or None),
-            )
-
-            conn.commit()
-            cursor.close()
-            conn.close() 
-
+            if result == "exists":
+                flash("⚠️ Username or email already exists.", "error")
+                return redirect(url_for("register"))
+        
             # ✅ Create upload folder
             os.makedirs(
                 os.path.join(app.config["UPLOAD_FOLDER"], new_user), exist_ok=True
@@ -556,22 +449,17 @@ def logout():
 
 @cache.memoize(timeout=3600)
 def get_business_info(username):
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
 
-    cur.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
+    def operation(cur):
+        cur.execute("""
+            SELECT paybill, account_number
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+        return cur.fetchone()
 
-    row = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return row
+    return run_db_operation(operation)
 
 @cache.memoize(timeout=120)
 def get_dashboard_data(username):
@@ -676,9 +564,8 @@ def dashboard():
     
     if request.method == "POST":
         question = request.form.get("question", "").strip()
-        if question:
+        if AI_ENABLED and question:
             try:
-                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
                 response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": question}],
@@ -731,50 +618,51 @@ def api_dash():
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
 @login_required
 def delete_revenue_day(date):
+
     username = session["username"]
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    def operation(cur):
 
-    # 🔒 BLOCK deletion if day is locked
-    cur.execute("""
-        SELECT locked
-        FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-    row = cur.fetchone()
+        # check if day is locked
+        cur.execute("""
+            SELECT locked
+            FROM revenue_days
+            WHERE username = %s
+              AND revenue_date = %s
+        """, (username, date))
 
-    if row and row[0]:
-        cur.close()
-        conn.close()
+        row = cur.fetchone()
+
+        if row and row["locked"]:
+            return "locked"
+
+        # delete manual entries
+        cur.execute("""
+            DELETE FROM revenue_entries
+            WHERE username = %s
+              AND revenue_date = %s
+        """, (username, date))
+
+        # delete container day
+        cur.execute("""
+            DELETE FROM revenue_days
+            WHERE username = %s
+              AND revenue_date = %s
+        """, (username, date))
+
+        return "deleted"
+
+    result = run_db_operation(operation, commit=True)
+
+    if result == "locked":
         flash("This revenue day is locked and cannot be deleted.", "error")
         return redirect(url_for("revenue_overview"))
 
-    # ✅ Delete manual revenue entries only
-    cur.execute("""
-        DELETE FROM revenue_entries
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-
-    # ✅ Delete the revenue day container
-    cur.execute("""
-        DELETE FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    # Refresh dashboard numbers
+    # refresh dashboard cache
     cache.delete_memoized(get_dashboard_data, username)
 
     flash("Revenue day deleted.", "success")
     return redirect(url_for("revenue_overview"))
-
 
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
 @login_required
@@ -798,23 +686,18 @@ def generate_ai_summary_for_day_route(date):
 
     save_ai_summary_for_day(username, date, summary)
 
-    # LOCK using REAL BUSINESS TOTAL (gross revenue)
     locked_total = data["gross_total"]
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    def operation(cur):
+        cur.execute("""
+            UPDATE revenue_days
+            SET locked = TRUE,
+                total_amount = %s
+            WHERE username = %s
+              AND revenue_date = %s
+        """, (locked_total, username, date))
 
-    cur.execute("""
-        UPDATE revenue_days
-        SET locked = TRUE,
-            total_amount = %s
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (locked_total, username, date))
-
-    conn.commit()
-    cur.close()
-    conn.close()
+    run_db_operation(operation, commit=True)
 
     flash("AI summary generated.")
     return redirect(url_for("revenue_day_detail", date=date))
@@ -910,126 +793,122 @@ def export_revenue_day_pdf(date):
 @app.route("/revenue/day/<date>")
 @login_required
 def revenue_day_detail(date):
+
     username = session["username"]
-    mpesa_entries = []
-
     manual_entries = load_revenue_entries_for_day(username, date)
-
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    # 🔹 get business identifiers
-    cursor.execute("""
-        SELECT paybill, account_number
-        FROM businesses
-        WHERE username = %s
-        LIMIT 1
-    """, (username,))
-    biz = cursor.fetchone()
-
-    
-    # 💵 CASH revenue for the day (NOT manual splits)
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS cash_total
-        FROM cash_revenue
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-
-    row = cursor.fetchone()
-    cash_total = float(row["cash_total"]) if row else 0.0
-
-    # 🔹 anomalies
-    cursor.execute("""
-        SELECT anomaly_type, severity, message
-        FROM revenue_anomalies
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, date))
-    anomalies = cursor.fetchall()
-
-    # 🔒 CHECK LOCK STATUS + LOCKED TOTAL (SAFE)
-    cursor.execute("""
-        SELECT locked, total_amount
-        FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-        LIMIT 1
-    """, (username, date))
-
-    row = cursor.fetchone()
-
-    if row:
-        is_locked = row.get("locked", False)
-        locked_total = float(row.get("total_amount") or 0)
-    else:
-        is_locked = False
-        locked_total = 0
-    
-
-    manual_total = sum(float(e["amount"]) for e in manual_entries)
-    mpesa_total = sum(float(e["amount"]) for e in mpesa_entries)
-    gross_total = mpesa_total + cash_total
-
+    expenses = get_expenses_for_day(username, date)
     ai_summary = get_ai_summary_for_day(username, date)
 
-    expenses = get_expenses_for_day(username, date)
+    def operation(cur):
+
+        # business identifiers
+        cur.execute("""
+            SELECT paybill, account_number
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+
+        # cash revenue
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS cash_total
+            FROM cash_revenue
+            WHERE username=%s AND revenue_date=%s
+        """,(username,date))
+
+        row = cur.fetchone()
+        cash_total = float(row["cash_total"]) if row else 0.0
+
+        # anomalies
+        cur.execute("""
+            SELECT anomaly_type, severity, message
+            FROM revenue_anomalies
+            WHERE username=%s AND revenue_date=%s
+        """,(username,date))
+        anomalies = cur.fetchall()
+
+        # lock status
+        cur.execute("""
+            SELECT locked, total_amount
+            FROM revenue_days
+            WHERE username=%s AND revenue_date=%s
+            LIMIT 1
+        """,(username,date))
+
+        row = cur.fetchone()
+
+        if row:
+            is_locked = row.get("locked", False)
+            locked_total = float(row.get("total_amount") or 0)
+        else:
+            is_locked = False
+            locked_total = 0
+
+        mpesa_total = 0.0
+
+        if not is_locked and biz:
+
+            paybill = biz["paybill"]
+            account_number = biz["account_number"]
+
+            cur.execute("""
+                SELECT COALESCE(SUM(amount),0) AS mpesa_total
+                FROM mpesa_transactions
+                WHERE status='confirmed'
+                  AND local_date=%s
+                  AND (
+                        account_reference=%s
+                        OR receiver=%s
+                      )
+            """,(date,account_number,paybill))
+
+            row = cur.fetchone()
+            mpesa_total = float(row["mpesa_total"]) if row else 0.0
+
+        return {
+            "biz": biz,
+            "cash_total": cash_total,
+            "anomalies": anomalies,
+            "is_locked": is_locked,
+            "locked_total": locked_total,
+            "mpesa_total": mpesa_total
+        }
+
+    db = run_db_operation(operation)
+
+    cash_total = db["cash_total"]
+    anomalies = db["anomalies"]
+    is_locked = db["is_locked"]
+    locked_total = db["locked_total"]
+    mpesa_total = db["mpesa_total"]
+
+    manual_total = sum(float(e["amount"]) for e in manual_entries)
+
     expense_total = expenses["total"]
     expense_entries = expenses["entries"]
 
     if is_locked:
-        # 🔒 LOCKED: single source of truth
+
         gross_total = locked_total
         net_revenue = locked_total
-        mpesa_total = max(0, locked_total - cash_total + expense_total
-                          )
-    else:
-        
-        if biz:
-            paybill = biz["paybill"]
-            account_number = biz["account_number"]
+        mpesa_total = max(0, locked_total - cash_total + expense_total)
 
-            cursor.execute("""
-                SELECT COALESCE(SUM(amount), 0) AS mpesa_total
-                FROM mpesa_transactions
-                WHERE status = 'confirmed'
-                  AND local_date = %s
-                  AND (
-                        (account_reference = %s)
-                        OR
-                        (receiver = %s)
-                      )
-            """, (
-                date,
-                account_number,
-                paybill
-            ))
-            row = cursor.fetchone() 
-            mpesa_total = float(row["mpesa_total"]) if row else 0.0
-            
-        else:
-            mpesa_total = 0.0
-        
-        
+    else:
+
         gross_total = mpesa_total + cash_total
         net_revenue = gross_total - expense_total
 
-        # 🔎 Manual split consistency check (UNLOCKED ONLY)
-        if not is_locked:
-            if abs(manual_total - net_revenue) > 0.01:
-                anomalies.append({
-                    "anomaly_type": "manual_split_mismatch",
-                    "severity": "warning",
-                    "message": (
-                        f"Manual split total (KSh {manual_total:.2f}) "
-                        f"does not match net revenue (KSh {net_revenue:.2f})."
-                    )
-                })
+        if abs(manual_total - net_revenue) > 0.01:
+            anomalies.append({
+                "anomaly_type": "manual_split_mismatch",
+                "severity": "warning",
+                "message": (
+                    f"Manual split total (KSh {manual_total:.2f}) "
+                    f"does not match net revenue (KSh {net_revenue:.2f})."
+                )
+            })
 
-        cursor.close()
-        conn.close()
-
-    
     return render_template(
         "revenue_day_detail.html",
         date=date,
@@ -1049,25 +928,23 @@ def revenue_day_detail(date):
 @app.route("/revenue/overview")
 @login_required
 def revenue_overview():
+
     username = session["username"]
 
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    def operation(cur):
+        cur.execute("""
+            SELECT
+                revenue_date,
+                locked,
+                total_amount AS total_revenue
+            FROM revenue_days
+            WHERE username = %s
+            ORDER BY revenue_date DESC
+        """, (username,))
 
-    cur.execute("""
-        SELECT
-            revenue_date,
-            locked,
-            total_amount AS total_revenue
-        FROM revenue_days
-        WHERE username = %s
-        ORDER BY revenue_date DESC
-    """, (username,))
+        return cur.fetchall()
 
-    days = cur.fetchall()
-
-    cur.close()
-    conn.close()
+    days = run_db_operation(operation)
 
     return render_template(
         "revenue_overview.html",
@@ -1090,81 +967,81 @@ def run_post_lock_tasks(username, revenue_date):
 @app.route("/revenue/lock", methods=["POST"])
 @login_required
 def lock_revenue_day_route():
+
     username = session["username"]
     revenue_date = request.form["revenue_date"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # 🚫 0️⃣ Stop if already locked
-    cursor.execute("""
-        SELECT locked
-        FROM revenue_days
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, revenue_date))
-
-    row = cursor.fetchone()
-    if row and row[0]:
-        flash("This day is already locked and cannot be changed.", "warning")
-        cursor.close()
-        conn.close()
-        return redirect(url_for("revenue_overview"))
-
-    # 1️⃣ Cash total
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0)
-        FROM cash_revenue
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (username, revenue_date))
-    cash_total = float(cursor.fetchone()[0])
-
-    # 2️⃣ MPesa total (FIXED)
-    cursor.execute("""
-        SELECT COALESCE(SUM(m.amount), 0)
-        FROM mpesa_transactions m
-        JOIN businesses b
-          ON (
-                (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                OR
-                (b.account_number IS NULL AND m.receiver = b.paybill)
-             )
-        WHERE b.username = %s
-          AND m.status = 'confirmed'
-          AND m.local_date = %s
-    """, (username, revenue_date))
-    mpesa_total = float(cursor.fetchone()[0])
-
-    gross_total = cash_total + mpesa_total
-
-    # 3️⃣ Expenses
     expenses = get_expenses_for_day(username, revenue_date)
     expense_total = float(expenses["total"])
 
-    # 4️⃣ NET revenue (single source of truth)
-    net_total = gross_total - expense_total
+    def operation(cur):
 
-    # 5️⃣ Ensure revenue_day exists
-    cursor.execute("""
-        INSERT INTO revenue_days (username, revenue_date)
-        VALUES (%s, %s)
-        ON CONFLICT (username, revenue_date) DO NOTHING
-    """, (username, revenue_date))
+        # stop if already locked
+        cur.execute("""
+            SELECT locked
+            FROM revenue_days
+            WHERE username=%s AND revenue_date=%s
+        """,(username,revenue_date))
 
-    # 6️⃣ Lock once and store NET
-    cursor.execute("""
-        UPDATE revenue_days
-        SET locked = TRUE,
-            total_amount = %s
-        WHERE username = %s
-          AND revenue_date = %s
-    """, (net_total, username, revenue_date))
+        row = cur.fetchone()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+        if row and row["locked"]:
+            return {"already_locked": True}
 
+        # cash total
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS cash_total
+            FROM cash_revenue
+            WHERE username=%s AND revenue_date=%s
+        """,(username,revenue_date))
+
+        cash_total = float(cur.fetchone()["cash_total"])
+
+        # mpesa total
+        cur.execute("""
+            SELECT COALESCE(SUM(m.amount),0) AS mpesa_total
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                    (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver=b.paybill)
+                 )
+            WHERE b.username=%s
+              AND m.status='confirmed'
+              AND m.local_date=%s
+        """,(username,revenue_date))
+
+        mpesa_total = float(cur.fetchone()["mpesa_total"])
+
+        gross_total = cash_total + mpesa_total
+        net_total = gross_total - expense_total
+
+        # ensure day exists
+        cur.execute("""
+            INSERT INTO revenue_days (username,revenue_date)
+            VALUES(%s,%s)
+            ON CONFLICT(username,revenue_date) DO NOTHING
+        """,(username,revenue_date))
+
+        # lock day
+        cur.execute("""
+            UPDATE revenue_days
+            SET locked=TRUE,
+                total_amount=%s
+            WHERE username=%s
+              AND revenue_date=%s
+        """,(net_total,username,revenue_date))
+
+        return {"already_locked": False}
+
+    result = run_db_operation(operation, commit=True)
+
+    if result["already_locked"]:
+        flash("This day is already locked and cannot be changed.", "warning")
+        return redirect(url_for("revenue_overview"))
+
+    # run background intelligence pipeline
     threading.Thread(
         target=run_post_lock_tasks,
         args=(username, revenue_date)
@@ -1173,29 +1050,29 @@ def lock_revenue_day_route():
     flash("Revenue day locked successfully.")
     return redirect(url_for("revenue_overview"))
 
-
 @app.route("/revenue/cash", methods=["GET", "POST"])
 @login_required
 def cash_revenue_entry():
+
     username = session["username"]
 
     if request.method == "POST":
+
         amount = float(request.form["amount"])
         date = request.form["date"]
         description = request.form.get("description")
 
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO cash_revenue (username, amount, description, revenue_date)
-            VALUES (%s, %s, %s, %s)
-        """, (username, amount, description, date))
-        conn.commit()
-        cur.close()
-        conn.close()
+        def operation(cur):
+            cur.execute("""
+                INSERT INTO cash_revenue (username, amount, description, revenue_date)
+                VALUES (%s, %s, %s, %s)
+            """, (username, amount, description, date))
+
+        run_db_operation(operation, commit=True)
 
         update_dashboard_snapshot(username)
         update_dashboard_intelligence(username)
+
         cache.delete_memoized(get_dashboard_data, username)
 
         flash("✅ Cash revenue added", "success")
@@ -1206,50 +1083,46 @@ def cash_revenue_entry():
 @app.route("/revenue/entry/<int:entry_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit_revenue_entry(entry_id):
+
     username = session["username"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    # -------- fetch entry --------
+    def fetch_entry(cur):
+        cur.execute("""
+            SELECT *
+            FROM revenue_entries
+            WHERE id = %s AND username = %s
+            LIMIT 1
+        """, (entry_id, username))
+        return cur.fetchone()
 
-    # Fetch entry
-    cursor.execute("""
-        SELECT *
-        FROM revenue_entries
-        WHERE id = %s AND username = %s
-        LIMIT 1
-    """, (entry_id, username))
-
-    entry = cursor.fetchone()
+    entry = run_db_operation(fetch_entry)
 
     if not entry:
-        cursor.close()
-        conn.close()
         abort(404)
 
+    # -------- update entry --------
     if request.method == "POST":
+
         new_category = request.form["category"]
         new_amount = float(request.form["amount"])
 
-        cursor.execute("""
-            UPDATE revenue_entries
-            SET category = %s,
-                amount = %s
-            WHERE id = %s AND username = %s
-        """, (new_category, new_amount, entry_id, username))
+        def update_entry(cur):
+            cur.execute("""
+                UPDATE revenue_entries
+                SET category = %s,
+                    amount = %s
+                WHERE id = %s AND username = %s
+            """, (new_category, new_amount, entry_id, username))
 
-        conn.commit()
-        cursor.close()
-        conn.close()
+        run_db_operation(update_entry, commit=True)
 
-        flash("Entry updated. You can continue editing","success")
+        flash("Entry updated. You can continue editing", "success")
 
         return redirect(url_for(
             "revenue_entry",
             date=entry["revenue_date"]
         ))
-
-    cursor.close()
-    conn.close()
 
     return render_template(
         "edit_revenue_entry.html",
@@ -1262,25 +1135,21 @@ def revenue_forecast():
 
     username = session["username"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    def operation(cur):
+        cur.execute("""
+            SELECT
+                revenue_date AS ds,
+                total_amount AS y
+            FROM revenue_days
+            WHERE username = %s
+              AND locked = TRUE
+            ORDER BY revenue_date ASC
+        """, (username,))
+        return cur.fetchall()
 
-    cursor.execute("""
-        SELECT
-            revenue_date AS ds,
-            total_amount AS y
-        FROM revenue_days
-        WHERE username = %s
-          AND locked = TRUE
-        ORDER BY revenue_date ASC
-    """, (username,))
+    rows = run_db_operation(operation)
 
-    rows = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    # 🔹 Convert to DataFrame FIRST
+    # Convert to DataFrame
     df = pd.DataFrame(rows)
 
     if df.empty:
@@ -1299,7 +1168,6 @@ def revenue_forecast():
 
     locked_days = len(df)
 
-    # 🔒 Not enough usable data
     if locked_days < 7:
         return render_template(
             "charts/revenue_forecast.html",
@@ -1307,7 +1175,7 @@ def revenue_forecast():
             days=locked_days
         )
 
-    # 🧠 Maturity logic (based on CLEAN data)
+    # Forecast maturity tiers
     if locked_days < 14:
         forecast_period = 7
         confidence_level = "Low"
@@ -1318,20 +1186,17 @@ def revenue_forecast():
         forecast_period = 90
         confidence_level = "High"
 
-    # ⭐ Train model
     model = Prophet(
         daily_seasonality=False,
         weekly_seasonality=False,
         yearly_seasonality=False,
         changepoint_prior_scale=0.15,
-        seasonality_mode='additive'
+        seasonality_mode="additive"
     )
 
     model.fit(df)
 
-    # ⭐ Adaptive forecast
     future = model.make_future_dataframe(periods=forecast_period)
-
     forecast = model.predict(future)
 
     forecast["yhat"] = forecast["yhat"].clip(lower=0)
@@ -1365,67 +1230,66 @@ def live_performance():
 
     username = session["username"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    def operation(cur):
 
-    # 🟢 CASH per day
-    cursor.execute("""
-        SELECT revenue_date AS day, SUM(amount) AS cash
-        FROM cash_revenue
-        WHERE username=%s
-        GROUP BY revenue_date
-    """,(username,))
-    cash_rows = cursor.fetchall()
+        # CASH per day
+        cur.execute("""
+            SELECT revenue_date AS day, SUM(amount) AS cash
+            FROM cash_revenue
+            WHERE username=%s
+            GROUP BY revenue_date
+        """,(username,))
+        cash_rows = cur.fetchall()
 
-    # 🟢 MPESA per day (USER SCOPED — VERY IMPORTANT)
-    cursor.execute("""
-        SELECT
-            m.local_date AS day,
-            SUM(m.amount) AS mpesa
-        FROM mpesa_transactions m
-        JOIN businesses b
-          ON (
-                (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
-                OR
-                (b.account_number IS NULL AND m.receiver=b.paybill)
-             )
-        WHERE b.username=%s
-          AND m.status='confirmed'
-        GROUP BY day
-    """,(username,))
-    mpesa_rows = cursor.fetchall()
+        # MPESA per day
+        cur.execute("""
+            SELECT
+                m.local_date AS day,
+                SUM(m.amount) AS mpesa
+            FROM mpesa_transactions m
+            JOIN businesses b
+              ON (
+                    (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+                    OR
+                    (b.account_number IS NULL AND m.receiver=b.paybill)
+                 )
+            WHERE b.username=%s
+              AND m.status='confirmed'
+            GROUP BY day
+        """,(username,))
+        mpesa_rows = cur.fetchall()
 
-    # 🟠 EXPENSES per day
-    cursor.execute("""
-        SELECT expense_date AS day, SUM(amount) AS expenses
-        FROM expenses
-        WHERE username=%s
-        GROUP BY expense_date
-    """,(username,))
-    expense_rows = cursor.fetchall()
+        # EXPENSES per day
+        cur.execute("""
+            SELECT expense_date AS day, SUM(amount) AS expenses
+            FROM expenses
+            WHERE username=%s
+            GROUP BY expense_date
+        """,(username,))
+        expense_rows = cur.fetchall()
 
-    cursor.close()
-    conn.close()
+        return cash_rows, mpesa_rows, expense_rows
 
-    # maps 
+    cash_rows, mpesa_rows, expense_rows = run_db_operation(operation)
+
+    # maps
     cash_map = {str(r["day"]): float(r["cash"]) for r in cash_rows}
     mpesa_map = {str(r["day"]): float(r["mpesa"]) for r in mpesa_rows}
     expense_map = {str(r["day"]): float(r["expenses"]) for r in expense_rows}
 
-    dates = sorted(set(cash_map)|set(mpesa_map)|set(expense_map))
+    dates = sorted(set(cash_map) | set(mpesa_map) | set(expense_map))
 
-    revenue_values=[]
-    expense_values=[]
-    profit_values=[]
+    revenue_values = []
+    expense_values = []
+    profit_values = []
 
     for d in dates:
-
-        gross = cash_map.get(d,0) + mpesa_map.get(d,0)
-        exp = expense_map.get(d,0)
+        gross = cash_map.get(d, 0) + mpesa_map.get(d, 0)
+        exp = expense_map.get(d, 0)
 
         revenue_values.append(gross)
         expense_values.append(exp)
-        profit_values.append(gross-exp)
+        profit_values.append(gross - exp)
 
     return render_template(
         "charts/live_performance.html",
@@ -1434,60 +1298,59 @@ def live_performance():
         expense_values=expense_values,
         profit_values=profit_values
     )
+
 @app.route("/api/latest-payment")
 def latest_payment():
+
     if "username" not in session:
         return jsonify({"payment": None})
 
     username = session["username"]
 
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
+    def operation(cur):
 
-    SQL = """
-    SELECT m.id, m.amount, m.created_at
-    FROM mpesa_transactions m
-    JOIN businesses b
-    ON (
-        (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-        OR
-        (b.account_number IS NULL AND m.receiver = b.paybill)
-    )
-    WHERE b.username = %s
-    AND m.seen = FALSE
-    AND m.status = 'confirmed'
-    ORDER BY m.created_at DESC
-    LIMIT 1
-    """
+        SQL = """
+        SELECT m.id, m.amount, m.created_at
+        FROM mpesa_transactions m
+        JOIN businesses b
+        ON (
+            (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+            OR
+            (b.account_number IS NULL AND m.receiver = b.paybill)
+        )
+        WHERE b.username = %s
+        AND m.seen = FALSE
+        AND m.status = 'confirmed'
+        ORDER BY m.created_at DESC
+        LIMIT 1
+        """
 
-    cur.execute(SQL, (username,))
-    payment = cur.fetchone()
+        cur.execute(SQL, (username,))
+        payment = cur.fetchone()
 
-    if payment:
-        cur.execute("""
-            UPDATE mpesa_transactions m
-            SET seen = TRUE
-            FROM businesses b
-            WHERE m.id = %s
-            AND (
-                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                    OR
-                    (b.account_number IS NULL AND m.receiver = b.paybill)
-                )
-            AND b.username = %s
-        """, (payment["id"], username))
+        if payment:
+            cur.execute("""
+                UPDATE mpesa_transactions m
+                SET seen = TRUE
+                FROM businesses b
+                WHERE m.id = %s
+                AND (
+                        (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                        OR
+                        (b.account_number IS NULL AND m.receiver = b.paybill)
+                    )
+                AND b.username = %s
+            """, (payment["id"], username))
 
-    conn.commit()
+        return payment
 
-    cur.close()
-    conn.close()
+    payment = run_db_operation(operation, commit=True)
 
     return jsonify({"payment": payment})
 
+
 @app.route("/api/financial_data")
 def financial_data():
-    import psycopg2, os
-    from flask import jsonify, session
 
     if "username" not in session:
         return jsonify({})
@@ -1495,47 +1358,47 @@ def financial_data():
     username = session["username"]
 
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
 
-        # Revenue per day
-        cur.execute("""
-            SELECT
-                m.local_date AS date
-                COALESCE(SUM(m.amount),0) AS revenue
-            FROM mpesa_transactions m
-            JOIN businesses b
-              ON (
-                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                    OR
-                    (b.account_number IS NULL AND m.receiver = b.paybill)
-                 )
-            WHERE b.username = %s
-              AND m.status = 'confirmed'
-            GROUP BY m.local_date AS date
-        """, (username,))
-        revenue_rows = cur.fetchall()
+        def operation(cur):
 
-        # Expenses per day
-        cur.execute("""
-            SELECT
-                DATE(expense_date) AS date,
-                COALESCE(SUM(amount), 0) AS expenses
-            FROM expenses
-            WHERE username = %s
-            GROUP BY DATE(expense_date)
-        """, (username,))
-        expense_rows = cur.fetchall()
+            # Revenue per day
+            cur.execute("""
+                SELECT
+                    m.local_date AS date,
+                    COALESCE(SUM(m.amount),0) AS revenue
+                FROM mpesa_transactions m
+                JOIN businesses b
+                  ON (
+                        (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
+                        OR
+                        (b.account_number IS NULL AND m.receiver = b.paybill)
+                     )
+                WHERE b.username = %s
+                  AND m.status = 'confirmed'
+                GROUP BY m.local_date
+            """, (username,))
+            revenue_rows = cur.fetchall()
 
-        cur.close()
-        conn.close()
+            # Expenses per day
+            cur.execute("""
+                SELECT
+                    DATE(expense_date) AS date,
+                    COALESCE(SUM(amount),0) AS expenses
+                FROM expenses
+                WHERE username = %s
+                GROUP BY DATE(expense_date)
+            """, (username,))
+            expense_rows = cur.fetchall()
 
-        # Convert to dicts for easy merge
-        revenue_map = {r[0]: float(r[1]) for r in revenue_rows}
-        expense_map = {e[0]: float(e[1]) for e in expense_rows}
+            return revenue_rows, expense_rows
 
-        # Merge all dates
-        all_dates = sorted(set(revenue_map.keys()) | set(expense_map.keys()))
+        revenue_rows, expense_rows = run_db_operation(operation)
+
+        # Convert to maps
+        revenue_map = {r["date"]: float(r["revenue"]) for r in revenue_rows}
+        expense_map = {e["date"]: float(e["expenses"]) for e in expense_rows}
+
+        all_dates = sorted(set(revenue_map) | set(expense_map))
 
         dates = [d.strftime("%b %d") for d in all_dates]
         revenue = [revenue_map.get(d, 0) for d in all_dates]
@@ -1553,11 +1416,8 @@ def financial_data():
         print("⚠️ Error generating financial data:", e)
         return jsonify({})
 
-
 @app.route("/api/transactions_summary")
 def transactions_summary():
-    import psycopg2, os
-    from flask import jsonify, session
 
     if "username" not in session:
         return jsonify({})
@@ -1565,35 +1425,37 @@ def transactions_summary():
     username = session["username"]
 
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
 
-        cur.execute("""
-            SELECT 
-                COALESCE(SUM(m.amount), 0) AS total_revenue,
-                COALESCE(AVG(m.amount), 0) AS avg_transaction,
-                COUNT(*) AS txn_count
-            FROM mpesa_transactions m
-            JOIN businesses b
-              ON (
-                    (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                    OR
-                    (b.account_number IS NULL AND m.receiver = b.paybill)
-                 )
-            WHERE b.username = %s
-              AND m.status = 'confirmed'
-        """, (username,))
+        def operation(cur):
+            cur.execute("""
+                SELECT 
+                    COALESCE(SUM(m.amount),0) AS total_revenue,
+                    COALESCE(AVG(m.amount),0) AS avg_transaction,
+                    COUNT(*) AS txn_count
+                FROM mpesa_transactions m
+                JOIN businesses b
+                  ON (
+                        (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
+                        OR
+                        (b.account_number IS NULL AND m.receiver=b.paybill)
+                     )
+                WHERE b.username=%s
+                  AND m.status='confirmed'
+            """,(username,))
 
-        total_revenue, avg_transaction, txn_count = cur.fetchone()
+            return cur.fetchone()
 
-        cur.close()
-        conn.close()
+        row = run_db_operation(operation)
+
+        total_revenue = float(row["total_revenue"] or 0)
+        avg_transaction = float(row["avg_transaction"] or 0)
+        txn_count = int(row["txn_count"] or 0)
 
         return jsonify({
-            "total_revenue": round(float(total_revenue), 2),
-            "avg_transaction": round(float(avg_transaction), 2),
+            "total_revenue": round(total_revenue, 2),
+            "avg_transaction": round(avg_transaction, 2),
             "txn_count": txn_count,
-            "profit_growth": "N/A"  # real growth comes later
+            "profit_growth": "N/A"
         })
 
     except Exception as e:
@@ -1748,71 +1610,67 @@ def payment_confirm():
         # ============================================================
         # SAVE TO DATABASE
         # ============================================================
-        conn = get_db_connection()
-        cur = conn.cursor()
+        def operation(cur):
 
-        # 🔍 Find business linked to this payment
-        cur.execute("""
-            SELECT id, username
-            FROM businesses
-            WHERE
-                (account_number IS NOT NULL AND account_number = %s)
-                OR
-                (account_number IS NULL AND paybill = %s)
-            LIMIT 1
-        """, (account_ref, shortcode))
+            # find linked business
+            cur.execute("""
+                SELECT id, username
+                FROM businesses
+                WHERE
+                    (account_number IS NOT NULL AND account_number = %s)
+                    OR
+                    (account_number IS NULL AND paybill = %s)
+                LIMIT 1
+            """, (account_ref, shortcode))
 
-        biz = cur.fetchone()
+            biz = cur.fetchone()
 
-        if not biz:
-            business_id = None
-            username = None
-        else:
-            business_id = biz[0]
-            username = biz[1]
+            if not biz:
+                business_id = None
+                username_local = None
+            else:
+                business_id = biz["id"]
+                username_local = biz["username"]
 
-        print("Inserting into MPesa transactions:", transaction_id, amount)
+            import pytz
+            from datetime import datetime
 
-        import pytz
-        from datetime import datetime
+            nairobi = pytz.timezone("Africa/Nairobi")
+            local_date = datetime.now(nairobi).date()
 
-        nairobi = pytz.timezone("Africa/Nairobi")
-        local_date = datetime.now(nairobi).date()
-
-        cur.execute("""
-            INSERT INTO mpesa_transactions
-            (
+            # insert transaction (safe against duplicates)
+            cur.execute("""
+                INSERT INTO mpesa_transactions
+                (
+                    transaction_id,
+                    amount,
+                    sender,
+                    receiver,
+                    transaction_type,
+                    account_reference,
+                    description,
+                    raw_payload,
+                    origin_ip,
+                    status,
+                    created_at,
+                    local_date
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW(),%s)
+                ON CONFLICT (transaction_id) DO NOTHING
+            """, (
                 transaction_id,
                 amount,
-                sender,
-                receiver,
-                transaction_type,
-                account_reference,
+                sender_phone or sender_name,
+                shortcode,
+                "C2B Payment",
+                account_ref,
                 description,
-                raw_payload,
-                origin_ip,
-                status,
-                created_at,
+                json.dumps(data),
+                request.remote_addr,
                 local_date
-            )
-            VALUES  (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW(), %s);
-        """, (
-            transaction_id,
-            amount,
-            sender_phone or sender_name,
-            shortcode,
-            "C2B Payment",
-            account_ref,
-            description,
-            json.dumps(data),
-            request.remote_addr,
-            local_date
-        ))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
+            ))
 
+            return username_local, local_date
         if username:
             ensure_revenue_day_exists(username, local_date)
             update_dashboard_snapshot(username)
@@ -3451,9 +3309,9 @@ def inventory_setup():
 
     username = session["username"]
 
-    # 🔹 GET business_id FIRST (REQUIRED)
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
+    # 🔹 GET business_id FIRST
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
         SELECT id FROM businesses
@@ -3473,7 +3331,6 @@ def inventory_setup():
     cur.close()
     conn.close()
 
-    # 🔹 HANDLE FORM SUBMIT
     if request.method == "POST":
         try:
             name = request.form["item_name"].strip().title()
@@ -3489,7 +3346,6 @@ def inventory_setup():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            # 1️⃣ Insert item
             cur.execute("""
                 INSERT INTO inventory_items (business_id, name, category, unit)
                 VALUES (%s, %s, %s, %s)
@@ -3498,7 +3354,6 @@ def inventory_setup():
 
             item_id = cur.fetchone()[0]
 
-            # 2️⃣ Create snapshot
             cur.execute("""
                 INSERT INTO inventory_snapshots
                 (business_id, snapshot_date, snapshot_type, created_by)
@@ -3508,7 +3363,6 @@ def inventory_setup():
 
             snapshot_id = cur.fetchone()[0]
 
-            # 3️⃣ Snapshot quantity
             cur.execute("""
                 INSERT INTO inventory_snapshot_items
                 (snapshot_id, item_id, quantity)
@@ -3526,8 +3380,8 @@ def inventory_setup():
             flash("❌ Failed to save inventory item.", "error")
 
     # 🔹 LOAD INVENTORY FOR DISPLAY
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
     SELECT
@@ -3535,25 +3389,15 @@ def inventory_setup():
         i.category,
         i.unit,
         s.snapshot_date,
-
-        si.quantity
-        + COALESCE(SUM(m.quantity_change),0) AS quantity
-
+        si.quantity + COALESCE(SUM(m.quantity_change),0) AS quantity
     FROM inventory_items i
-
-    JOIN inventory_snapshot_items si
-        ON si.item_id = i.id
-
-    JOIN inventory_snapshots s
-        ON s.id = si.snapshot_id
-
+    JOIN inventory_snapshot_items si ON si.item_id = i.id
+    JOIN inventory_snapshots s ON s.id = si.snapshot_id
     LEFT JOIN inventory_movements m
         ON m.item_id = i.id
         AND m.business_id = i.business_id
         AND m.created_at > s.created_at
-
     WHERE i.business_id = %s
-
     GROUP BY
         i.name,
         i.category,
@@ -3561,7 +3405,6 @@ def inventory_setup():
         s.snapshot_date,
         si.quantity,
         s.created_at
-
     ORDER BY s.snapshot_date DESC
     """, (business_id,))
 
@@ -3571,7 +3414,6 @@ def inventory_setup():
 
     return render_template("inventory_setup.html", items=items)
 
-
 @app.route("/inventory/adjust", methods=["GET", "POST"])
 def inventory_adjust():
     if "username" not in session:
@@ -3579,66 +3421,82 @@ def inventory_adjust():
 
     username = session["username"]
 
-    conn = get_db_connection(cursor_factory=RealDictCursor)
-    cur = conn.cursor()
+    conn = None
+    cur = None
 
-    # Get business_id for user
-    cur.execute(
-        "SELECT id FROM businesses WHERE username = %s",
-        (username,)
-    )
-    business = cur.fetchone()
-    if not business:
-        flash("No business found.", "error")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Get business_id
+        cur.execute(
+            "SELECT id FROM businesses WHERE username=%s",
+            (username,)
+        )
+        business = cur.fetchone()
+
+        if not business:
+            flash("No business found.", "error")
+            return redirect(url_for("dashboard"))
+
+        business_id = business["id"]
+
+        if request.method == "POST":
+
+            item_id = int(request.form["item_id"])
+            movement_type = request.form["movement_type"]
+            quantity = float(request.form["quantity"])
+            note = request.form.get("note")
+
+            # normalize direction
+            if movement_type in ("sale", "usage"):
+                quantity = -abs(quantity)
+            else:
+                quantity = abs(quantity)
+
+            cur.execute("""
+                INSERT INTO inventory_movements
+                (business_id, item_id, quantity_change, movement_type, source, created_by)
+                VALUES (%s,%s,%s,%s,%s,%s)
+            """, (
+                business_id,
+                item_id,
+                quantity,
+                movement_type,
+                note,
+                username
+            ))
+
+            conn.commit()
+
+            flash("Inventory updated successfully.", "success")
+
+        # load items
+        cur.execute("""
+            SELECT id, name
+            FROM inventory_items
+            WHERE business_id=%s
+            ORDER BY name
+        """, (business_id,))
+
+        items = cur.fetchall()
+
+        return render_template(
+            "inventory_adjust.html",
+            items=items,
+            success=True
+        )
+
+    except Exception as e:
+        print("Inventory adjust error:", e)
+        flash("Inventory update failed.", "error")
         return redirect(url_for("dashboard"))
 
-    business_id = business["id"]
-
-    if request.method == "POST":
-        item_id = int(request.form["item_id"])
-        movement_type = request.form["movement_type"]
-        quantity = float(request.form["quantity"])
-        note = request.form.get("note")
-
-        # Normalize quantity direction
-        if movement_type in ("sale", "usage"):
-            quantity = -abs(quantity)
-        else:
-            quantity = abs(quantity)
-
-        cur.execute("""
-            INSERT INTO inventory_movements
-            (business_id, item_id, quantity_change, movement_type, source, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            business_id,
-            item_id,
-            quantity,
-            movement_type,
-            note,
-            username
-        ))
-
-        conn.commit()
-        flash("Inventory updated successfully.", "success")
-
-    # Load items for dropdown
-    cur.execute("""
-        SELECT id, name
-        FROM inventory_items
-        WHERE business_id = %s
-        ORDER BY name
-    """, (business_id,))
-    items = cur.fetchall()
-
-    conn.close()
-
-    return render_template(
-        "inventory_adjust.html",
-        items=items,
-        success=True
-    )
-
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close
 
 if __name__ == "__main__":
 
