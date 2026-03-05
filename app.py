@@ -1619,9 +1619,8 @@ def payment_confirm():
                 SELECT id, username
                 FROM businesses
                 WHERE
-                    (account_number IS NOT NULL AND account_number = %s)
-                    OR
-                    (account_number IS NULL AND paybill = %s)
+                    account_number = %s
+                    OR paybill = %s
                 LIMIT 1
             """, (account_ref, shortcode))
 
