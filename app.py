@@ -1669,7 +1669,7 @@ def payment_confirm():
 
         username_local, local_date = run_db_operation(operation, commit=True)
         
-        if username:
+        if username_local:
             ensure_revenue_day_exists(username_local, local_date)
             update_dashboard_snapshot(username_local)
             update_dashboard_intelligence(username_local)
