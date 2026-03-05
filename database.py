@@ -1006,6 +1006,10 @@ def load_revenue_days(username):
 
 def update_dashboard_snapshot(username):
 
+    if not username:
+        print("snapshot skipped: username missing")
+        return
+
     def operation(cur):
 
         # CASH TOTAL
@@ -1091,6 +1095,10 @@ def update_dashboard_snapshot(username):
     run_db_operation(operation, commit=True)
 
 def update_dashboard_intelligence(username):
+
+    if not username:
+        print("intelligence skipped: username missing")
+        return
 
     def operation(cur):
 
