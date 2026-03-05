@@ -1676,10 +1676,10 @@ def payment_confirm():
         username_local, local_date = run_db_operation(operation, commit=True)
         
         if username:
-            ensure_revenue_day_exists(username, local_date)
-            update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
-            cache.delete_memoized(get_dashboard_data, username)
+            ensure_revenue_day_exists(username_local, local_date)
+            update_dashboard_snapshot(username_local)
+            update_dashboard_intelligence(username_local)
+            cache.delete_memoized(get_dashboard_data, username_local)
         
 
         print("✅ PAYMENT SAVED:", amount)
