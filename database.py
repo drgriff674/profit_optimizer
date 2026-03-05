@@ -1057,7 +1057,7 @@ def update_dashboard_snapshot(username):
         if len(rows) >= 2:
             current = float(rows[0]["total_amount"])
             previous = float(rows[1]["total_amount"])
-            growth = ((current - previous) / previous) * 100 if previous > 0 else 0
+            growth = round(((current-previous)/previous)*100,2)if previous > 0 else 0
         else:
             growth = 0
 

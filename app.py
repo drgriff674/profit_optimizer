@@ -1673,6 +1673,9 @@ def payment_confirm():
             ))
 
             return username_local, local_date
+
+        username_local, local_date = run_db_operation(operation, commit=True)
+        
         if username:
             ensure_revenue_day_exists(username, local_date)
             update_dashboard_snapshot(username)
