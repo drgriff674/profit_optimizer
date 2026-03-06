@@ -1380,6 +1380,59 @@ def get_user(username):
 
     return run_db_operation(operation)
 
+def get_weekly_inventory_insights(username):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT id
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        biz = cur.fetchone()
+        if not biz:
+            return []
+
+        business_id = biz["id"]
+
+        # movements last 7 days
+        cur.execute("""
+            SELECT movement_type, COUNT(*) as count
+            FROM inventory_movements
+            WHERE business_id = %s
+            AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY movement_type
+        """, (business_id,))
+
+        rows = cur.fetchall()
+
+        insights = []
+
+        for r in rows:
+            mtype = r["movement_type"]
+            count = r["count"]
+
+            if mtype == "adjustment":
+                insights.append(
+                    f"📦 {count} inventory adjustments were recorded this week."
+                )
+
+            elif mtype == "restock":
+                insights.append(
+                    f"📥 {count} inventory restocks occurred this week."
+                )
+
+            elif mtype == "sale":
+                insights.append(
+                    f"📤 Inventory decreased {count} times due to sales."
+                )
+
+        return insights
+
+    return run_db_operation(operation)
+
 def create_user_with_business(username, email, password, role, business_name, paybill, account_number):
 
     def operation(cur):

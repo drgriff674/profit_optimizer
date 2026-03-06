@@ -78,6 +78,7 @@ from database import(
     call_openai,
     get_user,
     create_user_with_business,
+    get_weekly_inventory_insights,
 )
 import pytz
 from flask_caching import Cache
@@ -505,6 +506,12 @@ def dashboard():
 
     username = session["username"]
 
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+    
+    run_weekly_intelligence(username)
+    generate_weekly_ai_report_if_ready(username)
+
     latest_payment = None
 
 
@@ -532,6 +539,10 @@ def dashboard():
     start = time.time()
     latest_report = get_latest_weekly_report(username)
     print("Weekly report took:", time.time() - start)
+
+    start = time.time()
+    inventory_insights = get_weekly_inventory_insights(username)
+    print ("Inventory_insights took:",time.time() - start)
 
     print("TOTAL dashboard time:", time.time() - start_total)
 
@@ -617,7 +628,8 @@ def dashboard():
         intelligence=intelligence,
         forecast_status=forecast_status,
         live_total_revenue=live_total_revenue,
-        weekly_report=latest_report
+        weekly_report=latest_report,
+        inventory_insights=inventory_insights
     )
 
 @app.route("/api/dashboard-snapshot")
