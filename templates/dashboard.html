@@ -259,6 +259,31 @@ bg-gray-100 text-gray-700
 	
 	</section>
 
+{% if intelligence.locked_days == 0 %}
+
+<div class="p-5 rounded-xl shadow mb-6"
+     style="background: var(--og-surface); border-left: 4px solid #3b82f6;">
+
+  <h3 class="text-lg font-semibold mb-2">
+    👋 Welcome to OptiGain
+  </h3>
+
+  <p class="text-sm opacity-80 mb-3">
+    Your dashboard will become smarter as you record revenue and expenses.
+    Follow these quick steps to get started:
+  </p>
+
+  <ul class="text-sm space-y-2">
+    <li>1️⃣ Add today's revenue in <strong>Revenue → Add Cash Revenue</strong></li>
+    <li>2️⃣ Record any spending in <strong>Expenses → Add Expense</strong></li>
+    <li>3️⃣ Lock the day once all entries are complete</li>
+    <li>4️⃣ After <strong>7 locked days</strong>, AI insights and forecasts activate</li>
+  </ul>
+
+</div>
+
+{% endif %}
+
         
 
    <!-- 🧠 INTELLIGENCE ROW -->
