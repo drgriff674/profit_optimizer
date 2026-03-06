@@ -178,13 +178,15 @@ def generate_revenue_day_export_data(username, revenue_date):
             mpesa_entries = cur.fetchall()
 
         return {
+            "date": revenue_date,
             "biz": biz,
             "is_locked": is_locked,
             "locked_total": locked_total,
             "cash_total": cash_total,
             "mpesa_total": mpesa_total,
             "mpesa_entries": mpesa_entries,
-            "expense_total":0
+            "manual_entries": manual_entries,
+            "expense_total": 0
         }
 
     db = run_db_operation(operation)
@@ -781,16 +783,19 @@ def export_revenue_day_pdf(date):
     username = session["username"]
     data = generate_revenue_day_export_data(username, date)
 
+    if not data:
+        abort(404)
+
     # --- SAFE VALUES ---
     manual_entries = data.get("manual_entries", [])
     mpesa_entries = data.get("mpesa_entries", [])
     expense_entries = data.get("expense_entries", [])
 
-    cash_total = data.get("cash_total", 0)
-    mpesa_total = data.get("mpesa_total", 0)
-    expense_total = data.get("expense_total", 0)
+    cash_total = float(data.get("cash_total", 0))
+    mpesa_total = float(data.get("mpesa_total", 0))
+    expense_total = float(data.get("expense_total", 0))
 
-    gross_total = cash_total - mpesa_total
+    gross_total = cash_total + mpesa_total
     net_total = gross_total - expense_total
 
     html = render_template(
