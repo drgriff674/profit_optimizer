@@ -1347,6 +1347,25 @@ def live_performance():
         profit_values=profit_values
     )
 
+@app.route("/profile")
+def profile():
+
+    if "username" not in session:
+        return redirect(url_for("login"))
+
+    username = session["username"]
+
+    business = get_business_info(username)
+    intelligence = get_dashboard_intelligence(username)
+    snapshot = get_dashboard_snapshot(username)
+
+    return render_template(
+        "profile.html",
+        business=business,
+        intelligence=intelligence,
+        snapshot=snapshot
+    )
+
 @app.route("/api/latest-payment")
 def latest_payment():
 
@@ -2722,21 +2741,6 @@ def send_report():
         flash("❌ Failed to send report.", "danger")
 
     return redirect(url_for("dashboard"))
-@app.route("/profile")
-def profile():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
-
-    if os.path.exists(user_folder):
-        uploaded_files = sorted(os.listdir(user_folder))
-    else:
-        uploaded_files = []
-
-    return render_template("profile.html", uploaded_files=uploaded_files)
-
 
 @app.route("/delete/<filename>", methods=["POST"])
 def delete_file(filename):

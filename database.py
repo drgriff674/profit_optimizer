@@ -1467,3 +1467,20 @@ def create_user_with_business(username, email, password, role, business_name, pa
         return "created"
 
     return run_db_operation(operation, commit=True)
+
+def get_business_info(username):
+
+    conn = sqlite3.connect("optigain.db")
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT business_name, paybill, account_number
+        FROM businesses
+        WHERE username = ?
+    """, (username,))
+
+    row = c.fetchone()
+    conn.close()
+
+    return row if row else {}
