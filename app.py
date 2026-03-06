@@ -276,13 +276,15 @@ except ImportError:
 
 # ✅ Flask app setup
 app = Flask(__name__)
+
 print ("Initializing database on startup...")
 init_db()
+
 cache = Cache(app, config={
     "CACHE_TYPE": "SimpleCache",  # safe for localhost
     "CACHE_DEFAULT_TIMEOUT": 300  # 5 minutes
 })
-app.secret_key = "your_secret_key"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev_secret_key")
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -3500,12 +3502,10 @@ def inventory_adjust():
         if cur:
             cur.close()
         if conn:
-            conn.close
+            conn.close()
 
 if __name__ == "__main__":
 
-    print("Initializing database...")
-    init_db()   # ← THIS CREATES ALL TABLES INCLUDING dashboard_snapshot
 
     port = int(os.environ.get("PORT", 5000))
     print("app is about to start listening on port", port)
