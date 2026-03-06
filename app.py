@@ -379,6 +379,8 @@ def login():
 
             if user and check_password_hash(user["password"], password):
                 session["username"] = username
+                print("LOGIN SUCCESS:",username)
+                print("SESSION SET:",session.get("username"))
                 return redirect(url_for("dashboard"))
 
             flash("❌ Invalid username or password", "error")
@@ -484,6 +486,7 @@ def get_dashboard_data(username):
 
 @app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
+    print("SESSION USER ON DASHBOARD:",session.get("username"))
     if "username" not in session:
         return redirect(url_for("login"))
 
@@ -1614,18 +1617,9 @@ def payment_confirm():
             cur.execute("""
                 SELECT id, username
                 FROM businesses
-                WHERE
-                    (
-                        account_number IS NOT NULL
-                        AND account_number = %s
-                    )
-                    OR
-                    (
-                        account_number IS NULL
-                        AND paybill = %s
-                    )
+                WHERE paybill = %s
                 LIMIT 1
-            """, (account_ref, shortcode))
+                """, (shortcode,))
             biz = cur.fetchone()
 
             if not biz:
@@ -1634,6 +1628,8 @@ def payment_confirm():
             else:
                 business_id = biz["id"]
                 username_local = biz["username"]
+
+            print("BUSINESS FOUND:",username_local)
 
             import pytz
             from datetime import datetime

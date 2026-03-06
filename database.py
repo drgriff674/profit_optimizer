@@ -39,6 +39,7 @@ def init_db():
         cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
+            email TEXT UNIQUE,
             password TEXT NOT NULL,
             role TEXT NOT NULL
         )
@@ -1061,9 +1062,14 @@ def update_dashboard_snapshot(username):
         if len(rows) >= 2:
             current = float(rows[0]["total_amount"])
             previous = float(rows[1]["total_amount"])
-            growth = round(((current-previous)/previous)*100,2)if previous > 0 else 0
+
+            if previous > 0:
+                growth = round(((current-previous)/previous)*100,2)
+            else:
+                growth = 0
         else:
             growth = 0
+        
 
         # LARGEST EXPENSE
         cur.execute("""
