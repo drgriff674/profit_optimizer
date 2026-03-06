@@ -406,6 +406,11 @@ def register():
         new_user = request.form["username"].strip()
         new_email = request.form["email"].strip()
         new_pass = request.form["password"].strip()
+        confirm_pass = request.form["confirm_password"].strip()
+
+        if new_pass != confirm_pass:
+            flash("❌ Passwords do not match.", "error")
+            return redirect(url_for("register"))
 
         business_name = request.form["business_name"].strip()
         paybill = request.form["paybill"].strip()

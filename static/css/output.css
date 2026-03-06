@@ -641,6 +641,14 @@ video {
   top: 1.25rem;
 }
 
+.right-2 {
+  right: 0.5rem;
+}
+
+.top-2 {
+  top: 0.5rem;
+}
+
 .z-20 {
   z-index: 20;
 }
@@ -1560,6 +1568,10 @@ video {
 
 .pt-6 {
   padding-top: 1.5rem;
+}
+
+.pr-10 {
+  padding-right: 2.5rem;
 }
 
 .text-left {

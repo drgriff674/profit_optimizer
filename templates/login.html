@@ -25,11 +25,11 @@
     🌙
   </button>
 
-  <!-- Auth Card -->
-  <div
-    class="w-full max-w-md rounded-2xl shadow-2xl p-8 border"
-    style="background: var(--og-surface; color: var(--og-text-main) border:1px solid var(--og-border-subtle)"
-  >
+ <!-- Auth Card -->
+<div
+  class="w-full max-w-md rounded-2xl shadow-2xl p-8 border"
+  style="background: var(--og-surface); color: var(--og-text-main); border:1px solid var(--og-border-subtle);"
+>
 
     <!-- Branding -->
     <div class="flex flex-col items-center mb-6">
@@ -66,22 +66,34 @@
         />
       </div>
 
-      <div>
-        <label class="block text-sm font-medium mb-1">
-          Password
-        </label>
-        <input
-          type="password"
-          name="password"
-          required
-          class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)] focus:border-transparent"
-          style="
-            background: var(--og-surface);
-            color: var(--og-text-main);
-            border-color: var(--og-border-subtle);
-          "
-        />
-      </div>
+     <div>
+  <label class="block text-sm font-medium mb-1">
+    Password
+  </label>
+
+  <div class="relative">
+    <input
+      id="password"
+      type="password"
+      name="password"
+      required
+      class="w-full rounded-lg px-4 py-2 pr-10 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)] focus:border-transparent"
+      style="
+        background: var(--og-surface);
+        color: var(--og-text-main);
+        border-color: var(--og-border-subtle);
+      "
+    />
+
+    <button
+      type="button"
+      onclick="togglePassword(this)"
+      class="absolute right-2 top-2 opacity-70"
+    >
+      👁
+    </button>
+  </div>
+</div>
 
       <button
         type="submit"
@@ -137,6 +149,22 @@
       });
     });
   </script>
+
+<script>
+function togglePassword(btn) {
+
+  const field = document.getElementById("password");
+
+  if (field.type === "password") {
+      field.type = "text";
+      btn.innerText = "🙈";
+  } else {
+      field.type = "password";
+      btn.innerText = "👁";
+  }
+
+}
+</script>
 
 </body>
 </html>
