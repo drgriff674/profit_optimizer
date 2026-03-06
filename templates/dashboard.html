@@ -187,6 +187,35 @@
         <div class="flex items-center gap-3">
             <button id="sidebarToggle" class="md:hidden text-2xl">☰</button>
             <h1 class="text-lg font-semibold">Welcome, {{ session['username'] }}</h1>
+
+<!-- FLASH MESSAGES -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="mb-4 space-y-2">
+
+{% for category, message in messages %}
+
+<div class="p-3 rounded-lg shadow
+{% if category == 'success' %}
+bg-green-100 text-green-700
+{% elif category == 'error' %}
+bg-red-100 text-red-700
+{% elif category == 'warning' %}
+bg-yellow-100 text-yellow-700
+{% else %}
+bg-gray-100 text-gray-700
+{% endif %}
+">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+</div>
+{% endif %}
+{% endwith %}
         </div>
         <button id="darkToggle"
                 class="w-10 h-10 rounded-full shadow"
@@ -262,10 +291,6 @@
         🟡 Forecast building confidence
       </p>
 
-  {% else %}
-      <p class="text-green-600 font-semibold">
-        🟢 AI fully active
-      </p>
   {% endif %}
 
 </div>
