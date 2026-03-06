@@ -1065,6 +1065,7 @@ def update_dashboard_snapshot(username):
 
             if previous > 0:
                 growth = round(((current-previous)/previous)*100,2)
+                growth = min(growth, 999999)
             else:
                 growth = 0
         else:

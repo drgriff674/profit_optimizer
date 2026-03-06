@@ -88,7 +88,7 @@ import re
 # Revenue helpers
 # ============================
 
-def generate_revenue_day_export_data(username, revenue_date):
+def generate_revenue_day_export_data(username, revenue_date): 
 
     manual_entries = load_revenue_entries_for_day(username, revenue_date)
 
@@ -183,15 +183,21 @@ def generate_revenue_day_export_data(username, revenue_date):
             "locked_total": locked_total,
             "cash_total": cash_total,
             "mpesa_total": mpesa_total,
-            "mpesa_entries": mpesa_entries
+            "mpesa_entries": mpesa_entries,
+            "expense_total":0
         }
 
     db = run_db_operation(operation)
+    return db
 
     
 def generate_revenue_ai_summary(username, date):
 
     data = generate_revenue_day_export_data(username, date)
+
+    if not data:
+        return "No revenue available for this day."
+        
 
     cash_total = data["cash_total"]
     mpesa_total = data["mpesa_total"]
@@ -677,6 +683,10 @@ def generate_ai_summary_for_day_route(date):
 
     data = generate_revenue_day_export_data(username, date)
 
+    if not data:
+        flash("No revenue data available")
+        return redirect(url_for("revenue_day_detail", date=date))
+
     summary = generate_revenue_ai_summary(
         date=date,
         cash_total=data["cash_total"],
@@ -687,7 +697,7 @@ def generate_ai_summary_for_day_route(date):
 
     save_ai_summary_for_day(username, date, summary)
 
-    locked_total = data["gross_total"]
+    locked_total = data["cash_total"] + data["mpesa_total"]
 
     def operation(cur):
         cur.execute("""
@@ -710,6 +720,20 @@ def export_revenue_day_csv(date):
     username = session["username"]
     data = generate_revenue_day_export_data(username, date)
 
+    if not data:
+        abort(404)
+
+    cash_total = data.get("cash_total", 0)
+    mpesa_total = data.get("mpesa_total", 0)
+    expense_total = data.get("expense_total", 0)
+
+    gross_total = cash_total + mpesa_total
+    net_total = gross_total - expense_total
+
+    manual_entries = data.get("manual_entries", [])
+    mpesa_entries = data.get("mpesa_entries", [])
+    expense_entries = data.get("expense_entries", [])
+
     output = StringIO()
     writer = csv.writer(output)
 
@@ -720,26 +744,26 @@ def export_revenue_day_csv(date):
     writer.writerow(["Totals"])
     writer.writerow(["Cash", data["cash_total"]])
     writer.writerow(["MPesa", data["mpesa_total"]])
-    writer.writerow(["Gross Revenue", data["gross_total"]])
-    writer.writerow(["Expenses", -data["expense_total"]])
-    writer.writerow(["Net Revenue", data["net_total"]])
+    writer.writerow(["Gross Revenue", gross_total])
+    writer.writerow(["Expenses",-expense_total])
+    writer.writerow(["Net Revenue", net_total])
     writer.writerow([])
 
     writer.writerow(["Manual Split Entries"])
     writer.writerow(["Category", "Amount"])
-    for e in data["manual_entries"]:
+    for e in manual_entries:
         writer.writerow([e["category"], e["amount"]])
 
     writer.writerow([])
     writer.writerow(["Expenses"])
     writer.writerow(["Category", "Amount"])
-    for e in data["expense_entries"]:
+    for e in expense_entries:
         writer.writerow([e["category"], -e["amount"]])
 
     writer.writerow([])
     writer.writerow(["MPesa Transactions"])
     writer.writerow(["Amount", "Time"])
-    for m in data["mpesa_entries"]:
+    for m in mpesa_entries:
         writer.writerow([m["amount"], m["created_at"]])
 
     csv_data = output.getvalue()
@@ -764,9 +788,10 @@ def export_revenue_day_pdf(date):
 
     cash_total = data.get("cash_total", 0)
     mpesa_total = data.get("mpesa_total", 0)
-    gross_total = data.get("gross_total", 0)
     expense_total = data.get("expense_total", 0)
-    net_total = data.get("net_total", 0)
+
+    gross_total = cash_total - mpesa_total
+    net_total = gross_total - expense_total
 
     html = render_template(
         "revenue_day_pdf.html",
