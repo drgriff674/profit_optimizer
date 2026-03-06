@@ -456,30 +456,6 @@ bg-gray-100 text-gray-700
 
 </div>
 
-<section class="mt-8 p-5 rounded-xl shadow"
-         style="background: var(--og-surface);">
-
-  <h2 class="text-lg font-semibold mb-3">
-    📂 Your Uploaded Files
-  </h2>
-
-  {% if files %}
-    <ul class="list-disc ml-5">
-      {% for file in files %}
-        <li>
-          <a href="{{ url_for('view_file', filename=file) }}"
-             class="font-medium"
-             style="color: var(--og-primary);">
-             {{ file }}
-          </a>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p class="opacity-70">No files uploaded yet.</p>
-  {% endif %}
-
-</section>
 
 <script>
 function toggleMenu(id,btn) {
