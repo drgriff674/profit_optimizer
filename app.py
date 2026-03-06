@@ -79,6 +79,7 @@ from database import(
     get_user,
     create_user_with_business,
     get_weekly_inventory_insights,
+    get_business_info,
 )
 import pytz
 from flask_caching import Cache
