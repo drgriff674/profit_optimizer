@@ -411,6 +411,7 @@ def login():
                 session["login_email"] = user["email"]
                 session["login_otp"] = otp
                 session["login_otp_time"] = time.time()
+                session["login_otp_attempts"] = 0
 
                 # Send OTP
                 send_otp_email(user["email"], otp)
@@ -478,6 +479,7 @@ def register():
             session["pending_email"] = new_email
             session["otp"] = otp
             session["otp_time"] = time.time()
+            session["otp_attempts"] = 0
 
             # Send OTP email
             send_otp_email(new_email, otp)
@@ -501,6 +503,12 @@ def verify_email():
 
         otp_time = session.get("otp_time")
 
+        attempts = session.get("otp_attempts", 0)
+
+        if attempts >= 5:
+            flash("❌ Too many verification attempts. Please register again.", "error")
+            return redirect(url_for("register"))
+
         if not otp_time or time.time() - otp_time > 300:
             flash("⏳ Verification code expired. Please register again.", "error")
             return redirect(url_for("register"))
@@ -515,11 +523,13 @@ def verify_email():
             session.pop("otp_time", None)
             session.pop("pending_user", None)
             session.pop("pending_email", None)
+            session.pop("otp_attempts", None)
 
             flash("✅ Email verified successfully.", "success")
 
             return redirect(url_for("dashboard"))
 
+        session["otp_attempts"] = session.get("otp_attempts", 0) + 1
         flash("❌ Invalid verification code.", "error")
 
     return render_template("verify_email.html")
@@ -539,6 +549,7 @@ def resend_otp():
 
     session["otp"] = otp
     session["otp_time"] = time.time()
+    session["otp_attempts"] = 0
 
     send_otp_email(pending_email, otp)
 
@@ -555,6 +566,12 @@ def login_verify():
 
         otp_time = session.get("login_otp_time")
 
+        attempts = session.get("login_otp_attempts", 0)
+
+        if attempts >= 5:
+            flash("❌ Too many login verification attempts. Please login again.", "error")
+            return redirect(url_for("login"))
+
         # expire after 5 minutes
         if not otp_time or time.time() - otp_time > 300:
             flash("⏳ Login code expired. Please login again.", "error")
@@ -570,11 +587,13 @@ def login_verify():
             session.pop("login_email", None)
             session.pop("login_otp", None)
             session.pop("login_otp_time", None)
+            session.pop("login_otp_attempts", None)
 
             flash("✅ Login verified.", "success")
 
             return redirect(url_for("dashboard"))
 
+        session["login_otp_attempts"] = session.get("login_otp_attempts", 0) + 1
         flash("❌ Invalid verification code.", "error")
 
     return render_template("login_verify.html")
@@ -632,10 +651,9 @@ def get_dashboard_data(username):
     return data
 
 @app.route("/dashboard", methods=["GET", "POST"])
+@login_required
 def dashboard():
     print("SESSION USER ON DASHBOARD:",session.get("username"))
-    if "username" not in session:
-        return redirect(url_for("login"))
 
     username = session["username"]
 
@@ -1481,10 +1499,8 @@ def live_performance():
     )
 
 @app.route("/profile")
+@login_required
 def profile():
-
-    if "username" not in session:
-        return redirect(url_for("login"))
 
     username = session["username"]
 
@@ -1500,10 +1516,8 @@ def profile():
     )
 
 @app.route("/api/latest-payment")
+@login_required
 def latest_payment():
-
-    if "username" not in session:
-        return jsonify({"payment": None})
 
     username = session["username"]
 
@@ -1550,10 +1564,8 @@ def latest_payment():
 
 
 @app.route("/api/financial_data")
+@login_required
 def financial_data():
-
-    if "username" not in session:
-        return jsonify({})
 
     username = session["username"]
 
@@ -1617,10 +1629,9 @@ def financial_data():
         return jsonify({})
 
 @app.route("/api/transactions_summary")
+@login_required
 def transactions_summary():
 
-    if "username" not in session:
-        return jsonify({})
 
     username = session["username"]
 
@@ -1912,11 +1923,10 @@ def payment_balance_result():
 
 
 # ✅ AI Insight Engine — analyzes latest financial data and generates insights
-@app.route("/api/ai_insights")
+@app.route("/api/ai_insights")#
+@login_required
 def ai_insights():
     try:
-        if "username" not in session:
-            return jsonify([])
 
         user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
 
@@ -3489,9 +3499,8 @@ def revenue_entry():
 
 
 @app.route("/inventory_setup", methods=["GET", "POST"])
+@login_required
 def inventory_setup():
-    if "username" not in session:
-        return redirect(url_for("login"))
 
     username = session["username"]
 
@@ -3601,9 +3610,8 @@ def inventory_setup():
     return render_template("inventory_setup.html", items=items)
 
 @app.route("/inventory/adjust", methods=["GET", "POST"])
+@login_required
 def inventory_adjust():
-    if "username" not in session:
-        return redirect(url_for("login"))
 
     username = session["username"]
 
