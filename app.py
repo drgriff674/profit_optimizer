@@ -857,13 +857,7 @@ def generate_ai_summary_for_day_route(date):
         flash("No revenue data available")
         return redirect(url_for("revenue_day_detail", date=date))
 
-    summary = generate_revenue_ai_summary(
-        date=date,
-        cash_total=data["cash_total"],
-        mpesa_total=data["mpesa_total"],
-        expense_total=data["expense_total"],
-        manual_entries=data["manual_entries"]
-    )
+    summary = generate_revenue_ai_summary(username, date)
 
     save_ai_summary_for_day(username, date, summary)
 
