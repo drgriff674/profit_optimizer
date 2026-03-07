@@ -90,16 +90,14 @@ from email.mime.text import MIMEText
 
 def send_otp_email(receiver_email, otp):
 
-    msg = MIMEText(f"Your OptiGain verification code is: {otp}")
-    msg["Subject"] = "OptiGain Email Verification"
-    msg["From"] = "yourgmail@gmail.com"
-    msg["To"] = receiver_email
+    msg = Message(
+        subject="OptiGain Email Verification",
+        recipients=[receiver_email]
+    )
 
-    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-    server.login("yourgmail@gmail.com", "YOUR_APP_PASSWORD")
+    msg.body = f"Your OptiGain verification code is: {otp}"
 
-    server.sendmail(msg["From"], receiver_email, msg.as_string())
-    server.quit()
+    mail.send(msg)
 
     print("OTP email sent successfully")
 
