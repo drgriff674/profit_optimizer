@@ -507,9 +507,9 @@ def verify_email():
 def test_mail():
     msg = Message(
         "SMTP Test",
-        recipients=["yourpersonalemail@gmail.com"]
+        recipients=["optigaintechnologies@gmail.com"]
     )
-    msg.body = "If you see this, SMTP works."
+    msg.body = "SMTP is working."
     mail.send(msg)
     return "Mail sent"
 
