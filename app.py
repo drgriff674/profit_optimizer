@@ -340,9 +340,7 @@ mail = Mail(app)
 def initialize_database():
     init_db()
 
-# Load OpenAI only if API key exists
-# Load environment variables
-load_dotenv()
+
 
 # Optional AI setup (works both local + Render)
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
