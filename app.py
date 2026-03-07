@@ -403,11 +403,21 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
+                # Generate OTP
+                otp = random.randint(100000, 999999)
 
-                session["username"] = username
-                print("LOGIN SUCCESS:",username)
-                print("SESSION SET:",session.get("username"))
-                return redirect(url_for("dashboard"))
+                # Store temporary login session
+                session["login_user"] = user["username"]
+                session["login_email"] = user["email"]
+                session["login_otp"] = otp
+                session["login_otp_time"] = time.time()
+
+                # Send OTP
+                send_otp_email(user["email"], otp)
+
+                flash("📧 Login verification code sent to your email.", "info")
+
+                return redirect(url_for("login_verify"))
 
             flash("❌ Invalid username or password", "error")
             return redirect(url_for("login"))
@@ -535,6 +545,39 @@ def resend_otp():
     flash("📧 A new verification code has been sent to your email.", "success")
 
     return redirect(url_for("verify_email"))
+
+@app.route("/login-verify", methods=["GET", "POST"])
+def login_verify():
+
+    if request.method == "POST":
+
+        code = request.form["otp"]
+
+        otp_time = session.get("login_otp_time")
+
+        # expire after 5 minutes
+        if not otp_time or time.time() - otp_time > 300:
+            flash("⏳ Login code expired. Please login again.", "error")
+            return redirect(url_for("login"))
+
+        if str(code) == str(session.get("login_otp")):
+
+            session["username"] = session.get("login_user")
+            session["email"] = session.get("login_email")
+
+            # clean session
+            session.pop("login_user", None)
+            session.pop("login_email", None)
+            session.pop("login_otp", None)
+            session.pop("login_otp_time", None)
+
+            flash("✅ Login verified.", "success")
+
+            return redirect(url_for("dashboard"))
+
+        flash("❌ Invalid verification code.", "error")
+
+    return render_template("login_verify.html")
 
 
 

@@ -195,7 +195,7 @@
 
 {% for category, message in messages %}
 
-<div class="p-3 rounded-lg shadow
+<div class="flash-message p-3 rounded-lg shadow
 {% if category == 'success' %}
 bg-green-100 text-green-700
 {% elif category == 'error' %}
@@ -533,6 +533,34 @@ setInterval(function(){
         document.getElementById("profit").innerText=data.total_profit;
     });
 },5000);
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const flashes = document.querySelectorAll(".flash-message");
+
+    if (flashes.length > 0) {
+
+        setTimeout(() => {
+
+            flashes.forEach(msg => {
+
+                msg.style.transition = "opacity 0.6s ease";
+                msg.style.opacity = "0";
+
+                setTimeout(() => {
+                    msg.remove();
+                }, 600);
+
+            });
+
+        }, 3500); // visible for 3.5 seconds
+    }
+
+});
+
 </script>
 
 </body>
