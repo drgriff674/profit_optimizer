@@ -85,6 +85,21 @@ import pytz
 from flask_caching import Cache
 from datetime import date
 import re
+import random
+from email.mime.text import MIMEText
+
+def send_otp_email(receiver_email, otp):
+
+    msg = MIMEText(f"Your OptiGain verification code is: {otp}")
+    msg["Subject"] = "OptiGain Email Verification"
+    msg["From"] = "yourgmail@gmail.com"
+    msg["To"] = receiver_email
+
+    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+    server.login("yourgmail@gmail.com", "YOUR_APP_PASSWORD")
+
+    server.sendmail(msg["From"], receiver_email, msg.as_string())
+    server.quit()
 
 # ============================
 # Revenue helpers
@@ -388,6 +403,11 @@ def login():
             user = get_user(username)
 
             if user and check_password_hash(user["password"], password):
+
+                if not session.get("verified"):
+                    flash("⚠️ Please verify your email first.", "warning")
+                    return redirect(url_for("verify_email"))
+
                 session["username"] = username
                 print("LOGIN SUCCESS:",username)
                 print("SESSION SET:",session.get("username"))
@@ -445,16 +465,46 @@ def register():
                 os.path.join(app.config["UPLOAD_FOLDER"], new_user), exist_ok=True
             )
 
-            # ✅ Save session info
-            session["username"] = new_user
-            session["email"] = new_email
-            return redirect(url_for("dashboard"))
+            # Generate OTP
+            otp = random.randint(100000, 999999)
+
+            session["pending_user"] = new_user
+            session["pending_email"] = new_email
+            session["otp"] = otp
+
+            # Send OTP email
+            send_otp_email(new_email, otp)
+
+            flash("📧 Verification code sent to your email.", "success")
+
+            return redirect(url_for("verify_email"))
 
         except Exception as e:
             flash(f"❌ Error creating user: {str(e)}", "error")
             return redirect(url_for("register"))
 
     return render_template("register.html")
+
+@app.route("/verify-email", methods=["GET", "POST"])
+def verify_email():
+
+    if request.method == "POST":
+
+        code = request.form["otp"]
+
+        if str(code) == str(session.get("otp")):
+
+            session["username"] = session.get("pending_user")
+            session["email"] = session.get("pending_email")
+            session["verified"] = True
+
+            flash("✅ Email verified successfully.", "success")
+
+            return redirect(url_for("dashboard"))
+
+        flash("❌ Invalid verification code.", "error")
+
+    return render_template("verify_email.html")
 
 
 @app.route("/logout")

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Email Verification</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+
+<body class="min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-sm p-6 shadow rounded-xl">
+
+<h2 class="text-xl font-bold mb-4">
+Verify your email
+</h2>
+
+<p class="text-sm mb-4">
+Enter the 6-digit code sent to your email.
+</p>
+
+<form method="POST">
+
+<input
+type="text"
+name="otp"
+maxlength="6"
+required
+class="w-full border rounded px-3 py-2 mb-3"
+/>
+
+<button
+type="submit"
+class="w-full py-2 rounded bg-blue-600 text-white">
+Verify Email
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>
