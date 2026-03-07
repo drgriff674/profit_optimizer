@@ -503,6 +503,16 @@ def verify_email():
 
     return render_template("verify_email.html")
 
+@app.route("/test-mail")
+def test_mail():
+    msg = Message(
+        "SMTP Test",
+        recipients=["yourpersonalemail@gmail.com"]
+    )
+    msg.body = "If you see this, SMTP works."
+    mail.send(msg)
+    return "Mail sent"
+
 
 @app.route("/logout")
 def logout():
