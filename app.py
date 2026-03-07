@@ -462,6 +462,14 @@ def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
 
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
 @cache.memoize(timeout=3600)
 def get_business_info(username):
 

@@ -191,6 +191,32 @@
   </div>
 </div>
 
+<!-- Terms & Privacy Agreement -->
+<div class="text-sm mt-2">
+
+<label class="flex items-start gap-2">
+
+<input type="checkbox" required class="mt-1">
+
+<span class="opacity-80">
+I agree to the
+<a href="{{ url_for('terms') }}" target="_blank"
+   class="font-semibold hover:underline"
+   style="color: var(--og-primary);">
+   Terms of Service
+</a>
+and
+<a href="{{ url_for('privacy') }}" target="_blank"
+   class="font-semibold hover:underline"
+   style="color: var(--og-primary);">
+   Privacy Policy
+</a>
+</span>
+
+</label>
+
+</div>
+
       <button
         type="submit"
         class="w-full py-2.5 rounded-lg font-semibold shadow transition hover:opacity-90 active:scale-[0.99]"
