@@ -1373,7 +1373,7 @@ def get_user(username):
 
     def operation(cur):
         cur.execute(
-            "SELECT username, password, role FROM users WHERE username=%s",
+            "SELECT username,email, password, role FROM users WHERE username=%s",
             (username,)
         )
         return cur.fetchone()
