@@ -87,6 +87,7 @@ from datetime import date
 import re
 import random
 from email.mime.text import MIMEText
+import time
 
 def send_otp_email(receiver_email, otp):
 
@@ -466,6 +467,7 @@ def register():
             session["pending_user"] = new_user
             session["pending_email"] = new_email
             session["otp"] = otp
+            session["otp_time"] = time.time()
 
             # Send OTP email
             send_otp_email(new_email, otp)
@@ -487,11 +489,22 @@ def verify_email():
 
         code = request.form["otp"]
 
+        otp_time = session.get("otp_time")
+
+        if not otp_time or time.time() - otp_time > 300:
+            flash("⏳ Verification code expired. Please register again.", "error")
+            return redirect(url_for("register"))
+
         if str(code) == str(session.get("otp")):
 
             session["username"] = session.get("pending_user")
             session["email"] = session.get("pending_email")
             session["verified"] = True
+
+            session.pop("otp", None)
+            session.pop("otp_time", None)
+            session.pop("pending_user", None)
+            session.pop("pending_email", None)
 
             flash("✅ Email verified successfully.", "success")
 
@@ -501,15 +514,28 @@ def verify_email():
 
     return render_template("verify_email.html")
 
-@app.route("/test-mail")
-def test_mail():
-    msg = Message(
-        "SMTP Test",
-        recipients=["optigaintechnologies@gmail.com"]
-    )
-    msg.body = "SMTP is working."
-    mail.send(msg)
-    return "Mail sent"
+@app.route("/resend-otp")
+def resend_otp():
+
+    pending_email = session.get("pending_email")
+    pending_user = session.get("pending_user")
+
+    if not pending_email or not pending_user:
+        flash("⚠️ Session expired. Please register again.", "error")
+        return redirect(url_for("register"))
+
+    # generate new OTP
+    otp = random.randint(100000, 999999)
+
+    session["otp"] = otp
+    session["otp_time"] = time.time()
+
+    send_otp_email(pending_email, otp)
+
+    flash("📧 A new verification code has been sent to your email.", "success")
+
+    return redirect(url_for("verify_email"))
+
 
 
 @app.route("/logout")
