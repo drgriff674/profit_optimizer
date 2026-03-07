@@ -101,6 +101,8 @@ def send_otp_email(receiver_email, otp):
     server.sendmail(msg["From"], receiver_email, msg.as_string())
     server.quit()
 
+    print("OTP email sent successfully")
+
 # ============================
 # Revenue helpers
 # ============================
@@ -404,9 +406,6 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
-                if not session.get("verified"):
-                    flash("⚠️ Please verify your email first.", "warning")
-                    return redirect(url_for("verify_email"))
 
                 session["username"] = username
                 print("LOGIN SUCCESS:",username)
