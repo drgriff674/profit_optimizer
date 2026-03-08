@@ -6,7 +6,7 @@ from psycopg2 import pool
 DATABASE_URL = os.environ.get("DATABASE_URL")
 connection_pool = pool.SimpleConnectionPool(
     1, #min connections
-    10, #max connections
+    15 #max connections
     DATABASE_URL
     )
 
