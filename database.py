@@ -1324,7 +1324,7 @@ def generate_weekly_ai_report_if_ready(username):
         summary_lines = []
         for i, r in enumerate(rows, start=1):
             amount = float(r["total_amount"] or 0)
-            summary_lines.append(f"Day {i}: KSh {amount:,.0f")
+            summary_lines.append(f"Day {i}: KSh {amount:,.0f}")
         summary = "Weekly revenue data:\n" + "\n".join(summary_lines)
 
         # ---- CALL OPENAI ----
