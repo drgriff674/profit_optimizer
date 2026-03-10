@@ -1299,14 +1299,14 @@ def generate_weekly_ai_report_if_ready(username):
 
         # check if this report already exists
         cur.execute("""
-            SELECT COUNT(*) AS report_count
+            SELECT report
             FROM weekly_ai_reports
             WHERE username=%s AND locked_days=%s
         """,(username,locked))
 
-        existing = cur.fetchone()["report_count"]
+        existing = cur.fetchone()
 
-        if existing > 0:
+        if existing and existing["report"] != "AI Insight temporarily unavailable.":
             return
 
         # LOAD LAST 7 LOCKED DAYS DATA
@@ -1321,7 +1321,11 @@ def generate_weekly_ai_report_if_ready(username):
         rows = cur.fetchall()
 
         # build summary text for OpenAI
-        summary = str(rows)
+        summary_lines = []
+        for i, r in enumerate(rows, start=1):
+            amount = float(r["total_amount"] or 0)
+            summary_lines.append(f"Day {i}: KSh {amount:,.0f")
+        summary = "Weekly revenue data:\n" + "\n".join(summary_lines)
 
         # ---- CALL OPENAI ----
         ai_text = call_openai(summary)
@@ -1342,8 +1346,23 @@ def call_openai(summary):
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a financial analyst generating weekly business insights."},
-                {"role": "user", "content": f"Analyze this weekly revenue data and provide short actionable advice:\n{summary}"}
+                {
+                    "role": "system",
+                    "content": "You are a financial analyst helping small businesses understand revenue trends and improve profitability."
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+Analyze this weekly revenue performance and generate 2–3 short insights.
+
+Focus on:
+- revenue trend
+- unusual spikes or drops
+- simple practical advice for the business owner
+
+{summary}
+"""
+                }
             ],
         )
 
