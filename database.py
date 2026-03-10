@@ -1370,7 +1370,7 @@ Focus on:
 
     except Exception as e:
         print("OpenAI error:", e)
-        return "AI insight temporarily unavailable."
+        return f"AI error: {str(e)}"
 
 def get_latest_weekly_report(username):
 
