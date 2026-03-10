@@ -2994,12 +2994,14 @@ def advisor():
 
 
 @app.route("/ask", methods=["GET", "POST"])
+@login_required
 def ask():
+
+    username = session["username"]
+
     if request.method == "GET":
-        # When someone just visits the Ask page
         return render_template("ask.html")
 
-    # For POST (form submission or API)
     question = request.form.get("question") or (
         request.json.get("question") if request.is_json else None
     )
@@ -3011,47 +3013,76 @@ def ask():
 
     if not AI_ENABLED:
         msg = "AI functionality is temporarily disabled."
-        return jsonify({"error": msg}), (
-            503 if request.is_json else render_template("ask.html", answer=msg)
-        )
+        if request.is_json:
+            return jsonify({"error": msg}), 503
+        return render_template("ask.html", answer=msg)
 
     try:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            msg = "Missing OpenAI API key."
-            return jsonify({"error": msg}), (
-                500 if request.is_json else render_template("ask.html", answer=msg)
-            )
 
-        client = OpenAI(api_key=api_key)
+        # Pull real financial data for this user
+        snapshot = get_dashboard_snapshot(username)
+        intelligence = get_dashboard_intelligence_snapshot(username)
+        forecast = get_locked_revenue_for_forecast(username)
+
+        financial_context = f"""
+Business Financial Snapshot
+
+Total Revenue: {snapshot.get("total_revenue",0)}
+Total Expenses: {snapshot.get("total_expenses",0)}
+Total Profit: {snapshot.get("total_profit",0)}
+
+Locked Revenue Days: {intelligence.get("locked_days",0)}
+Anomaly Days: {intelligence.get("anomaly_days",0)}
+Average Daily Revenue: {intelligence.get("avg_daily_revenue",0)}
+
+Forecast Confidence: {forecast.get("confidence")}
+Forecast Horizon: {forecast.get("forecast_period")} days
+"""
+
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a smart business assistant that gives concise, actionable insights.",
+                    "content": """
+You are OptiGain AI — a financial intelligence assistant.
+
+Your job is to analyze a user's business financial data and answer questions.
+
+Rules:
+- Only answer questions related to finance, business performance, revenue, expenses, forecasting, inventory, or profitability.
+- If the user asks unrelated questions (politics, general knowledge, etc), politely refuse.
+- Use the provided financial data as the source of truth.
+- Provide concise, actionable business insights.
+""",
                 },
-                {"role": "user", "content": question},
+                {
+                    "role": "system",
+                    "content": financial_context
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
             ],
-            temperature=0.7,
+            temperature=0.4,
         )
 
-        answer = (
-            response.choices[0].message.content.strip()
-            if response.choices
-            else "No response received."
-        )
+        answer = response.choices[0].message.content.strip()
 
         if request.is_json:
             return jsonify({"answer": answer})
+
         return render_template("ask.html", answer=answer)
 
     except Exception as e:
+
         msg = f"Error generating answer: {str(e)}"
+
         if request.is_json:
             return jsonify({"error": msg}), 500
-        return render_template("ask.html", answer=msg)
 
+        return render_template("ask.html", answer=msg)
 
 @app.route("/admin")
 def admin():
