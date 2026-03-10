@@ -1349,22 +1349,38 @@ def call_openai(summary):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a financial analyst helping small businesses understand revenue trends and improve profitability."
+                    "content": """
+You are a business intelligence assistant for small businesses.
+
+Your job is to analyze weekly revenue data and produce short, practical insights.
+
+Look for:
+- unusual spikes or drops
+- patterns in daily revenue
+- inconsistencies across the week
+- signals that may affect profitability
+
+Write 2–3 concise insights (1–2 sentences each).
+
+Each insight should:
+- explain the pattern
+- suggest a possible cause
+- recommend a simple action the business owner can take.
+
+Avoid generic advice and long explanations.
+Be direct and practical.
+"""
                 },
                 {
                     "role": "user",
                     "content": f"""
-Analyze this weekly revenue performance and generate 2–3 short insights.
-
-Focus on:
-- revenue trend
-- unusual spikes or drops
-- simple practical advice for the business owner
+Weekly revenue data:
 
 {summary}
 """
                 }
             ],
+            temperature=0.4
         )
 
         return response.choices[0].message.content.strip()
@@ -1372,7 +1388,7 @@ Focus on:
     except Exception as e:
         print("OpenAI error:", e)
         return f"AI error: {str(e)}"
-
+    
 def get_latest_weekly_report(username):
 
     def operation(cur):
