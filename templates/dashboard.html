@@ -347,6 +347,8 @@ bg-gray-100 text-gray-700
 
 {% if weekly_report %}
 
+{% if weekly_report %}
+
 <div class="p-5 rounded-xl shadow"
      style="background: var(--og-surface); border-left: 4px solid #6366f1;">
 
@@ -358,14 +360,13 @@ bg-gray-100 text-gray-700
     Generated after {{ weekly_report.locked_days }} locked days
   </p>
 
-  <p class="text-sm leading-relaxed">
-    {{ weekly_report.report }}
-  </p>
+  <pre class="text-sm leading-relaxed whitespace-pre-wrap">
+{{ weekly_report.report }}
+  </pre>
 
 </div>
 
 {% endif %}
-
 {% if inventory_insights %}
 
 <div class="p-5 rounded-xl shadow mt-4"
