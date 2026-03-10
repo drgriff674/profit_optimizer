@@ -1346,29 +1346,27 @@ def call_openai(summary):
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
+            temperature=0.4,
             messages=[
                 {
                     "role": "system",
                     "content": """
 You are a business intelligence assistant for small businesses.
 
-Your job is to analyze weekly revenue data and produce short, practical insights.
+Analyze weekly revenue data and produce short actionable insights.
 
-Look for:
-- unusual spikes or drops
-- patterns in daily revenue
-- inconsistencies across the week
-- signals that may affect profitability
+Rules:
+- Write EXACTLY 3 bullet-point insights.
+- Each insight must be ONE sentence.
+- Focus on unusual spikes, drops, or patterns.
+- Suggest a simple action when relevant.
+- Keep each insight under 20 words.
 
-Write 2–3 concise insights (1–2 sentences each).
+Format output exactly like this:
 
-Each insight should:
-- explain the pattern
-- suggest a possible cause
-- recommend a simple action the business owner can take.
-
-Avoid generic advice and long explanations.
-Be direct and practical.
+• Insight 1
+• Insight 2
+• Insight 3
 """
                 },
                 {
@@ -1380,7 +1378,6 @@ Weekly revenue data:
 """
                 }
             ],
-            temperature=0.4
         )
 
         return response.choices[0].message.content.strip()
@@ -1388,6 +1385,29 @@ Weekly revenue data:
     except Exception as e:
         print("OpenAI error:", e)
         return f"AI error: {str(e)}"
+
+
+
+def detect_weekly_alerts(rows):
+
+    values = [float(r["total_amount"]) for r in rows]
+
+    avg = sum(values) / len(values)
+    mx = max(values)
+    mn = min(values)
+
+    alerts = []
+
+    if mx > avg * 2:
+        alerts.append("⚠ Revenue spike detected this week.")
+
+    if mn < avg * 0.5:
+        alerts.append("📉 Revenue dropped significantly on one day.")
+
+    if max(values) - min(values) > avg:
+        alerts.append("⚠ Revenue volatility detected across the week.")
+
+    return alerts
     
 def get_latest_weekly_report(username):
 
