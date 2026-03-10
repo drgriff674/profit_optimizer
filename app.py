@@ -239,27 +239,47 @@ def generate_revenue_ai_summary(username, date):
     gross_total=cash_total+mpesa_total
     net_total=gross_total-expense_total
 
-    prompt=f"""
-You are a financial analyst.
+    prompt = f"""
+    You are a financial analyst helping a small business owner understand today's performance.
 
-Date: {date}
+    Date: {date}
 
-Cash revenue: KSh {cash_total:,.0f}
-MPesa revenue: KSh {mpesa_total:,.0f}
-Gross revenue: KSh {gross_total:,.0f}
-Expenses: KSh {expense_total:,.0f}
-Net revenue: KSh {net_total:,.0f}
+    Financial data:
+    Cash revenue: KSh {cash_total:,.0f}
+    MPesa revenue: KSh {mpesa_total:,.0f}
+    Gross revenue: KSh {gross_total:,.0f}
+    Expenses: KSh {expense_total:,.0f}
+    Net revenue: KSh {net_total:,.0f}
 
-Revenue category breakdown:
-{category_lines}
+    Revenue category breakdown:
+    {category_lines}
 
-Explain performance under 90 words.
-Be factual.
-"""
+    Write a short daily insight for the business owner.
 
-    response=client.chat.completions.create(
+    Focus on:
+    - whether revenue is strong or weak
+    - unusual imbalances between cash and MPesa
+    - whether expenses are high relative to revenue
+    - the most important revenue category
+
+    Rules:
+    - Use clear business language
+    - Reference numbers from the data
+    - Maximum 3 sentences
+    - Maximum 80 words
+    """
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role":"user","content":prompt}]
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a financial analyst generating concise business insights for small business dashboards."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
     )
 
     return response.choices[0].message.content.strip()
