@@ -1276,10 +1276,11 @@ def run_weekly_intelligence(username):
         values = [float(r["total_amount"]) for r in last7]
 
         avg = sum(values) / 7
-        mx = max(values)
-        mn = min(values)
+        sorted_values = sorted(values)
+        mx = sorted_values[-2]
+        mn = sorted_values[1]
 
-        if mx - mn > avg * 0.7:
+        if mx - mn > avg * 1.2:
             summary = "Revenue unstable this week. Large daily fluctuations detected."
         elif avg > 0 and values[0] > values[-1]:
             summary = "Revenue trending upward. Positive business momentum."
@@ -1497,6 +1498,11 @@ def get_weekly_inventory_insights(username):
                 insights.append(
                     f"📤 Inventory decreased {count} times due to sales."
                 )
+            elif mtype == "usage/waste":
+                insights.append(
+                    f"📤 Inventory decreased {count} times due to usage/waste."
+                )
+                    
 
         return insights
 
