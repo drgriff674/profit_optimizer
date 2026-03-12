@@ -1498,9 +1498,9 @@ def get_weekly_inventory_insights(username):
                 insights.append(
                     f"📤 Inventory decreased {count} times due to sales."
                 )
-            elif mtype == "usage/waste":
+            elif mtype == "usage":
                 insights.append(
-                    f"📤 Inventory decreased {count} times due to usage/waste."
+                    f"📤 Inventory decreased {count} times due to usage."
                 )
                     
 

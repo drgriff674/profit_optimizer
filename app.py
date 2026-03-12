@@ -3570,7 +3570,7 @@ def inventory_setup():
     business_id = business["id"]
 
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     if request.method == "POST":
         try:
@@ -3612,7 +3612,7 @@ def inventory_setup():
 
             conn.commit()
             cur.close()
-            conn.close()
+            connection_piool.putconn(conn)
 
             return redirect(url_for("inventory_setup"))
 
@@ -3651,7 +3651,7 @@ def inventory_setup():
 
     items = cur.fetchall()
     cur.close()
-    conn.close()
+    connection_pool.putconn(conn)
 
     return render_template("inventory_setup.html", items=items)
 
@@ -3736,7 +3736,7 @@ def inventory_adjust():
         if cur:
             cur.close()
         if conn:
-            conn.close()
+            connection_pool.putconn(conn)
 
 if __name__ == "__main__":
 
