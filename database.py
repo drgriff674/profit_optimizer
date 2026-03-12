@@ -5,7 +5,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2 import pool
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-connection_pool = pool.SimpleConnectionPool(
+connection_pool = pool.ThreadedConnectionPool(
     4, #min connections
     20, #max connections
     DATABASE_URL
@@ -14,7 +14,20 @@ connection_pool = pool.SimpleConnectionPool(
 #  Railway PostgreSQL connection string
 
 def get_db_connection():
-    return connection_pool.getconn()
+    conn = connection_pool.getconn()
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.close()
+    except:
+        conn = psycopg2.connect(
+            DATABASE_URL,
+            sslmode="require"
+        )
+    return conn
+        
+    
 
 def run_db_operation(operation, commit=False):
     
