@@ -1567,8 +1567,8 @@ def get_user_by_email(email):
         cur.execute(
             "SELECT*FROM users WHERE email=%s",
             (email,)
-            )
+        )
 
-            return cur.fetchone()
+        return cur.fetchone()
 
-        return run_db_operation(operation)
+    return run_db_operation(operation)
