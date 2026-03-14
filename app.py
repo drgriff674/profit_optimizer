@@ -624,8 +624,8 @@ def login_verify():
         session["login_otp_attempts"] = session.get("login_otp_attempts", 0) + 1
         flash("❌ Invalid verification code.", "error")
 
-    return render_template("login_verify.html")
-
+    otp_time = session.get("login_otp_time", 0)
+    return render_template("login_verify.html", otp_time=otp_time)
 
 
 @app.route("/logout")
