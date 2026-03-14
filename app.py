@@ -658,6 +658,36 @@ def forgot_password():
 
     return render_template("forgot_password.html")
 
+@app.route("/reset-verify", methods=["GET", "POST"])
+def reset_verify():
+
+    if request.method == "POST":
+
+        code = request.form["otp"].strip()
+
+        otp_time = session.get("reset_otp_time")
+        attempts = session.get("reset_attempts", 0)
+
+        if attempts >= 5:
+            flash("❌ Too many attempts. Please restart password reset.", "error")
+            return redirect(url_for("forgot_password"))
+
+        if not otp_time or time.time() - otp_time > 300:
+            flash("⏳ Reset code expired. Please request again.", "error")
+            return redirect(url_for("forgot_password"))
+
+        if str(code) == str(session.get("reset_otp")):
+
+            session["reset_verified"] = True
+            flash("✅ Code verified. You can now reset your password.", "success")
+
+            return redirect(url_for("reset_password"))
+
+        session["reset_attempts"] = session.get("reset_attempts", 0) + 1
+        flash("❌ Invalid code.", "error")
+
+    return render_template("reset_verify.html")
+
 
 @app.route("/logout")
 def logout():
