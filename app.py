@@ -724,7 +724,7 @@ def reset_password():
 
             print("Rows updated:", cur.rowcount)
 
-        run_db_operation(operation)
+        run_db_operation(operation, commit=True)
 
         # cleanup session
         session.pop("reset_email", None)
