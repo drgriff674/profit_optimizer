@@ -169,13 +169,26 @@
    👤 My Profile
 </a>
 
+<a href="{{ url_for('settings') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   ⚙️ Settings
+</a>
+
+<a href="{{ url_for('support') }}"
+   class="block p-3 rounded-md font-semibold transition hover:text-white"
+   onmouseover="this.style.background='var(--og-primary)'"
+   onmouseout="this.style.background='transparent'">
+   💬 Customer Support
+</a>
+
 <a href="{{ url_for('logout') }}"
    class="block p-3 rounded-md font-semibold transition hover:text-white"
    onmouseover="this.style.background='var(--og-primary)'"
    onmouseout="this.style.background='transparent'">
    🚪 Logout
 </a>
-
     </nav>
 </aside>
 

@@ -739,6 +739,36 @@ def reset_password():
 
     return render_template("reset_password.html")
 
+@app.route("/settings", methods=["GET","POST"])
+@login_required
+def settings():
+
+    username = session["username"]
+
+    user = get_user(username)
+
+    if request.method == "POST":
+
+        new_email = request.form["email"].strip()
+
+        def operation(cur):
+            cur.execute(
+                "UPDATE users SET email=%s WHERE username=%s",
+                (new_email, username)
+            )
+
+        run_db_operation(operation, commit=True)
+
+        flash("✅ Email updated successfully.", "success")
+        return redirect(url_for("settings"))
+
+    return render_template("settings.html", user=user)
+
+@app.route("/support")
+@login_required
+def support():
+    return render_template("support.html")
+
 
 @app.route("/logout")
 def logout():

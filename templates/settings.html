@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Settings</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+</head>
+
+<body class="min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-md p-6 shadow rounded-xl">
+
+<h2 class="text-xl font-bold mb-4">
+User Settings
+</h2>
+
+<form method="POST">
+
+<label class="block text-sm mb-1">
+Email
+</label>
+
+<input
+type="email"
+name="email"
+value="{{ user.email }}"
+required
+class="w-full border rounded px-3 py-2 mb-4"
+/>
+
+<button
+type="submit"
+class="w-full py-2 rounded bg-blue-600 text-white">
+Update Email
+</button>
+
+</form>
+
+</div>
+
+</body>
+</html>
