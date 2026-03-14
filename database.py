@@ -1559,3 +1559,16 @@ def get_business_info(username):
     conn.close()
 
     return row if row else {}
+
+def get_user_by_email(email):
+
+    def operation(cur):
+
+        cur.execute(
+            "SELECT*FROM users WHERE email=%s",
+            (email,)
+            )
+
+            return cur.fetchone()
+
+        return run_db_operation(operation)

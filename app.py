@@ -82,6 +82,7 @@ from database import(
     get_weekly_inventory_insights,
     get_business_info,
     detect_weekly_alerts,
+    get_user_by_email,
 )
 import pytz
 from flask_caching import Cache
@@ -627,6 +628,35 @@ def login_verify():
 
     otp_time = session.get("login_otp_time", 0)
     return render_template("login_verify.html", otp_time=otp_time)
+
+@app.route("/forgot-password", methods=["GET","POST"])
+def forgot_password():
+
+    if request.method == "POST":
+
+        email = request.form["email"].strip()
+
+        user = get_user_by_email(email)
+
+        if not user:
+            flash("❌ No account found with that email.", "error")
+            return redirect(url_for("forgot_password"))
+
+        # generate OTP
+        otp = random.randint(100000,999999)
+
+        session["reset_email"] = email
+        session["reset_otp"] = otp
+        session["reset_otp_time"] = time.time()
+        session["reset_attempts"] = 0
+
+        send_otp_email(email, otp)
+
+        flash("📧 Password reset code sent to your email.", "success")
+
+        return redirect(url_for("reset_verify"))
+
+    return render_template("forgot_password.html")
 
 
 @app.route("/logout")
