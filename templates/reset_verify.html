@@ -17,6 +17,10 @@ Password Reset Verification
 Enter the 6-digit code sent to your email.
 </p>
 
+<p class="text-sm mb-3">
+Code expires in: <span id=countdown">5:00</span>
+</p>
+
 <form method="POST">
 
 <input
@@ -36,6 +40,34 @@ Verify Code
 </form>
 
 </div>
+
+<script>
+
+const otpTime = {{ otp_time }};
+const expiry = 300; // 5 minutes
+
+function updateTimer() {
+
+    const now = Math.floor(Date.now() / 1000)
+    const remaining = expiry - (now - otpTime)
+
+    if (remaining <= 0) {
+        document.getElementById("countdown").innerText = "Expired"
+        return
+    }
+
+    const minutes = Math.floor(remaining / 60)
+    const seconds = remaining % 60
+
+    document.getElementById("countdown").innerText =
+        minutes + ":" + seconds.toString().padStart(2,"0")
+
+}
+
+setInterval(updateTimer,1000)
+updateTimer()
+
+</script>
 
 </body>
 </html>

@@ -685,8 +685,9 @@ def reset_verify():
 
         session["reset_attempts"] = session.get("reset_attempts", 0) + 1
         flash("❌ Invalid code.", "error")
-
-    return render_template("reset_verify.html")
+    
+    otp_time = session.get("reset_otp_time",0)
+    return render_template("reset_verify.html", otp_time=otp_time)
 
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
@@ -709,10 +710,16 @@ def reset_password():
         email = session.get("reset_email")
 
         def operation(cur):
+
             cur.execute(
-                "UPDATE users SET password=%s WHERE email=%s",
+                "UPDATE users SET password=%s WHERE email=%s RETURNING email",
                 (hashed_password, email)
             )
+
+            updated = cur.fetchone()
+            print("PASSWORD UPDATED FOR:", updated)
+
+            return updated
 
         run_db_operation(operation)
 
