@@ -7,10 +7,10 @@
 
 <body class="min-h-screen flex items-center justify-center">
 
-<div class="w-full max-w-md p-6 shadow rounded-xl">
+<div class="w-full max-w-lg p-6 shadow rounded-xl">
 
 <h2 class="text-xl font-bold mb-4">
-User Settings
+Settings
 </h2>
 
 <a href="{{ url_for('dashboard') }}"
@@ -18,8 +18,31 @@ class="inline-block mb-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">
 ← Back to Dashboard
 </a>
 
-<!-- UPDATE EMAIL -->
-<div class="mb-6">
+<!-- TAB MENU -->
+
+<div class="flex border-b mb-4">
+
+<button onclick="showTab('account')" class="px-4 py-2 font-medium">
+Account
+</button>
+
+<button onclick="showTab('security')" class="px-4 py-2 font-medium">
+Security
+</button>
+
+<button onclick="showTab('billing')" class="px-4 py-2 font-medium">
+Billing
+</button>
+
+<button onclick="showTab('support')" class="px-4 py-2 font-medium">
+Support
+</button>
+
+</div>
+
+<!-- ACCOUNT -->
+
+<div id="account" class="tab">
 
 <h3 class="font-semibold mb-2">Update Email</h3>
 
@@ -43,8 +66,9 @@ Update Email
 
 </div>
 
-<!-- CHANGE PASSWORD -->
-<div class="mb-6">
+<!-- SECURITY -->
+
+<div id="security" class="tab hidden">
 
 <h3 class="font-semibold mb-2">Change Password</h3>
 
@@ -76,26 +100,51 @@ Change Password
 
 </div>
 
-<!-- DELETE ACCOUNT -->
-<div>
+<!-- BILLING -->
 
-<h3 class="font-semibold mb-2 text-red-600">
-Delete Account
-</h3>
+<div id="billing" class="tab hidden">
 
-<form method="POST" action="{{ url_for('delete_account') }}">
+<p class="mb-3">Your subscription status will appear here.</p>
 
-<button
-type="submit"
-class="w-full py-2 rounded bg-red-600 text-white">
-Delete My Account
-</button>
+<p class="text-sm opacity-70">
+Billing features coming soon.
+</p>
 
-</form>
+</div>
+
+<!-- SUPPORT -->
+
+<div id="support" class="tab hidden">
+
+<p class="mb-3">
+Need help? Contact us anytime.
+</p>
+
+<p>
+📧 optigaintechnologies@gmail.com
+</p>
+
+<p>
+📞 0702432710
+</p>
 
 </div>
 
 </div>
+
+<script>
+
+function showTab(tab){
+
+document.querySelectorAll(".tab").forEach(t=>{
+t.classList.add("hidden");
+});
+
+document.getElementById(tab).classList.remove("hidden");
+
+}
+
+</script>
 
 </body>
 </html>
