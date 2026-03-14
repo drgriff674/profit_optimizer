@@ -48,6 +48,7 @@ from database import(
     save_expense,
     load_expenses,
     get_db_connection,
+    connection_pool,
     run_db_operation,
     load_revenue_entries_for_day,
     load_expense_categories,
@@ -3619,7 +3620,7 @@ def inventory_setup():
 
             conn.commit()
             cur.close()
-            connection_piool.putconn(conn)
+            connection_pool.putconn(conn)
 
             return redirect(url_for("inventory_setup"))
 
