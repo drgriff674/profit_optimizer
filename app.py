@@ -795,7 +795,6 @@ def dashboard():
 
     latest_payment = None
 
-
     #  Cached dashboard data
     cached_data = {}
     notifications = []
@@ -3398,29 +3397,6 @@ def promote_user(username):
     return redirect(url_for("admin"))
 
 
-# 🔁 Reset user password (default: '1234')
-@app.route("/reset_password/<username>", methods=["POST"])
-def reset_password(username):
-    if "username" not in session:
-        flash("Login required.", "error")
-        return redirect(url_for("login"))
-
-    current_user = session["username"]
-    if current_user not in ["griffin", "diana", "rose"]:
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("dashboard"))
-
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE users SET password = %s WHERE username = %s", ("1234", username)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash(f"Password for '{username}' reset to '1234'.", "success")
-    return redirect(url_for("admin"))
 
 
 @app.route("/admin/toggle_ai", methods=["POST"])
