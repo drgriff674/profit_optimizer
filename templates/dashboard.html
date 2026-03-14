@@ -21,7 +21,7 @@
 <!-- SIDEBAR -->
 <aside id="sidebar"
        class="fixed z-50 inset-y-0 left-0 w-60 shadow-xl transform 
-              -translate-x-full md:translate-x-0 transition-all duration-300"
+              -translate-x-full md:translate-x-0 transition-all duration-300 overflow-y-auto"
        style="background: var(--og-surface); color: var(--og-text-main);">
 
     <div class="p-6 flex flex-col items-center">
@@ -29,7 +29,7 @@
         <h2 class="font-bold text-xl" style="color: var(--og-primary);">OptiGain</h2>
     </div>
 
-    <nav class="mt-4 px-4 space-y-2">
+    <nav class="mt-4 px-4 space-y-2 pb-10">
 
         <a href="{{ url_for('dashboard') }}"
            class="block p-3 rounded-md font-semibold transition hover:text-white"

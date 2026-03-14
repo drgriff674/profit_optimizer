@@ -13,18 +13,24 @@
 User Settings
 </h2>
 
-<form method="POST">
+<a href="{{ url_for('dashboard') }}"
+class="inline-block mb-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">
+← Back to Dashboard
+</a>
 
-<label class="block text-sm mb-1">
-Email
-</label>
+<!-- UPDATE EMAIL -->
+<div class="mb-6">
+
+<h3 class="font-semibold mb-2">Update Email</h3>
+
+<form method="POST" action="{{ url_for('settings') }}">
 
 <input
 type="email"
 name="email"
 value="{{ user.email }}"
 required
-class="w-full border rounded px-3 py-2 mb-4"
+class="w-full border rounded px-3 py-2 mb-3"
 />
 
 <button
@@ -34,6 +40,60 @@ Update Email
 </button>
 
 </form>
+
+</div>
+
+<!-- CHANGE PASSWORD -->
+<div class="mb-6">
+
+<h3 class="font-semibold mb-2">Change Password</h3>
+
+<form method="POST" action="{{ url_for('change_password') }}">
+
+<input
+type="password"
+name="current_password"
+placeholder="Current password"
+required
+class="w-full border rounded px-3 py-2 mb-3"
+/>
+
+<input
+type="password"
+name="new_password"
+placeholder="New password"
+required
+class="w-full border rounded px-3 py-2 mb-3"
+/>
+
+<button
+type="submit"
+class="w-full py-2 rounded bg-green-600 text-white">
+Change Password
+</button>
+
+</form>
+
+</div>
+
+<!-- DELETE ACCOUNT -->
+<div>
+
+<h3 class="font-semibold mb-2 text-red-600">
+Delete Account
+</h3>
+
+<form method="POST" action="{{ url_for('delete_account') }}">
+
+<button
+type="submit"
+class="w-full py-2 rounded bg-red-600 text-white">
+Delete My Account
+</button>
+
+</form>
+
+</div>
 
 </div>
 

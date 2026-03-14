@@ -769,6 +769,57 @@ def settings():
 def support():
     return render_template("support.html")
 
+@app.route("/delete-account", methods=["POST"])
+@login_required
+def delete_account():
+
+    username = session["username"]
+
+    def operation(cur):
+
+        cur.execute(
+            "DELETE FROM users WHERE username=%s",
+            (username,)
+        )
+
+    run_db_operation(operation, commit=True)
+
+    session.clear()
+
+    flash("Account deleted.", "info")
+
+    return redirect(url_for("register"))
+
+@app.route("/change-password", methods=["POST"])
+@login_required
+def change_password():
+
+    username = session["username"]
+
+    current_password = request.form["current_password"]
+    new_password = request.form["new_password"]
+
+    user = get_user(username)
+
+    if not check_password_hash(user["password"], current_password):
+
+        flash("❌ Current password incorrect.", "error")
+        return redirect(url_for("settings"))
+
+    hashed = generate_password_hash(new_password)
+
+    def operation(cur):
+        cur.execute(
+            "UPDATE users SET password=%s WHERE username=%s",
+            (hashed, username)
+        )
+
+    run_db_operation(operation, commit=True)
+
+    flash("✅ Password updated successfully.", "success")
+
+    return redirect(url_for("settings"))
+
 
 @app.route("/logout")
 def logout():
