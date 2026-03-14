@@ -707,19 +707,15 @@ def reset_password():
 
         hashed_password = generate_password_hash(new_password)
 
-        email = session.get("reset_email")
+        user = get_user_by_email(session.get("reset_email"))
+        username = user["username"]
 
         def operation(cur):
 
             cur.execute(
-                "UPDATE users SET password=%s WHERE email=%s RETURNING email",
-                (hashed_password, email)
+                "UPDATE users SET password=%s WHERE username=%s",
+                (hashed_password, username)
             )
-
-            updated = cur.fetchone()
-            print("PASSWORD UPDATED FOR:", updated)
-
-            return updated
 
         run_db_operation(operation)
 
