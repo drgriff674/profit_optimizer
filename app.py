@@ -688,6 +688,47 @@ def reset_verify():
 
     return render_template("reset_verify.html")
 
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+
+    if not session.get("reset_verified"):
+        flash("⚠️ Please verify the reset code first.", "error")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+
+        new_password = request.form["password"].strip()
+        confirm_password = request.form["confirm_password"].strip()
+
+        if new_password != confirm_password:
+            flash("❌ Passwords do not match.", "error")
+            return redirect(url_for("reset_password"))
+
+        hashed_password = generate_password_hash(new_password)
+
+        email = session.get("reset_email")
+
+        def operation(cur):
+            cur.execute(
+                "UPDATE users SET password=%s WHERE email=%s",
+                (hashed_password, email)
+            )
+
+        run_db_operation(operation)
+
+        # cleanup session
+        session.pop("reset_email", None)
+        session.pop("reset_otp", None)
+        session.pop("reset_otp_time", None)
+        session.pop("reset_attempts", None)
+        session.pop("reset_verified", None)
+
+        flash("✅ Password reset successfully. Please login.", "success")
+
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html")
+
 
 @app.route("/logout")
 def logout():
