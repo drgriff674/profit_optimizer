@@ -708,6 +708,11 @@ def reset_password():
         hashed_password = generate_password_hash(new_password)
 
         user = get_user_by_email(session.get("reset_email"))
+
+        if not user:
+            flash("User not found.", "error")
+            return redirect(url_for("forgot_password"))
+
         username = user["username"]
 
         def operation(cur):
@@ -716,6 +721,8 @@ def reset_password():
                 "UPDATE users SET password=%s WHERE username=%s",
                 (hashed_password, username)
             )
+
+            print("Rows updated:", cur.rowcount)
 
         run_db_operation(operation)
 
