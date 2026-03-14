@@ -92,16 +92,24 @@
     >
       👁
     </button>
-  </div>
+ </div>
 </div>
 
-      <button
-        type="submit"
-        class="w-full py-2.5 rounded-lg font-semibold shadow transition hover:opacity-90 active:scale-[0.99]"
-        style="background: var(--og-primary); color: white;"
-      >
-        Login
-      </button>
+<div class="text-right">
+  <a href="{{ url_for('forgot_password') }}"
+     class="text-sm hover:underline"
+     style="color: var(--og-primary);">
+     Forgot password?
+  </a>
+</div>
+
+<button
+  type="submit"
+  class="w-full py-2.5 rounded-lg font-semibold shadow transition hover:opacity-90 active:scale-[0.99]"
+  style="background: var(--og-primary); color: white;"
+>
+  Login
+</button>
 
     </form>
 
