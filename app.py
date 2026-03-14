@@ -518,11 +518,16 @@ def register():
 @app.route("/verify-email", methods=["GET", "POST"])
 def verify_email():
 
+    otp_time = session.get("otp_time")
+
+    # If session expired completely
+    if not session.get("otp") or not session.get("pending_email"):
+        flash("⚠️ Session expired. Please register again.", "error")
+        return redirect(url_for("register"))
+
     if request.method == "POST":
 
-        code = request.form["otp"]
-
-        otp_time = session.get("otp_time")
+        code = request.form["otp"].strip()
 
         attempts = session.get("otp_attempts", 0)
 
@@ -530,9 +535,10 @@ def verify_email():
             flash("❌ Too many verification attempts. Please register again.", "error")
             return redirect(url_for("register"))
 
-        if not otp_time or time.time() - otp_time > 300:
-            flash("⏳ Verification code expired. Please register again.", "error")
-            return redirect(url_for("register"))
+        # Expire after 5 minutes
+        if time.time() - otp_time > 300:
+            flash("⏳ Verification code expired. A new code has been sent.", "error")
+            return redirect(url_for("resend_otp"))
 
         if str(code) == str(session.get("otp")):
 
@@ -540,6 +546,7 @@ def verify_email():
             session["email"] = session.get("pending_email")
             session["verified"] = True
 
+            # cleanup
             session.pop("otp", None)
             session.pop("otp_time", None)
             session.pop("pending_user", None)
@@ -550,10 +557,10 @@ def verify_email():
 
             return redirect(url_for("dashboard"))
 
-        session["otp_attempts"] = session.get("otp_attempts", 0) + 1
+        session["otp_attempts"] = attempts + 1
         flash("❌ Invalid verification code.", "error")
 
-    return render_template("verify_email.html")
+    return render_template("verify_email.html", otp_time=otp_time)
 
 @app.route("/resend-otp")
 def resend_otp():
@@ -583,7 +590,7 @@ def login_verify():
 
     if request.method == "POST":
 
-        code = request.form["otp"]
+        code = request.form["otp"].strip()
 
         otp_time = session.get("login_otp_time")
 

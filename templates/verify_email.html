@@ -13,8 +13,12 @@
 Verify your email
 </h2>
 
-<p class="text-sm mb-4">
+<p class="text-sm mb-2">
 Enter the 6-digit code sent to your email.
+</p>
+
+<p class="text-sm text-gray-500 mb-4">
+Code expires in <span id="countdown">05:00</span>
 </p>
 
 <form method="POST">
@@ -35,7 +39,6 @@ Verify Email
 
 </form>
 
-<!-- ADD THIS BLOCK HERE -->
 <div class="text-center mt-4">
 
 <p class="text-sm opacity-70">
@@ -43,14 +46,47 @@ Didn't receive the code?
 </p>
 
 <a href="{{ url_for('resend_otp') }}"
-   class="text-blue-600 font-semibold hover:underline">
-   Resend verification code
+class="text-blue-600 font-semibold hover:underline">
+Resend verification code
 </a>
 
 </div>
-<!-- END BLOCK -->
 
 </div>
+
+<script>
+
+const otpTime = {{ otp_time }};
+const expiry = otpTime + 300;
+
+function updateTimer(){
+
+const now = Math.floor(Date.now()/1000);
+
+let remaining = expiry - now;
+
+if(remaining <= 0){
+document.getElementById("countdown").innerText = "Expired";
+return;
+}
+
+let minutes = Math.floor(remaining / 60);
+let seconds = remaining % 60;
+
+if(seconds < 10){
+seconds = "0" + seconds;
+}
+
+document.getElementById("countdown").innerText =
+minutes + ":" + seconds;
+
+}
+
+setInterval(updateTimer,1000);
+
+updateTimer();
+
+</script>
 
 </body>
 </html>
