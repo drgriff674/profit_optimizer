@@ -9,9 +9,11 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
   <!-- OptiGain theme -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}"
 </head>
 
-<body class="min-h-screen flex items-center justify-center transition-colors"
+<body class="min-h-screen transition-colors"
     style="background: var(--og-bg);">
 
   <!-- Dark mode toggle -->
@@ -25,9 +27,51 @@
     🌙
   </button>
 
+<h1 class="text-4xl font-bold text-center mb-6">
+
+Welcome to OptiGain
+</h1>
+
+<p class="text-center opacity-70 mb-10">
+Financial intelligence and inventory optimization in one platform.
+</p>
+
+<section class="max-w-6xl mx-auto px-6 pt-12 pb-8 reveal">
+
+<img
+src="{{ url_for('static', filename='images/hero.jpg') }}"
+class="rounded-xl shadow-xl mx-auto"
+/>
+
+</section>
+
+<section class="max-w-6xl mx-auto px-6 py-10 reveal">
+
+<img
+src="{{ url_for('static', filename='images/features.jpg') }}"
+class="rounded-xl shadow-lg mx-auto"
+/>
+
+</section>
+
+<section class="max-w-6xl mx-auto px-6 py-10 reveal">
+
+<img
+src="{{ url_for('static', filename='images/features-info.jpg') }}"
+class="rounded-xl shadow-lg mx-auto"
+/>
+
+</section>
+
+<h2 class="text-2xl font-semibold text-center mt-24 mb-8">
+Access Your OptiGain Dashboard
+</h2>
+
  <!-- Auth Card -->
+<section class="max-w-2xl mx-auto px-6 pb-16 reveal">
+
 <div
-  class="w-full max-w-md rounded-2xl shadow-2xl p-8 border"
+  class="w-full rounded-2xl shadow-xl p-10 border"
   style="background: var(--og-surface); color: var(--og-text-main); border:1px solid var(--og-border-subtle);"
 >
 
@@ -105,7 +149,7 @@
 
 <button
   type="submit"
-  class="w-full py-2.5 rounded-lg font-semibold shadow transition hover:opacity-90 active:scale-[0.99]"
+  class="w-full py-2.5 rounded-lg font-semibold shadow transition transform hover:-translate-y-0.5 hover:opacity-90 active:scale-[0.99]"
   style="background: var(--og-primary); color: white;"
 >
   Login
@@ -138,6 +182,7 @@
     {% endwith %}
 
   </div>
+</section>
 
   <!-- Dark Mode Script (style.css driven) -->
   <script>
@@ -171,6 +216,28 @@ function togglePassword(btn) {
       btn.innerText = "👁";
   }
 
+}
+</script>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("active");
+    }
+  });
+});
+
+document.querySelectorAll(".reveal").forEach((el) => {
+  observer.observe(el);
+});
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/sw.js")
+    .then(() => console.log("OptiGain service worker registered"))
+    .catch(err => console.log("Service worker error:", err));
 }
 </script>
 
