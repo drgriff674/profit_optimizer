@@ -41,7 +41,6 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from jenga import get_access_token
 from database import(
     load_users,
     save_user,
@@ -1014,11 +1013,7 @@ def api_dash():
 
     return jsonify(snap)
 
-@app.route("/test-jenga")
-def test_jenga():
 
-    token = get_access_token()
-    return jsonify(token)
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
 @login_required
