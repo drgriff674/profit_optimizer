@@ -9,12 +9,17 @@ def get_access_token():
 
     url = "https://v3.jengahq.io/identity/v3/token"
 
-    headers = {
-        "Content-Type": "application/json",
-        "consumer-key": JENGA_API_KEY,
-        "consumer-secret": JENGA_API_SECRET
+    payload = {
+        "merchantCode": JENGA_MERCHANT_CODE,
+        "consumerKey": JENGA_API_KEY,
+        "consumerSecret": JENGA_API_SECRET
     }
 
-    response = requests.get(url, headers=headers)
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
 
     return response.text
