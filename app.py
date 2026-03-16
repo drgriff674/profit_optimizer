@@ -41,6 +41,7 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from jenga import get_access_token
 from database import(
     load_users,
     save_user,
@@ -104,6 +105,7 @@ def send_otp_email(receiver_email, otp):
     mail.send(msg)
 
     print("OTP email sent successfully")
+
 
 # ============================
 # Revenue helpers
@@ -1011,6 +1013,12 @@ def api_dash():
     snap=get_dashboard_snapshot(username)
 
     return jsonify(snap)
+
+@app.route("/test-jenga")
+def test_jenga():
+
+    token = get_access_token()
+    return token
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
 @login_required
@@ -3915,7 +3923,6 @@ def inventory_adjust():
             connection_pool.putconn(conn)
 
 if __name__ == "__main__":
-
 
     port = int(os.environ.get("PORT", 5000))
     print("app is about to start listening on port", port)
