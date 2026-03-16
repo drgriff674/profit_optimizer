@@ -21,4 +21,4 @@ def get_access_token():
 
     response = requests.post(url, json=payload, headers=headers)
 
-    return response.json()
+    return response.text
