@@ -7,7 +7,7 @@ JENGA_MERCHANT_CODE = os.environ.get("JENGA_MERCHANT_CODE")
 
 def get_access_token():
 
-    url = "https://api.jengahq.io/identity/v3/token"
+    url = "https://v3.jengahq.io/identity/v3/token"
 
     payload = {
         "merchantCode": JENGA_MERCHANT_CODE,
