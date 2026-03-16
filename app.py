@@ -1018,7 +1018,7 @@ def api_dash():
 def test_jenga():
 
     token = get_access_token()
-    return token
+    return jsonify(token)
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
 @login_required
