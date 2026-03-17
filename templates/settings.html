@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
 <head>
 <title>Settings</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+<body class="min-h-screen">
 
-<!-- 🌙 DARK MODE BUTTON -->
 <button
   id="darkToggle"
-  class="fixed top-5 right-5 w-11 h-11 rounded-full shadow-lg"
-  style="background:#2563eb; color:white;"
+  class="fixed top-5 right-5 w-11 h-11 rounded-full shadow-lg bg-blue-600 text-white hover:opacity-90"
 >
 🌙
 </button>
@@ -236,20 +234,29 @@ btn.textContent = field.type === "password" ? "👁" : "🙈";
 const toggle = document.getElementById("darkToggle");
 const root = document.documentElement;
 
-function updateIcon(){
-toggle.textContent = root.classList.contains("dark") ? "☀️" : "🌙";
+// load saved theme
+if (localStorage.getItem("theme") === "dark") {
+    root.classList.add("dark");
+} else if (!localStorage.getItem("theme")) {
+    // optional: system preference
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        root.classList.add("dark");
+    }
 }
 
-if(localStorage.getItem("theme")==="dark"){
-root.classList.add("dark");
+function updateIcon(){
+    toggle.textContent = root.classList.contains("dark") ? "☀️" : "🌙";
 }
 
 updateIcon();
 
 toggle.onclick = () => {
-root.classList.toggle("dark");
-localStorage.setItem("theme", root.classList.contains("dark") ? "dark":"light");
-updateIcon();
+    root.classList.toggle("dark");
+    localStorage.setItem(
+        "theme",
+        root.classList.contains("dark") ? "dark" : "light"
+    );
+    updateIcon();
 };
 </script>
 
