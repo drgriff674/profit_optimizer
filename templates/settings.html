@@ -5,46 +5,53 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen flex items-center justify-center">
+<body class="min-h-screen bg-gray-50">
 
-<div class="w-full max-w-lg p-6 shadow rounded-xl">
+<div class="max-w-5xl mx-auto px-6 py-12">
 
-<h2 class="text-xl font-bold mb-4">
-Settings
-</h2>
+<!-- HEADER -->
+<div class="mb-8">
+  <h1 class="text-3xl font-bold">Settings</h1>
+  <p class="text-sm opacity-70 mt-1">
+    Manage your account, security, and preferences
+  </p>
+</div>
 
 <a href="{{ url_for('dashboard') }}"
-class="inline-block mb-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">
+class="inline-block mb-6 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">
 ← Back to Dashboard
 </a>
 
 <!-- TAB MENU -->
+<div class="flex gap-6 border-b mb-8 text-sm font-medium">
 
-<div class="flex border-b mb-4">
-
-<button onclick="showTab('account')" class="px-4 py-2 font-medium">
+<button onclick="showTab('account')" class="tab-btn pb-3 border-b-2 border-blue-600 text-blue-600">
 Account
 </button>
 
-<button onclick="showTab('security')" class="px-4 py-2 font-medium">
+<button onclick="showTab('security')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Security
 </button>
 
-<button onclick="showTab('billing')" class="px-4 py-2 font-medium">
+<button onclick="showTab('billing')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Billing
 </button>
 
-<button onclick="showTab('support')" class="px-4 py-2 font-medium">
+<button onclick="showTab('support')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Support
 </button>
 
 </div>
 
 <!-- ACCOUNT -->
-
 <div id="account" class="tab">
 
-<h3 class="font-semibold mb-2">Update Email</h3>
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6 border">
+
+<h2 class="text-lg font-semibold mb-1">Email Address</h2>
+<p class="text-sm opacity-70 mb-4">
+Update the email associated with your account
+</p>
 
 <form method="POST" action="{{ url_for('settings') }}">
 
@@ -53,12 +60,12 @@ type="email"
 name="email"
 value="{{ user.email }}"
 required
-class="w-full border rounded px-3 py-2 mb-3"
+class="w-full border rounded-lg px-4 py-3 mb-4"
 />
 
 <button
 type="submit"
-class="w-full py-2 rounded bg-blue-600 text-white">
+class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:opacity-90">
 Update Email
 </button>
 
@@ -66,11 +73,17 @@ Update Email
 
 </div>
 
-<!-- SECURITY -->
+</div>
 
+<!-- SECURITY -->
 <div id="security" class="tab hidden">
 
-<h3 class="font-semibold mb-2">Change Password</h3>
+<div class="bg-white rounded-xl shadow-sm p-6 mb-6 border">
+
+<h2 class="text-lg font-semibold mb-1">Change Password</h2>
+<p class="text-sm opacity-70 mb-4">
+Use a strong password to keep your account secure
+</p>
 
 <form method="POST" action="{{ url_for('change_password') }}">
 
@@ -79,7 +92,7 @@ type="password"
 name="current_password"
 placeholder="Current password"
 required
-class="w-full border rounded px-3 py-2 mb-3"
+class="w-full border rounded-lg px-4 py-3 mb-3"
 />
 
 <input
@@ -87,12 +100,12 @@ type="password"
 name="new_password"
 placeholder="New password"
 required
-class="w-full border rounded px-3 py-2 mb-3"
+class="w-full border rounded-lg px-4 py-3 mb-4"
 />
 
 <button
 type="submit"
-class="w-full py-2 rounded bg-green-600 text-white">
+class="w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:opacity-90">
 Change Password
 </button>
 
@@ -100,11 +113,18 @@ Change Password
 
 </div>
 
-<!-- BILLING -->
+</div>
 
+<!-- BILLING -->
 <div id="billing" class="tab hidden">
 
-<p class="mb-3">Your subscription status will appear here.</p>
+<div class="bg-white rounded-xl shadow-sm p-6 border">
+
+<h2 class="text-lg font-semibold mb-2">Subscription</h2>
+
+<p class="mb-2">
+Your subscription status will appear here.
+</p>
 
 <p class="text-sm opacity-70">
 Billing features coming soon.
@@ -112,28 +132,29 @@ Billing features coming soon.
 
 </div>
 
-<!-- SUPPORT -->
+</div>
 
+<!-- SUPPORT -->
 <div id="support" class="tab hidden">
 
-<p class="mb-3">
+<div class="bg-white rounded-xl shadow-sm p-6 border">
+
+<h2 class="text-lg font-semibold mb-2">Contact Support</h2>
+
+<p class="mb-4">
 Need help? Contact us anytime.
 </p>
 
-<p>
-📧 optigaintechnologies@gmail.com
-</p>
+<div class="mb-2">📧 optigaintechnologies@gmail.com</div>
+<div>📞 0702432710</div>
 
-<p>
-📞 0702432710
-</p>
+</div>
 
 </div>
 
 </div>
 
 <script>
-
 function showTab(tab){
 
 document.querySelectorAll(".tab").forEach(t=>{
@@ -142,8 +163,15 @@ t.classList.add("hidden");
 
 document.getElementById(tab).classList.remove("hidden");
 
-}
+// update active tab styling
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+btn.classList.remove("border-blue-600","text-blue-600");
+btn.classList.add("border-transparent","opacity-70");
+});
 
+event.target.classList.add("border-blue-600","text-blue-600");
+event.target.classList.remove("opacity-70");
+}
 </script>
 
 </body>

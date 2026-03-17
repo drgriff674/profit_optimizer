@@ -296,6 +296,18 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def start_otp_flow(purpose, data, email):
+
+    otp = str(random.randint(100000, 999999))
+
+    session["otp_code"] = otp
+    session["otp_purpose"] = purpose
+    session["otp_data"] = data
+    session["otp_time"] = time.time()
+    session["otp_attempts"] = 0
+
+    send_otp_email(email, otp)
+
 def run_cron_jobs():
     print("⏰ Running background jobs")
 
@@ -427,22 +439,13 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
-                # Generate OTP
-                otp = random.randint(100000, 999999)
+                start_otp_flow(
+                    "login",
+                    {"username": user["username"], "email": user["email"]},
+                    user["email"]
+                )
 
-                # Store temporary login session
-                session["login_user"] = user["username"]
-                session["login_email"] = user["email"]
-                session["login_otp"] = otp
-                session["login_otp_time"] = time.time()
-                session["login_otp_attempts"] = 0
-
-                # Send OTP
-                send_otp_email(user["email"], otp)
-
-                flash("📧 Login verification code sent to your email.", "info")
-
-                return redirect(url_for("login_verify"))
+                return redirect(url_for("verify"))
 
             flash("❌ Invalid username or password", "error")
             return redirect(url_for("login"))
@@ -456,6 +459,7 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+
         new_user = request.form["username"].strip()
         new_email = request.form["email"].strip()
         new_pass = request.form["password"].strip()
@@ -470,11 +474,9 @@ def register():
         account_number = request.form.get("account_number","").strip()
 
         try:
-            # determine role
             users = load_users()
             role = "admin" if len(users) == 0 else "user"
 
-            # hash password
             hashed_password = generate_password_hash(new_pass)
 
             result = create_user_with_business(
@@ -490,27 +492,21 @@ def register():
             if result == "exists":
                 flash("⚠️ Username or email already exists.", "error")
                 return redirect(url_for("register"))
-        
-            # ✅ Create upload folder
+
             os.makedirs(
                 os.path.join(app.config["UPLOAD_FOLDER"], new_user), exist_ok=True
             )
 
-            # Generate OTP
-            otp = random.randint(100000, 999999)
-
-            session["pending_user"] = new_user
-            session["pending_email"] = new_email
-            session["otp"] = otp
-            session["otp_time"] = time.time()
-            session["otp_attempts"] = 0
-
-            # Send OTP email
-            send_otp_email(new_email, otp)
+            # ✅ NEW OTP SYSTEM
+            start_otp_flow(
+                "register",
+                {"username": new_user, "email": new_email},
+                new_email
+            )
 
             flash("📧 Verification code sent to your email.", "success")
 
-            return redirect(url_for("verify_email"))
+            return redirect(url_for("verify"))
 
         except Exception as e:
             flash(f"❌ Error creating user: {str(e)}", "error")
@@ -518,128 +514,140 @@ def register():
 
     return render_template("register.html")
 
-@app.route("/verify-email", methods=["GET", "POST"])
-def verify_email():
 
-    otp_time = session.get("otp_time")
+@app.route("/verify", methods=["GET", "POST"])
+def verify():
 
-    # If session expired completely
-    if not session.get("otp") or not session.get("pending_email"):
-        flash("⚠️ Session expired. Please register again.", "error")
-        return redirect(url_for("register"))
-
-    if request.method == "POST":
-
-        code = request.form["otp"].strip()
-
-        attempts = session.get("otp_attempts", 0)
-
-        if attempts >= 5:
-            flash("❌ Too many verification attempts. Please register again.", "error")
-            return redirect(url_for("register"))
-
-        # Expire after 5 minutes
-        if time.time() - otp_time > 300:
-            flash("⏳ Verification code expired. A new code has been sent.", "error")
-            return redirect(url_for("resend_otp"))
-
-        if str(code) == str(session.get("otp")):
-
-            session["username"] = session.get("pending_user")
-            session["email"] = session.get("pending_email")
-            session["verified"] = True
-
-            # cleanup
-            session.pop("otp", None)
-            session.pop("otp_time", None)
-            session.pop("pending_user", None)
-            session.pop("pending_email", None)
-            session.pop("otp_attempts", None)
-
-            flash("✅ Email verified successfully.", "success")
-
-            return redirect(url_for("dashboard"))
-
-        session["otp_attempts"] = attempts + 1
-        flash("❌ Invalid verification code.", "error")
-
-    return render_template("verify_email.html", otp_time=otp_time)
-
-@app.route("/resend-otp")
-def resend_otp():
-
-    pending_email = session.get("pending_email")
-    pending_user = session.get("pending_user")
-
-    if not pending_email or not pending_user:
-        flash("⚠️ Session expired. Please register again.", "error")
-        return redirect(url_for("register"))
-
-    # generate new OTP
-    otp = random.randint(100000, 999999)
-
-    session["otp"] = otp
-    session["otp_time"] = time.time()
-    session["otp_attempts"] = 0
-
-    send_otp_email(pending_email, otp)
-
-    flash("📧 A new verification code has been sent to your email.", "success")
-
-    return redirect(url_for("verify_email"))
-
-@app.route("/login-verify", methods=["GET", "POST"])
-def login_verify():
-
-    # 🔒 Step 1: Ensure session exists
-    if "login_otp" not in session or "login_otp_time" not in session:
-        flash("Session expired. Please login again.", "error")
+    if "otp_code" not in session:
+        flash("Session expired.", "error")
         return redirect(url_for("login"))
 
     if request.method == "POST":
 
-        # 🔒 Step 2: Safe OTP input
+        otp_time = session.get("otp_time")
+        attempts = session.get("otp_attempts", 0)
+
+        # ⏳ Expiry (5 minutes)
+        if not otp_time or time.time() - otp_time > 300:
+            flash("⏳ Code expired. Please try again.", "error")
+            return redirect(url_for("login"))
+
+        # 🚫 Too many attempts
+        if attempts >= 5:
+            flash("❌ Too many attempts. Please try again.", "error")
+            return redirect(url_for("login"))
+
         code = request.form.get("otp", "").strip()
 
-        otp_time = session.get("login_otp_time")
-        attempts = session.get("login_otp_attempts", 0)
+        if code != session.get("otp_code"):
+            session["otp_attempts"] = session.get("otp_attempts", 0)+1
+            flash("❌ Invalid code", "error")
+            return redirect(url_for("verify"))
 
-        # 🔒 Step 3: Prevent crashes from bad otp_time
-        if not isinstance(otp_time, (int, float)):
-            flash("Session error. Please login again.", "error")
-            return redirect(url_for("login"))
+        purpose = session.get("otp_purpose")
+        data = session.get("otp_data")
 
-        if attempts >= 5:
-            flash("❌ Too many login verification attempts. Please login again.", "error")
-            return redirect(url_for("login"))
+        # LOGIN
+        if purpose == "login":
 
-        # ⏳ Expiry check
-        if time.time() - otp_time > 300:
-            flash("⏳ Login code expired. Please login again.", "error")
-            return redirect(url_for("login"))
+            session["username"] = data["username"]
+            session["email"] = data["email"]
 
-        # ✅ Correct OTP
-        if str(code) == str(session.get("login_otp")):
+    
+            session.pop("otp_code", None)
+            session.pop("otp_purpose", None)
+            session.pop("otp_data", None)
+            session.pop("otp_time", None)
+            session.pop("otp_attempts", None)
 
-            session["username"] = session.get("login_user")
-            session["email"] = session.get("login_email")
-
-            # clean session
-            session.pop("login_user", None)
-            session.pop("login_email", None)
-            session.pop("login_otp", None)
-            session.pop("login_otp_time", None)
-            session.pop("login_otp_attempts", None)
-
-            flash("✅ Login verified.", "success")
+            flash("✅ Login successful", "success")
             return redirect(url_for("dashboard"))
+        
+        # REGISTER
+        elif purpose == "register":
+            session["username"] = data["username"]
+            session["email"] = data["email"]
 
-        # ❌ Wrong OTP
-        session["login_otp_attempts"] = attempts + 1
-        flash("❌ Invalid verification code.", "error")
+            session.pop("otp_code", None)
+            session.pop("otp_purpose", None)
+            session.pop("otp_data", None)
+            session.pop("otp_time", None)
+            session.pop("otp_attempts", None)
 
-    otp_time = session.get("login_otp_time", 0)
-    return render_template("login_verify.html", otp_time=otp_time)
+            flash("✅ Email verified", "success")
+            return redirect(url_for("dashboard"))
+        
+        # RESET PASSWORD
+        elif purpose == "reset_password":
+            session["reset_verified"] = True
+            return redirect(url_for("reset_password"))
+
+        # CHANGE EMAIL
+        elif purpose == "change_email":
+
+            def op(cur):
+                cur.execute(
+                    "UPDATE users SET email=%s WHERE username=%s",
+                    (data["new_email"], session["username"])
+                )
+
+            run_db_operation(op, commit=True)
+
+            flash("✅ Email updated", "success")
+            return redirect(url_for("settings"))
+
+        # CHANGE PASSWORD
+        elif purpose == "change_password":
+
+            hashed = generate_password_hash(data["new_password"])
+
+            def op(cur):
+                cur.execute(
+                    "UPDATE users SET password=%s WHERE username=%s",
+                    (hashed, session["username"])
+                )
+
+            run_db_operation(op, commit=True)
+
+            flash("✅ Password updated", "success")
+            return redirect(url_for("settings"))
+
+        # cleanup
+        session.pop("otp_code", None)
+        session.pop("otp_purpose", None)
+        session.pop("otp_data", None)
+        session.pop("otp_time", None)
+        session.pop("otp_attempts", None)
+
+    return render_template("verify.html")
+
+
+
+
+@app.route("/resend-otp")
+def resend_otp():
+
+    email = session.get("otp_data", {}).get("email")
+
+    if not email:
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("login"))
+
+    # generate new OTP
+    otp = random.randint(100000, 999999)
+
+    session["otp_code"] = otp
+    session["otp_time"] = time.time()
+    session["otp_attempts"] = 0
+
+    send_otp_email(email, otp)
+
+    flash("📧 New verification code sent.", "success")
+
+    return redirect(url_for("verify"))
+
+
+
 @app.route("/forgot-password", methods=["GET","POST"])
 def forgot_password():
 
@@ -653,52 +661,20 @@ def forgot_password():
             flash("❌ No account found with that email.", "error")
             return redirect(url_for("forgot_password"))
 
-        # generate OTP
-        otp = random.randint(100000,999999)
-
-        session["reset_email"] = email
-        session["reset_otp"] = otp
-        session["reset_otp_time"] = time.time()
-        session["reset_attempts"] = 0
-
-        send_otp_email(email, otp)
+        # ✅ NEW SYSTEM
+        start_otp_flow(
+            "reset_password",
+            {"email": email},
+            email
+        )
 
         flash("📧 Password reset code sent to your email.", "success")
 
-        return redirect(url_for("reset_verify"))
+        return redirect(url_for("verify"))
 
     return render_template("forgot_password.html")
 
-@app.route("/reset-verify", methods=["GET", "POST"])
-def reset_verify():
 
-    if request.method == "POST":
-
-        code = request.form["otp"].strip()
-
-        otp_time = session.get("reset_otp_time")
-        attempts = session.get("reset_attempts", 0)
-
-        if attempts >= 5:
-            flash("❌ Too many attempts. Please restart password reset.", "error")
-            return redirect(url_for("forgot_password"))
-
-        if not otp_time or time.time() - otp_time > 300:
-            flash("⏳ Reset code expired. Please request again.", "error")
-            return redirect(url_for("forgot_password"))
-
-        if str(code) == str(session.get("reset_otp")):
-
-            session["reset_verified"] = True
-            flash("✅ Code verified. You can now reset your password.", "success")
-
-            return redirect(url_for("reset_password"))
-
-        session["reset_attempts"] = session.get("reset_attempts", 0) + 1
-        flash("❌ Invalid code.", "error")
-    
-    otp_time = session.get("reset_otp_time",0)
-    return render_template("reset_verify.html", otp_time=otp_time)
 
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
@@ -718,7 +694,8 @@ def reset_password():
 
         hashed_password = generate_password_hash(new_password)
 
-        user = get_user_by_email(session.get("reset_email"))
+        email = session.get("otp_data",{}).get("email")
+        user = get_user_by_email(email)
 
         if not user:
             flash("User not found.", "error")
@@ -737,11 +714,7 @@ def reset_password():
 
         run_db_operation(operation, commit=True)
 
-        # cleanup session
-        session.pop("reset_email", None)
-        session.pop("reset_otp", None)
-        session.pop("reset_otp_time", None)
-        session.pop("reset_attempts", None)
+        
         session.pop("reset_verified", None)
 
         flash("✅ Password reset successfully. Please login.", "success")
@@ -834,7 +807,7 @@ def change_password():
 
 @app.route("/logout")
 def logout():
-    session.pop("username", None)
+    session.clear()
     return redirect(url_for("login"))
 
 @app.route("/terms")

@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Email Verification</title>
+<title>Verification – OptiGain</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen flex items-center justify-center">
+<body class="min-h-screen flex items-center justify-center bg-gray-50">
 
-<div class="w-full max-w-sm p-6 shadow rounded-xl">
+<div class="w-full max-w-md p-8 bg-white shadow-xl rounded-2xl">
 
-<h2 class="text-xl font-bold mb-4">
-Verify your email
+<h2 class="text-2xl font-bold mb-2 text-center">
+Verification Required
 </h2>
 
-<p class="text-sm mb-2">
-Enter the 6-digit code sent to your email.
+<p class="text-sm text-center opacity-70 mb-6">
+Enter the 6-digit code sent to your email
 </p>
 
-<p class="text-sm text-gray-500 mb-4">
+<p class="text-sm text-center mb-4">
 Code expires in <span id="countdown">05:00</span>
 </p>
 
-<form method="POST">
+<form method="POST" class="space-y-4">
 
 <input
 type="text"
 name="otp"
 maxlength="6"
 required
-class="w-full border rounded px-3 py-2 mb-3"
+placeholder="Enter code"
+class="w-full border rounded-lg px-4 py-3 text-center text-lg tracking-widest"
 />
 
 <button
 type="submit"
-class="w-full py-2 rounded bg-blue-600 text-white">
-Verify Email
+class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:opacity-90">
+Verify
 </button>
 
 </form>
@@ -42,12 +43,12 @@ Verify Email
 <div class="text-center mt-4">
 
 <p class="text-sm opacity-70">
-Didn't receive the code?
+Didn’t receive the code?
 </p>
 
 <a href="{{ url_for('resend_otp') }}"
 class="text-blue-600 font-semibold hover:underline">
-Resend verification code
+Resend code
 </a>
 
 </div>
@@ -55,14 +56,11 @@ Resend verification code
 </div>
 
 <script>
-
-const otpTime = {{ otp_time }};
+const otpTime = {{ session.get("otp_time", 0) }};
 const expiry = otpTime + 300;
 
 function updateTimer(){
-
 const now = Math.floor(Date.now()/1000);
-
 let remaining = expiry - now;
 
 if(remaining <= 0){
@@ -73,19 +71,14 @@ return;
 let minutes = Math.floor(remaining / 60);
 let seconds = remaining % 60;
 
-if(seconds < 10){
-seconds = "0" + seconds;
-}
+if(seconds < 10){ seconds = "0" + seconds; }
 
 document.getElementById("countdown").innerText =
 minutes + ":" + seconds;
-
 }
 
 setInterval(updateTimer,1000);
-
 updateTimer();
-
 </script>
 
 </body>
