@@ -786,24 +786,18 @@ def change_password():
     user = get_user(username)
 
     if not check_password_hash(user["password"], current_password):
-
         flash("❌ Current password incorrect.", "error")
         return redirect(url_for("settings"))
 
-    hashed = generate_password_hash(new_password)
+    # 🔐 Start OTP instead of updating immediately
+    start_otp_flow(
+        "change_password",
+        {"new_password": new_password},
+        user["email"]
+    )
 
-    def operation(cur):
-        cur.execute(
-            "UPDATE users SET password=%s WHERE username=%s",
-            (hashed, username)
-        )
-
-    run_db_operation(operation, commit=True)
-
-    flash("✅ Password updated successfully.", "success")
-
-    return redirect(url_for("settings"))
-
+    flash("📧 Verification code sent to your email.", "info")
+    return redirect(url_for("verify"))
 
 @app.route("/logout")
 def logout():

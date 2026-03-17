@@ -9,6 +9,18 @@
 
 <div class="max-w-5xl mx-auto px-6 py-12">
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for category, msg in messages %}
+        <div class="px-4 py-3 rounded-lg bg-gray-100 shadow text-sm">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 <!-- HEADER -->
 <div class="mb-8">
   <h1 class="text-3xl font-bold">Settings</h1>
@@ -25,19 +37,19 @@ class="inline-block mb-6 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">
 <!-- TAB MENU -->
 <div class="flex gap-6 border-b mb-8 text-sm font-medium">
 
-<button onclick="showTab('account')" class="tab-btn pb-3 border-b-2 border-blue-600 text-blue-600">
+<button onclick="showTab('account',event)" class="tab-btn pb-3 border-b-2 border-blue-600 text-blue-600">
 Account
 </button>
 
-<button onclick="showTab('security')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('security',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Security
 </button>
 
-<button onclick="showTab('billing')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('billing',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Billing
 </button>
 
-<button onclick="showTab('support')" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('support',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
 Support
 </button>
 
@@ -87,21 +99,41 @@ Use a strong password to keep your account secure
 
 <form method="POST" action="{{ url_for('change_password') }}">
 
-<input
-type="password"
-name="current_password"
-placeholder="Current password"
-required
-class="w-full border rounded-lg px-4 py-3 mb-3"
-/>
+<div class="relative mb-3">
+  <input
+    id="current_password"
+    type="password"
+    name="current_password"
+    placeholder="Current password"
+    required
+    class="w-full border rounded-lg px-4 py-3 pr-10"
+  />
 
-<input
-type="password"
-name="new_password"
-placeholder="New password"
-required
-class="w-full border rounded-lg px-4 py-3 mb-4"
-/>
+  <button
+    type="button"
+    onclick="togglePassword('current_password', this)"
+    class="absolute right-2 top-2">
+    👁
+  </button>
+</div>
+
+<div class="relative mb-3">
+  <input
+    id="new_password"
+    type="password"
+    name="new_password"
+    placeholder="New password"
+    required
+    class="w-full border rounded-lg px-4 py-3 pr-10"
+  />
+
+  <button
+    type="button"
+    onclick="togglePassword('new_password', this)"
+    class="absolute right-2 top-2">
+    👁
+  </button>
+</div>
 
 <button
 type="submit"
@@ -155,7 +187,7 @@ Need help? Contact us anytime.
 </div>
 
 <script>
-function showTab(tab){
+function showTab(tab, event){
 
 document.querySelectorAll(".tab").forEach(t=>{
 t.classList.add("hidden");
@@ -169,8 +201,25 @@ btn.classList.remove("border-blue-600","text-blue-600");
 btn.classList.add("border-transparent","opacity-70");
 });
 
+if(event){
 event.target.classList.add("border-blue-600","text-blue-600");
 event.target.classList.remove("opacity-70");
+}
+
+}
+</script>
+
+<script>
+function togglePassword(fieldId, btn) {
+  const field = document.getElementById(fieldId);
+
+  if (field.type === "password") {
+    field.type = "text";
+    btn.innerText = "🙈";
+  } else {
+    field.type = "password";
+    btn.innerText = "👁";
+  }
 }
 </script>
 
