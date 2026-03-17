@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen transition-colors bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+<body class="min-h-screen transition-colors duration-300 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
 
 <!-- 🌙 DARK MODE BUTTON -->
 <button
@@ -16,7 +16,7 @@
 🌙
 </button>
 
-<!-- ← BACK BUTTON (TOP LEFT) -->
+<!-- ← BACK BUTTON -->
 <a href="{{ url_for('dashboard') }}"
 class="fixed top-5 left-5 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-90 shadow">
 ← Dashboard
@@ -28,7 +28,7 @@ class="fixed top-5 left-5 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hove
   {% if messages %}
     <div class="mb-6 space-y-2">
       {% for category, msg in messages %}
-        <div class="px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 shadow text-sm">
+        <div class="px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow text-sm">
           {{ msg }}
         </div>
       {% endfor %}
@@ -39,7 +39,7 @@ class="fixed top-5 left-5 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hove
 <!-- HEADER -->
 <div class="mb-8">
   <h1 class="text-3xl font-bold">Settings</h1>
-  <p class="text-sm opacity-70 mt-1">
+  <p class="text-sm opacity-70 dark:opacity-90 mt-1">
     Manage your account, security, and preferences
   </p>
 </div>
@@ -51,15 +51,15 @@ class="fixed top-5 left-5 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hove
 Account
 </button>
 
-<button onclick="showTab('security',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('security',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 dark:opacity-90 hover:opacity-100">
 Security
 </button>
 
-<button onclick="showTab('billing',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('billing',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 dark:opacity-90 hover:opacity-100">
 Billing
 </button>
 
-<button onclick="showTab('support',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 hover:opacity-100">
+<button onclick="showTab('support',event)" class="tab-btn pb-3 border-b-2 border-transparent opacity-70 dark:opacity-90 hover:opacity-100">
 Support
 </button>
 
@@ -72,7 +72,7 @@ Support
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-1">Email Address</h2>
-<p class="text-sm opacity-70 mb-4">
+<p class="text-sm opacity-70 dark:opacity-90 mb-4">
 Update the email associated with your account
 </p>
 
@@ -83,7 +83,7 @@ type="email"
 name="email"
 value="{{ user.email }}"
 required
-class="w-full border rounded-lg px-4 py-3 mb-4"
+class="w-full rounded-lg px-4 py-3 mb-4 bg-white dark:bg-gray-700 text-black dark:text-white border border-gray-300 dark:border-gray-600"
 />
 
 <button
@@ -96,7 +96,7 @@ Update Email
 
 </div>
 
-<!-- DELETE ACCOUNT -->
+<!-- DELETE -->
 <form method="POST" action="{{ url_for('delete_account') }}">
 
 <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-700">
@@ -114,13 +114,12 @@ This action is permanent and cannot be undone.
     id="delete_password"
     type="password"
     name="password"
-    placeholder="Enter your password to confirm"
     required
-    class="w-full border rounded-lg px-4 py-3 pr-10"
+    placeholder="Enter your password to confirm"
+    class="w-full rounded-lg px-4 py-3 pr-10 bg-white dark:bg-gray-700 text-black dark:text-white border border-gray-300 dark:border-gray-600"
   />
 
-  <button
-    type="button"
+  <button type="button"
     onclick="togglePassword('delete_password', this)"
     class="absolute right-2 top-2">
     👁
@@ -145,7 +144,7 @@ Delete My Account
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-1">Change Password</h2>
-<p class="text-sm opacity-70 mb-4">
+<p class="text-sm opacity-70 dark:opacity-90 mb-4">
 Use a strong password to keep your account secure
 </p>
 
@@ -156,17 +155,11 @@ Use a strong password to keep your account secure
     id="current_password"
     type="password"
     name="current_password"
-    placeholder="Current password"
     required
-    class="w-full border rounded-lg px-4 py-3 pr-10"
+    placeholder="Current password"
+    class="w-full rounded-lg px-4 py-3 pr-10 bg-white dark:bg-gray-700 text-black dark:text-white border border-gray-300 dark:border-gray-600"
   />
-
-  <button
-    type="button"
-    onclick="togglePassword('current_password', this)"
-    class="absolute right-2 top-2">
-    👁
-  </button>
+  <button type="button" onclick="togglePassword('current_password', this)" class="absolute right-2 top-2">👁</button>
 </div>
 
 <div class="relative mb-3">
@@ -174,17 +167,11 @@ Use a strong password to keep your account secure
     id="new_password"
     type="password"
     name="new_password"
-    placeholder="New password"
     required
-    class="w-full border rounded-lg px-4 py-3 pr-10"
+    placeholder="New password"
+    class="w-full rounded-lg px-4 py-3 pr-10 bg-white dark:bg-gray-700 text-black dark:text-white border border-gray-300 dark:border-gray-600"
   />
-
-  <button
-    type="button"
-    onclick="togglePassword('new_password', this)"
-    class="absolute right-2 top-2">
-    👁
-  </button>
+  <button type="button" onclick="togglePassword('new_password', this)" class="absolute right-2 top-2">👁</button>
 </div>
 
 <button
@@ -201,76 +188,47 @@ Change Password
 
 <!-- BILLING -->
 <div id="billing" class="tab hidden">
-
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-
 <h2 class="text-lg font-semibold mb-2">Subscription</h2>
-
-<p class="mb-2">
-Your subscription status will appear here.
-</p>
-
-<p class="text-sm opacity-70">
-Billing features coming soon.
-</p>
-
+<p>Your subscription status will appear here.</p>
+<p class="text-sm opacity-70 dark:opacity-90">Billing features coming soon.</p>
 </div>
-
 </div>
 
 <!-- SUPPORT -->
 <div id="support" class="tab hidden">
-
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-
 <h2 class="text-lg font-semibold mb-2">Contact Support</h2>
-
-<p class="mb-4">
-Need help? Contact us anytime.
-</p>
-
-<div class="mb-2">📧 optigaintechnologies@gmail.com</div>
+<p class="mb-4">Need help? Contact us anytime.</p>
+<div>📧 optigaintechnologies@gmail.com</div>
 <div>📞 0702432710</div>
-
 </div>
-
 </div>
 
 </div>
 
 <script>
 function showTab(tab, event){
-
-document.querySelectorAll(".tab").forEach(t=>{
-t.classList.add("hidden");
-});
-
+document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));
 document.getElementById(tab).classList.remove("hidden");
 
 document.querySelectorAll(".tab-btn").forEach(btn=>{
 btn.classList.remove("border-blue-600","text-blue-600");
-btn.classList.add("border-transparent","opacity-70");
+btn.classList.add("border-transparent","opacity-70","dark:opacity-90");
 });
 
 if(event){
 event.target.classList.add("border-blue-600","text-blue-600");
 event.target.classList.remove("opacity-70");
 }
-
 }
 </script>
 
 <script>
-function togglePassword(fieldId, btn) {
-  const field = document.getElementById(fieldId);
-
-  if (field.type === "password") {
-    field.type = "text";
-    btn.innerText = "🙈";
-  } else {
-    field.type = "password";
-    btn.innerText = "👁";
-  }
+function togglePassword(id, btn){
+const field = document.getElementById(id);
+field.type = field.type === "password" ? "text" : "password";
+btn.textContent = field.type === "password" ? "👁" : "🙈";
 }
 </script>
 
@@ -278,21 +236,21 @@ function togglePassword(fieldId, btn) {
 const toggle = document.getElementById("darkToggle");
 const root = document.documentElement;
 
-function updateIcon() {
-  toggle.textContent = root.classList.contains("dark") ? "☀️" : "🌙";
+function updateIcon(){
+toggle.textContent = root.classList.contains("dark") ? "☀️" : "🌙";
 }
 
-if (localStorage.getItem("theme") === "dark") {
-  root.classList.add("dark");
+if(localStorage.getItem("theme")==="dark"){
+root.classList.add("dark");
 }
 
 updateIcon();
 
-toggle.addEventListener("click", () => {
-  const isDark = root.classList.toggle("dark");
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-  updateIcon();
-});
+toggle.onclick = () => {
+root.classList.toggle("dark");
+localStorage.setItem("theme", root.classList.contains("dark") ? "dark":"light");
+updateIcon();
+};
 </script>
 
 </body>
