@@ -11,6 +11,9 @@ from flask import (
     send_file,
     jsonify,
 )
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask import Response
 import csv
 from io import StringIO
@@ -336,17 +339,35 @@ except ImportError:
 
 
 
-# ✅ Flask app setup
 app = Flask(__name__)
 
-print ("Initializing database on startup...")
-init_db()
+# 🔒 SECURITY CONFIG
+app.config.update(
+    SECRET_KEY=os.getenv("FLASK_SECRET_KEY", "dev_secret_key"),
+    SESSION_COOKIE_SECURE=True,
+    REMEMBER_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax'
+)
 
+# 🛡 CSRF
+csrf = CSRFProtect(app)
+
+# 🚫 RATE LIMITER
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+#cache
 cache = Cache(app, config={
-    "CACHE_TYPE": "SimpleCache",  # safe for localhost
-    "CACHE_DEFAULT_TIMEOUT": 300  # 5 minutes
+    "CACHE_TYPE":"SimpleCache",
+    "CACHE_DEFAULT_TIMEOUT":300
 })
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev_secret_key")
+
+print("Initializing database on startup...")
+init_db()
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -426,6 +447,7 @@ def index():
 
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
 
     if request.method == "POST":
@@ -457,6 +479,7 @@ def login():
     return render_template("login.html")
 
 @app.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def register():
     if request.method == "POST":
 
@@ -516,6 +539,7 @@ def register():
 
 
 @app.route("/verify", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def verify():
 
     if "otp_code" not in session:
@@ -642,6 +666,7 @@ def verify():
 
 
 @app.route("/resend-otp")
+@limiter.limit("3 per minute")
 def resend_otp():
 
     email = session.get("otp_data", {}).get("email")
@@ -666,6 +691,7 @@ def resend_otp():
 
 
 @app.route("/forgot-password", methods=["GET","POST"])
+@limiter.limit("3 per minute")
 def forgot_password():
 
     if request.method == "POST":
@@ -694,6 +720,7 @@ def forgot_password():
 
 
 @app.route("/reset-password", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def reset_password():
 
     if not session.get("reset_verified"):
@@ -776,6 +803,7 @@ def support():
     return render_template("support.html")
 
 @app.route("/delete-account", methods=["POST"])
+@limiter.limit("2 per minute")
 @login_required
 def delete_account():
 
@@ -839,7 +867,7 @@ def privacy():
     return render_template("privacy.html")
 
 @cache.memoize(timeout=3600)
-def get_business_info(username):
+def get_business_info_cached(username):
 
     def operation(cur):
         cur.execute("""

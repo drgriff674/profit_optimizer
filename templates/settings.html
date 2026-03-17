@@ -80,6 +80,7 @@ Update the email associated with your account
 </p>
 
 <form method="POST" action="{{ url_for('settings') }}">
+{{ csrf_token() }}
 
 <input
 type="email"
@@ -103,6 +104,7 @@ Update Email
 
 <!-- DELETE -->
 <form method="POST" action="{{ url_for('delete_account') }}">
+{{ csrf_token() }}
 
 <div class="rounded-xl p-6 border"
      style="background: rgba(255,0,0,0.05); border-color: rgba(255,0,0,0.3);">
@@ -158,6 +160,7 @@ Use a strong password to keep your account secure
 </p>
 
 <form method="POST" action="{{ url_for('change_password') }}">
+{{ csrf_token() }}
 
 <div class="relative mb-3">
 <input id="current_password" type="password" name="current_password" required
