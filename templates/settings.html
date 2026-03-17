@@ -5,7 +5,16 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen bg-gray-50">
+<body class="min-h-screen transition-colors" style="background: var(--og-bg);">
+
+<!-- 🌙 DARK MODE BUTTON (PUT IT HERE) -->
+<button
+  id="darkToggle"
+  class="fixed top-5 right-5 w-11 h-11 rounded-full shadow-lg"
+  style="background:#2563eb; color:white;"
+>
+🌙
+</button>
 
 <div class="max-w-5xl mx-auto px-6 py-12">
 
@@ -95,15 +104,23 @@ Delete Account
 This action is permanent and cannot be undone.
 </p>
 
-<form method="POST" action="{{ url_for('delete_account') }}">
+<div class="relative mb-4">
+  <input
+    id="delete_password"
+    type="password"
+    name="password"
+    placeholder="Enter your password to confirm"
+    required
+    class="w-full border rounded-lg px-4 py-3 pr-10"
+  />
 
-<input
-type="password"
-name="password"
-placeholder="Enter your password to confirm"
-required
-class="w-full border rounded-lg px-4 py-3 mb-4"
-/>
+  <button
+    type="button"
+    onclick="togglePassword('delete_password', this)"
+    class="absolute right-2 top-2">
+    👁
+  </button>
+</div>
 
 <button
 type="submit"
@@ -251,6 +268,27 @@ function togglePassword(fieldId, btn) {
     btn.innerText = "👁";
   }
 }
+</script>
+
+<script>
+const toggle = document.getElementById("darkToggle");
+const root = document.documentElement;
+
+function updateIcon() {
+  toggle.textContent = root.classList.contains("dark") ? "☀️" : "🌙";
+}
+
+if (localStorage.getItem("theme") === "dark") {
+  root.classList.add("dark");
+}
+
+updateIcon();
+
+toggle.addEventListener("click", () => {
+  const isDark = root.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+  updateIcon();
+});
 </script>
 
 </body>
