@@ -591,23 +591,34 @@ def resend_otp():
 @app.route("/login-verify", methods=["GET", "POST"])
 def login_verify():
 
+    # 🔒 Step 1: Ensure session exists
+    if "login_otp" not in session or "login_otp_time" not in session:
+        flash("Session expired. Please login again.", "error")
+        return redirect(url_for("login"))
+
     if request.method == "POST":
 
-        code = request.form["otp"].strip()
+        # 🔒 Step 2: Safe OTP input
+        code = request.form.get("otp", "").strip()
 
         otp_time = session.get("login_otp_time")
-
         attempts = session.get("login_otp_attempts", 0)
+
+        # 🔒 Step 3: Prevent crashes from bad otp_time
+        if not isinstance(otp_time, (int, float)):
+            flash("Session error. Please login again.", "error")
+            return redirect(url_for("login"))
 
         if attempts >= 5:
             flash("❌ Too many login verification attempts. Please login again.", "error")
             return redirect(url_for("login"))
 
-        # expire after 5 minutes
-        if not otp_time or time.time() - otp_time > 300:
+        # ⏳ Expiry check
+        if time.time() - otp_time > 300:
             flash("⏳ Login code expired. Please login again.", "error")
             return redirect(url_for("login"))
 
+        # ✅ Correct OTP
         if str(code) == str(session.get("login_otp")):
 
             session["username"] = session.get("login_user")
@@ -621,15 +632,14 @@ def login_verify():
             session.pop("login_otp_attempts", None)
 
             flash("✅ Login verified.", "success")
-
             return redirect(url_for("dashboard"))
 
-        session["login_otp_attempts"] = session.get("login_otp_attempts", 0) + 1
+        # ❌ Wrong OTP
+        session["login_otp_attempts"] = attempts + 1
         flash("❌ Invalid verification code.", "error")
 
     otp_time = session.get("login_otp_time", 0)
     return render_template("login_verify.html", otp_time=otp_time)
-
 @app.route("/forgot-password", methods=["GET","POST"])
 def forgot_password():
 
