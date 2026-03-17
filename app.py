@@ -611,6 +611,23 @@ def verify():
 
             flash("✅ Password updated", "success")
             return redirect(url_for("settings"))
+        
+        # DELETE ACCOUNT
+        elif purpose == "delete_account":
+
+            def op(cur):
+                cur.execute(
+                    "DELETE FROM users WHERE username=%s",
+                    (data["username"],)
+                )
+
+            run_db_operation(op, commit=True)
+
+            session.clear()
+
+            flash("Account deleted successfully.", "info")
+
+            return redirect(url_for("register"))
 
         # cleanup
         session.pop("otp_code", None)
@@ -735,16 +752,21 @@ def settings():
 
         new_email = request.form["email"].strip()
 
-        def operation(cur):
-            cur.execute(
-                "UPDATE users SET email=%s WHERE username=%s",
-                (new_email, username)
-            )
+        # 🧠 Optional sanity check (prevents useless OTPs)
+        if new_email == user["email"]:
+            flash("⚠️ This is already your current email.", "error")
+            return redirect(url_for("settings"))
 
-        run_db_operation(operation, commit=True)
+        # 🔐 Start OTP verification flow
+        start_otp_flow(
+            "change_email",
+            {"new_email": new_email},
+            new_email  # send OTP to NEW email
+        )
 
-        flash("✅ Email updated successfully.", "success")
-        return redirect(url_for("settings"))
+        flash("📧 Verification code sent to your new email.", "info")
+
+        return redirect(url_for("verify"))
 
     return render_template("settings.html", user=user)
 
@@ -758,21 +780,25 @@ def support():
 def delete_account():
 
     username = session["username"]
+    password = request.form["password"]
 
-    def operation(cur):
+    user = get_user(username)
 
-        cur.execute(
-            "DELETE FROM users WHERE username=%s",
-            (username,)
-        )
+    # 🔐 Step 1: verify password
+    if not check_password_hash(user["password"], password):
+        flash("❌ Incorrect password.", "error")
+        return redirect(url_for("settings"))
 
-    run_db_operation(operation, commit=True)
+    # 🔐 Step 2: start OTP flow
+    start_otp_flow(
+        "delete_account",
+        {"username": username},
+        user["email"]
+    )
 
-    session.clear()
+    flash("📧 Verification code sent. Confirm deletion.", "error")
 
-    flash("Account deleted.", "info")
-
-    return redirect(url_for("register"))
+    return redirect(url_for("verify"))
 
 @app.route("/change-password", methods=["POST"])
 @login_required

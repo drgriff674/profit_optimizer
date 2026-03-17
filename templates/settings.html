@@ -85,6 +85,36 @@ Update Email
 
 </div>
 
+<div class="bg-red-50 rounded-xl p-6 border border-red-200">
+
+<h2 class="text-lg font-semibold text-red-600 mb-2">
+Delete Account
+</h2>
+
+<p class="text-sm mb-4 text-red-500">
+This action is permanent and cannot be undone.
+</p>
+
+<form method="POST" action="{{ url_for('delete_account') }}">
+
+<input
+type="password"
+name="password"
+placeholder="Enter your password to confirm"
+required
+class="w-full border rounded-lg px-4 py-3 mb-4"
+/>
+
+<button
+type="submit"
+class="w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:opacity-90">
+Delete My Account
+</button>
+
+</form>
+
+</div>
+
 </div>
 
 <!-- SECURITY -->
