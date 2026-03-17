@@ -5,9 +5,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 
-<body class="min-h-screen transition-colors" style="background: var(--og-bg);">
+<body class="min-h-screen transition-colors bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
 
-<!-- 🌙 DARK MODE BUTTON (PUT IT HERE) -->
+<!-- 🌙 DARK MODE BUTTON -->
 <button
   id="darkToggle"
   class="fixed top-5 right-5 w-11 h-11 rounded-full shadow-lg"
@@ -16,13 +16,19 @@
 🌙
 </button>
 
+<!-- ← BACK BUTTON (TOP LEFT) -->
+<a href="{{ url_for('dashboard') }}"
+class="fixed top-5 left-5 px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-90 shadow">
+← Dashboard
+</a>
+
 <div class="max-w-5xl mx-auto px-6 py-12">
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="mb-6 space-y-2">
       {% for category, msg in messages %}
-        <div class="px-4 py-3 rounded-lg bg-gray-100 shadow text-sm">
+        <div class="px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 shadow text-sm">
           {{ msg }}
         </div>
       {% endfor %}
@@ -37,11 +43,6 @@
     Manage your account, security, and preferences
   </p>
 </div>
-
-<a href="{{ url_for('dashboard') }}"
-class="inline-block mb-6 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-← Back to Dashboard
-</a>
 
 <!-- TAB MENU -->
 <div class="flex gap-6 border-b mb-8 text-sm font-medium">
@@ -67,7 +68,8 @@ Support
 <!-- ACCOUNT -->
 <div id="account" class="tab">
 
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6 border">
+<!-- EMAIL -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-1">Email Address</h2>
 <p class="text-sm opacity-70 mb-4">
@@ -94,7 +96,10 @@ Update Email
 
 </div>
 
-<div class="bg-red-50 rounded-xl p-6 border border-red-200">
+<!-- DELETE ACCOUNT -->
+<form method="POST" action="{{ url_for('delete_account') }}">
+
+<div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border border-red-200 dark:border-red-700">
 
 <h2 class="text-lg font-semibold text-red-600 mb-2">
 Delete Account
@@ -128,16 +133,16 @@ class="w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:opacity-
 Delete My Account
 </button>
 
-</form>
-
 </div>
+
+</form>
 
 </div>
 
 <!-- SECURITY -->
 <div id="security" class="tab hidden">
 
-<div class="bg-white rounded-xl shadow-sm p-6 mb-6 border">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-1">Change Password</h2>
 <p class="text-sm opacity-70 mb-4">
@@ -197,7 +202,7 @@ Change Password
 <!-- BILLING -->
 <div id="billing" class="tab hidden">
 
-<div class="bg-white rounded-xl shadow-sm p-6 border">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-2">Subscription</h2>
 
@@ -216,7 +221,7 @@ Billing features coming soon.
 <!-- SUPPORT -->
 <div id="support" class="tab hidden">
 
-<div class="bg-white rounded-xl shadow-sm p-6 border">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
 
 <h2 class="text-lg font-semibold mb-2">Contact Support</h2>
 
@@ -242,7 +247,6 @@ t.classList.add("hidden");
 
 document.getElementById(tab).classList.remove("hidden");
 
-// update active tab styling
 document.querySelectorAll(".tab-btn").forEach(btn=>{
 btn.classList.remove("border-blue-600","text-blue-600");
 btn.classList.add("border-transparent","opacity-70");
