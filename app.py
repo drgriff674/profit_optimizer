@@ -2015,8 +2015,8 @@ def register_url():
     payload = {
         "ShortCode": shortcode,
         "ResponseType": "Completed",
-        "ConfirmationURL": "https://profitoptimizer-production.up.railway.app/payment/confirm",
-        "ValidationURL": "https://profitoptimizer-production.up.railway.app/payment/validate",
+        "ConfirmationURL": "https://optigainapp.com/payment/confirm",
+        "ValidationURL": "https://optigainapp.com/payment/validate",
     }
 
     try:
