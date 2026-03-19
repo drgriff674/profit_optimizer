@@ -1983,6 +1983,7 @@ def get_token():
 
 # ✅ REGISTER CALLBACK URL
 @app.route("/register_url", methods=["POST"])
+@csrf.exempt
 def register_url():
     import os, requests
     from flask import jsonify
@@ -2032,6 +2033,7 @@ def register_url():
     
 
 @app.route("/payment/validate", methods=["POST"])
+@csrf.exempt
 def payment_validate():
     data = request.get_json(silent=True)
     print("📥 VALIDATION Callback:", data)
