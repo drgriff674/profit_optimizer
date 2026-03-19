@@ -206,6 +206,11 @@ def init_db():
 
         cur.execute("""
         ALTER TABLE mpesa_transactions
+        ADD COLUMN IF NOT EXISTS local_date DATE;
+        """)
+
+        cur.execute("""
+        ALTER TABLE mpesa_transactions
         ADD COLUMN IF NOT EXISTS seen BOOLEAN DEFAULT FALSE
         """)
 

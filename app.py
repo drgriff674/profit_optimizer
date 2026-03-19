@@ -2172,12 +2172,12 @@ def payment_confirm():
 
         username_local, local_date = run_db_operation(operation, commit=True)
 
-        #log_audit(
-            #username_local or "system",
-            #"MPESA_RECEIVED",
-            #f"{transaction_id}:{amount}",
-            #request.remote_addr
-            #)
+        log_audit(
+            username_local or "system",
+            "MPESA_RECEIVED",
+            f"{transaction_id}:{amount}",
+            request.remote_addr
+            )
         
         if username_local:
             ensure_revenue_day_exists(username_local, local_date)
