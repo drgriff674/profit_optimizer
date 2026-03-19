@@ -11,7 +11,7 @@ from flask import (
     send_file,
     jsonify,
 )
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, csrf_exempt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import Response
@@ -2044,24 +2044,26 @@ def payment_validate():
 
 
 @app.route("/payment/confirm", methods=["POST"])
+@csrf_exempt
 def payment_confirm():
+
+    print("🔥 CALLBACK HIT")
+
     import psycopg2, os, json
     from flask import request, jsonify
 
     data = request.get_json(silent=True)
+
     if not data:
         data = request.form.to_dict()
-        print("Empty or invalid JSON received")
-        return jsonify({
-            "ResultCode": 0,
-            "ResultDesc": "No JSON body"
-            })
+
+    print("📦 DATA RECEIVED:", data)
 
     try:
         # ============================================================
         # 1️⃣ CASE A — C2B SIMULATOR (V1 CALLBACK)
         # ============================================================
-        if "TransID" in data and "TransAmount" in data:
+        if data.get("TransID"):
             print("✔ Detected: C2B Simulator")
 
             transaction_id = data.get("TransID")
