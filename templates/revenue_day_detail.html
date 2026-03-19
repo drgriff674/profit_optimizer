@@ -126,6 +126,7 @@
 
   {% if not is_locked %}
   <form method="POST" action="{{ url_for('lock_revenue_day_route') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="revenue_date" value="{{ date }}">
     <button class="w-full bg-red-600 text-white py-2 rounded">
       🔒 Lock This Day
@@ -133,6 +134,7 @@
   </form>
 
 <form method="POST" action="{{ url_for('generate_ai_summary_for_day_route', date=date) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
     🧠 Generate AI Summary
   </button>

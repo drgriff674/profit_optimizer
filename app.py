@@ -1498,21 +1498,14 @@ def lock_revenue_day_route():
         gross_total = cash_total + mpesa_total
         net_total = gross_total - expense_total
 
-        # ensure day exists
         cur.execute("""
-            INSERT INTO revenue_days (username,revenue_date)
-            VALUES(%s,%s)
-            ON CONFLICT(username,revenue_date) DO NOTHING
-        """,(username,revenue_date))
-
-        # lock day
-        cur.execute("""
-            UPDATE revenue_days
-            SET locked=TRUE,
-                total_amount=%s
-            WHERE username=%s
-              AND revenue_date=%s
-        """,(net_total,username,revenue_date))
+            INSERT INTO revenue_days (username, revenue_date, locked, total_amount)
+            VALUES (%s, %s, TRUE, %s)
+            ON CONFLICT (username, revenue_date)
+            DO UPDATE SET
+                locked = TRUE,
+                total_amount = EXCLUDED.total_amount
+        """, (username, revenue_date, net_total))
 
         return {"already_locked": False}
 
