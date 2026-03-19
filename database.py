@@ -36,13 +36,21 @@ def run_db_operation(operation, commit=False):
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         result = operation(cur)
+
         if commit:
             conn.commit()
+
         return result
+
+    except Exception as e:
+        conn.rollback()  
+        print("DB ERROR:", e)
+        raise e
+
     finally:
         if cur:
             cur.close()
-        connection_pool.putconn(conn)    
+        connection_pool.putconn(conn)  
 
 #  Initialize database and tables if not exists
 def init_db():
@@ -67,7 +75,8 @@ def init_db():
             amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
             revenue_date DATE NOT NULL,
             description TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         );
 
         CREATE INDEX IF NOT EXISTS idx_cash_revenue_user_date
@@ -96,7 +105,8 @@ def init_db():
             category TEXT,
             description TEXT,
             expense_date DATE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         )
         """)
 
@@ -109,7 +119,8 @@ def init_db():
             category TEXT NOT NULL,
             amount NUMERIC NOT NULL,
             revenue_date DATE NOT NULL,
-            locked BOOLEAN DEFAULT FALSE
+            locked BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         )
         """)
 
@@ -208,7 +219,8 @@ def init_db():
             severity TEXT NOT NULL, -- info, warning, critical
             message TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            resolved BOOLEAN DEFAULT FALSE
+            resolved BOOLEAN DEFAULT FALSE,
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         );
         """)
         cur.execute("""
@@ -218,7 +230,8 @@ def init_db():
             revenue_date DATE NOT NULL,
             summary TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE (username, revenue_date)
+            UNIQUE (username, revenue_date),
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         );
         """)
         cur.execute("""
@@ -229,7 +242,8 @@ def init_db():
             locked BOOLEAN DEFAULT FALSE,
             total_amount NUMERIC(12,2) DEFAULT 0,
             created_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE (username, revenue_date)
+            UNIQUE (username, revenue_date),
+            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
         );
         """)
         #dashboard snapshot table
@@ -283,6 +297,17 @@ def init_db():
         """)
 
         cur.execute("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            action TEXT NOT NULL,
+            details TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+
+        cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_revenue_days_username 
         ON revenue_days(username);
 
@@ -300,6 +325,15 @@ def init_db():
 
         CREATE INDEX IF NOT EXISTS idx_businesses_username 
         ON businesses(username);
+
+        CREATE INDEX IF NOT EXISTS idx_audit_username 
+        ON audit_logs(username);
+
+        CREATE INDEX IF NOT EXISTS idx_audit_action 
+        ON audit_logs(action);
+
+        CREATE INDEX IF NOT EXISTS idx_audit_created_at 
+        ON audit_logs(created_at);
 
         CREATE INDEX IF NOT EXISTS idx_mpesa_status 
         ON mpesa_transactions(status);
@@ -322,6 +356,56 @@ def init_db():
         cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_mpesa_local_date
         ON mpesa_transactions(local_date);
+        """)
+
+        # --- MPESA HARD SECURITY ---
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint WHERE conname = 'chk_mpesa_status'
+            ) THEN
+                ALTER TABLE mpesa_transactions
+                ADD CONSTRAINT chk_mpesa_status
+                CHECK (status IN ('pending','confirmed','failed'));
+            END IF;
+        END$$;
+        """)
+
+        cur.execute("""
+        ALTER TABLE mpesa_transactions
+        ALTER COLUMN amount SET NOT NULL;
+        """)
+
+        cur.execute("""
+        ALTER TABLE mpesa_transactions
+        ALTER COLUMN transaction_id SET NOT NULL;
+        """)
+
+        cur.execute("""
+        ALTER TABLE mpesa_transactions
+        ALTER COLUMN status SET NOT NULL;
+        """)
+
+        # --- PREVENT UPDATES (IMMUTABLE TRANSACTIONS) ---
+        cur.execute("""
+        CREATE OR REPLACE FUNCTION prevent_mpesa_update()
+        RETURNS trigger AS $$
+        BEGIN
+            RAISE EXCEPTION 'MPesa transactions cannot be updated';
+        END;
+        $$ LANGUAGE plpgsql;
+        """)
+
+        cur.execute("""
+        DROP TRIGGER IF EXISTS no_update_mpesa ON mpesa_transactions;
+        """)
+
+        cur.execute("""
+        CREATE TRIGGER no_update_mpesa
+        BEFORE UPDATE ON mpesa_transactions
+        FOR EACH ROW
+        EXECUTE FUNCTION prevent_mpesa_update();
         """)
 
     run_db_operation(operation, commit=True)
@@ -1545,20 +1629,17 @@ def create_user_with_business(username, email, password, role, business_name, pa
 
 def get_business_info(username):
 
-    conn = sqlite3.connect("optigain.db")
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
+    def operation(cur):
+        cur.execute("""
+            SELECT business_name, paybill, account_number
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
 
-    c.execute("""
-        SELECT business_name, paybill, account_number
-        FROM businesses
-        WHERE username = ?
-    """, (username,))
+        return cur.fetchone()
 
-    row = c.fetchone()
-    conn.close()
-
-    return row if row else {}
+    return run_db_operation(operation)
 
 def get_user_by_email(email):
 
@@ -1572,3 +1653,13 @@ def get_user_by_email(email):
         return cur.fetchone()
 
     return run_db_operation(operation)
+
+def log_audit(username, action, details=None, ip_address=None):
+
+    def operation(cur):
+        cur.execute("""
+            INSERT INTO audit_logs (username, action, details, ip_address)
+            VALUES (%s, %s, %s, %s)
+        """, (username, action, details, ip_address))
+
+    run_db_operation(operation, commit=True)

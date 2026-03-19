@@ -86,6 +86,7 @@ from database import(
     get_business_info,
     detect_weekly_alerts,
     get_user_by_email,
+    log_audit,
 )
 import pytz
 from flask_caching import Cache
@@ -464,6 +465,8 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
+                log_audit(username, "LOGIN_OTP_SENT", "OTP sent", request.remote_addr)
+
                 start_otp_flow(
                     "login",
                     {"username": user["username"], "email": user["email"]},
@@ -473,6 +476,9 @@ def login():
                 return redirect(url_for("verify"))
 
             flash("❌ Invalid username or password", "error")
+
+            log_audit(username or "unknown","LOGIN_FAILED","Invalid credentials", request.remote_addr)
+            
             return redirect(url_for("login"))
 
         except Exception as e:
@@ -514,6 +520,8 @@ def register():
                 paybill,
                 account_number or None
             )
+
+            log_audit(new_user, "REGISTER_INIT","Account created, OTP pending", request.remote_addr)
 
             if result == "exists":
                 flash("⚠️ Username or email already exists.", "error")
@@ -578,7 +586,10 @@ def verify():
         if purpose == "login":
 
             session["username"] = data["username"]
+            
+            log_audit(session["username"],"LOGIN_SUCCESS","User logged in",request.remote_addr)
             session["email"] = data["email"]
+            
 
     
             session.pop("otp_code", None)
@@ -593,7 +604,11 @@ def verify():
         # REGISTER
         elif purpose == "register":
             session["username"] = data["username"]
+            
+            log_audit(session["username"],"REGISTER_SUCCESS","Email verified",request.remote_addr)
             session["email"] = data["email"]
+            
+            
 
             session.pop("otp_code", None)
             session.pop("otp_purpose", None)
@@ -607,6 +622,9 @@ def verify():
         # RESET PASSWORD
         elif purpose == "reset_password":
             session["reset_verified"] = True
+            
+            log_audit("unknown","RESET_PASSWORD_VERIFIED","OTP correct", request.remote_addr)
+            
             return redirect(url_for("reset_password"))
 
         # CHANGE EMAIL
@@ -619,6 +637,8 @@ def verify():
                 )
 
             run_db_operation(op, commit=True)
+            
+            log_audit(session["username"],"EMAIL_CHANGED", data["new_email"], request.remote_addr)
 
             flash("✅ Email updated", "success")
             return redirect(url_for("settings"))
@@ -635,6 +655,8 @@ def verify():
                 )
 
             run_db_operation(op, commit=True)
+            
+            log_audit(session["username"],"PASSWORD_CHANGED","password updated", request.remote_addr)
 
             flash("✅ Password updated", "success")
             return redirect(url_for("settings"))
@@ -649,6 +671,8 @@ def verify():
                 )
 
             run_db_operation(op, commit=True)
+            
+            log_audit(data["username"],"ACCOUNT_DELETED","user deleted account", request.remote_addr)
 
             session.clear()
 
@@ -713,6 +737,8 @@ def forgot_password():
             {"email": email},
             email
         )
+
+        log_audit("unknown","PASSWORD_RESET_REQUEST", email, request.remote_addr)
 
         flash("📧 Password reset code sent to your email.", "success")
 
@@ -858,6 +884,10 @@ def change_password():
 
 @app.route("/logout")
 def logout():
+    username = session.get("username")
+    
+    log_audit(username,"LOGOUT","User logged out", request.remote_addr)
+    
     session.clear()
     return redirect(url_for("login"))
 
@@ -1089,6 +1119,7 @@ def delete_revenue_day(date):
     result = run_db_operation(operation, commit=True)
 
     if result == "locked":
+        log_audit(username,"DELETE_REVENUE_DAY", date,request.remote_addr)
         flash("This revenue day is locked and cannot be deleted.", "error")
         return redirect(url_for("revenue_overview"))
 
@@ -1491,6 +1522,8 @@ def lock_revenue_day_route():
         flash("This day is already locked and cannot be changed.", "warning")
         return redirect(url_for("revenue_overview"))
 
+    log_audit(username,"LOCK_REVENUE_DAY", revenue_date, request.remote_addr)
+
     # run background intelligence pipeline
     threading.Thread(
         target=run_post_lock_tasks,
@@ -1519,6 +1552,8 @@ def cash_revenue_entry():
             """, (username, amount, description, date))
 
         run_db_operation(operation, commit=True)
+
+        log_audit(username,"ADD_CASH_REVENUE",f"{amount}", request.remote_addr)
 
         update_dashboard_snapshot(username)
         update_dashboard_intelligence(username)
@@ -1566,6 +1601,8 @@ def edit_revenue_entry(entry_id):
             """, (new_category, new_amount, entry_id, username))
 
         run_db_operation(update_entry, commit=True)
+
+        log_audit(username,"EDIT_REVENUE_ENTRY",f"id:{entry_id}", request.remote_addr)
 
         flash("Entry updated. You can continue editing", "success")
 
@@ -2133,6 +2170,13 @@ def payment_confirm():
             return username_local, local_date
 
         username_local, local_date = run_db_operation(operation, commit=True)
+
+        log_audit(
+            username_local or "system",
+            "MPESA_RECEIVED",
+            f"{transaction_id}:{amount}",
+            request.remote_addr
+            )
         
         if username_local:
             ensure_revenue_day_exists(username_local, local_date)
@@ -3694,6 +3738,8 @@ def expense_entry():
                 expense_date=request.form["date"]
             )
 
+            log_audit(username,"ADD_EXPENSE",f"{request.form['amount']}", request.remote_addr)
+
             update_dashboard_snapshot(username)
             update_dashboard_intelligence(username)
             cache.delete_memoized(get_dashboard_data, username)
@@ -3739,6 +3785,13 @@ def revenue_entry():
             amount=float(request.form["amount"]),
             revenue_date=selected_date
         )
+
+        log_audit(
+            username,
+            "ADD_REVENUE_ENTRY",
+            f"{request.form['category']}:{request.form['amount']}",
+            request.remote_addr
+            )
 
         update_dashboard_intelligence(username)
         cache.delete_memoized(get_dashboard_data, username)
@@ -3824,6 +3877,9 @@ def inventory_setup():
             """, (snapshot_id, item_id, quantity))
 
             conn.commit()
+
+            log_audit(username, "ADD_INVENTORY_ITEM",name, request.remote_addr)
+            
             cur.close()
             connection_pool.putconn(conn)
 
@@ -3921,6 +3977,8 @@ def inventory_adjust():
             ))
 
             conn.commit()
+
+            log_audit(username,"INVENTORY_ADJUST",f"{movement_type}:{quantity}", request.remote_addr)
 
             flash("Inventory updated successfully.", "success")
 
