@@ -2078,15 +2078,16 @@ def payment_confirm():
         # 2️⃣ CASE B — DARAJA V2 CALLBACK (STK-STYLE)
         # ============================================================
         elif "Body" in data and "stkCallback" in data["Body"]:
-            print("✔ Detected: V2 STK Callback")
+            print("🔥 Detected: REAL STK CALLBACK")
 
             stk = data["Body"]["stkCallback"]
+
             transaction_id = stk.get("CheckoutRequestID", "")
             description = stk.get("ResultDesc", "")
             amount = 0.0
             sender_phone = ""
             sender_name = "Unknown"
-            account_ref = "V2 Callback"
+            account_ref = ""
             shortcode = None
 
             items = stk.get("CallbackMetadata", {}).get("Item", [])
@@ -2094,10 +2095,12 @@ def payment_confirm():
             for item in items:
                 if item.get("Name") == "Amount":
                     amount = float(item.get("Value", 0))
-                if item.get("Name") == "MpesaReceiptNumber":
+                elif item.get("Name") == "MpesaReceiptNumber":
                     transaction_id = item.get("Value", transaction_id)
-                if item.get("Name") == "PhoneNumber":
+                elif item.get("Name") == "PhoneNumber":
                     sender_phone = str(item.get("Value", ""))
+                elif item.get("Name") == "AccountReference":
+                    account_ref = str(item.get("Value", ""))
         else:
             print("❌ Unknown callback format")
             return jsonify({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
@@ -2119,8 +2122,9 @@ def payment_confirm():
                 SELECT id, username
                 FROM businesses
                 WHERE paybill = %s
+                   OR account_number = %s
                 LIMIT 1
-                """, (shortcode,))
+            """, (shortcode, account_ref))
             biz = cur.fetchone()
 
             if not biz:
