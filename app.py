@@ -1981,6 +1981,11 @@ def get_token():
     except Exception as e:
         return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
 
+@app.route("/payment/test", methods=["GET", "POST"])
+def payment_test():
+    print("🔥 TEST ROUTE HIT")
+    return "OK", 200
+
 # ✅ REGISTER CALLBACK URL
 @app.route("/register_url", methods=["POST"])
 @csrf.exempt
@@ -2015,8 +2020,8 @@ def register_url():
     payload = {
         "ShortCode": shortcode,
         "ResponseType": "Cancelled",
-        "ConfirmationURL": "https://optigainapp.com/payment/confirm",
-        "ValidationURL": "https://optigainapp.com/payment/validate",
+        "ConfirmationURL": "https://optigainapp.com/payment/test",
+        "ValidationURL": "https://optigainapp.com/payment/test",
     }
 
     try:
