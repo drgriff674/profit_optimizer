@@ -2014,7 +2014,7 @@ def register_url():
 
     payload = {
         "ShortCode": shortcode,
-        "ResponseType": "Cancelled",
+        "ResponseType": "Completed",
         "ConfirmationURL": "https://optigainapp.com/payment/confirm",
         "ValidationURL": "https://optigainapp.com/payment/validate",
     }
@@ -2119,14 +2119,24 @@ def payment_confirm():
         # ============================================================
         def operation(cur):
 
-            # find linked business
+           # 🔥 ALWAYS prioritize account number (BillRefNumber)
+
+            cur.execute("""
+                SELECT id, username
+                FROM businesses
+                WHERE account_number = %s
+                LIMIT 1
+            """, (account_ref,))
+        biz = cur.fetchone()
+
+        # fallback ONLY if needed
+        if not biz and shortcode:
             cur.execute("""
                 SELECT id, username
                 FROM businesses
                 WHERE paybill = %s
-                   OR account_number = %s
                 LIMIT 1
-            """, (shortcode, account_ref))
+            """, (shortcode,))
             biz = cur.fetchone()
 
             if not biz:
