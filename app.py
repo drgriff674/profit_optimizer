@@ -1446,7 +1446,6 @@ def run_post_lock_tasks(username, revenue_date):
         print("Background task error:", e)
 
 @app.route("/revenue/lock", methods=["POST"])
-@limiter.limit("5 per minute")
 @login_required
 def lock_revenue_day_route():
 
@@ -2043,7 +2042,7 @@ def payment_validate():
     })
 
 
-@limiter.limit("10 per minute")
+
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
     import psycopg2, os, json
@@ -2051,6 +2050,7 @@ def payment_confirm():
 
     data = request.get_json(silent=True)
     if not data:
+        data = request.form.to_dict()
         print("Empty or invalid JSON received")
         return jsonify({
             "ResultCode": 0,
