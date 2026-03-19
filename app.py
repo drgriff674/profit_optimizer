@@ -2014,7 +2014,7 @@ def register_url():
 
     payload = {
         "ShortCode": shortcode,
-        "ResponseType": "Completed",
+        "ResponseType": "Cancelled",
         "ConfirmationURL": "https://optigainapp.com/payment/confirm",
         "ValidationURL": "https://optigainapp.com/payment/validate",
     }
