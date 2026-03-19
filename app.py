@@ -2121,34 +2121,34 @@ def payment_confirm():
         # ============================================================
         def operation(cur):
 
-           # 🔥 ALWAYS prioritize account number (BillRefNumber)
-
+            # 1️⃣ Try account reference first (BEST MATCH)
             cur.execute("""
                 SELECT id, username
                 FROM businesses
                 WHERE account_number = %s
                 LIMIT 1
             """, (account_ref,))
-        biz = cur.fetchone()
-
-        # fallback ONLY if needed
-        if not biz and shortcode:
-            cur.execute("""
-                SELECT id, username
-                FROM businesses
-                WHERE paybill = %s
-                LIMIT 1
-            """, (shortcode,))
             biz = cur.fetchone()
 
-            if not biz:
-                business_id = None
-                username_local = None
-            else:
+            # 2️⃣ Fallback to paybill
+            if not biz and shortcode:
+                cur.execute("""
+                    SELECT id, username
+                    FROM businesses
+                    WHERE paybill = %s
+                    LIMIT 1
+                """, (shortcode,))
+                biz = cur.fetchone()
+
+            # 3️⃣ Extract user
+            if biz:
                 business_id = biz["id"]
                 username_local = biz["username"]
+            else:
+                business_id = None
+                username_local = None
 
-            print("BUSINESS FOUND:",username_local)
+            print("BUSINESS FOUND:", username_local)
 
             import pytz
             from datetime import datetime
@@ -2156,7 +2156,7 @@ def payment_confirm():
             nairobi = pytz.timezone("Africa/Nairobi")
             local_date = datetime.now(nairobi).date()
 
-            # insert transaction (safe against duplicates)
+            # 4️⃣ Insert transaction
             cur.execute("""
                 INSERT INTO mpesa_transactions
                 (
@@ -2189,7 +2189,6 @@ def payment_confirm():
             ))
 
             return username_local, local_date
-
         username_local, local_date = run_db_operation(operation, commit=True)
 
         log_audit(
