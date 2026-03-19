@@ -1446,6 +1446,7 @@ def run_post_lock_tasks(username, revenue_date):
         print("Background task error:", e)
 
 @app.route("/revenue/lock", methods=["POST"])
+@limiter.limit("5 per minute")
 @login_required
 def lock_revenue_day_route():
 
@@ -2042,7 +2043,7 @@ def payment_validate():
     })
 
 
-
+@limiter.limit("10 per minute")
 @app.route("/payment/confirm", methods=["POST"])
 def payment_confirm():
     import psycopg2, os, json
@@ -2171,12 +2172,12 @@ def payment_confirm():
 
         username_local, local_date = run_db_operation(operation, commit=True)
 
-        log_audit(
-            username_local or "system",
-            "MPESA_RECEIVED",
-            f"{transaction_id}:{amount}",
-            request.remote_addr
-            )
+        #log_audit(
+            #username_local or "system",
+            #"MPESA_RECEIVED",
+            #f"{transaction_id}:{amount}",
+            #request.remote_addr
+            #)
         
         if username_local:
             ensure_revenue_day_exists(username_local, local_date)
