@@ -2063,7 +2063,7 @@ def payment_confirm():
         # ============================================================
         # 1️⃣ CASE A — C2B SIMULATOR (V1 CALLBACK)
         # ============================================================
-        if data.get("TransID"):
+        if "TransID" in data and "TransAmount" in data:
             print("✔ Detected: C2B Simulator")
 
             transaction_id = data.get("TransID")
