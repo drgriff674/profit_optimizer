@@ -915,24 +915,12 @@ def get_business_info_cached(username):
 
 @cache.memoize(timeout=120)
 def get_dashboard_data(username):
+
     data = {}
 
-    # 1️Historical revenue data (for charts)
-    data["revenue_history"] = get_dashboard_revenue_intelligence(username)
-
-    # 2️Intelligence snapshot (AI + dashboard counters)
-    data["intelligence"] = get_dashboard_intelligence_snapshot(username)
-
-    # 3️Forecast readiness (LOCKED days only)
+    data["snapshot"] = get_dashboard_snapshot(username)
+    data["intelligence"] = get_dashboard_intelligence(username)
     data["forecast_status"] = get_locked_revenue_for_forecast(username)
-        
-
-    # Optional legacy / placeholder
-    if os.path.exists("financial_data.csv"):
-        df = pd.read_csv("financial_data.csv")
-        data["df"] = df
-    else:
-        data["df"] = pd.DataFrame()
 
     return data
 
@@ -943,43 +931,25 @@ def dashboard():
 
     username = session["username"]
 
-    update_dashboard_snapshot(username)
-    update_dashboard_intelligence(username)
-    
-    run_weekly_intelligence(username)
-    generate_weekly_ai_report_if_ready(username)
 
     latest_payment = None
 
-    #  Cached dashboard data
-    cached_data = {}
     notifications = []
     forecast_data = []
     last_synced = None
+
     import time
 
-    start_total = time.time()
+    
+    cached_data = get_dashboard_data(username)
 
-    start = time.time()
-    snapshot = get_dashboard_snapshot(username)
-    print("Snapshot took:", time.time() - start)
+    snapshot = cached_data.get("snapshot", {})
+    intelligence = cached_data.get("intelligence", {})
+    forecast_status = cached_data.get("forecast_status", {})
 
-    start = time.time()
-    intelligence = get_dashboard_intelligence(username)
-    print("Intelligence took:", time.time() - start)
-
-    start = time.time()
-    forecast_status = get_locked_revenue_for_forecast(username)
-    print("Forecast took:", time.time() - start)
-
-    start = time.time()
+    
     latest_report = get_latest_weekly_report(username)
-    print("Weekly report took:", time.time() - start)
-
-    start = time.time()
     inventory_insights = get_weekly_inventory_insights(username)
-    print ("Inventory_insights took:",time.time() - start)
-
     print("TOTAL dashboard time:", time.time() - start_total)
 
     answer = None
@@ -1517,6 +1487,10 @@ def lock_revenue_day_route():
 
     log_audit(username,"LOCK_REVENUE_DAY", revenue_date, request.remote_addr)
 
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+    cache.delete_memoized(get_dashboard_data, username)
+
     # run background intelligence pipeline
     threading.Thread(
         target=run_post_lock_tasks,
@@ -2042,6 +2016,7 @@ def payment_validate():
 
 @app.route("/payment/confirm", methods=["POST"])
 @csrf.exempt
+@limiter.limit("10 per second")
 def payment_confirm():
 
     print("🔥 CALLBACK HIT")
