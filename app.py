@@ -1816,6 +1816,9 @@ def latest_payment():
 
     payment = run_db_operation(operation, commit=True)
 
+    if payment:
+        payment["created_at"] = payment["created_at"].isoformat()
+
     return jsonify({"payment": payment})
 
 
