@@ -509,11 +509,21 @@ async function pollLatestPayment() {
 
       // Only trigger if new payment
       if (paymentId !== lastSeenPaymentId) {
-        lastSeenPaymentId = paymentId;
-        localStorage.setItem("lastPaymentId", paymentId);
+    lastSeenPaymentId = paymentId;
+    localStorage.setItem("lastPaymentId", paymentId);
 
-        showPaymentPopup(data.payment.amount);
-      }
+    showPaymentPopup(data.payment.amount);
+
+    // 🔥 INSTANT REVENUE UPDATE (ADD THIS HERE)
+    fetch("/api/dashboard-snapshot")
+      .then(r => r.json())
+      .then(data => {
+        const el = document.getElementById("liveRevenue");
+        if (el && data.total_revenue !== undefined) {
+          el.innerText = "KSh " + Math.floor(data.total_revenue);
+        }
+      });
+}
     }
   } catch (e) {
     console.error("Polling error:", e);
@@ -541,12 +551,13 @@ setInterval(function(){
     fetch("/api/dashboard-snapshot")
     .then(r=>r.json())
     .then(data=>{
-        const el = document.getElementaryById("liveRevenue");
+        const el = document.getElementById("liveRevenue");
+
         if (el && data.total_revenue !== undefined) {
-           el.innerText = "kSh" + Math.floor(data.total_revenue);
+            el.innerText = "KSh " + Math.floor(data.total_revenue);
         }
     });
-},5000);
+}, 5000);
 </script>
 
 <script>
