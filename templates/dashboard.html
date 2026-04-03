@@ -497,40 +497,46 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-  async function pollLatestPayment() {
-    try {
-      const res = await fetch("/api/latest-payment");
-      const data = await res.json();
-      
-      console.log("Polling response:", data);
+let lastSeenPaymentId = null;
 
-      if (data.payment && data.payment.amount) {
+async function pollLatestPayment() {
+  try {
+    const res = await fetch("/api/latest-payment");
+    const data = await res.json();
+
+    if (data.payment) {
+      const paymentId = data.payment.id;
+
+      // 🔥 ONLY trigger if new
+      if (paymentId !== lastSeenPaymentId) {
+        lastSeenPaymentId = paymentId;
+
         showPaymentPopup(data.payment.amount);
         refreshKPIs();
       }
-    } catch (e) {
-      console.error("Polling error:", e);
     }
+  } catch (e) {
+    console.error("Polling error:", e);
   }
+}
 
-  function showPaymentPopup(amount) {
-    const popup = document.createElement("div");
-    popup.className =
-      "fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50";
-    popup.innerText = `💰 Payment received: KSh ${amount}`;
+function showPaymentPopup(amount) {
+  const popup = document.createElement("div");
+  popup.className =
+    "fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50";
+  popup.innerText = `💰 Payment received: KSh ${amount}`;
 
-    document.body.appendChild(popup);
+  document.body.appendChild(popup);
 
-    setTimeout(() => popup.remove(), 4000);
-  }
+  setTimeout(() => popup.remove(), 4000);
+}
 
-  function refreshKPIs() {
-    // simplest approach for now
-    window.location.reload();
-  }
+function refreshKPIs() {
+  window.location.reload();
+}
 
-  // Poll every 5 seconds
-  setInterval(pollLatestPayment, 5000);
+// Poll every 5 seconds
+setInterval(pollLatestPayment, 5000);
 </script>
 
 <script>
