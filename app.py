@@ -1789,7 +1789,6 @@ def latest_payment():
             (b.account_number IS NULL AND m.receiver = b.paybill)
         )
         WHERE b.username = %s
-        AND m.seen = FALSE
         AND m.status = 'confirmed'
         ORDER BY m.created_at DESC
         LIMIT 1
@@ -1798,19 +1797,7 @@ def latest_payment():
         cur.execute(SQL, (username,))
         payment = cur.fetchone()
 
-        if payment:
-            cur.execute("""
-                UPDATE mpesa_transactions m
-                SET seen = TRUE
-                FROM businesses b
-                WHERE m.id = %s
-                AND (
-                        (b.account_number IS NOT NULL AND m.account_reference = b.account_number)
-                        OR
-                        (b.account_number IS NULL AND m.receiver = b.paybill)
-                    )
-                AND b.username = %s
-            """, (payment["id"], username))
+        
 
         return payment
 
