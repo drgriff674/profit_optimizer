@@ -497,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-let lastSeenPaymentId = null;
+let lastSeenPaymentId = localStorage.getItem("lastPaymentId");
 
 async function pollLatestPayment() {
   try {
@@ -505,14 +505,14 @@ async function pollLatestPayment() {
     const data = await res.json();
 
     if (data.payment) {
-      const paymentId = data.payment.id;
+      const paymentId = String(data.payment.id);
 
-      // 🔥 ONLY trigger if new
+      // Only trigger if new payment
       if (paymentId !== lastSeenPaymentId) {
         lastSeenPaymentId = paymentId;
+        localStorage.setItem("lastPaymentId", paymentId);
 
         showPaymentPopup(data.payment.amount);
-        refreshKPIs();
       }
     }
   } catch (e) {
@@ -531,13 +531,10 @@ function showPaymentPopup(amount) {
   setTimeout(() => popup.remove(), 4000);
 }
 
-function refreshKPIs() {
-  window.location.reload();
-}
-
 // Poll every 5 seconds
 setInterval(pollLatestPayment, 5000);
 </script>
+
 
 <script>
 setInterval(function(){
