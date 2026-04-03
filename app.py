@@ -939,6 +939,7 @@ def dashboard():
     last_synced = None
 
     import time
+    start_total = time.time()
 
     
     cached_data = get_dashboard_data(username)
