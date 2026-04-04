@@ -1,0 +1,53 @@
+<h2>Sales</h2>
+
+<h3>Products</h3>
+
+<ul>
+  {% for p in products %}
+    <li>
+      {{ p.name }} - KSh {{ p.price }}
+      <button onclick="addItem({{ p.id }}, '{{ p.name }}', {{ p.price }})">
+        Add
+      </button>
+    </li>
+  {% endfor %}
+</ul>
+
+<h3>Cart</h3>
+<ul id="cart"></ul>
+
+<button onclick="createSale()">Create Sale</button>
+
+<h3>Recent Sales</h3>
+<ul>
+  {% for s in sales %}
+    <li>
+      {{ s.sale_id }} - KSh {{ s.total_amount }} - {{ s.status }}
+    </li>
+  {% endfor %}
+</ul>
+
+<script>
+let cart = [];
+
+function addItem(id, name, price) {
+    cart.push({ product_id: id, name, price, quantity: 1 });
+
+    const el = document.getElementById("cart");
+    el.innerHTML += `<li>${name} - ${price}</li>`;
+}
+
+function createSale() {
+    fetch("/sales/create", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({items: cart})
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert("Sale created: " + data.sale_id);
+        cart = [];
+        location.reload();
+    });
+}
+</script>

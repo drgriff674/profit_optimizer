@@ -97,6 +97,7 @@ import re
 import random
 from email.mime.text import MIMEText
 import time
+import uuid
 
 def send_otp_email(receiver_email, otp):
 
@@ -1055,6 +1056,111 @@ def api_dash():
 
     return jsonify(snap)
 
+
+
+@app.route("/sales/create", methods=["POST"])
+@login_required
+def create_sale():
+
+    username = session["username"]
+    data = request.get_json()
+
+    items = data.get("items", [])
+
+    def operation(cur):
+
+        # get business
+        cur.execute("""
+            SELECT id FROM businesses WHERE username=%s LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+        business_id = biz["id"]
+
+        sale_id = str(uuid.uuid4())[:8]  # short clean id
+
+        total = 0
+
+        for item in items:
+            total += item["price"] * item["quantity"]
+
+        # insert sale
+        cur.execute("""
+            INSERT INTO sales (sale_id, business_id, total_amount)
+            VALUES (%s, %s, %s)
+        """, (sale_id, business_id, total))
+
+        # insert items
+        for item in items:
+            cur.execute("""
+                INSERT INTO sale_items (sale_id, product_id, quantity, price)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                sale_id,
+                item["product_id"],
+                item["quantity"],
+                item["price"]
+            ))
+
+        return sale_id
+
+    sale_id = run_db_operation(operation, commit=True)
+
+    return jsonify({
+        "sale_id": sale_id,
+        "status": "pending"
+    })
+
+@app.route("/sales")
+@login_required
+def sales_page():
+
+    username = session["username"]
+
+    def operation(cur):
+        cur.execute("""
+            SELECT b.id as business_id
+            FROM businesses b
+            WHERE b.username = %s
+            LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+
+        if not biz:
+            return {"products": [], "sales": []}
+
+        business_id = biz["business_id"]
+
+        # get products
+        cur.execute("""
+            SELECT id, name, price
+            FROM products
+            WHERE business_id = %s
+        """, (business_id,))
+        products = cur.fetchall()
+
+        # get recent sales
+        cur.execute("""
+            SELECT sale_id, total_amount, status, created_at
+            FROM sales
+            WHERE business_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (business_id,))
+        sales = cur.fetchall()
+
+        return {
+            "products": products,
+            "sales": sales
+        }
+
+    data = run_db_operation(operation)
+
+    return render_template(
+        "sales.html",
+        products=data["products"],
+        sales=data["sales"]
+    )
+
 @app.route("/api/create-sale", methods=["POST"])
 def create_sale_route():
 
@@ -1076,6 +1182,32 @@ def create_sale_route():
     result = create_sale(biz["id"], items)
 
     return jsonify(result)
+
+@app.route("/test/create-sale")
+@login_required
+def test_create_sale():
+    username = session["username"]
+
+    def operation(cur):
+        cur.execute("SELECT id FROM businesses WHERE username=%s LIMIT 1", (username,))
+        biz = cur.fetchone()
+
+        if not biz:
+            return "No business"
+
+        import uuid
+        sale_id = str(uuid.uuid4())
+
+        cur.execute("""
+            INSERT INTO sales (sale_id, business_id, total_amount, status)
+            VALUES (%s, %s, %s, 'pending')
+        """, (sale_id, biz["id"], 300))
+
+        return sale_id
+
+    sale_id = run_db_operation(operation, commit=True)
+
+    return f"Created sale: {sale_id}"
 
 
 
@@ -2187,12 +2319,18 @@ def payment_confirm():
                     cur.execute("""
                         UPDATE sales
                         SET status = 'completed'
-                        WHERE sale_id = %s
+                        WHERE sale_id = %s AND status = 'pending'
+                        RETURNING sale_id
                     """, (account_ref,))
 
-                run_db_operation(link_sale, commit=True)
+                    updated = cur.fetchone()
 
-                print("🔗 Sale linked and completed:", account_ref)
+                    if updated:
+                        print("✅ Sale linked:", account_ref)
+                    else:
+                        print("⚠️ No matching or already completed sale:", account_ref)
+
+                run_db_operation(link_sale, commit=True)
 
             except Exception as e:
                 print("⚠️ Sale linking failed:", e)
