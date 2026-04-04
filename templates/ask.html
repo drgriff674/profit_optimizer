@@ -63,6 +63,7 @@
              rounded-2xl shadow-sm p-6"
     >
       <form method="POST" action="{{ url_for('ask') }}" class="flex flex-col gap-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input
           type="text"
           name="question"
