@@ -33,8 +33,20 @@ def run_db_operation(operation, commit=False):
     
     conn = get_db_connection()
     cur = None
+
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # 🔥 ADD THIS BLOCK (RLS CONTEXT)
+        from flask import session
+
+        username = session.get("username")
+        if username:
+            cur.execute("SET app.current_user = %s", (username,))
+        else:
+            raise Exception("No user in session for DB access")
+
+        # --- existing logic ---
         result = operation(cur)
 
         if commit:
@@ -43,14 +55,14 @@ def run_db_operation(operation, commit=False):
         return result
 
     except Exception as e:
-        conn.rollback()  
+        conn.rollback()
         print("DB ERROR:", e)
         raise e
 
     finally:
         if cur:
             cur.close()
-        connection_pool.putconn(conn)  
+        connection_pool.putconn(conn)
 
 #  Initialize database and tables if not exists
 def init_db():
