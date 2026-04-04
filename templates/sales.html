@@ -1,43 +1,146 @@
-<h2>Sales</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sales - OptiGain</title>
 
-<h3>Products</h3>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<ul>
-  {% for p in products %}
-    <li>
-      {{ p.name }} - KSh {{ p.price }}
-      <button onclick="addItem({{ p.id }}, '{{ p.name }}', {{ p.price }})">
-        Add
-      </button>
+<style>
+:root {
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --text: #111827;
+}
+.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+</style>
+
+</head>
+
+<body class="p-4 transition-colors">
+
+<!-- TOP BAR -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-xl font-bold">🧾 Sales</h1>
+
+  <button id="darkToggle"
+    class="px-3 py-1 rounded bg-gray-800 text-white">
+    🌙
+  </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+<!-- PRODUCTS -->
+<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+  <h3 class="font-semibold mb-3">Products</h3>
+
+  <div class="space-y-2">
+    {% for p in products %}
+    <button
+      onclick="addItem({{ p.id }}, '{{ p.name }}', {{ p.price }})"
+      class="w-full flex justify-between px-3 py-2 rounded bg-green-600 text-white hover:opacity-90">
+
+      <span>{{ p.name }}</span>
+      <span>KSh {{ p.price }}</span>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- CART -->
+<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+  <h3 class="font-semibold mb-3">Cart</h3>
+
+  <ul id="cart" class="space-y-2 text-sm"></ul>
+
+  <div class="mt-4 font-semibold">
+    Total: KSh <span id="total">0</span>
+  </div>
+
+  <button onclick="createSale()"
+    class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:opacity-90">
+    Create Sale
+  </button>
+</div>
+
+<!-- RECENT SALES -->
+<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+  <h3 class="font-semibold mb-3">Recent Sales</h3>
+
+  <ul class="text-sm space-y-2">
+    {% for s in sales %}
+    <li class="flex justify-between border-b pb-1">
+      <span>{{ s.sale_id }}</span>
+      <span>KSh {{ s.total_amount }}</span>
+      <span class="{% if s.status == 'completed' %}text-green-500{% else %}text-yellow-500{% endif %}">
+        {{ s.status }}
+      </span>
     </li>
-  {% endfor %}
-</ul>
+    {% endfor %}
+  </ul>
+</div>
 
-<h3>Cart</h3>
-<ul id="cart"></ul>
-
-<button onclick="createSale()">Create Sale</button>
-
-<h3>Recent Sales</h3>
-<ul>
-  {% for s in sales %}
-    <li>
-      {{ s.sale_id }} - KSh {{ s.total_amount }} - {{ s.status }}
-    </li>
-  {% endfor %}
-</ul>
+</div>
 
 <script>
 let cart = [];
 
-function addItem(id, name, price) {
-    cart.push({ product_id: id, name, price, quantity: 1 });
-
+function renderCart() {
     const el = document.getElementById("cart");
-    el.innerHTML += `<li>${name} - ${price}</li>`;
+    const totalEl = document.getElementById("total");
+
+    el.innerHTML = "";
+
+    let total = 0;
+
+    cart.forEach((item, i) => {
+        total += item.price * item.quantity;
+
+        el.innerHTML += `
+          <li class="flex justify-between">
+            ${item.name} x${item.quantity}
+            <button onclick="removeItem(${i})">❌</button>
+          </li>
+        `;
+    });
+
+    totalEl.innerText = total;
+}
+
+function addItem(id, name, price) {
+    const existing = cart.find(i => i.product_id === id);
+
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({ product_id: id, name, price, quantity: 1 });
+    }
+
+    renderCart();
+}
+
+function removeItem(index) {
+    cart.splice(index, 1);
+    renderCart();
 }
 
 function createSale() {
+
+    if (cart.length === 0) {
+        alert("Cart is empty 😅");
+        return;
+    }
+
     fetch("/sales/create", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -45,9 +148,29 @@ function createSale() {
     })
     .then(r => r.json())
     .then(data => {
-        alert("Sale created: " + data.sale_id);
+        alert("✅ Sale created: " + data.sale_id);
+
         cart = [];
+        renderCart();
         location.reload();
     });
 }
+
+/* DARK MODE */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("darkToggle");
+  const root = document.documentElement;
+
+  if (localStorage.getItem("theme") === "dark") {
+    root.classList.add("dark");
+  }
+
+  btn.onclick = () => {
+    const dark = root.classList.toggle("dark");
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  };
+});
 </script>
+
+</body>
+</html>

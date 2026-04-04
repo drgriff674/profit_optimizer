@@ -1063,7 +1063,7 @@ def api_dash():
 def create_sale():
 
     username = session["username"]
-    data = request.get_json()
+    data = request.get_json() or {}
 
     items = data.get("items", [])
 
