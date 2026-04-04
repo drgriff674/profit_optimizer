@@ -71,6 +71,8 @@
     <!-- FORM -->
     <form method="POST" action="{{ url_for('revenue_entry') }}" class="space-y-4">
 
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
       <!-- Revenue Date -->
       <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
