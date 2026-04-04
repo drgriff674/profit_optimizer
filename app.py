@@ -1081,6 +1081,7 @@ def api_dash():
 
 
 @app.route("/products/create", methods=["POST"])
+@csrf_exempt
 @login_required
 def create_product():
 
