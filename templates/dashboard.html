@@ -263,6 +263,29 @@ bg-gray-100 text-gray-700
         {% endfor %}
  	</div>
 
+{% if top_products %}
+<div class="p-5 rounded-xl shadow mb-6"
+     style="background: var(--og-surface); border-left: 4px solid #10b981;">
+
+  <h3 class="text-lg font-semibold mb-3">
+    🍽️ Top Selling Items Today
+  </h3>
+
+  <ul class="text-sm space-y-2">
+    {% for item in top_products %}
+      <li class="flex justify-between">
+        <span>{{ item.name }}</span>
+        <span>
+          {{ item.total_sold }} sold • 
+          KSh {{ item.revenue | int }}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+
+</div>
+{% endif %}
+
         
 
 {% if intelligence.locked_days == 0 %}

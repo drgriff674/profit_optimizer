@@ -312,6 +312,86 @@ def init_db():
         );
         """)
 
+        # --- PRODUCTS (WHAT CAN BE SOLD) ---
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id SERIAL PRIMARY KEY,
+            business_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            price NUMERIC(10,2) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+        )
+        """)
+
+        # --- SALES ---
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS sales (
+            id SERIAL PRIMARY KEY,
+            sale_id TEXT UNIQUE NOT NULL,
+            business_id INTEGER NOT NULL,
+            total_amount NUMERIC(10,2) NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+        )
+        """)
+
+        # --- SALE ITEMS ---
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS sale_items (
+            id SERIAL PRIMARY KEY,
+            sale_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            price NUMERIC(10,2) NOT NULL,
+            FOREIGN KEY (sale_id) REFERENCES sales(sale_id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+        )
+        """)
+
+        # --- SALES SYSTEM INDEXES ---
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_products_business
+        ON products(business_id);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_business
+        ON sales(business_id);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_sale_id
+        ON sales(sale_id);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_created_at
+        ON sales(created_at);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_status
+        ON sales(status);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_business_date_status
+        ON sales(business_id, created_at, status);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id
+        ON sale_items(sale_id);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sale_items_product_id
+        ON sale_items(product_id);
+        """)
+
         cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_revenue_days_username 
         ON revenue_days(username);
@@ -414,6 +494,89 @@ def init_db():
         """)
 
     run_db_operation(operation, commit=True)
+
+def create_sale(business_id, items):
+
+    import uuid
+
+    def operation(cur):
+
+        sale_id = str(uuid.uuid4())
+        total = 0
+
+        # calculate total
+        for item in items:
+            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+            product = cur.fetchone()
+            if not product:
+                continue
+
+            total += float(product["price"]) * int(item["quantity"])
+
+        # create sale
+        cur.execute("""
+            INSERT INTO sales (sale_id, business_id, total_amount, status)
+            VALUES (%s, %s, %s, 'pending')
+        """, (sale_id, business_id, total))
+
+        # insert items
+        for item in items:
+            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+            product = cur.fetchone()
+            if not product:
+                continue
+
+            cur.execute("""
+                INSERT INTO sale_items (sale_id, product_id, quantity, price)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                sale_id,
+                item["product_id"],
+                item["quantity"],
+                product["price"]
+            ))
+
+        return {"sale_id": sale_id, "total": total}
+
+    return run_db_operation(operation, commit=True)
+
+
+def get_top_products_for_day(username, date):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT b.id
+            FROM businesses b
+            WHERE b.username = %s
+            LIMIT 1
+        """, (username,))
+
+        biz = cur.fetchone()
+        if not biz:
+            return []
+
+        business_id = biz["id"]
+
+        cur.execute("""
+            SELECT 
+                p.name,
+                SUM(si.quantity) as total_sold,
+                SUM(si.quantity * si.price) as revenue
+            FROM sales s
+            JOIN sale_items si ON s.sale_id = si.sale_id
+            JOIN products p ON p.id = si.product_id
+            WHERE s.business_id = %s
+              AND DATE(s.created_at) = %s
+              AND s.status = 'completed'
+            GROUP BY p.name
+            ORDER BY total_sold DESC
+            LIMIT 5
+        """, (business_id, date))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
 
 
 #revenue cash functions

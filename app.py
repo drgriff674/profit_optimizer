@@ -87,6 +87,8 @@ from database import(
     detect_weekly_alerts,
     get_user_by_email,
     log_audit,
+    create_sale,
+    get_top_products_for_day,
 )
 import pytz
 from flask_caching import Cache
@@ -951,6 +953,10 @@ def dashboard():
     
     latest_report = get_latest_weekly_report(username)
     inventory_insights = get_weekly_inventory_insights(username)
+
+    from datetime import datetime
+    today = datetime.now().date()
+    top_products = get_top_products_for_day(username, today)
     print("TOTAL dashboard time:", time.time() - start_total)
 
     answer = None
@@ -1036,7 +1042,8 @@ def dashboard():
         forecast_status=forecast_status,
         live_total_revenue=live_total_revenue,
         weekly_report=latest_report,
-        inventory_insights=inventory_insights
+        inventory_insights=inventory_insights,
+        top_products=top_products
     )
 
 @app.route("/api/dashboard-snapshot")
@@ -1047,6 +1054,28 @@ def api_dash():
     snap=get_dashboard_snapshot(username)
 
     return jsonify(snap)
+
+@app.route("/api/create-sale", methods=["POST"])
+def create_sale_route():
+
+    data = request.get_json()
+
+    username = data.get("username")
+    items = data.get("items", [])
+
+    # get business
+    def operation(cur):
+        cur.execute("SELECT id FROM businesses WHERE username=%s LIMIT 1", (username,))
+        return cur.fetchone()
+
+    biz = run_db_operation(operation)
+
+    if not biz:
+        return jsonify({"error": "Business not found"}), 400
+
+    result = create_sale(biz["id"], items)
+
+    return jsonify(result)
 
 
 
@@ -2064,6 +2093,7 @@ def payment_confirm():
                     sender_phone = str(item.get("Value", ""))
                 elif item.get("Name") == "AccountReference":
                     account_ref = str(item.get("Value", ""))
+                
         else:
             print("❌ Unknown callback format")
             return jsonify({"ResultCode": 1, "ResultDesc": "Invalid callback format"})
@@ -2149,6 +2179,23 @@ def payment_confirm():
 
             return username_local, local_date
         username_local, local_date = run_db_operation(operation, commit=True)
+
+        # 🔗 LINK PAYMENT TO SALE
+        if account_ref:
+            try:
+                def link_sale(cur):
+                    cur.execute("""
+                        UPDATE sales
+                        SET status = 'completed'
+                        WHERE sale_id = %s
+                    """, (account_ref,))
+
+                run_db_operation(link_sale, commit=True)
+
+                print("🔗 Sale linked and completed:", account_ref)
+
+            except Exception as e:
+                print("⚠️ Sale linking failed:", e)
 
         log_audit(
             username_local or "system",
