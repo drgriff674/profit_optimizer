@@ -11,7 +11,7 @@ from flask import (
     send_file,
     jsonify,
 )
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, csrf_exempt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import Response
