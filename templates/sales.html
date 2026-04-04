@@ -228,17 +228,33 @@ function addProduct() {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ name, price })
     })
-    .then(r => r.json())
+    .then(async (r) => {
+        const text = await r.text();
+
+        try {
+            return JSON.parse(text);
+        } catch {
+            throw new Error("Server returned non-JSON:\n" + text);
+        }
+    })
     .then(data => {
+        if (data.error) {
+            alert("❌ " + data.error);
+            return;
+        }
+
         alert("✅ Product added");
 
         document.getElementById("pname").value = "";
         document.getElementById("pprice").value = "";
 
         location.reload();
+    })
+    .catch(err => {
+        console.error("FRONTEND ERROR:", err);
+        alert("Something broke — check console");
     });
 }
-
 // =======================
 // DARK MODE
 // =======================

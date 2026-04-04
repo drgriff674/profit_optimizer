@@ -1086,56 +1086,60 @@ def create_product():
 
     print("🔥 CREATE PRODUCT HIT")
 
-    username = session["username"]
-    data = request.get_json()
+    try:
+        username = session["username"]
+        data = request.get_json()
 
-    name = data.get("name")
-    price = data.get("price")
+        name = data.get("name")
+        price = data.get("price")
 
-    # 🔒 basic validation
-    if not name or not price:
-        return jsonify({"error": "Missing name or price"}), 400
+        # 🔒 validation
+        if not name or not price:
+            return jsonify({"error": "Missing name or price"}), 400
 
-    def operation(cur):
+        def operation(cur):
 
-        # 1️⃣ CHECK BUSINESS
-        cur.execute("""
-            SELECT id FROM businesses WHERE username=%s LIMIT 1
-        """, (username,))
-        biz = cur.fetchone()
-
-        # 2️⃣ AUTO-CREATE BUSINESS IF MISSING
-        if not biz:
-            print("⚠️ No business found — creating one")
-
+            # 1️⃣ CHECK BUSINESS
             cur.execute("""
-                INSERT INTO businesses (username, business_name, paybill, account_number)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id
-            """, (
-                username,
-                f"{username} Business",
-                "000000",
-                "AUTO"
-            ))
-
+                SELECT id FROM businesses WHERE username=%s LIMIT 1
+            """, (username,))
             biz = cur.fetchone()
 
-        business_id = biz["id"]
-        print("✅ USING BUSINESS ID:", business_id)
+            # 2️⃣ AUTO-CREATE BUSINESS
+            if not biz:
+                print("⚠️ No business found — creating one")
 
-        # 3️⃣ INSERT PRODUCT
-        cur.execute("""
-            INSERT INTO products (business_id, name, price)
-            VALUES (%s, %s, %s)
-        """, (business_id, name, price))
+                cur.execute("""
+                    INSERT INTO businesses (username, business_name, paybill, account_number)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    username,
+                    f"{username} Business",
+                    "000000",
+                    "AUTO"
+                ))
 
-    run_db_operation(operation, commit=True)
+                biz = cur.fetchone()
 
-    print("✅ PRODUCT SAVED")
+            business_id = biz["id"]
+            print("✅ USING BUSINESS ID:", business_id)
 
-    return jsonify({"status": "ok"})
+            # 3️⃣ INSERT PRODUCT
+            cur.execute("""
+                INSERT INTO products (business_id, name, price)
+                VALUES (%s, %s, %s)
+            """, (business_id, name, price))
 
+        run_db_operation(operation, commit=True)
+
+        print("✅ PRODUCT SAVED")
+
+        return jsonify({"status": "ok"})
+
+    except Exception as e:
+        print("❌ BACKEND ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/sales/create", methods=["POST"])
 @login_required
