@@ -23,14 +23,21 @@ body {
   color: var(--text);
 }
 </style>
-
 </head>
 
 <body class="p-4 transition-colors">
 
 <!-- TOP BAR -->
 <div class="flex justify-between items-center mb-6">
-  <h1 class="text-xl font-bold">🧾 Sales</h1>
+
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('dashboard') }}"
+       class="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm">
+       ← Dashboard
+    </a>
+
+    <h1 class="text-xl font-bold">🧾 Sales</h1>
+  </div>
 
   <button id="darkToggle"
     class="px-3 py-1 rounded bg-gray-800 text-white">
@@ -43,6 +50,23 @@ body {
 <!-- PRODUCTS -->
 <div class="p-4 rounded-xl shadow" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Products</h3>
+
+  <!-- ADD PRODUCT -->
+  <div class="mb-4 space-y-2">
+    <input id="pname"
+           placeholder="Product name"
+           class="w-full px-2 py-1 rounded border text-black">
+
+    <input id="pprice"
+           type="number"
+           placeholder="Price"
+           class="w-full px-2 py-1 rounded border text-black">
+
+    <button onclick="addProduct()"
+      class="w-full bg-purple-600 text-white py-1 rounded hover:opacity-90">
+      ➕ Add Product
+    </button>
+  </div>
 
   <div class="space-y-2">
     {% for p in products %}
@@ -95,6 +119,9 @@ body {
 <script>
 let cart = [];
 
+// =======================
+// CART RENDER
+// =======================
 function renderCart() {
     const el = document.getElementById("cart");
     const totalEl = document.getElementById("total");
@@ -107,9 +134,13 @@ function renderCart() {
         total += item.price * item.quantity;
 
         el.innerHTML += `
-          <li class="flex justify-between">
-            ${item.name} x${item.quantity}
-            <button onclick="removeItem(${i})">❌</button>
+          <li class="flex justify-between items-center">
+            <span>${item.name} x${item.quantity}</span>
+            <div class="flex gap-2">
+              <button onclick="decreaseQty(${i})">➖</button>
+              <button onclick="increaseQty(${i})">➕</button>
+              <button onclick="removeItem(${i})">❌</button>
+            </div>
           </li>
         `;
     });
@@ -117,6 +148,9 @@ function renderCart() {
     totalEl.innerText = total;
 }
 
+// =======================
+// ADD ITEM
+// =======================
 function addItem(id, name, price) {
     const existing = cart.find(i => i.product_id === id);
 
@@ -129,11 +163,31 @@ function addItem(id, name, price) {
     renderCart();
 }
 
+// =======================
+// QUANTITY CONTROLS
+// =======================
+function increaseQty(index) {
+    cart[index].quantity += 1;
+    renderCart();
+}
+
+function decreaseQty(index) {
+    if (cart[index].quantity > 1) {
+        cart[index].quantity -= 1;
+    } else {
+        cart.splice(index, 1);
+    }
+    renderCart();
+}
+
 function removeItem(index) {
     cart.splice(index, 1);
     renderCart();
 }
 
+// =======================
+// CREATE SALE
+// =======================
 function createSale() {
 
     if (cart.length === 0) {
@@ -156,7 +210,38 @@ function createSale() {
     });
 }
 
-/* DARK MODE */
+// =======================
+// ADD PRODUCT
+// =======================
+function addProduct() {
+
+    const name = document.getElementById("pname").value;
+    const price = document.getElementById("pprice").value;
+
+    if (!name || !price) {
+        alert("Fill product name and price");
+        return;
+    }
+
+    fetch("/products/create", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name, price })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert("✅ Product added");
+
+        document.getElementById("pname").value = "";
+        document.getElementById("pprice").value = "";
+
+        location.reload();
+    });
+}
+
+// =======================
+// DARK MODE
+// =======================
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("darkToggle");
   const root = document.documentElement;

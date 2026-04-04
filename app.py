@@ -1080,6 +1080,34 @@ def api_dash():
     return jsonify(snap)
 
 
+@app.route("/products/create", methods=["POST"])
+@login_required
+def create_product():
+
+    username = session["username"]
+    data = request.get_json()
+
+    name = data.get("name")
+    price = data.get("price")
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT id FROM businesses WHERE username=%s LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+        business_id = biz["id"]
+
+        cur.execute("""
+            INSERT INTO products (business_id, name, price)
+            VALUES (%s, %s, %s)
+        """, (business_id, name, price))
+
+    run_db_operation(operation, commit=True)
+
+    return jsonify({"status": "ok"})
+
+
 
 @app.route("/sales/create", methods=["POST"])
 @login_required
