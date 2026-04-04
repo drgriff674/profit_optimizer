@@ -1603,7 +1603,7 @@ def revenue_day_detail(date):
             account_number = biz["account_number"]
 
             cur.execute("""
-                SELECT amount, mpesa_receipt_number, created_at
+                SELECT amount, transaction_id, created_at
                 FROM mpesa_transactions
                 WHERE status='confirmed'
                   AND local_date=%s
