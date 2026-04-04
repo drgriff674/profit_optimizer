@@ -103,32 +103,7 @@ body {
 <div class="p-4 rounded-xl shadow" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
-  <ul class="text-sm space-y-2">
-  {% for s in sales %}
-
-  <li class="flex flex-col border-b pb-2">
-
-    <!-- TOP LINE -->
-    <div class="flex justify-between">
-      <span>{{ s.sale_id }}</span>
-      <span>KSh {{ s.total_amount }}</span>
-      <span class="{% if s.status == 'completed' %}text-green-500{% else %}text-yellow-500{% endif %}">
-        {{ s.status }}
-      </span>
-    </div>
-
-    <!-- 🔥 PAYMENT INSTRUCTION -->
-    {% if s.status == 'pending' %}
-    <div class="text-xs text-gray-500 mt-1">
-      Paybill: <b>YOUR_PAYBILL</b> |
-      Account: <b>{{ s.sale_id }}</b>
-    </div>
-    {% endif %}
-
-  </li>
-
-  {% endfor %}
-</ul>
+  <ul id="salesList" class="text-sm space-y-2"></ul>
 
 </div>
 
@@ -136,6 +111,7 @@ body {
 
 <script>
 let cart = [];
+let previousSales = {};
 
 // =======================
 // CART RENDER
@@ -282,12 +258,66 @@ function addProduct() {
     });
 }
 
+function loadSales() {
+    fetch("/api/sales")
+    .then(r => r.json())
+    .then(data => {
+
+        const el = document.getElementById("salesList");
+        el.innerHTML = "";
+
+        data.sales.forEach(s => {
+
+            const prevStatus = previousSales[s.sale_id];
+
+            const justPaid = prevStatus === "pending" && s.status === "completed";
+
+            previousSales[s.sale_id] = s.status;
+
+            el.innerHTML += `
+              <li id="sale-${s.sale_id}" class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
+
+                <div class="flex justify-between">
+                  <span>${s.sale_id}</span>
+                  <span>KSh ${s.total_amount}</span>
+                  <span class="${s.status === 'completed' ? 'text-green-500' : 'text-yellow-500'}">
+                    ${s.status}
+                  </span>
+                </div>
+
+                ${
+                  s.status === "pending"
+                  ? `<div class="text-xs text-gray-500 mt-1">
+                       Paybill: <b>YOUR_PAYBILL</b> |
+                       Account: <b>${s.sale_id}</b>
+                     </div>`
+                  : ""
+                }
+
+                ${
+                  justPaid
+                  ? `<div class="text-green-600 text-xs mt-1">
+                       💰 Payment received
+                     </div>`
+                  : ""
+                }
+
+              </li>
+            `;
+        });
+    });
+}
+
+setInterval(loadSales, 3000);
+
 // =======================
 // DARK MODE
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("darkToggle");
   const root = document.documentElement;
+
+  loadSales();
 
   if (localStorage.getItem("theme") === "dark") {
     root.classList.add("dark");

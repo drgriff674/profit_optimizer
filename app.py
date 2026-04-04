@@ -1079,6 +1079,38 @@ def api_dash():
 
     return jsonify(snap)
 
+@app.route("/api/sales")
+@login_required
+def api_sales():
+
+    username = session["username"]
+
+    def operation(cur):
+        cur.execute("""
+            SELECT b.id
+            FROM businesses b
+            WHERE b.username = %s
+            LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+
+        if not biz:
+            return []
+
+        cur.execute("""
+            SELECT sale_id, total_amount, status
+            FROM sales
+            WHERE business_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (biz["id"],))
+
+        return cur.fetchall()
+
+    sales = run_db_operation(operation)
+
+    return jsonify({"sales": sales})
+
 
 @app.route("/products/create", methods=["POST"])
 @csrf.exempt
