@@ -104,16 +104,32 @@ body {
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
   <ul class="text-sm space-y-2">
-    {% for s in sales %}
-    <li class="flex justify-between border-b pb-1">
+  {% for s in sales %}
+
+  <li class="flex flex-col border-b pb-2">
+
+    <!-- TOP LINE -->
+    <div class="flex justify-between">
       <span>{{ s.sale_id }}</span>
       <span>KSh {{ s.total_amount }}</span>
       <span class="{% if s.status == 'completed' %}text-green-500{% else %}text-yellow-500{% endif %}">
         {{ s.status }}
       </span>
-    </li>
-    {% endfor %}
-  </ul>
+    </div>
+
+    <!-- 🔥 PAYMENT INSTRUCTION -->
+    {% if s.status == 'pending' %}
+    <div class="text-xs text-gray-500 mt-1">
+      Paybill: <b>YOUR_PAYBILL</b> |
+      Account: <b>{{ s.sale_id }}</b>
+    </div>
+    {% endif %}
+
+  </li>
+
+  {% endfor %}
+</ul>
+
 </div>
 
 </div>
