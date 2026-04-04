@@ -1302,7 +1302,18 @@ def update_dashboard_snapshot(username):
         """,(username,))
         mpesa=float(cur.fetchone()["total"])
 
-        revenue=cash+mpesa
+        # SALES TOTAL (ONLY COMPLETED SALES)
+        cur.execute("""
+            SELECT COALESCE(SUM(s.total_amount),0) AS total
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND s.status = 'completed'
+        """, (username,))
+
+        sales_total = float(cur.fetchone()["total"])
+
+        revenue=cash+mpesa+sales_total
 
         # EXPENSE TOTAL
         cur.execute("""
