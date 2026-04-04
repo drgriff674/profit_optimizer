@@ -2429,25 +2429,53 @@ def payment_confirm():
             return username_local, local_date
         username_local, local_date = run_db_operation(operation, commit=True)
 
-        # 🔗 LINK PAYMENT TO SALE
+        # 🔗 LINK PAYMENT TO SALE + UPDATE DASHBOARD
         if account_ref:
             try:
                 def link_sale(cur):
+
+                    # 1️⃣ UPDATE SALE
                     cur.execute("""
                         UPDATE sales
                         SET status = 'completed'
                         WHERE sale_id = %s AND status = 'pending'
-                        RETURNING sale_id
+                        RETURNING business_id
                     """, (account_ref,))
 
                     updated = cur.fetchone()
 
-                    if updated:
-                        print("✅ Sale linked:", account_ref)
-                    else:
-                        print("⚠️ No matching or already completed sale:", account_ref)
+                    if not updated:
+                        print("⚠️ No matching sale:", account_ref)
+                        return None
 
-                run_db_operation(link_sale, commit=True)
+                    business_id = updated["business_id"]
+
+                    # 2️⃣ GET USERNAME FROM BUSINESS
+                    cur.execute("""
+                        SELECT username FROM businesses
+                        WHERE id = %s
+                    """, (business_id,))
+
+                    biz = cur.fetchone()
+
+                    if not biz:
+                        print("⚠️ Business not found for sale")
+                        return None
+
+                    username_from_sale = biz["username"]
+
+                    print("✅ Sale linked + user:", username_from_sale)
+
+                    return username_from_sale
+
+                username_from_sale = run_db_operation(link_sale, commit=True)
+
+                # 3️⃣ 🔥 FORCE DASHBOARD UPDATE
+                if username_from_sale:
+                    ensure_revenue_day_exists(username_from_sale, local_date)
+                    update_dashboard_snapshot(username_from_sale)
+                    update_dashboard_intelligence(username_from_sale)
+                    cache.delete_memoized(get_dashboard_data, username_from_sale)
 
             except Exception as e:
                 print("⚠️ Sale linking failed:", e)
