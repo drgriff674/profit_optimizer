@@ -1596,16 +1596,39 @@ def revenue_day_detail(date):
             row = cur.fetchone()
             mpesa_total = float(row["mpesa_total"]) if row else 0.0
 
+        mpesa_transactions = []
+
+        if biz:
+            paybill = biz["paybill"]
+            account_number = biz["account_number"]
+
+            cur.execute("""
+                SELECT amount, mpesa_receipt_number, created_at
+                FROM mpesa_transactions
+                WHERE status='confirmed'
+                  AND local_date=%s
+                  AND (
+                        account_reference=%s
+                        OR receiver=%s
+                      )
+                ORDER BY created_at DESC
+            """, (date, account_number, paybill))
+
+            mpesa_transactions = cur.fetchall()
+
         return {
             "biz": biz,
             "cash_total": cash_total,
             "anomalies": anomalies,
             "is_locked": is_locked,
             "locked_total": locked_total,
-            "mpesa_total": mpesa_total
+            "mpesa_total": mpesa_total,
+            "mpesa_transactions": mpesa_transactions
         }
 
     db = run_db_operation(operation)
+
+    mpesa_transactions = db["mpesa_transactions"]
 
     cash_total = db["cash_total"]
     anomalies = db["anomalies"]
@@ -1652,7 +1675,8 @@ def revenue_day_detail(date):
         anomalies=anomalies,
         ai_summary=ai_summary,
         expense_total=expense_total,
-        expense_entries=expense_entries
+        expense_entries=expense_entries,
+        mpesa_transactions=mpesa_transactions
     )
 
 @app.route("/revenue/overview")
