@@ -8,6 +8,8 @@
   <h1 class="text-lg font-semibold mb-4">✏️ Edit Revenue Entry</h1>
 
   <form method="POST" class="space-y-4 bg-white p-4 rounded shadow">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
 
     <div>
       <label class="block text-sm">Category</label>
