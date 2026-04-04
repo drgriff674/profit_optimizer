@@ -294,6 +294,27 @@ def generate_revenue_ai_summary(username, date):
 
     return response.choices[0].message.content.strip()
 
+def ensure_business_exists(username):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT id FROM businesses WHERE username=%s
+        """, (username,))
+        biz = cur.fetchone()
+
+        if not biz:
+            cur.execute("""
+                INSERT INTO businesses (username, business_name, paybill)
+                VALUES (%s, %s, %s)
+            """, (
+                username,
+                username + " Business",
+                "000000"
+            ))
+            print("⚠️ Business auto-created for", username)
+
+    run_db_operation(operation, commit=True)
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -933,6 +954,8 @@ def dashboard():
     print("SESSION USER ON DASHBOARD:",session.get("username"))
 
     username = session["username"]
+
+    ensure_business_exists(username)
 
 
     latest_payment = None
