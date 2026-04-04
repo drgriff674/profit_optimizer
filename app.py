@@ -1084,20 +1084,47 @@ def api_dash():
 @login_required
 def create_product():
 
+    print("🔥 CREATE PRODUCT HIT")
+
     username = session["username"]
     data = request.get_json()
 
     name = data.get("name")
     price = data.get("price")
 
+    # 🔒 basic validation
+    if not name or not price:
+        return jsonify({"error": "Missing name or price"}), 400
+
     def operation(cur):
 
+        # 1️⃣ CHECK BUSINESS
         cur.execute("""
             SELECT id FROM businesses WHERE username=%s LIMIT 1
         """, (username,))
         biz = cur.fetchone()
-        business_id = biz["id"]
 
+        # 2️⃣ AUTO-CREATE BUSINESS IF MISSING
+        if not biz:
+            print("⚠️ No business found — creating one")
+
+            cur.execute("""
+                INSERT INTO businesses (username, business_name, paybill, account_number)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id
+            """, (
+                username,
+                f"{username} Business",
+                "000000",
+                "AUTO"
+            ))
+
+            biz = cur.fetchone()
+
+        business_id = biz["id"]
+        print("✅ USING BUSINESS ID:", business_id)
+
+        # 3️⃣ INSERT PRODUCT
         cur.execute("""
             INSERT INTO products (business_id, name, price)
             VALUES (%s, %s, %s)
@@ -1105,8 +1132,9 @@ def create_product():
 
     run_db_operation(operation, commit=True)
 
-    return jsonify({"status": "ok"})
+    print("✅ PRODUCT SAVED")
 
+    return jsonify({"status": "ok"})
 
 
 @app.route("/sales/create", methods=["POST"])
