@@ -37,16 +37,18 @@ def run_db_operation(operation, commit=False):
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # 🔥 ADD THIS BLOCK (RLS CONTEXT)
-        from flask import session
+        # ✅ SAFE SESSION HANDLING
+        try:
+            from flask import session
+            username = session.get("username")
+        except:
+            username = None
 
-        username = session.get("username")
+        # ✅ ONLY SET RLS IF USER EXISTS
         if username:
             cur.execute("SET app.current_user = %s", (username,))
-        else:
-            raise Exception("No user in session for DB access")
 
-        # --- existing logic ---
+        # --- run actual query ---
         result = operation(cur)
 
         if commit:
