@@ -1143,6 +1143,7 @@ def create_product():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/sales/create", methods=["POST"])
+@csrf.exempt
 @login_required
 def create_sale():
 
