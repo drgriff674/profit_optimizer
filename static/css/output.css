@@ -874,6 +874,10 @@ video {
   height: 80vh;
 }
 
+.h-\[85vh\] {
+  height: 85vh;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -1668,6 +1672,10 @@ video {
 
 .pr-1 {
   padding-right: 0.25rem;
+}
+
+.pt-3 {
+  padding-top: 0.75rem;
 }
 
 .text-left {

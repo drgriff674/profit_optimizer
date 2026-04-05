@@ -6,7 +6,6 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <style>
@@ -27,10 +26,10 @@ body {
 </style>
 </head>
 
-<body class="p-4 transition-colors overflow-hidden">
+<body class="p-4 transition-colors">
 
 <!-- TOP BAR -->
-<div class="flex justify-between items-center mb-6">
+<div class="flex justify-between items-center mb-4">
   <div class="flex items-center gap-3">
     <a href="{{ url_for('dashboard') }}"
        class="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm">
@@ -46,13 +45,12 @@ body {
 </div>
 
 <!-- GRID -->
-<div class="grid grid-cols-3 gap-6 h-screen">
+<div class="grid grid-cols-3 gap-6 h-[85vh]">
 
 <!-- PRODUCTS -->
-<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
+<div class="p-4 rounded-xl shadow flex flex-col overflow-hidden" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Products</h3>
 
-  <!-- ADD PRODUCT -->
   <div class="mb-4 space-y-2">
     <input id="pname" placeholder="Product name"
            class="w-full px-2 py-1 rounded border text-black">
@@ -66,28 +64,32 @@ body {
     </button>
   </div>
 
-  <!-- PRODUCT LIST -->
-  <div id="productsList" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
+  <div id="productsList" class="space-y-2 overflow-y-auto flex-1"></div>
 </div>
 
 <!-- CART -->
-<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
+<div class="p-4 rounded-xl shadow flex flex-col" style="background: var(--card);">
+
   <h3 class="font-semibold mb-3">Cart</h3>
 
-  <ul id="cart" class="space-y-2 text-sm overflow-y-auto flex-1"></ul>
+  <ul id="cart" class="space-y-2 text-sm flex-1 overflow-y-auto"></ul>
 
-  <div class="mt-4 font-semibold">
-    Total: KSh <span id="total">0</span>
+  <!-- FIXED BOTTOM AREA -->
+  <div class="border-t pt-3 mt-3">
+    <div class="font-semibold mb-2">
+      Total: KSh <span id="total">0</span>
+    </div>
+
+    <button onclick="createSale()"
+      class="w-full bg-blue-600 text-white py-2 rounded hover:opacity-90">
+      Create Sale
+    </button>
   </div>
 
-  <button onclick="createSale()"
-    class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:opacity-90">
-    Create Sale
-  </button>
 </div>
 
-<!-- RECENT SALES -->
-<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
+<!-- SALES -->
+<div class="p-4 rounded-xl shadow flex flex-col overflow-hidden" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
   <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
@@ -97,10 +99,9 @@ body {
 
 <script>
 let cart = [];
-let previousSales = {};
 let currentEditId = null;
 
-// ======================= CART =======================
+// ================= CART =================
 function renderCart() {
     const el = document.getElementById("cart");
     const totalEl = document.getElementById("total");
@@ -127,7 +128,7 @@ function renderCart() {
 
 function addItem(id, name, price) {
     const existing = cart.find(i => i.product_id === id);
-    if (existing) existing.quantity += 1;
+    if (existing) existing.quantity++;
     else cart.push({ product_id: id, name, price, quantity: 1 });
 
     renderCart();
@@ -137,78 +138,67 @@ function increaseQty(i){ cart[i].quantity++; renderCart(); }
 function decreaseQty(i){ cart[i].quantity>1 ? cart[i].quantity-- : cart.splice(i,1); renderCart(); }
 function removeItem(i){ cart.splice(i,1); renderCart(); }
 
-// ======================= SALES =======================
-function createSale() {
-    if (!cart.length) return alert("Cart is empty 😅");
-
-    fetch("/sales/create", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({items: cart})
-    })
-    .then(r => r.json())
-    .then(() => {
-        cart = [];
-        renderCart();
-        loadSales();
-    });
-}
-
-// ======================= PRODUCTS =======================
+// ================= PRODUCTS =================
 function addProduct() {
     const name = pname.value;
     const price = pprice.value;
-
     if (!name || !price) return alert("Fill product name and price");
 
     const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
     fetch("/products/create", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrf
-        },
-        body: JSON.stringify({ name, price })
+        headers: {"Content-Type":"application/json","X-CSRFToken":csrf},
+        body: JSON.stringify({name,price})
     })
-    .then(r => r.json())
-    .then(() => {
-        pname.value = "";
-        pprice.value = "";
-        loadProducts(); // ✅ FIXED
-    });
+    .then(r=>r.json())
+    .then(()=>{ pname.value=""; pprice.value=""; loadProducts(); });
 }
 
 function loadProducts() {
     fetch("/api/products")
-    .then(r => r.json())
-    .then(data => {
+    .then(r=>r.json())
+    .then(data=>{
         const el = document.getElementById("productsList");
         el.innerHTML = "";
 
-        data.products.forEach(p => {
+        data.products.forEach(p=>{
             el.innerHTML += `
             <div class="flex items-center gap-2">
 
                 <button onclick="addItem(${p.id}, '${p.name}', ${p.price})"
-                    class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white hover:opacity-90">
-                    <span>${p.name}</span>
-                    <span>KSh ${p.price}</span>
+                  class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white">
+                  <span>${p.name}</span>
+                  <span>KSh ${p.price}</span>
                 </button>
 
                 <button onclick="editProduct(${p.id}, '${p.name}', ${p.price})"
-                    class="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg">
-                    ✏️
-                </button>
+                  class="p-2 bg-yellow-500 text-white rounded">✏️</button>
 
                 <button onclick="deleteProduct(${p.id})"
-                    class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg">
-                    🗑️
-                </button>
+                  class="p-2 bg-red-500 text-white rounded">🗑️</button>
 
             </div>`;
         });
     });
+}
+
+// ✅ FIXED EDIT FUNCTION
+function editProduct(id, name, price) {
+    const newName = prompt("Edit name:", name);
+    const newPrice = prompt("Edit price:", price);
+
+    if (!newName || !newPrice) return;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+    fetch(`/products/update/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type":"application/json","X-CSRFToken":csrf},
+        body: JSON.stringify({ name:newName, price:newPrice })
+    })
+    .then(r=>r.json())
+    .then(()=>loadProducts());
 }
 
 function deleteProduct(id) {
@@ -218,49 +208,51 @@ function deleteProduct(id) {
 
     fetch(`/products/delete/${id}`, {
         method: "DELETE",
-        headers: { "X-CSRFToken": csrf }
+        headers: {"X-CSRFToken":csrf}
     })
-    .then(r => r.json())
-    .then(() => loadProducts());
+    .then(r=>r.json())
+    .then(()=>loadProducts());
 }
 
-// ======================= SALES LIST =======================
+// ================= SALES =================
+function createSale() {
+    if (!cart.length) return alert("Cart is empty 😅");
+
+    fetch("/sales/create", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({items:cart})
+    })
+    .then(r=>r.json())
+    .then(()=>{
+        cart=[]; renderCart(); loadSales();
+    });
+}
+
 function loadSales() {
     fetch("/api/sales")
-    .then(r => r.json())
-    .then(data => {
-        const el = document.getElementById("salesList");
-        el.innerHTML = "";
+    .then(r=>r.json())
+    .then(data=>{
+        const el=document.getElementById("salesList");
+        el.innerHTML="";
 
-        data.sales.forEach(s => {
-            el.innerHTML += `
+        data.sales.forEach(s=>{
+            el.innerHTML+=`
             <li class="flex justify-between border-b pb-2">
-                <span>${s.sale_id}</span>
-                <span>KSh ${s.total_amount}</span>
-                <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
-                    ${s.status}
-                </span>
+              <span>${s.sale_id}</span>
+              <span>KSh ${s.total_amount}</span>
+              <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
+                ${s.status}
+              </span>
             </li>`;
         });
     });
 }
 
-// ======================= INIT =======================
-document.addEventListener("DOMContentLoaded", () => {
-    loadProducts(); // 🔥 FIX
+// INIT
+document.addEventListener("DOMContentLoaded",()=>{
+    loadProducts();
     loadSales();
-
-    const btn = document.getElementById("darkToggle");
-    const root = document.documentElement;
-
-    if (localStorage.getItem("theme") === "dark") {
-        root.classList.add("dark");
-    }
-
-    btn.onclick = () => {
-        const dark = root.classList.toggle("dark");
-        localStorage.setItem("theme", dark ? "dark" : "light");
-    };
 });
 </script>
 
