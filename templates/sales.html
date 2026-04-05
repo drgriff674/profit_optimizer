@@ -13,18 +13,19 @@
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white transition">
 
 <!-- TOP BAR -->
-<div class="flex justify-between items-center mb-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 shadow-sm">
+<div class="flex justify-between items-center mb-4 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
 
   <div class="flex items-center gap-3">
     <a href="{{ url_for('dashboard') }}"
        class="px-3 py-1.5 rounded-lg text-sm font-medium
-              bg-slate-100 hover:bg-slate-200 transition">
+              bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white transition">
        ← Dashboard
     </a>
 
     <h1 class="text-lg font-semibold">Sales</h1>
   </div>
 
+</div>
 <button id="darkToggle"
   class="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
   🌙
@@ -40,19 +41,25 @@
   <h3 class="font-semibold mb-3">Products</h3>
 
   <div class="mb-4 space-y-2">
-    <input id="pname" placeholder="Product name"
-           class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2
-focus:ring-blue-500 focus:outline-none"
+   <input id="pname" placeholder="Product name"
+       class="w-full px-3 py-2 rounded-lg border border-slate-300
+              dark:border-slate-600
+              bg-white dark:bg-slate-700
+              text-sm text-slate-900 dark:text-white
+              focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
-    <input id="pprice" type="number" placeholder="Price"
-           class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:ring-2
-focus:ring-blue-500 focus:outline-none"
+<input id="pprice" type="number" placeholder="Price"
+       class="w-full px-3 py-2 rounded-lg border border-slate-300
+              dark:border-slate-600
+              bg-white dark:bg-slate-700
+              text-sm text-slate-900 dark:text-white
+              focus:ring-2 focus:ring-blue-500 focus:outline-none">
 
 
     <button onclick="addProduct()"
-      class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition"
-      ➕ Add Product
-    </button>
+  class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">
+  ➕ Add Product
+</button>
   </div>
 
   <div id="productsList" class="space-y-2 overflow-y-auto flex-1"></div>
@@ -163,7 +170,10 @@ function loadProducts() {
             <div class="flex items-center gap-2">
 
                 <button onclick="addItem(${p.id}, '${p.name}', ${p.price})"
-                  class="flex-1 flex justify-between items-center px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm transition"
+                 class="flex-1 flex justify-between items-center px-3 py-2 rounded-lg 
+bg-slate-100 hover:bg-slate-200 
+dark:bg-slate-700 dark:hover:bg-slate-600 
+text-sm transition"
                   <span>${p.name}</span>
                   <span>KSh ${p.price}</span>
                 </button>
