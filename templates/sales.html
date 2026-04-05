@@ -100,6 +100,7 @@ body {
 <script>
 let cart = [];
 let currentEditId = null;
+let previousSales = {};
 
 // ================= CART =================
 function renderCart() {
@@ -266,20 +267,59 @@ function createSale() {
 
 function loadSales() {
     fetch("/api/sales")
-    .then(r=>r.json())
-    .then(data=>{
-        const el=document.getElementById("salesList");
-        el.innerHTML="";
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById("salesList");
 
-        data.sales.forEach(s=>{
-            el.innerHTML+=`
-            <li class="flex justify-between border-b pb-2">
-              <span>${s.sale_id}</span>
-              <span>KSh ${s.total_amount}</span>
-              <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
-                ${s.status}
-              </span>
+        data.sales.forEach(s => {
+
+            const prevStatus = previousSales[s.sale_id];
+            const justPaid = prevStatus === "pending" && s.status === "completed";
+
+            previousSales[s.sale_id] = s.status;
+
+            let existing = document.getElementById("sale-" + s.sale_id);
+
+            const html = `
+            <li id="sale-${s.sale_id}"
+                class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
+
+                <div class="flex justify-between">
+                    <span>${s.sale_id}</span>
+                    <span>KSh ${s.total_amount}</span>
+                    <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
+                        ${s.status}
+                    </span>
+                </div>
+
+                ${
+                    s.status === "pending"
+? `<div class="text-xs text-blue-600 mt-1 bg-blue-50 p-2 rounded">
+
+     📲 <b>Customer Payment Instructions</b><br>
+
+     Pay via <b>Paybill</b><br>
+     Use Account Number (Order ID): <b>${s.sale_id}</b>
+
+   </div>`
+: ""
+                }
+
+                ${
+                    justPaid
+                    ? `<div class="text-green-600 text-xs mt-1">
+                         💰 Payment received
+                       </div>`
+                    : ""
+                }
+
             </li>`;
+
+            if (existing) {
+                existing.outerHTML = html;
+            } else {
+                el.innerHTML += html;
+            }
         });
     });
 }
@@ -288,6 +328,8 @@ function loadSales() {
 document.addEventListener("DOMContentLoaded",()=>{
     loadProducts();
     loadSales();
+
+    setInterval(loadSales, 3000);	
 });
 </script>
 
