@@ -1079,6 +1079,52 @@ def api_dash():
 
     return jsonify(snap)
 
+@app.route("/api/products")
+@login_required
+def api_products():
+
+    username = session["username"]
+
+    def operation(cur):
+        cur.execute("""
+            SELECT p.id, p.name, p.price
+            FROM products p
+            JOIN businesses b ON p.business_id = b.id
+            WHERE b.username = %s
+        """, (username,))
+
+        return {"products": cur.fetchall()}
+
+    return jsonify(run_db_operation(operation))
+
+@app.route("/products/update/<int:id>", methods=["PUT"])
+@login_required
+def update_product(id):
+
+    data = request.get_json()
+
+    def operation(cur):
+        cur.execute("""
+            UPDATE products
+            SET name=%s, price=%s
+            WHERE id=%s
+        """, (data["name"], data["price"], id))
+
+    run_db_operation(operation, commit=True)
+
+    return jsonify({"success": True})
+
+@app.route("/products/delete/<int:id>", methods=["DELETE"])
+@login_required
+def delete_product(id):
+
+    def operation(cur):
+        cur.execute("DELETE FROM products WHERE id=%s", (id,))
+
+    run_db_operation(operation, commit=True)
+
+    return jsonify({"success": True})
+
 @app.route("/api/sales")
 @login_required
 def api_sales():

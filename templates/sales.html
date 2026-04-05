@@ -70,17 +70,32 @@ body {
     </button>
   </div>
 
-  <div class="space-y-2">
-    {% for p in products %}
+  <div id="productsList" class="space-y-2">
+  {% for p in products %}
+  <div class="flex items-center gap-2">
+
     <button
       onclick="addItem({{ p.id }}, '{{ p.name }}', {{ p.price }})"
-      class="w-full flex justify-between px-3 py-2 rounded bg-green-600 text-white hover:opacity-90">
+      class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white">
 
       <span>{{ p.name }}</span>
       <span>KSh {{ p.price }}</span>
     </button>
-    {% endfor %}
+
+    <!-- ✏️ EDIT -->
+    <button onclick="editProduct({{ p.id }}, '{{ p.name }}', {{ p.price }})"
+      class="px-2 py-1 bg-yellow-500 text-white rounded">
+      ✏️
+    </button>
+
+    <!-- 🗑️ DELETE -->
+    <button onclick="deleteProduct({{ p.id }})"
+      class="px-2 py-1 bg-red-600 text-white rounded">
+      🗑️
+    </button>
+
   </div>
+  {% endfor %}
 </div>
 
 <!-- CART -->
@@ -112,6 +127,7 @@ body {
 <script>
 let cart = [];
 let previousSales = {};
+let currentEditId = null;
 
 // =======================
 // CART RENDER
@@ -311,6 +327,99 @@ function loadSales() {
 setInterval(loadSales, 3000);
 
 // =======================
+// EDIT PRODUCT (MODAL)
+// =======================
+function editProduct(id, name, price) {
+    currentEditId = id;
+
+    document.getElementById("editName").value = name;
+    document.getElementById("editPrice").value = price;
+
+    document.getElementById("editModal").classList.remove("hidden");
+    document.getElementById("editModal").classList.add("flex");
+}
+
+function closeModal() {
+    document.getElementById("editModal").classList.add("hidden");
+}
+
+function saveEdit() {
+
+    const name = document.getElementById("editName").value;
+    const price = document.getElementById("editPrice").value;
+
+    fetch(`/products/update/${currentEditId}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, price })
+    })
+    .then(r => r.json())
+    .then(() => {
+        closeModal();
+        loadProducts();
+    });
+}
+
+// =======================
+// DELETE PRODUCT
+// =======================
+function deleteProduct(id) {
+
+    if (!confirm("Delete product?")) return;
+
+    fetch(`/products/delete/${id}`, {
+        method: "DELETE"
+    })
+    .then(r => r.json())
+    .then(() => {
+        loadProducts();
+    });
+}
+
+// =======================
+// LOAD PRODUCTS (NO RELOAD)
+// =======================
+function loadProducts() {
+
+    fetch("/api/products")
+    .then(r => r.json())
+    .then(data => {
+
+        const container = document.getElementById("productsList");
+        container.innerHTML = "";
+
+        data.products.forEach(p => {
+
+            container.innerHTML += `
+            <div class="flex items-center gap-2">
+
+              <button
+                onclick="addItem(${p.id}, '${p.name}', ${p.price})"
+                class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white">
+
+                <span>${p.name}</span>
+                <span>KSh ${p.price}</span>
+              </button>
+
+              <button onclick="editProduct(${p.id}, '${p.name}', ${p.price})"
+                class="px-2 py-1 bg-yellow-500 text-white rounded">
+                ✏️
+              </button>
+
+              <button onclick="deleteProduct(${p.id})"
+                class="px-2 py-1 bg-red-600 text-white rounded">
+                🗑️
+              </button>
+
+            </div>
+            `;
+        });
+    });
+}
+
+// =======================
 // DARK MODE
 // =======================
 document.addEventListener("DOMContentLoaded", () => {
@@ -329,6 +438,38 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 </script>
+
+<!-- ✏️ EDIT PRODUCT MODAL -->
+<div id="editModal"
+     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+
+  <div class="bg-white p-6 rounded-xl w-80 shadow-lg">
+
+    <h2 class="text-lg font-semibold mb-4">Edit Product</h2>
+
+    <input id="editName"
+           class="w-full mb-3 px-2 py-1 border rounded text-black"
+           placeholder="Product name">
+
+    <input id="editPrice"
+           type="number"
+           class="w-full mb-4 px-2 py-1 border rounded text-black"
+           placeholder="Price">
+
+    <div class="flex justify-between">
+      <button onclick="closeModal()"
+        class="px-3 py-1 bg-gray-400 text-white rounded">
+        Cancel
+      </button>
+
+      <button onclick="saveEdit()"
+        class="px-3 py-1 bg-blue-600 text-white rounded">
+        Save
+      </button>
+    </div>
+
+  </div>
+</div>
 
 </body>
 </html>
