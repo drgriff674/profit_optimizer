@@ -47,10 +47,10 @@ body {
   </button>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[80vh]">
 
 <!-- PRODUCTS -->
-<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Products</h3>
 
   <!-- ADD PRODUCT -->
@@ -70,7 +70,7 @@ body {
     </button>
   </div>
 
-  <div id="productsList" class="space-y-2">
+  <div id="productsList" class="space-y-2 overflow-y-auto flex-1 pr-1">
   {% for p in products %}
   <div class="flex items-center gap-2">
 
@@ -83,26 +83,35 @@ body {
     </button>
 
     <!-- ✏️ EDIT -->
-    <button onclick="editProduct({{ p.id }}, '{{ p.name }}', {{ p.price }})"
-      class="px-2 py-1 bg-yellow-500 text-white rounded">
-      ✏️
-    </button>
+   <button onclick="editProduct({{ p.id }}, '{{ p.name }}', {{ p.price }})"
+  class="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-sm transition flex items-center justify-center"
+  title="Edit product">
+
+  ✏️
+</button>
 
     <!-- 🗑️ DELETE -->
     <button onclick="deleteProduct({{ p.id }})"
-      class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition"
-      
-    </button>
+  class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition flex items-center justify-center"
+  title="Delete product">
+
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+       viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-6 4h8" />
+  </svg>
+
+</button>
 
   </div>
   {% endfor %}
 </div>
 
 <!-- CART -->
-<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Cart</h3>
 
-  <ul id="cart" class="space-y-2 text-sm"></ul>
+  <ul id="cart" class="space-y-2 text-sm overflow-y-auto flex-1"></ul>
 
   <div class="mt-4 font-semibold">
     Total: KSh <span id="total">0</span>
@@ -115,10 +124,10 @@ body {
 </div>
 
 <!-- RECENT SALES -->
-<div class="p-4 rounded-xl shadow" style="background: var(--card);">
+<div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
-  <ul id="salesList" class="text-sm space-y-2"></ul>
+  <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
 
 </div>
 
