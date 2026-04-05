@@ -13,23 +13,34 @@
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white transition">
 
 <!-- TOP BAR -->
-<div class="flex justify-between items-center mb-4 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+<div class="flex justify-between items-center mb-4 
+            bg-white dark:bg-slate-800 
+            border border-slate-200 dark:border-slate-700 
+            rounded-xl px-4 py-3 shadow-sm">
 
   <div class="flex items-center gap-3">
     <a href="{{ url_for('dashboard') }}"
        class="px-3 py-1.5 rounded-lg text-sm font-medium
-              bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white transition">
+              bg-slate-100 hover:bg-slate-200 
+              dark:bg-slate-700 dark:hover:bg-slate-600 
+              dark:text-white transition">
        ← Dashboard
     </a>
 
-    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">Sales</h1>
+    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+      Sales
+    </h1>
   </div>
 
-</div>
-<button id="darkToggle"
-  class="px-3 py-1.5 rounded-lg text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-  🌙
-</button>
+  <!-- ✅ NOW PROPERLY POSITIONED -->
+  <button id="darkToggle"
+    class="px-3 py-1.5 rounded-lg text-sm 
+           bg-slate-100 dark:bg-slate-700 
+           hover:bg-slate-200 dark:hover:bg-slate-600 
+           text-slate-800 dark:text-white 
+           transition">
+    🌙
+  </button>
 
 </div>
 
