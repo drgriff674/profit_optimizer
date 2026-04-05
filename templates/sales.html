@@ -27,17 +27,15 @@ body {
 </style>
 </head>
 
-<body class="p-4 transition-colors">
+<body class="p-4 transition-colors overflow-hidden">
 
 <!-- TOP BAR -->
 <div class="flex justify-between items-center mb-6">
-
   <div class="flex items-center gap-3">
     <a href="{{ url_for('dashboard') }}"
        class="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm">
        ← Dashboard
     </a>
-
     <h1 class="text-xl font-bold">🧾 Sales</h1>
   </div>
 
@@ -47,7 +45,8 @@ body {
   </button>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[80vh]">
+<!-- GRID -->
+<div class="grid grid-cols-3 gap-6 h-screen">
 
 <!-- PRODUCTS -->
 <div class="p-4 rounded-xl shadow flex flex-col h-full" style="background: var(--card);">
@@ -55,13 +54,10 @@ body {
 
   <!-- ADD PRODUCT -->
   <div class="mb-4 space-y-2">
-    <input id="pname"
-           placeholder="Product name"
+    <input id="pname" placeholder="Product name"
            class="w-full px-2 py-1 rounded border text-black">
 
-    <input id="pprice"
-           type="number"
-           placeholder="Price"
+    <input id="pprice" type="number" placeholder="Price"
            class="w-full px-2 py-1 rounded border text-black">
 
     <button onclick="addProduct()"
@@ -70,41 +66,8 @@ body {
     </button>
   </div>
 
-  <div id="productsList" class="space-y-2 overflow-y-auto flex-1 pr-1">
-  {% for p in products %}
-  <div class="flex items-center gap-2">
-
-    <button
-      onclick="addItem({{ p.id }}, '{{ p.name }}', {{ p.price }})"
-      class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white">
-
-      <span>{{ p.name }}</span>
-      <span>KSh {{ p.price }}</span>
-    </button>
-
-    <!-- ✏️ EDIT -->
-   <button onclick="editProduct({{ p.id }}, '{{ p.name }}', {{ p.price }})"
-  class="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg shadow-sm transition flex items-center justify-center"
-  title="Edit product">
-
-  ✏️
-</button>
-
-    <!-- 🗑️ DELETE -->
-    <button onclick="deleteProduct({{ p.id }})"
-  class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition flex items-center justify-center"
-  title="Delete product">
-
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-       viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-6 4h8" />
-  </svg>
-
-</button>
-
-  </div>
-  {% endfor %}
+  <!-- PRODUCT LIST -->
+  <div id="productsList" class="space-y-2 overflow-y-auto flex-1 pr-1"></div>
 </div>
 
 <!-- CART -->
@@ -128,7 +91,6 @@ body {
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
   <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
-
 </div>
 
 </div>
@@ -138,81 +100,46 @@ let cart = [];
 let previousSales = {};
 let currentEditId = null;
 
-// =======================
-// CART RENDER
-// =======================
+// ======================= CART =======================
 function renderCart() {
     const el = document.getElementById("cart");
     const totalEl = document.getElementById("total");
 
     el.innerHTML = "";
-
     let total = 0;
 
     cart.forEach((item, i) => {
         total += item.price * item.quantity;
 
         el.innerHTML += `
-          <li class="flex justify-between items-center">
+        <li class="flex justify-between items-center">
             <span>${item.name} x${item.quantity}</span>
             <div class="flex gap-2">
-              <button onclick="decreaseQty(${i})">➖</button>
-              <button onclick="increaseQty(${i})">➕</button>
-              <button onclick="removeItem(${i})">❌</button>
+                <button onclick="decreaseQty(${i})">➖</button>
+                <button onclick="increaseQty(${i})">➕</button>
+                <button onclick="removeItem(${i})">❌</button>
             </div>
-          </li>
-        `;
+        </li>`;
     });
 
     totalEl.innerText = total;
 }
 
-// =======================
-// ADD ITEM
-// =======================
 function addItem(id, name, price) {
     const existing = cart.find(i => i.product_id === id);
-
-    if (existing) {
-        existing.quantity += 1;
-    } else {
-        cart.push({ product_id: id, name, price, quantity: 1 });
-    }
+    if (existing) existing.quantity += 1;
+    else cart.push({ product_id: id, name, price, quantity: 1 });
 
     renderCart();
 }
 
-// =======================
-// QUANTITY CONTROLS
-// =======================
-function increaseQty(index) {
-    cart[index].quantity += 1;
-    renderCart();
-}
+function increaseQty(i){ cart[i].quantity++; renderCart(); }
+function decreaseQty(i){ cart[i].quantity>1 ? cart[i].quantity-- : cart.splice(i,1); renderCart(); }
+function removeItem(i){ cart.splice(i,1); renderCart(); }
 
-function decreaseQty(index) {
-    if (cart[index].quantity > 1) {
-        cart[index].quantity -= 1;
-    } else {
-        cart.splice(index, 1);
-    }
-    renderCart();
-}
-
-function removeItem(index) {
-    cart.splice(index, 1);
-    renderCart();
-}
-
-// =======================
-// CREATE SALE
-// =======================
+// ======================= SALES =======================
 function createSale() {
-
-    if (cart.length === 0) {
-        alert("Cart is empty 😅");
-        return;
-    }
+    if (!cart.length) return alert("Cart is empty 😅");
 
     fetch("/sales/create", {
         method: "POST",
@@ -220,302 +147,122 @@ function createSale() {
         body: JSON.stringify({items: cart})
     })
     .then(r => r.json())
-    .then(data => {
-        alert("✅ Sale created: " + data.sale_id);
-
+    .then(() => {
         cart = [];
         renderCart();
-        location.reload();
+        loadSales();
     });
 }
 
-// =======================
-// ADD PRODUCT
-// =======================
+// ======================= PRODUCTS =======================
 function addProduct() {
+    const name = pname.value;
+    const price = pprice.value;
 
-    const name = document.getElementById("pname").value;
-    const price = document.getElementById("pprice").value;
+    if (!name || !price) return alert("Fill product name and price");
 
-    if (!name || !price) {
-        alert("Fill product name and price");
-        return;
-    }
-
-    // ✅ GET CSRF TOKEN
-    const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
     fetch("/products/create", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken   // ✅ THIS IS THE FIX
+            "X-CSRFToken": csrf
         },
         body: JSON.stringify({ name, price })
     })
-    .then(async (r) => {
-        const text = await r.text();
-
-        try {
-            return JSON.parse(text);
-        } catch {
-            throw new Error("Server returned non-JSON:\n" + text);
-        }
-    })
-    .then(data => {
-        if (data.error) {
-            alert("❌ " + data.error);
-            return;
-        }
-
-        alert("✅ Product added");
-
-        document.getElementById("pname").value = "";
-        document.getElementById("pprice").value = "";
-
-        location.reload();
-    })
-    .catch(err => {
-        console.error("FRONTEND ERROR:", err);
-        alert("Something broke — check console");
+    .then(r => r.json())
+    .then(() => {
+        pname.value = "";
+        pprice.value = "";
+        loadProducts(); // ✅ FIXED
     });
 }
 
+function loadProducts() {
+    fetch("/api/products")
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById("productsList");
+        el.innerHTML = "";
+
+        data.products.forEach(p => {
+            el.innerHTML += `
+            <div class="flex items-center gap-2">
+
+                <button onclick="addItem(${p.id}, '${p.name}', ${p.price})"
+                    class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white hover:opacity-90">
+                    <span>${p.name}</span>
+                    <span>KSh ${p.price}</span>
+                </button>
+
+                <button onclick="editProduct(${p.id}, '${p.name}', ${p.price})"
+                    class="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg">
+                    ✏️
+                </button>
+
+                <button onclick="deleteProduct(${p.id})"
+                    class="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg">
+                    🗑️
+                </button>
+
+            </div>`;
+        });
+    });
+}
+
+function deleteProduct(id) {
+    if (!confirm("Delete product?")) return;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
+    fetch(`/products/delete/${id}`, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": csrf }
+    })
+    .then(r => r.json())
+    .then(() => loadProducts());
+}
+
+// ======================= SALES LIST =======================
 function loadSales() {
     fetch("/api/sales")
     .then(r => r.json())
     .then(data => {
-
         const el = document.getElementById("salesList");
         el.innerHTML = "";
 
         data.sales.forEach(s => {
-
-            const prevStatus = previousSales[s.sale_id];
-
-            const justPaid = prevStatus === "pending" && s.status === "completed";
-
-            previousSales[s.sale_id] = s.status;
-
             el.innerHTML += `
-              <li id="sale-${s.sale_id}" class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
-
-                <div class="flex justify-between">
-                  <span>${s.sale_id}</span>
-                  <span>KSh ${s.total_amount}</span>
-                  <span class="${s.status === 'completed' ? 'text-green-500' : 'text-yellow-500'}">
+            <li class="flex justify-between border-b pb-2">
+                <span>${s.sale_id}</span>
+                <span>KSh ${s.total_amount}</span>
+                <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
                     ${s.status}
-                  </span>
-                </div>
-
-                ${
-                  s.status === "pending"
-                  ? `<div class="text-xs text-gray-500 mt-1">
-                       Paybill: <b>YOUR_PAYBILL</b> |
-                       Account: <b>${s.sale_id}</b>
-                     </div>`
-                  : ""
-                }
-
-                ${
-                  justPaid
-                  ? `<div class="text-green-600 text-xs mt-1">
-                       💰 Payment received
-                     </div>`
-                  : ""
-                }
-
-              </li>
-            `;
+                </span>
+            </li>`;
         });
     });
 }
 
-setInterval(loadSales, 3000);
-
-// =======================
-// EDIT PRODUCT (MODAL)
-// =======================
-function editProduct(id, name, price) {
-    currentEditId = id;
-
-    document.getElementById("editName").value = name;
-    document.getElementById("editPrice").value = price;
-
-    document.getElementById("editModal").classList.remove("hidden");
-    document.getElementById("editModal").classList.add("flex");
-}
-
-function closeModal() {
-    document.getElementById("editModal").classList.add("hidden");
-}
-
-function saveEdit() {
-
-    const name = document.getElementById("editName").value;
-    const price = document.getElementById("editPrice").value;
-
-    const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
-
-    fetch(`/products/update/${currentEditId}`, {
-        method: "PUT",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken
-        },
-        body: JSON.stringify({ name, price })
-    })
-    .then(r => r.text())
-    .then(t => {
-        console.log("UPDATE RESPONSE:", t);
-
-        try {
-            return JSON.parse(t);
-        } catch {
-            throw new Error("Not JSON → " + t);
-        }
-    })
-    .then(() => {
-        closeModal();
-        loadProducts();
-    })
-    .catch(err => {
-        console.error("UPDATE ERROR:", err);
-        alert("Update failed — check console");
-    });
-}
-
-// =======================
-// DELETE PRODUCT
-// =======================
-function deleteProduct(id) {
-
-    if (!confirm("Delete product?")) return;
-
-    const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
-
-    fetch(`/products/delete/${id}`, {
-        method: "DELETE",
-        headers: {
-            "X-CSRFToken": csrfToken
-        }
-    })
-    .then(r => r.text())
-    .then(t => {
-        console.log("DELETE RESPONSE:", t);
-
-        try {
-            return JSON.parse(t);
-        } catch {
-            throw new Error("Not JSON → " + t);
-        }
-    })
-    .then(() => {
-        loadProducts();
-    })
-    .catch(err => {
-        console.error("DELETE ERROR:", err);
-        alert("Delete failed — check console");
-    });
-}
-// =======================
-// LOAD PRODUCTS (NO RELOAD)
-// =======================
-function loadProducts() {
-
-    fetch("/api/products")
-    .then(r => r.json())
-    .then(data => {
-
-        const container = document.getElementById("productsList");
-        container.innerHTML = "";
-
-        data.products.forEach(p => {
-
-            container.innerHTML += `
-            <div class="flex items-center gap-2">
-
-              <button
-                onclick="addItem(${p.id}, '${p.name}', ${p.price})"
-                class="flex-1 flex justify-between px-3 py-2 rounded bg-green-600 text-white">
-
-                <span>${p.name}</span>
-                <span>KSh ${p.price}</span>
-              </button>
-
-              <button onclick="editProduct(${p.id}, '${p.name}', ${p.price})"
-                class="px-2 py-1 bg-yellow-500 text-white rounded">
-                ✏️
-              </button>
-
-              <button onclick="deleteProduct(${p.id})"
-                class="px-2 py-1 bg-red-600 text-white rounded">
-                🗑️
-              </button>
-
-            </div>
-            `;
-        });
-    });
-}
-
-// =======================
-// DARK MODE
-// =======================
+// ======================= INIT =======================
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("darkToggle");
-  const root = document.documentElement;
+    loadProducts(); // 🔥 FIX
+    loadSales();
 
-  loadSales();
+    const btn = document.getElementById("darkToggle");
+    const root = document.documentElement;
 
-  if (localStorage.getItem("theme") === "dark") {
-    root.classList.add("dark");
-  }
+    if (localStorage.getItem("theme") === "dark") {
+        root.classList.add("dark");
+    }
 
-  btn.onclick = () => {
-    const dark = root.classList.toggle("dark");
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  };
+    btn.onclick = () => {
+        const dark = root.classList.toggle("dark");
+        localStorage.setItem("theme", dark ? "dark" : "light");
+    };
 });
 </script>
-
-<!-- ✏️ EDIT PRODUCT MODAL -->
-<div id="editModal"
-     class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
-
-  <div class="bg-white p-6 rounded-xl w-80 shadow-lg">
-
-    <h2 class="text-lg font-semibold mb-4">Edit Product</h2>
-
-    <input id="editName"
-           class="w-full mb-3 px-2 py-1 border rounded text-black"
-           placeholder="Product name">
-
-    <input id="editPrice"
-           type="number"
-           class="w-full mb-4 px-2 py-1 border rounded text-black"
-           placeholder="Price">
-
-    <div class="flex justify-between">
-      <button onclick="closeModal()"
-        class="px-3 py-1 bg-gray-400 text-white rounded">
-        Cancel
-      </button>
-
-      <button onclick="saveEdit()"
-        class="px-3 py-1 bg-blue-600 text-white rounded">
-        Save
-      </button>
-    </div>
-
-  </div>
-</div>
 
 </body>
 </html>
