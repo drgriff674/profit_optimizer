@@ -22,7 +22,7 @@
        ← Dashboard
     </a>
 
-    <h1 class="text-lg font-semibold">Sales</h1>
+    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">Sales</h1>
   </div>
 
 </div>
@@ -115,23 +115,34 @@ function renderCart() {
         el.innerHTML += `
         <li class="flex justify-between items-center">
             <span>${item.name} x${item.quantity}</span>
-            <div class="flex items-center overflow-hidden rounded-lg border border-slate-200">
+           <div class="flex items-center overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
 
     <!-- MINUS -->
     <button onclick="decreaseQty(${i})"
-      class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-sm font-medium">
+      class="px-3 py-1 
+             bg-slate-100 hover:bg-slate-200 
+             dark:bg-slate-700 dark:hover:bg-slate-600 
+             text-slate-800 dark:text-white 
+             text-sm font-medium">
       −
     </button>
 
     <!-- PLUS -->
     <button onclick="increaseQty(${i})"
-      class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-sm font-medium border-x border-slate-200">
+      class="px-3 py-1 
+             bg-slate-100 hover:bg-slate-200 
+             dark:bg-slate-700 dark:hover:bg-slate-600 
+             text-slate-800 dark:text-white 
+             text-sm font-medium 
+             border-x border-slate-200 dark:border-slate-700">
       +
     </button>
 
     <!-- REMOVE -->
     <button onclick="removeItem(${i})"
-      class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm font-medium">
+      class="px-3 py-1 
+             bg-red-500 hover:bg-red-600 
+             text-white text-sm font-medium">
       ✕
     </button>
 
@@ -192,7 +203,13 @@ text-sm transition"
                 </button>
 
                 <button onclick="editProduct(${p.id}, '${p.name}', ${p.price})"
-                  class="px-2 py-1 text-xs rounded-lg bg-amber-500 hover:bg-amber-600 text-white transition">✏️</button>
+  class="px-2 py-1 text-xs rounded-lg 
+         bg-slate-200 hover:bg-slate-300 
+         dark:bg-slate-600 dark:hover:bg-slate-500 
+         text-slate-800 dark:text-white 
+         transition">
+  Edit
+</button>
 
                 <button onclick="deleteProduct(${p.id})"
                   class="px-2 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white transition">
