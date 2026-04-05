@@ -90,8 +90,8 @@ body {
 
     <!-- 🗑️ DELETE -->
     <button onclick="deleteProduct({{ p.id }})"
-      class="px-2 py-1 bg-red-600 text-white rounded">
-      🗑️
+      class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-sm transition"
+      
     </button>
 
   </div>
@@ -348,17 +348,35 @@ function saveEdit() {
     const name = document.getElementById("editName").value;
     const price = document.getElementById("editPrice").value;
 
+    const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+
     fetch(`/products/update/${currentEditId}`, {
         method: "PUT",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
         },
         body: JSON.stringify({ name, price })
     })
-    .then(r => r.json())
+    .then(r => r.text())
+    .then(t => {
+        console.log("UPDATE RESPONSE:", t);
+
+        try {
+            return JSON.parse(t);
+        } catch {
+            throw new Error("Not JSON → " + t);
+        }
+    })
     .then(() => {
         closeModal();
         loadProducts();
+    })
+    .catch(err => {
+        console.error("UPDATE ERROR:", err);
+        alert("Update failed — check console");
     });
 }
 
@@ -369,15 +387,34 @@ function deleteProduct(id) {
 
     if (!confirm("Delete product?")) return;
 
+    const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
+
     fetch(`/products/delete/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: {
+            "X-CSRFToken": csrfToken
+        }
     })
-    .then(r => r.json())
+    .then(r => r.text())
+    .then(t => {
+        console.log("DELETE RESPONSE:", t);
+
+        try {
+            return JSON.parse(t);
+        } catch {
+            throw new Error("Not JSON → " + t);
+        }
+    })
     .then(() => {
         loadProducts();
+    })
+    .catch(err => {
+        console.error("DELETE ERROR:", err);
+        alert("Delete failed — check console");
     });
 }
-
 // =======================
 // LOAD PRODUCTS (NO RELOAD)
 // =======================

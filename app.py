@@ -1098,6 +1098,7 @@ def api_products():
     return jsonify(run_db_operation(operation))
 
 @app.route("/products/update/<int:id>", methods=["PUT"])
+@csrf.exempt
 @login_required
 def update_product(id):
 
@@ -1115,6 +1116,7 @@ def update_product(id):
     return jsonify({"success": True})
 
 @app.route("/products/delete/<int:id>", methods=["DELETE"])
+@csrf.exempt
 @login_required
 def delete_product(id):
 
