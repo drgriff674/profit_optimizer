@@ -2121,6 +2121,22 @@ def profile():
         snapshot=snapshot
     )
 
+@app.route("/test-create-sale")
+def test_create_sale():
+
+    from database import create_sale
+
+    # use a real business_id (VERY IMPORTANT)
+    business_id = 1  
+
+    items = [
+        {"product_id": 1, "quantity": 2}
+    ]
+
+    sale = create_sale(business_id, items)
+
+    return sale
+
 
 
 @app.route("/pesapal/get-ipn-id")
