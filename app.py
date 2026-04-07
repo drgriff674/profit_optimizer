@@ -1250,8 +1250,8 @@ def create_sale():
 
         # insert sale
         cur.execute("""
-            INSERT INTO sales (sale_id, business_id, total_amount)
-            VALUES (%s, %s, %s)
+            INSERT INTO sales (sale_id, business_id, total_amount, status)
+            VALUES (%s, %s, %s, 'completed')
         """, (sale_id, business_id, total))
 
         # insert items
@@ -1598,13 +1598,14 @@ def revenue_day_detail(date):
         row = cur.fetchone()
         cash_total = float(row["cash_total"]) if row else 0.0
 
-        # sales total (NEW 🔥)
+        # sales total (FIXED ✅)
         cur.execute("""
-            SELECT COALESCE(SUM(total_amount),0) AS sales_total
-            FROM sales
-            WHERE username=%s
-              AND DATE(created_at)=%s
-              AND status='completed'
+            SELECT COALESCE(SUM(s.total_amount),0) AS sales_total
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND DATE(s.created_at) = %s
+              AND s.status = 'completed'
         """, (username, date))
 
         row = cur.fetchone()
@@ -1830,13 +1831,14 @@ def lock_revenue_day_route():
 
         mpesa_total = float(cur.fetchone()["mpesa_total"])
 
-        # sales total (NEW 🔥)
+        # sales total (FIXED ✅)
         cur.execute("""
-            SELECT COALESCE(SUM(total_amount),0) AS sales_total
-            FROM sales
-            WHERE username=%s
-              AND DATE(created_at)=%s
-              AND status='completed'
+            SELECT COALESCE(SUM(s.total_amount),0) AS sales_total
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND DATE(s.created_at) = %s
+              AND s.status = 'completed'
         """, (username, revenue_date))
 
         sales_total = float(cur.fetchone()["sales_total"])
