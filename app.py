@@ -2353,14 +2353,7 @@ def pesapal_ipn():
             from datetime import date
             today = date.today()
 
-            # ✅ mark sale completed
-            cur.execute("""
-                UPDATE sales
-                SET status = 'completed'
-                WHERE sale_id = %s AND status != 'completed'
-            """, (merchant_reference,))
-
-            # ✅ get username + amount
+            # ✅ FIRST: get username + amount
             cur.execute("""
                 SELECT b.username, s.total_amount
                 FROM sales s
@@ -2376,6 +2369,16 @@ def pesapal_ipn():
             username = row["username"]
             amount = float(row["total_amount"])
 
+            # 🔥🔥🔥 THIS IS THE MISSING PIECE
+            cur.execute(f"SET app.current_username = '{username}'")
+
+            # ✅ NOW mark sale completed
+            cur.execute("""
+                UPDATE sales
+                SET status = 'completed'
+                WHERE sale_id = %s AND status != 'completed'
+            """, (merchant_reference,))
+
             # ✅ update revenue_days
             cur.execute("""
                 INSERT INTO revenue_days (username, revenue_date, total_amount)
@@ -2389,7 +2392,6 @@ def pesapal_ipn():
             update_dashboard_intelligence(username)
 
             print("📊 DASHBOARD UPDATED FOR:", username)
-
         run_db_operation(operation, commit=True)
 
         print("✅ SALE COMPLETED:", merchant_reference)
