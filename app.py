@@ -2121,27 +2121,7 @@ def profile():
         snapshot=snapshot
     )
 
-@app.route('/test-pesapal')
-def test_pesapal():
 
-    fake_data = {
-        "OrderTrackingId": "TEST123",
-        "OrderMerchantReference": "SALE001"
-    }
-
-    print("🧪 TESTING IPN DIRECTLY")
-
-    try:
-        order_tracking_id = fake_data.get("OrderTrackingId")
-
-        status = check_payment_status(order_tracking_id)
-
-        print("🔍 PAYMENT STATUS:", status)
-
-        return "✅ Direct test worked"
-
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
 
 @app.route("/pesapal/get-ipn-id")
 def get_ipn_id():
@@ -2169,37 +2149,7 @@ def get_ipn_id():
 
     return response.json()
 
-@app.route("/pesapal/register-ipn")
-def register_ipn():
 
-    import requests, os
-
-    # 🔐 get token
-    auth_url = "https://pay.pesapal.com/v3/api/Auth/RequestToken"
-
-    res = requests.post(auth_url, json={
-        "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
-        "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
-    })
-
-    token = res.json().get("token")
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-
-    # 📡 register IPN properly
-    url = "https://pay.pesapal.com/v3/api/URLSetup/RegisterIPN"
-
-    payload = {
-        "url": "https://optigainapp.com/pesapal/ipn",
-        "ipn_notification_type": "POST"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-
-    return response.json()
 
 @app.route("/api/latest-payment")
 @login_required
@@ -2355,33 +2305,17 @@ def transactions_summary():
 # ============================
 
 def get_pesapal_token():
-    url = "https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken"
+    import requests, os
 
-    data = {
+    url = "https://pay.pesapal.com/v3/api/Auth/RequestToken"
+
+    response = requests.post(url, json={
         "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
         "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
-    }
+    })
 
-    response = requests.post(url, json=data)
     return response.json()
 
-def register_pesapal_ipn():
-    token = get_pesapal_token().get("token")
-
-    url = "https://cybqa.pesapal.com/pesapalv3/api/URLSetup/RegisterIPN"
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "url": "https://optigainapp.com/pesapal/ipn",
-        "ipn_notification_type": "POST"
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-    return response.json()
 
 @app.route('/pesapal/ipn', methods=['POST'])
 @csrf.exempt
