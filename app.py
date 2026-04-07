@@ -2273,8 +2273,8 @@ def transactions_summary():
         print("⚠️ Error generating transaction summary:", e)
         return jsonify({})
 
-@app.route("/test-create-sale")
-def test_create_sale():
+@app.route("/dev-test-create-sale")
+def create_sale_test_unique():
 
     from database import create_sale
 
