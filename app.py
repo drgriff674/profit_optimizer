@@ -2345,74 +2345,54 @@ def pesapal_ipn():
 
     print("🔍 PAYMENT STATUS:", status)
 
-    if status == "COMPLETED":
+    if status and status.strip().lower() == "completed":
+
         from database import run_db_operation, update_dashboard_snapshot, update_dashboard_intelligence
 
         def operation(cur):
-
             from datetime import date
-
             today = date.today()
 
-            def operation(cur):
-
-                # ✅ 1. mark sale completed (safe)
-                cur.execute("""
-                    UPDATE sales
-                    SET status = 'completed'
-                    WHERE sale_id = %s AND status != 'completed'
-                """, (merchant_reference,))
-
-                # ✅ 2. get username + amount
-                cur.execute("""
-                    SELECT b.username, s.total_amount
-                    FROM sales s
-                    JOIN businesses b ON s.business_id = b.id
-                    WHERE s.sale_id = %s
-                """, (merchant_reference,))
-
-                row = cur.fetchone()
-
-                if not row:
-                    return
-
-                username = row["username"]
-                amount = float(row["total_amount"])
-
-                # ✅ 3. update revenue_days (THIS WAS MISSING 🔥)
-                cur.execute("""
-                    INSERT INTO revenue_days (username, revenue_date, total_amount)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (username, revenue_date)
-                    DO UPDATE SET total_amount = revenue_days.total_amount + EXCLUDED.total_amount
-                """, (username, today, amount))
-
-                # ✅ 4. update dashboard (KEEP THIS)
-                update_dashboard_snapshot(username)
-                update_dashboard_intelligence(username)
-
-                print("📊 DASHBOARD UPDATED FOR:", username
-                      )
+            # ✅ mark sale completed
             cur.execute("""
-                SELECT b.username
+                UPDATE sales
+                SET status = 'completed'
+                WHERE sale_id = %s AND status != 'completed'
+            """, (merchant_reference,))
+
+            # ✅ get username + amount
+            cur.execute("""
+                SELECT b.username, s.total_amount
                 FROM sales s
                 JOIN businesses b ON s.business_id = b.id
                 WHERE s.sale_id = %s
             """, (merchant_reference,))
 
-            user = cur.fetchone()
+            row = cur.fetchone()
 
-            if user:
-                username = user["username"]
-                update_dashboard_snapshot(username)
-                update_dashboard_intelligence(username)
+            if not row:
+                return
 
-                print("📊 DASHBOARD UPDATED FOR:", username)
+            username = row["username"]
+            amount = float(row["total_amount"])
+
+            # ✅ update revenue_days
+            cur.execute("""
+                INSERT INTO revenue_days (username, revenue_date, total_amount)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (username, revenue_date)
+                DO UPDATE SET total_amount = revenue_days.total_amount + EXCLUDED.total_amount
+            """, (username, today, amount))
+
+            # ✅ update dashboard
+            update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
+
+            print("📊 DASHBOARD UPDATED FOR:", username)
 
         run_db_operation(operation, commit=True)
 
         print("✅ SALE COMPLETED:", merchant_reference)
-
     return jsonify({"status": "processed"})
 
 @app.route("/pesapal/create-payment/<sale_id>")
