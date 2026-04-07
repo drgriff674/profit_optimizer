@@ -322,9 +322,13 @@ function createSale() {
 
 function deleteSale(saleId) {
     if (!confirm("Cancel this sale?")) return;
+const csrf = document.querySelector('meta[name="csrf-token"]').content
 
     fetch(`/sales/delete/${saleId}`, {
         method: "POST"
+        headers:{
+              X-CSRFToken":csrf
+       }
     })
    .then(r => r.json())
 .then(data => {

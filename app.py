@@ -1383,12 +1383,14 @@ def delete_sale(sale_id):
 
         cur.execute("""
             DELETE FROM sales
-            WHERE sale_id = %s AND status = 'pending'
+            WHERE sale_id = %s
         """, (sale_id,))
 
         return cur.rowcount  # 🔥 THIS IS KEY
 
     deleted = run_db_operation(operation, commit=True)
+
+    print("DELETE RESULT:",deleted)
 
     return {"deleted": deleted}
 
