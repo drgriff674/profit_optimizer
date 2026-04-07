@@ -2427,10 +2427,20 @@ def check_payment_status(order_tracking_id):
 
     response = requests.get(url, headers=headers)
 
-    data = response.json()
+    # 🔍 DEBUG RAW RESPONSE FIRST
+    print("🔍 RAW RESPONSE STATUS:", response.status_code)
+    print("🔍 RAW RESPONSE TEXT:", response.text)
+
+    # ✅ SAFE JSON PARSING
+    try:
+        data = response.json()
+    except Exception as e:
+        print("❌ JSON ERROR:", str(e))
+        return "INVALID"
+
     print("🔍 FULL STATUS RESPONSE:", data)
 
-    return data.get("payment_status_description")
+    return data.get("payment_status_description", "UNKNOWN")
 
 @app.route("/pesapal/create-payment/<sale_id>")
 def create_payment(sale_id):
