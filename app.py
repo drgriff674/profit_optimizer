@@ -2278,7 +2278,7 @@ def create_sale_test_unique():
 
     from database import create_sale
 
-    business_id = 1  
+    business_id = 5  
 
     items = [
         {"product_id": 1, "quantity": 2}
