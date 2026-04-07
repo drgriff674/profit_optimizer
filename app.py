@@ -2121,6 +2121,21 @@ def profile():
         snapshot=snapshot
     )
 
+@app.route('/test-pesapal')
+def test_pesapal():
+    import requests
+
+    url = "https://optigainapp.com/pesapal/ipn"
+
+    data = {
+        "OrderTrackingId": "TEST123",
+        "OrderMerchantReference": "SALE001"
+    }
+
+    res = requests.post(url, json=data)
+
+    return res.text
+
 @app.route("/api/latest-payment")
 @login_required
 def latest_payment():
