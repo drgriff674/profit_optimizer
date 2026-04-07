@@ -2305,6 +2305,24 @@ def get_pesapal_token():
 
     return response.json()
 
+def check_payment_status(order_tracking_id):
+
+    import requests
+
+    token = get_pesapal_token().get("token")
+
+    url = f"https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    data = response.json()
+
+    return data.get("payment_status_description", "UNKNOWN")
+
 
 @app.route('/pesapal/ipn', methods=['GET', 'POST'])
 @csrf.exempt
