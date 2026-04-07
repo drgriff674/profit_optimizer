@@ -2189,7 +2189,7 @@ def register_ipn():
 
     payload = {
         "url": "https://optigainapp.com/pesapal/ipn",
-        "ipn_notification_type": "GET"
+        "ipn_notification_type": "POST"
     }
 
     response = requests.post(url, json=payload, headers=headers)
@@ -2385,7 +2385,116 @@ def pesapal_ipn():
     data = request.get_json(silent=True)
     print("🔥 PESAPAL IPN HIT:", data)
 
-    return jsonify({"status": "received"})
+    order_tracking_id = data.get("OrderTrackingId")
+    merchant_reference = data.get("OrderMerchantReference")
+
+    if not order_tracking_id:
+        return jsonify({"error": "Missing tracking id"}), 400
+
+    # 🔍 VERIFY PAYMENT STATUS FROM PESAPAL
+    status = check_payment_status(order_tracking_id)
+
+    print("🔍 PAYMENT STATUS:", status)
+
+    if status == "COMPLETED":
+
+        from database import run_db_operation
+
+        def operation(cur):
+            cur.execute("""
+                UPDATE sales
+                SET status = 'completed'
+                WHERE sale_id = %s
+            """, (merchant_reference,))
+
+        run_db_operation(operation, commit=True)
+
+        print("✅ SALE COMPLETED:", merchant_reference)
+
+    return jsonify({"status": "processed"})
+
+def check_payment_status(order_tracking_id):
+
+    import requests
+
+    token = get_pesapal_token().get("token")
+
+    url = f"https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.get(url, headers=headers)
+
+    data = response.json()
+    print("🔍 FULL STATUS RESPONSE:", data)
+
+    return data.get("payment_status_description")
+
+@app.route("/pesapal/create-payment/<sale_id>")
+def create_payment(sale_id):
+
+    import requests, os
+    from database import run_db_operation
+
+    # 🔍 get sale amount from DB
+    def operation(cur):
+        cur.execute("""
+            SELECT total_amount
+            FROM sales
+            WHERE sale_id = %s
+        """, (sale_id,))
+        return cur.fetchone()
+
+    sale = run_db_operation(operation)
+
+    if not sale:
+        return "Sale not found", 404
+
+    amount = float(sale["total_amount"])
+
+    # 🔐 get token
+    token = get_pesapal_token().get("token")
+
+    url = "https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "id": sale_id,
+        "currency": "KES",
+        "amount": amount,
+        "description": "Payment for sale",
+        "callback_url": "https://optigainapp.com/payment-success",
+
+        # 🔥 THIS IS YOUR IPN ID (VERY IMPORTANT)
+        "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
+
+        "billing_address": {
+            "email_address": "test@optigain.com",
+            "phone_number": "0700000000",
+            "country_code": "KE",
+            "first_name": "Test",
+            "last_name": "User"
+        }
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    print("🧾 PAYMENT RESPONSE:", data)
+
+    # 🔗 redirect user to payment page
+    redirect_url = data.get("redirect_url")
+
+    if redirect_url:
+        return redirect(redirect_url)
+
+    return data
 
     
 # ✅ GET ACCESS TOKEN
