@@ -2377,6 +2377,7 @@ def pesapal_ipn():
         print("✅ SALE COMPLETED:", merchant_reference)
 
     return jsonify({"status": "processed"})
+
 @app.route("/pesapal/create-payment/<sale_id>")
 def create_payment(sale_id):
 
@@ -2441,6 +2442,9 @@ def create_payment(sale_id):
 
     return data
 
+@app.route("/payment-success")
+def payment_success():
+    return "✅ Payment successful! You can close this page."
     
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
