@@ -2306,11 +2306,15 @@ def get_pesapal_token():
     return response.json()
 
 
-@app.route('/pesapal/ipn', methods=['POST'])
+@app.route('/pesapal/ipn', methods=['GET', 'POST'])
 @csrf.exempt
 def pesapal_ipn():
 
-    data = request.get_json(silent=True)
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.args.to_dict()
+
     print("🔥 PESAPAL IPN HIT:", data)
 
     order_tracking_id = data.get("OrderTrackingId")
@@ -2319,27 +2323,21 @@ def pesapal_ipn():
     if not order_tracking_id:
         return jsonify({"error": "Missing tracking id"}), 400
 
-    # 🔍 VERIFY PAYMENT STATUS
     status = check_payment_status(order_tracking_id)
 
     print("🔍 PAYMENT STATUS:", status)
 
-    username = None  # 👈 we capture it
-
     if status == "COMPLETED":
-
-        from database import run_db_operation
+        from database import run_db_operation, update_dashboard_snapshot, update_dashboard_intelligence
 
         def operation(cur):
 
-            # 1. mark sale completed
             cur.execute("""
                 UPDATE sales
                 SET status = 'completed'
                 WHERE sale_id = %s
             """, (merchant_reference,))
 
-            # 2. get username
             cur.execute("""
                 SELECT b.username
                 FROM sales s
@@ -2347,24 +2345,20 @@ def pesapal_ipn():
                 WHERE s.sale_id = %s
             """, (merchant_reference,))
 
-            return cur.fetchone()
+            user = cur.fetchone()
 
-        user = run_db_operation(operation, commit=True)
+            if user:
+                username = user["username"]
+                update_dashboard_snapshot(username)
+                update_dashboard_intelligence(username)
 
-        if user:
-            username = user["username"]
+                print("📊 DASHBOARD UPDATED FOR:", username)
 
-            from database import update_dashboard_snapshot, update_dashboard_intelligence
-
-            update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
-
-            print("📊 DASHBOARD UPDATED FOR:", username)
+        run_db_operation(operation, commit=True)
 
         print("✅ SALE COMPLETED:", merchant_reference)
 
     return jsonify({"status": "processed"})
-
 @app.route("/pesapal/create-payment/<sale_id>")
 def create_payment(sale_id):
 
