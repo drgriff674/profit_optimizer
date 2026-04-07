@@ -2290,6 +2290,49 @@ def get_token():
         return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
 
 
+# ============================
+# PESAPAL INTEGRATION
+# ============================
+
+def get_pesapal_token():
+    url = "https://cybqa.pesapal.com/pesapalv3/api/Auth/RequestToken"
+
+    data = {
+        "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
+        "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
+    }
+
+    response = requests.post(url, json=data)
+    return response.json()
+
+def register_pesapal_ipn():
+    token = get_pesapal_token().get("token")
+
+    url = "https://cybqa.pesapal.com/pesapalv3/api/URLSetup/RegisterIPN"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "url": "https://optigainapp.com/pesapal/ipn",
+        "ipn_notification_type": "POST"
+    }
+
+    response = requests.post(url, json=data, headers=headers)
+    return response.json()
+
+@app.route('/pesapal/ipn', methods=['POST'])
+@csrf.exempt
+def pesapal_ipn():
+
+    data = request.get_json(silent=True)
+    print("🔥 PESAPAL IPN HIT:", data)
+
+    return jsonify({"status": "received"})
+
+
 
 # ✅ REGISTER CALLBACK URL
 @app.route("/register_url", methods=["POST"])
