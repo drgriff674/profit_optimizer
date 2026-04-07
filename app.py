@@ -2121,49 +2121,7 @@ def profile():
         snapshot=snapshot
     )
 
-@app.route("/test-create-sale")
-def test_create_sale():
 
-    from database import create_sale
-
-    # use a real business_id (VERY IMPORTANT)
-    business_id = 1  
-
-    items = [
-        {"product_id": 1, "quantity": 2}
-    ]
-
-    sale = create_sale(business_id, items)
-
-    return sale
-
-
-
-@app.route("/pesapal/get-ipn-id")
-def get_ipn_id():
-
-    import requests, os
-
-    # 🔐 Step 1: get token
-    auth_url = "https://pay.pesapal.com/v3/api/Auth/RequestToken"
-
-    res = requests.post(auth_url, json={
-        "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
-        "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
-    })
-
-    token = res.json().get("token")
-
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-
-    # 📡 Step 2: fetch IPNs
-    ipn_url = "https://pay.pesapal.com/v3/api/URLSetup/GetIpnList"
-
-    response = requests.get(ipn_url, headers=headers)
-
-    return response.json()
 
 
 
@@ -2315,6 +2273,21 @@ def transactions_summary():
         print("⚠️ Error generating transaction summary:", e)
         return jsonify({})
 
+@app.route("/test-create-sale")
+def test_create_sale():
+
+    from database import create_sale
+
+    business_id = 1  
+
+    items = [
+        {"product_id": 1, "quantity": 2}
+    ]
+
+    sale = create_sale(business_id, items)
+
+    return sale
+
 
 # ============================
 # PESAPAL INTEGRATION
@@ -2346,25 +2319,27 @@ def pesapal_ipn():
     if not order_tracking_id:
         return jsonify({"error": "Missing tracking id"}), 400
 
-    # 🔍 VERIFY PAYMENT STATUS FROM PESAPAL
+    # 🔍 VERIFY PAYMENT STATUS
     status = check_payment_status(order_tracking_id)
 
     print("🔍 PAYMENT STATUS:", status)
 
+    username = None  # 👈 we capture it
+
     if status == "COMPLETED":
 
-        from database import run_db_operation, update_dashboard_snapshot, update_dashboard_intelligence
+        from database import run_db_operation
 
         def operation(cur):
 
-            # ✅ 1. mark sale as completed
+            # 1. mark sale completed
             cur.execute("""
                 UPDATE sales
                 SET status = 'completed'
                 WHERE sale_id = %s
             """, (merchant_reference,))
 
-            # ✅ 2. get username from this sale
+            # 2. get username
             cur.execute("""
                 SELECT b.username
                 FROM sales s
@@ -2372,50 +2347,23 @@ def pesapal_ipn():
                 WHERE s.sale_id = %s
             """, (merchant_reference,))
 
-            user = cur.fetchone()
+            return cur.fetchone()
 
-            # ✅ 3. update dashboard instantly
-            if user:
-                username = user["username"]
+        user = run_db_operation(operation, commit=True)
 
-                update_dashboard_snapshot(username)
-                update_dashboard_intelligence(username)
+        if user:
+            username = user["username"]
 
-                print("📊 DASHBOARD UPDATED FOR:", username)
+            from database import update_dashboard_snapshot, update_dashboard_intelligence
 
-        run_db_operation(operation, commit=True)
+            update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
+
+            print("📊 DASHBOARD UPDATED FOR:", username)
 
         print("✅ SALE COMPLETED:", merchant_reference)
+
     return jsonify({"status": "processed"})
-
-def check_payment_status(order_tracking_id):
-
-    import requests
-
-    token = get_pesapal_token().get("token")
-
-    url = f"https://pay.pesapal.com/v3/api/Transactions/GetTransactionStatus?orderTrackingId={order_tracking_id}"
-
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-
-    response = requests.get(url, headers=headers)
-
-    # 🔍 DEBUG RAW RESPONSE FIRST
-    print("🔍 RAW RESPONSE STATUS:", response.status_code)
-    print("🔍 RAW RESPONSE TEXT:", response.text)
-
-    # ✅ SAFE JSON PARSING
-    try:
-        data = response.json()
-    except Exception as e:
-        print("❌ JSON ERROR:", str(e))
-        return "INVALID"
-
-    print("🔍 FULL STATUS RESPONSE:", data)
-
-    return data.get("payment_status_description", "UNKNOWN")
 
 @app.route("/pesapal/create-payment/<sale_id>")
 def create_payment(sale_id):
