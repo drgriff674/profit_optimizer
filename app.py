@@ -2132,9 +2132,11 @@ def test_pesapal():
         "OrderMerchantReference": "SALE001"
     }
 
-    res = requests.post(url, json=data)
-
-    return res.text
+    try:
+        requests.post(url, json=data, timeout=5)
+        return "✅ Test sent successfully"
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 @app.route("/api/latest-payment")
 @login_required
