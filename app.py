@@ -2138,6 +2138,32 @@ def test_pesapal():
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
+@app.route("/pesapal/get-ipn-id")
+def get_ipn_id():
+
+    import requests, os
+
+    # 🔐 Step 1: get token
+    auth_url = "https://pay.pesapal.com/v3/api/Auth/RequestToken"
+
+    res = requests.post(auth_url, json={
+        "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
+        "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
+    })
+
+    token = res.json().get("token")
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    # 📡 Step 2: fetch IPNs
+    ipn_url = "https://pay.pesapal.com/v3/api/URLSetup/GetIpnList"
+
+    response = requests.get(ipn_url, headers=headers)
+
+    return response.json()
+
 @app.route("/api/latest-payment")
 @login_required
 def latest_payment():
