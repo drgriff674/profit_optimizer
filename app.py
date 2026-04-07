@@ -1251,7 +1251,7 @@ def create_sale():
         # insert sale
         cur.execute("""
             INSERT INTO sales (sale_id, business_id, total_amount, status)
-            VALUES (%s, %s, %s, 'completed')
+            VALUES (%s, %s, %s, 'pending')
         """, (sale_id, business_id, total))
 
         # insert items
