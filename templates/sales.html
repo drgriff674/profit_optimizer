@@ -32,6 +32,12 @@
     </h1>
   </div>
 
+{% if request.args.get("success") %}
+<div class="mb-4 p-3 rounded-lg bg-green-100 text-green-700 text-sm">
+  ✅ Payment successful!
+</div>
+{% endif %}
+
   <!-- ✅ NOW PROPERLY POSITIONED -->
   <button id="darkToggle"
     class="px-3 py-1.5 rounded-lg text-sm 
@@ -314,6 +320,25 @@ function createSale() {
     });
 }
 
+function deleteSale(saleId) {
+    if (!confirm("Cancel this sale?")) return;
+
+    fetch(`/sales/delete/${saleId}`, {
+        method: "POST"
+    })
+    .then(() => {
+        // ✅ instantly remove from UI
+        const el = document.getElementById("sale-" + saleId);
+        if (el) {
+    el.style.transition = "0.3s";
+    el.style.opacity = "0";
+    el.style.transform = "translateX(20px)";
+
+    setTimeout(() => el.remove(), 300);
+}
+    });
+}
+
 function loadSales() {
     fetch("/api/sales")
     .then(r => r.json())
@@ -344,22 +369,26 @@ function loadSales() {
                 
                     ${
 
-s.status === "pending"
-? `<div class="mt-2 flex gap-2">
+s.status === "pending"  
+? `<div class="mt-2 flex gap-2 items-center">  
 
-     <a href="/pesapal/create-payment/${s.sale_id}"
-        class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
-        💳 Pay Now
-     </a>
+     <a href="/pesapal/create-payment/${s.sale_id}"  
+        class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">  
+        💳 Pay Now  
+     </a>  
 
-     <div class="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-        Or pay via Paybill<br>
-        Account: <b>${s.sale_id}</b>
-     </div>
+     <button onclick="deleteSale('${s.sale_id}')"  
+        class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">  
+        ❌ Cancel  
+     </button>
 
-   </div>`
-: ""
-}
+     <div class="text-xs text-blue-600 bg-blue-50 p-2 rounded">  
+        Or pay via Paybill<br>  
+        Account: <b>${s.sale_id}</b>  
+     </div>  
+
+   </div>`  
+: ""}
 
                 ${
                     justPaid

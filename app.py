@@ -1374,6 +1374,23 @@ def test_create_sale():
 
     return f"Created sale: {sale_id}"
 
+@app.route("/sales/delete/<sale_id>", methods=["POST"])
+def delete_sale(sale_id):
+
+    from database import run_db_operation
+
+    def operation(cur):
+
+        # only delete if still pending (safety 🔥)
+        cur.execute("""
+            DELETE FROM sales
+            WHERE sale_id = %s AND status = 'pending'
+        """, (sale_id,))
+
+    run_db_operation(operation, commit=True)
+
+    return {"status": "deleted"}
+
 
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
@@ -2514,7 +2531,7 @@ def create_payment(sale_id):
 
 @app.route("/payment-success")
 def payment_success():
-    return "✅ Payment successful! You can close this page."
+    return redirect("/sales?success=1")
     
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
