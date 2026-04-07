@@ -2281,7 +2281,7 @@ def create_sale_test_unique():
     business_id = 5  
 
     items = [
-        {"product_id": 1, "quantity": 2}
+        {"product_id": 7, "quantity": 2}  # ✅ biscuits
     ]
 
     sale = create_sale(business_id, items)
