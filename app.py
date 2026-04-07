@@ -2337,19 +2337,39 @@ def pesapal_ipn():
 
     if status == "COMPLETED":
 
-        from database import run_db_operation
+        from database import run_db_operation, update_dashboard_snapshot, update_dashboard_intelligence
 
         def operation(cur):
+
+            # ✅ 1. mark sale as completed
             cur.execute("""
                 UPDATE sales
                 SET status = 'completed'
                 WHERE sale_id = %s
             """, (merchant_reference,))
 
+            # ✅ 2. get username from this sale
+            cur.execute("""
+                SELECT b.username
+                FROM sales s
+                JOIN businesses b ON s.business_id = b.id
+                WHERE s.sale_id = %s
+            """, (merchant_reference,))
+
+            user = cur.fetchone()
+
+            # ✅ 3. update dashboard instantly
+            if user:
+                username = user["username"]
+
+                update_dashboard_snapshot(username)
+                update_dashboard_intelligence(username)
+
+                print("📊 DASHBOARD UPDATED FOR:", username)
+
         run_db_operation(operation, commit=True)
 
         print("✅ SALE COMPLETED:", merchant_reference)
-
     return jsonify({"status": "processed"})
 
 def check_payment_status(order_tracking_id):
