@@ -2164,6 +2164,38 @@ def get_ipn_id():
 
     return response.json()
 
+@app.route("/pesapal/register-ipn")
+def register_ipn():
+
+    import requests, os
+
+    # 🔐 get token
+    auth_url = "https://pay.pesapal.com/v3/api/Auth/RequestToken"
+
+    res = requests.post(auth_url, json={
+        "consumer_key": os.getenv("PESAPAL_CONSUMER_KEY"),
+        "consumer_secret": os.getenv("PESAPAL_CONSUMER_SECRET")
+    })
+
+    token = res.json().get("token")
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    # 📡 register IPN properly
+    url = "https://pay.pesapal.com/v3/api/URLSetup/RegisterIPN"
+
+    payload = {
+        "url": "https://optigainapp.com/pesapal/ipn",
+        "ipn_notification_type": "GET"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    return response.json()
+
 @app.route("/api/latest-payment")
 @login_required
 def latest_payment():
