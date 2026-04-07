@@ -322,19 +322,18 @@ function createSale() {
 
 function deleteSale(saleId) {
     if (!confirm("Cancel this sale?")) return;
-const csrf = document.querySelector('meta[name="csrf-token"]').content
+const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
-    fetch(`/sales/delete/${saleId}`, {
-        method: "POST"
-        headers:{
-              X-CSRFToken":csrf
-       }
-    })
-   .then(r => r.json())
+fetch(`/sales/delete/${saleId}`, {
+    method: "POST",
+    headers: {
+        "X-CSRFToken": csrf
+    }
+})
+.then(r => r.json())
 .then(data => {
 
     if (data.deleted > 0) {
-        // ✅ real delete
         const el = document.getElementById("sale-" + saleId);
         if (el) {
             el.style.transition = "0.3s";
@@ -343,7 +342,7 @@ const csrf = document.querySelector('meta[name="csrf-token"]').content
             setTimeout(() => el.remove(), 300);
         }
     } else {
-        alert("⚠️ Cannot delete (already paid or not found)");
+        alert("⚠️ Cannot delete");
     }
 
 });
