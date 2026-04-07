@@ -1598,6 +1598,18 @@ def revenue_day_detail(date):
         row = cur.fetchone()
         cash_total = float(row["cash_total"]) if row else 0.0
 
+        # sales total (NEW 🔥)
+        cur.execute("""
+            SELECT COALESCE(SUM(total_amount),0) AS sales_total
+            FROM sales
+            WHERE username=%s
+              AND DATE(created_at)=%s
+              AND status='completed'
+        """, (username, date))
+
+        row = cur.fetchone()
+        sales_total = float(row["sales_total"]) if row else 0.0
+
         # anomalies
         cur.execute("""
             SELECT anomaly_type, severity, message
@@ -1667,6 +1679,7 @@ def revenue_day_detail(date):
         return {
             "biz": biz,
             "cash_total": cash_total,
+            "sales_total": sales_total,
             "anomalies": anomalies,
             "is_locked": is_locked,
             "locked_total": locked_total,
@@ -1677,6 +1690,7 @@ def revenue_day_detail(date):
     db = run_db_operation(operation)
 
     mpesa_transactions = db["mpesa_transactions"]
+    sales_total = db["sales_total"]
 
     cash_total = db["cash_total"]
     anomalies = db["anomalies"]
@@ -1693,11 +1707,11 @@ def revenue_day_detail(date):
 
         gross_total = locked_total
         net_revenue = locked_total
-        mpesa_total = max(0, locked_total - cash_total + expense_total)
+        mpesa_total = max(0, locked_total - cash_total - sales_total + expense_total)
 
     else:
 
-        gross_total = mpesa_total + cash_total
+        gross_total = mpesa_total + cash_total + sales_total
         net_revenue = gross_total - expense_total
 
         if abs(manual_total - net_revenue) > 0.01:
@@ -1816,7 +1830,18 @@ def lock_revenue_day_route():
 
         mpesa_total = float(cur.fetchone()["mpesa_total"])
 
-        gross_total = cash_total + mpesa_total
+        # sales total (NEW 🔥)
+        cur.execute("""
+            SELECT COALESCE(SUM(total_amount),0) AS sales_total
+            FROM sales
+            WHERE username=%s
+              AND DATE(created_at)=%s
+              AND status='completed'
+        """, (username, revenue_date))
+
+        sales_total = float(cur.fetchone()["sales_total"])
+
+        gross_total = cash_total + mpesa_total + sales_total
         net_total = gross_total - expense_total
 
         cur.execute("""
