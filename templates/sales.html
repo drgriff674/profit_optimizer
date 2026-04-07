@@ -342,17 +342,24 @@ function loadSales() {
                 </div>
 
                 ${
-                    s.status === "pending"
-? `<div class="text-xs text-blue-600 mt-1 bg-blue-50 p-2 rounded">
+                    ${
 
-     📲 <b>Customer Payment Instructions</b><br>
+s.status === "pending"
+? `<div class="mt-2 flex gap-2">
 
-     Pay via <b>Paybill</b><br>
-     Use Account Number (Order ID): <b>${s.sale_id}</b>
+     <a href="/pesapal/create-payment/${s.sale_id}"
+        class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
+        💳 Pay Now
+     </a>
+
+     <div class="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+        Or pay via Paybill<br>
+        Account: <b>${s.sale_id}</b>
+     </div>
 
    </div>`
 : ""
-                }
+}
 
                 ${
                     justPaid
