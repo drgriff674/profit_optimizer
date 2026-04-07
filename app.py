@@ -2123,18 +2123,23 @@ def profile():
 
 @app.route('/test-pesapal')
 def test_pesapal():
-    import requests
 
-    url = "https://optigainapp.com/pesapal/ipn"
-
-    data = {
+    fake_data = {
         "OrderTrackingId": "TEST123",
         "OrderMerchantReference": "SALE001"
     }
 
+    print("🧪 TESTING IPN DIRECTLY")
+
     try:
-        requests.post(url, json=data, timeout=5)
-        return "✅ Test sent successfully"
+        order_tracking_id = fake_data.get("OrderTrackingId")
+
+        status = check_payment_status(order_tracking_id)
+
+        print("🔍 PAYMENT STATUS:", status)
+
+        return "✅ Direct test worked"
+
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
