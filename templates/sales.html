@@ -326,17 +326,24 @@ function deleteSale(saleId) {
     fetch(`/sales/delete/${saleId}`, {
         method: "POST"
     })
-    .then(() => {
-        // ✅ instantly remove from UI
+   .then(r => r.json())
+.then(data => {
+
+    if (data.deleted > 0) {
+        // ✅ real delete
         const el = document.getElementById("sale-" + saleId);
         if (el) {
-    el.style.transition = "0.3s";
-    el.style.opacity = "0";
-    el.style.transform = "translateX(20px)";
+            el.style.transition = "0.3s";
+            el.style.opacity = "0";
+            el.style.transform = "translateX(20px)";
+            setTimeout(() => el.remove(), 300);
+        }
+    } else {
+        alert("⚠️ Cannot delete (already paid or not found)");
+    }
 
-    setTimeout(() => el.remove(), 300);
-}
-    });
+});
+
 }
 
 function loadSales() {
@@ -344,6 +351,7 @@ function loadSales() {
     .then(r => r.json())
     .then(data => {
         const el = document.getElementById("salesList");
+el.innerHTML = "";
 
         data.sales.forEach(s => {
 

@@ -1381,16 +1381,16 @@ def delete_sale(sale_id):
 
     def operation(cur):
 
-        # only delete if still pending (safety 🔥)
         cur.execute("""
             DELETE FROM sales
             WHERE sale_id = %s AND status = 'pending'
         """, (sale_id,))
 
-    run_db_operation(operation, commit=True)
+        return cur.rowcount  # 🔥 THIS IS KEY
 
-    return {"status": "deleted"}
+    deleted = run_db_operation(operation, commit=True)
 
+    return {"deleted": deleted}
 
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
