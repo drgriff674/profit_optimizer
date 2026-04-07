@@ -2268,26 +2268,6 @@ def transactions_summary():
     except Exception as e:
         print("⚠️ Error generating transaction summary:", e)
         return jsonify({})
-    
-# ✅ GET ACCESS TOKEN
-@app.route("/get_token")
-def get_token():
-    import os, requests
-    from flask import jsonify
-
-    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
-    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
-
-    if not consumer_key or not consumer_secret:
-        return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
-
-    try:
-        auth_url = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        response = requests.get(auth_url, auth=(consumer_key, consumer_secret), timeout=10)
-        response.raise_for_status()
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
 
 
 # ============================
@@ -2331,6 +2311,29 @@ def pesapal_ipn():
     print("🔥 PESAPAL IPN HIT:", data)
 
     return jsonify({"status": "received"})
+
+    
+# ✅ GET ACCESS TOKEN
+@app.route("/get_token")
+def get_token():
+    import os, requests
+    from flask import jsonify
+
+    consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+    consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+
+    if not consumer_key or not consumer_secret:
+        return jsonify({"error": "Missing M-Pesa credentials in environment variables."}), 400
+
+    try:
+        auth_url = "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+        response = requests.get(auth_url, auth=(consumer_key, consumer_secret), timeout=10)
+        response.raise_for_status()
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": f"Failed to get token: {str(e)}"}), 500
+
+
 
 
 
