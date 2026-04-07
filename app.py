@@ -2369,10 +2369,33 @@ def pesapal_ipn():
             username = row["username"]
             amount = float(row["total_amount"])
 
-            # 🔥🔥🔥 THIS IS THE MISSING PIECE
+            # 🔥 SET USER (RLS FIX)
             cur.execute(f"SET app.current_username = '{username}'")
 
-            # ✅ NOW mark sale completed
+            # ✅ INSERT INTO MPESA TRANSACTIONS (💥 THIS IS THE NEW PART)
+            cur.execute("""
+                INSERT INTO mpesa_transactions (
+                    transaction_id,
+                    amount,
+                    receiver,
+                    account_reference,
+                    transaction_type,
+                    status,
+                    local_date
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (transaction_id) DO NOTHING
+            """, (
+                order_tracking_id,     # unique ID from pesapal
+                amount,
+                "pesapal",
+                merchant_reference,    # links to sale
+                "pesapal",
+                "confirmed",
+                today
+            ))
+
+            # ✅ mark sale completed
             cur.execute("""
                 UPDATE sales
                 SET status = 'completed'
@@ -2392,6 +2415,7 @@ def pesapal_ipn():
             update_dashboard_intelligence(username)
 
             print("📊 DASHBOARD UPDATED FOR:", username)
+    
         run_db_operation(operation, commit=True)
 
         print("✅ SALE COMPLETED:", merchant_reference)
