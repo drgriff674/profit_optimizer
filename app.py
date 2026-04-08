@@ -2496,6 +2496,8 @@ def pesapal_ipn():
             update_dashboard_snapshot(username)
             update_dashboard_intelligence(username)
 
+            cache.delete_memoized(get_dashboard_data, username)
+
             print("📊 DASHBOARD UPDATED FOR:", username)
     
         run_db_operation(operation, commit=True)
