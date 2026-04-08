@@ -2443,7 +2443,7 @@ def pesapal_ipn():
 
             # ✅ FIRST: get username + amount
             cur.execute("""
-                SELECT b.username, s.total_amount
+                SELECT b.username, b.account_number, b.paybill, s.total_amount
                 FROM sales s
                 JOIN businesses b ON s.business_id = b.id
                 WHERE s.sale_id = %s
@@ -2455,6 +2455,8 @@ def pesapal_ipn():
                 return
 
             username = row["username"]
+            account_number = row["account_number"] or username
+            paybill = row["paybill"]
             amount = float(row["total_amount"])
 
             # 🔥 SET USER (RLS FIX)
@@ -2476,8 +2478,8 @@ def pesapal_ipn():
             """, (
                 order_tracking_id,     # unique ID from pesapal
                 amount,
-                "pesapal",
-                merchant_reference,    # links to sale
+                paybill,
+                account_number,
                 "pesapal",
                 "confirmed",
                 today
