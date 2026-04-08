@@ -536,7 +536,7 @@ def register():
         if setup_type == "normal":
             new_email = None
             business_name = f"{new_user}'s Business"
-            paybill = None
+            paybill = "000000"
             account_number = None
 
         # ✅ PAYBILL USER
