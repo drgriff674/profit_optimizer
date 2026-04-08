@@ -1113,7 +1113,7 @@ def dashboard():
         inventory_insights=inventory_insights,
         top_products=top_products,
         subscription=subscription,
-        current_date=datetime.utc().date()
+        current_date=datetime.utcnow().date()
     )
 
 @app.route("/api/dashboard-snapshot")
