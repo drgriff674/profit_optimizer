@@ -457,6 +457,27 @@ def init_db():
         ON mpesa_transactions(local_date);
         """)
 
+        # --- SUBSCRIPTIONS TABLE ---
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS subscriptions (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE,
+
+            plan TEXT DEFAULT 'monthly',
+            status TEXT DEFAULT 'trial',
+
+            trial_start TIMESTAMP,
+            trial_end TIMESTAMP,
+
+            subscription_start TIMESTAMP,
+            subscription_end TIMESTAMP,
+
+            last_payment_reference TEXT,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+
         # --- MPESA HARD SECURITY ---
         cur.execute("""
         DO $$
@@ -1836,9 +1857,43 @@ def create_user_with_business(username, email, password, role, business_name, pa
             (username, business_name, paybill, account_number)
         )
 
+
+        from datetime import datetime, timedelta
+
+        now = datetime.utcnow()
+        trial_end = now + timedelta(days=7)
+
+        cur.execute("""
+            INSERT INTO subscriptions (
+                username,
+                status,
+                trial_start,
+                trial_end
+            )
+            VALUES (%s, %s, %s, %s)
+        """, (
+            username,
+            "trial",
+            now,
+            trial_end
+        ))
+
         return "created"
 
     return run_db_operation(operation, commit=True)
+
+def get_subscription(username):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT *
+            FROM subscriptions
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+        return cur.fetchone()
+
+    return run_db_operation(operation)
 
 def get_business_info(username):
 

@@ -293,6 +293,66 @@ bg-gray-100 text-gray-700
 </div>
 {% endif %}
 
+
+{% if subscription %}
+
+<div class="p-5 rounded-xl shadow mb-6"
+     style="background: var(--og-surface); border-left: 4px solid #f59e0b;">
+
+  <h3 class="text-lg font-semibold mb-2">
+    💳 Subscription Status
+  </h3>
+
+  {% if subscription.status == "trial" %}
+
+    <p class="text-sm mb-2">
+      🎉 You are on a <strong>7-day free trial</strong>
+    </p>
+
+   {% set days_left = (subscription.trial_end.date() - current_date).days %}
+
+<p class="text-sm">
+  Trial ends on:
+  <strong>{{ subscription.trial_end.strftime('%Y-%m-%d') }}</strong>
+</p>
+
+{% if days_left <= 5 %}
+<p class="text-red-500 font-semibold mt-2">
+  ⚠ Your trial ends in {{ days_left }} day(s)
+</p>
+{% endif %}
+
+    <p class="text-sm text-red-500 mt-2">
+      ⚠ After trial: KSh 1,500/month required
+    </p>
+
+  {% elif subscription.status == "active" %}
+
+    <p class="text-sm text-green-600">
+      ✅ Subscription active
+    </p>
+
+    <p class="text-sm">
+      Next billing:
+      {{ subscription.subscription_end.strftime('%Y-%m-%d') }}
+    </p>
+
+  {% elif subscription.status == "expired" %}
+
+    <p class="text-sm text-red-500">
+      ❌ Subscription expired
+    </p>
+
+    <p class="text-sm">
+      Renew to continue using OptiGain
+    </p>
+
+  {% endif %}
+
+</div>
+
+{% endif %}
+
         
 
 {% if live_total_revenue == 0 %}

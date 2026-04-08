@@ -90,6 +90,7 @@ from database import(
     create_sale,
     get_top_products_for_day,
     process_payment,
+    get_subscription,
 )
 import pytz
 from flask_caching import Cache
@@ -1011,6 +1012,7 @@ def dashboard():
 
     
     cached_data = get_dashboard_data(username)
+    subscription = get_subscription(username)
 
     snapshot = cached_data.get("snapshot", {})
     intelligence = cached_data.get("intelligence", {})
@@ -1109,7 +1111,9 @@ def dashboard():
         live_total_revenue=live_total_revenue,
         weekly_report=latest_report,
         inventory_insights=inventory_insights,
-        top_products=top_products
+        top_products=top_products,
+        subscription=subscription,
+        current_date=datetime.utc().date()
     )
 
 @app.route("/api/dashboard-snapshot")
