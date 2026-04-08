@@ -490,15 +490,26 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
-                log_audit(username, "LOGIN_OTP_SENT", "OTP sent", request.remote_addr)
+                # ✅ IF USER HAS EMAIL → OTP FLOW
+                if user.get("email"):
 
-                start_otp_flow(
-                    "login",
-                    {"username": user["username"], "email": user["email"]},
-                    user["email"]
-                )
+                    log_audit(username, "LOGIN_OTP_SENT", "OTP sent", request.remote_addr)
 
-                return redirect(url_for("verify"))
+                    start_otp_flow(
+                        "login",
+                        {"username": user["username"], "email": user["email"]},
+                        user["email"]
+                    )
+
+                    return redirect(url_for("verify"))
+
+                # ✅ NORMAL USER → LOGIN DIRECTLY
+                else:
+                    session["username"] = user["username"]
+
+                    log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
+
+                    return redirect(url_for("dashboard"))  # change if needed
 
             flash("❌ Invalid username or password", "error")
 
@@ -511,6 +522,7 @@ def login():
             return redirect(url_for("login"))
 
     return render_template("login.html")
+
 
 @app.route("/register", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
