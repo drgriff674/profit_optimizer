@@ -581,16 +581,20 @@ def register():
                 os.path.join(app.config["UPLOAD_FOLDER"], new_user), exist_ok=True
             )
 
-            # ✅ NEW OTP SYSTEM
-            start_otp_flow(
-                "register",
-                {"username": new_user, "email": new_email},
-                new_email
-            )
+            # ✅ NEW OTP SYSTEM (ONLY IF EMAIL EXISTS)
+            if new_email:
+                start_otp_flow(
+                    "register",
+                    {"username": new_user, "email": new_email},
+                    new_email
+                )
 
-            flash("📧 Verification code sent to your email.", "success")
+                flash("📧 Verification code sent to your email.", "success")
+                return redirect(url_for("verify"))
 
-            return redirect(url_for("verify"))
+            # ✅ NORMAL USER → skip OTP
+            flash("✅ Account created successfully.", "success")
+            return redirect(url_for("login"))
 
         except Exception as e:
             flash(f"❌ Error creating user: {str(e)}", "error")
