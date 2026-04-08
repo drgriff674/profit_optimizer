@@ -518,7 +518,6 @@ def register():
     if request.method == "POST":
 
         new_user = request.form["username"].strip()
-        new_email = request.form["email"].strip()
         new_pass = request.form["password"].strip()
         confirm_pass = request.form["confirm_password"].strip()
 
@@ -526,10 +525,36 @@ def register():
             flash("❌ Passwords do not match.", "error")
             return redirect(url_for("register"))
 
-        business_name = request.form["business_name"].strip()
-        paybill = request.form["paybill"].strip()
-        account_number = request.form.get("account_number","").strip()
+        setup_type = request.form.get("setup_type")
 
+        new_email = request.form.get("email", "").strip()
+        business_name = request.form.get("business_name", "").strip()
+        paybill = request.form.get("paybill", "").strip()
+        account_number = request.form.get("account_number", "").strip()
+
+        # ✅ NORMAL USER
+        if setup_type == "normal":
+            new_email = None
+            business_name = None
+            paybill = None
+            account_number = None
+
+        # ✅ PAYBILL USER
+        elif setup_type == "paybill":
+            if not new_email or not business_name or not paybill:
+                flash("❌ Email, business name and paybill are required.", "error")
+                return redirect(url_for("register"))
+
+            if not account_number:
+                account_number = None
+
+        
+        if not paybill:
+            paybill = None
+        if not account_number:
+            account_number = None
+            
+        
         try:
             users = load_users()
             role = "admin" if len(users) == 0 else "user"
