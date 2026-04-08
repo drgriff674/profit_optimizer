@@ -89,6 +89,7 @@ from database import(
     log_audit,
     create_sale,
     get_top_products_for_day,
+    process_payment,
 )
 import pytz
 from flask_caching import Cache
@@ -2448,13 +2449,7 @@ def pesapal_ipn():
                 WHERE sale_id = %s AND status != 'completed'
             """, (merchant_reference,))
 
-            # ✅ update revenue_days
-            cur.execute("""
-                INSERT INTO revenue_days (username, revenue_date, total_amount)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (username, revenue_date)
-                DO UPDATE SET total_amount = revenue_days.total_amount + EXCLUDED.total_amount
-            """, (username, today, amount))
+            process_payment(username, amount, today)
 
             # ✅ update dashboard
             update_dashboard_snapshot(username)
@@ -2812,7 +2807,8 @@ def payment_confirm():
 
                 # 3️⃣ 🔥 FORCE DASHBOARD UPDATE
                 if username_from_sale:
-                    ensure_revenue_day_exists(username_from_sale, local_date)
+                    process_payment(username_from_sale, amount, local_date)
+                    
                     update_dashboard_snapshot(username_from_sale)
                     update_dashboard_intelligence(username_from_sale)
                     cache.delete_memoized(get_dashboard_data, username_from_sale)
@@ -2828,7 +2824,8 @@ def payment_confirm():
             )
         
         if username_local:
-            ensure_revenue_day_exists(username_local, local_date)
+            process_payment(username_local, amount, local_date)
+            
             update_dashboard_snapshot(username_local)
             update_dashboard_intelligence(username_local)
             cache.delete_memoized(get_dashboard_data, username_local)

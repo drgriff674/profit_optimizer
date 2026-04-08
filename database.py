@@ -509,6 +509,26 @@ def init_db():
 
     run_db_operation(operation, commit=True)
 
+
+def process_payment(username, amount, local_date):
+    def operation(cur):
+
+        # 🔥 ensure day exists (same logic as MPesa)
+        cur.execute("""
+            INSERT INTO revenue_days (username, revenue_date)
+            VALUES (%s, %s)
+            ON CONFLICT (username, revenue_date) DO NOTHING
+        """, (username, local_date))
+
+        # 💰 update total
+        cur.execute("""
+            UPDATE revenue_days
+            SET total_amount = total_amount + %s
+            WHERE username = %s AND revenue_date = %s
+        """, (amount, username, local_date))
+
+    run_db_operation(operation, commit=True)
+
 def create_sale(business_id, items):
 
     import uuid
