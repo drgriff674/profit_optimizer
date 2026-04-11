@@ -361,7 +361,7 @@ el.innerHTML = "";
         data.sales.forEach(s => {
 
             const prevStatus = previousSales[s.sale_id];
-            const justPaid = prevStatus === "pending" && s.status === "completed";
+            const justPaid = prevStatus !=="completed" && s.status === "completed";
 
             previousSales[s.sale_id] = s.status;
 
@@ -379,33 +379,40 @@ el.innerHTML = "";
         </span>
     </div>
 
-    ${
-        s.status === "pending"
-        ? `<div class="mt-2 flex flex-col gap-2">
+${
+    s.status === "pending"   // 🔵 PAYBILL USER
+    ? `<div class="mt-2 flex flex-col gap-2">
 
-            <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
-                📱 Pay via Paybill<br>
-                Account: <b>${s.sale_id}</b>
-            </div>
+        <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
+            📱 Paybill<br>
+            Account: <b>${s.sale_id}</b>
+        </div>
 
-            <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
-                🏪 Pay via Till Number<br>
-                Till: <b>XXXXXX</b>
-            </div>
+        <p class="text-xs text-gray-500">
+            Waiting for payment confirmation
+        </p>
 
-            <p class="text-xs text-gray-500">
-                Payment reflects automatically after confirmation
-            </p>
+    </div>`
 
-            <button onclick="deleteSale('${s.sale_id}')"
-                class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">
-                ❌ Cancel
-            </button>
+    : s.status === "unpaid"   // 🟣 NORMAL USER
+    ? `<div class="mt-2 flex flex-col gap-2">
 
-        </div>`
-        : ""
-    }
+        <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
+            🏪 Pay via Till Number<br>
+            Amount: KSh ${s.total_amount}
+        </div>
 
+        <button onclick="markPaid('${s.sale_id}')"
+            class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
+            ✅ Mark as Paid
+        </button>
+
+    </div>`
+
+    : ""
+}
+
+   
     ${
         justPaid
         ? `<div class="text-green-600 text-xs mt-1">
@@ -432,6 +439,14 @@ document.addEventListener("DOMContentLoaded",()=>{
 
     setInterval(loadSales, 3000);	
 });
+
+function markPaid(saleId) {
+    fetch(`/sales/mark-paid/${saleId}`, {
+        method: "POST"
+    })
+    .then(() => loadSales());
+}
+
 </script>
 
 <!-- EDIT MODAL -->

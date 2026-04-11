@@ -1382,18 +1382,34 @@ def create_sale():
         biz = cur.fetchone()
         business_id = biz["id"]
 
-        sale_id = str(uuid.uuid4())[:8]  # short clean id
+        import random
+
+        sale_id = str(random.randint(100000,999999))
 
         total = 0
 
         for item in items:
             total += item["price"] * item["quantity"]
 
+        # 🔥 get business payment info
+        cur.execute("""
+            SELECT paybill_number, till_number
+            FROM businesses
+            WHERE id = %s
+        """, (business_id,))
+        biz_data = cur.fetchone()
+
+        # 🔥 decide status
+        if biz_data and biz_data.get("paybill_number"):
+            status = "pending"   # paybill user
+        else:
+            status = "unpaid"    # normal user (till)
+
         # insert sale
         cur.execute("""
             INSERT INTO sales (sale_id, business_id, total_amount, status)
-            VALUES (%s, %s, %s, 'pending')
-        """, (sale_id, business_id, total))
+            VALUES (%s, %s, %s, %s)
+        """, (sale_id, business_id, total, status))
 
         # insert items
         for item in items:
@@ -1413,7 +1429,7 @@ def create_sale():
 
     return jsonify({
         "sale_id": sale_id,
-        "status": "pending"
+        "status": status
     })
 
 @app.route("/sales")
@@ -1488,6 +1504,28 @@ def create_sale_route():
     result = create_sale(biz["id"], items)
 
     return jsonify(result)
+
+@app.route("/sales/mark-paid/<sale_id>", methods=["POST"])
+@login_required
+def mark_paid(sale_id):
+
+    username = session["username"]
+
+    def operation(cur):
+        cur.execute("""
+            UPDATE sales s
+            JOIN businesses b ON s.business_id = b.id
+            SET s.status = 'completed'
+            WHERE s.sale_id = %s AND b.username = %s
+        """, (sale_id, username))
+
+        return cur.rowcount  # 🔥 tells us if anything was updated
+
+    updated = run_db_operation(operation, commit=True)
+
+    return jsonify({
+        "success": updated > 0
+    })
 
 @app.route("/test/create-sale")
 @login_required
