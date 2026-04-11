@@ -381,25 +381,26 @@ el.innerHTML = "";
                     ${
 
 s.status === "pending"  
-? `<div class="mt-2 flex gap-2 items-center">  
+? `<div class="mt-2 flex flex-col gap-2">
 
-     <a href="/pesapal/create-payment/${s.sale_id}"  
-        class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">  
-        💳 Pay Now  
-     </a>  
+     <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
+        📱 Pay via Paybill<br>
+        Account: <b>${s.sale_id}</b>
+     </div>
 
-     <button onclick="deleteSale('${s.sale_id}')"  
-        class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">  
-        ❌ Cancel  
+     <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
+        🏪 Or Pay via Till Number<br>
+        Ask business owner for Till Number
+     </div>
+
+     <button onclick="deleteSale('${s.sale_id}')"
+        class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">
+        ❌ Cancel
      </button>
 
-     <div class="text-xs text-blue-600 bg-blue-50 p-2 rounded">  
-        Or pay via Paybill<br>  
-        Account: <b>${s.sale_id}</b>  
-     </div>  
-
-   </div>`  
-: ""}
+   </div>`
+: ""
+   
 
                 ${
                     justPaid

@@ -1176,9 +1176,11 @@ def subscribe():
 
     import requests, os
     import uuid
-    order_id = f"{username}-{uuid.uuid4()}"
+    from flask import session
 
     username = session["username"]
+
+    order_id = f"{username}-{uuid.uuid4()}"
     amount = 1500
 
     token = get_pesapal_token().get("token")
