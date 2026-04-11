@@ -367,55 +367,54 @@ el.innerHTML = "";
 
             let existing = document.getElementById("sale-" + s.sale_id);
 
-            const html = `
-            <li id="sale-${s.sale_id}"
-                class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
+           const html = `
+<li id="sale-${s.sale_id}"
+    class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
 
-                <div class="flex justify-between">
-                    <span>${s.sale_id}</span>
-                    <span>KSh ${s.total_amount}</span>
-                    <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
-                        ${s.status}
-                    </span>
-                </div>
+    <div class="flex justify-between">
+        <span>${s.sale_id}</span>
+        <span>KSh ${s.total_amount}</span>
+        <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
+            ${s.status}
+        </span>
+    </div>
 
-                
-                    ${
-s.status === "pending"  
-? `<div class="mt-2 flex flex-col gap-2">
+    ${
+        s.status === "pending"
+        ? `<div class="mt-2 flex flex-col gap-2">
 
-     <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
-        📱 Pay via Paybill<br>
-        Account: <b>${s.sale_id}</b>
-     </div>
+            <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
+                📱 Pay via Paybill<br>
+                Account: <b>${s.sale_id}</b>
+            </div>
 
-     <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
-        🏪 Pay via Till Number<br>
-        Till: <b>XXXXXX</b>
-     </div>
+            <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
+                🏪 Pay via Till Number<br>
+                Till: <b>XXXXXX</b>
+            </div>
 
-     <p class="text-xs text-gray-500">
-        Payment reflects automatically after confirmation
-     </p>
+            <p class="text-xs text-gray-500">
+                Payment reflects automatically after confirmation
+            </p>
 
-     <button onclick="deleteSale('${s.sale_id}')"
-        class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">
-        ❌ Cancel
-     </button>
+            <button onclick="deleteSale('${s.sale_id}')"
+                class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">
+                ❌ Cancel
+            </button>
 
-   </div>`
-: ""
-   
+        </div>`
+        : ""
+    }
 
-                ${
-                    justPaid
-                    ? `<div class="text-green-600 text-xs mt-1">
-                         💰 Payment received
-                       </div>`
-                    : ""
-                }
+    ${
+        justPaid
+        ? `<div class="text-green-600 text-xs mt-1">
+             💰 Payment received
+           </div>`
+        : ""
+    }
 
-            </li>`;
+</li>`;
 
             if (existing) {
                 existing.outerHTML = html;
