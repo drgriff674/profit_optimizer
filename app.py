@@ -1393,7 +1393,7 @@ def create_sale():
 
         # 🔥 get business payment info
         cur.execute("""
-            SELECT paybill_number, account_number
+            SELECT paybill, account_number
             FROM businesses
             WHERE id = %s
         """, (business_id,))
