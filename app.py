@@ -1393,14 +1393,14 @@ def create_sale():
 
         # 🔥 get business payment info
         cur.execute("""
-            SELECT paybill_number, till_number
+            SELECT paybill_number, account_number
             FROM businesses
             WHERE id = %s
         """, (business_id,))
         biz_data = cur.fetchone()
 
         # 🔥 decide status
-        if biz_data and biz_data.get("paybill_number") not in [None,"","0"]:
+        if biz_data and biz_data.get("paybill"):
             status = "pending"   # paybill user
         else:
             status = "unpaid"    # normal user (till)
@@ -1513,10 +1513,12 @@ def mark_paid(sale_id):
 
     def operation(cur):
         cur.execute("""
-            UPDATE sales s
-            JOIN businesses b ON s.business_id = b.id
-            SET s.status = 'completed'
-            WHERE s.sale_id = %s AND b.username = %s
+            UPDATE sales
+            SET status = 'completed'
+            WHERE sale_id = %s
+            AND business_id IN (
+                SELECT id FROM businesses WHERE username = %s
+            )
         """, (sale_id, username))
 
         return cur.rowcount  # 🔥 tells us if anything was updated
