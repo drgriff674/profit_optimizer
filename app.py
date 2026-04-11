@@ -1002,6 +1002,7 @@ def dashboard():
 
 
     latest_payment = None
+    warning_message = None
 
     notifications = []
     forecast_data = []
