@@ -1400,7 +1400,7 @@ def create_sale():
         biz_data = cur.fetchone()
 
         # 🔥 decide status
-        if biz_data and biz_data.get("paybill_number"):
+        if biz_data and biz_data.get("paybill_number") not in [None,"","0"]:
             status = "pending"   # paybill user
         else:
             status = "unpaid"    # normal user (till)
@@ -1423,9 +1423,9 @@ def create_sale():
                 item["price"]
             ))
 
-        return sale_id
+        return sale_id, status
 
-    sale_id = run_db_operation(operation, commit=True)
+    sale_id, status = run_db_operation(operation, commit=True)
 
     return jsonify({
         "sale_id": sale_id,

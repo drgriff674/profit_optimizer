@@ -316,9 +316,19 @@ function createSale() {
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({items:cart})
     })
-    .then(r=>r.json())
-    .then(()=>{
-        cart=[]; renderCart(); loadSales();
+    .then(r=>{
+        if(!r.ok) throw new Error("Server error");
+        return r.json();
+    })
+    .then(data=>{
+        console.log("SALE CREATED:", data);
+        cart=[]; 
+        renderCart(); 
+        loadSales();
+    })
+    .catch(err=>{
+        console.error(err);
+        alert("Something broke 😅 check console");
     });
 }
 
