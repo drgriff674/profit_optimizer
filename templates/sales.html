@@ -395,7 +395,7 @@ el.innerHTML = "";
         </span>
 
         ${
-            s.status !== "completed"
+            s.status !== "pending"
             ? `<button onclick="deleteSale('${s.sale_id}')"
                 class="px-2 py-1 text-xs rounded bg-red-500 hover:bg-red-600 text-white">
                 ✕
@@ -430,10 +430,19 @@ ${
             Amount: KSh ${s.total_amount}
         </div>
 
-        <button onclick="markPaid('${s.sale_id}')"
-            class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
-            ✅ Mark as Paid
-        </button>
+       <div class="flex gap-2">
+
+    <button onclick="markPaid('${s.sale_id}')"
+        class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
+        ✅ Mark as Paid
+    </button>
+
+    <button onclick="deleteSale('${s.sale_id}')"
+        class="px-3 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white">
+        ❌ Cancel
+    </button>
+
+</div>
 
     </div>`
 

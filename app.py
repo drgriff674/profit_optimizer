@@ -1560,6 +1560,7 @@ def test_create_sale():
 def delete_sale(sale_id):
 
     from database import run_db_operation
+    from flask import session
 
     def operation(cur):
 
@@ -1573,13 +1574,13 @@ def delete_sale(sale_id):
             WHERE sale_id = %s
         """, (sale_id, session["username"]))
 
-        return cur.rowcount  # 🔥 THIS IS KEY
+        return cur.rowcount  
 
     deleted = run_db_operation(operation, commit=True)
 
     print("DELETE RESULT:",deleted)
 
-    return {"deleted": deleted}
+    return jsonify({"deleted": deleted})
 
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
