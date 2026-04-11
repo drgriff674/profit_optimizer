@@ -381,13 +381,31 @@ el.innerHTML = "";
 <li id="sale-${s.sale_id}"
     class="flex flex-col border-b pb-2 ${justPaid ? 'bg-green-100' : ''}">
 
-    <div class="flex justify-between">
-        <span>${s.sale_id}</span>
-        <span>KSh ${s.total_amount}</span>
-        <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'}">
+    <div class="flex justify-between items-center">
+
+    <div>
+        <div>${s.sale_id}</div>
+        <div class="text-xs text-gray-400">KSh ${s.total_amount}</div>
+    </div>
+
+    <div class="flex items-center gap-2">
+
+        <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'} text-xs">
             ${s.status}
         </span>
+
+        ${
+            s.status !== "completed"
+            ? `<button onclick="deleteSale('${s.sale_id}')"
+                class="px-2 py-1 text-xs rounded bg-red-500 hover:bg-red-600 text-white">
+                ✕
+               </button>`
+            : ""
+        }
+
     </div>
+
+</div>
 
 ${
     s.status === "pending"   // 🔵 PAYBILL USER

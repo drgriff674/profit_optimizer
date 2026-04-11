@@ -1556,6 +1556,7 @@ def test_create_sale():
     return f"Created sale: {sale_id}"
 
 @app.route("/sales/delete/<sale_id>", methods=["POST"])
+@login_required
 def delete_sale(sale_id):
 
     from database import run_db_operation
@@ -1564,8 +1565,13 @@ def delete_sale(sale_id):
 
         cur.execute("""
             DELETE FROM sales
+            USING businesses b
+            WHERE s.sale_id = %s
+            AND s.business_id = b.id
+            AND b.username = %s
+            AND s.status !='completed'
             WHERE sale_id = %s
-        """, (sale_id,))
+        """, (sale_id, session["username"]))
 
         return cur.rowcount  # 🔥 THIS IS KEY
 
