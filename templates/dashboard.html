@@ -297,62 +297,73 @@ bg-gray-100 text-gray-700
 {% if subscription %}
 
 <div class="p-5 rounded-xl shadow mb-6"
-     style="background: var(--og-surface); border-left: 4px solid #f59e0b;">
+     style="background: var(--og-surface); border-left: 4px solid #6366f1;">
 
-  <h3 class="text-lg font-semibold mb-2">
-    💳 Subscription Status
-  </h3>
+  <div class="flex justify-between items-center mb-2">
+    <h3 class="text-lg font-semibold">
+      💳 Subscription
+    </h3>
 
-  {% if subscription.status == "trial" %}
+    <!-- STATUS BADGE -->
+    <span class="text-xs px-3 py-1 rounded-full font-semibold
+      {% if subscription_status == 'trial' %}
+        bg-yellow-100 text-yellow-700
+      {% elif subscription_status == 'active' %}
+        bg-green-100 text-green-700
+      {% else %}
+        bg-red-100 text-red-700
+      {% endif %}
+    ">
+      {{ subscription_status|capitalize }}
+    </span>
+  </div>
 
-    <p class="text-sm mb-2">
-      🎉 You are on a <strong>7-day free trial</strong>
+  <!-- STATUS TEXT -->
+  {% if subscription_status == "trial" %}
+    <p class="text-sm mb-1">
+      🎉 Free trial active
     </p>
 
-   {% set days_left = (subscription.trial_end.date() - current_date).days %}
-
-<p class="text-sm">
-  Trial ends on:
-  <strong>{{ subscription.trial_end.strftime('%Y-%m-%d') }}</strong>
-</p>
-
-{% if days_left <= 5 %}
-<p class="text-red-500 font-semibold mt-2">
-  ⚠ Your trial ends in {{ days_left }} day(s)
-</p>
-{% endif %}
-
-    <p class="text-sm text-red-500 mt-2">
-      ⚠ After trial: KSh 1,500/month required
-    </p>
-
-  {% elif subscription.status == "active" %}
-
-    <p class="text-sm text-green-600">
+  {% elif subscription_status == "active" %}
+    <p class="text-sm text-green-600 mb-1">
       ✅ Subscription active
     </p>
 
-    <p class="text-sm">
-      Next billing:
-      {{ subscription.subscription_end.strftime('%Y-%m-%d') }}
-    </p>
-
-  {% elif subscription.status == "expired" %}
-
-    <p class="text-sm text-red-500">
+  {% elif subscription_status == "expired" %}
+    <p class="text-sm text-red-500 mb-1">
       ❌ Subscription expired
     </p>
+  {% endif %}
 
-    <p class="text-sm">
-      Renew to continue using OptiGain
-    </p>
+  <!-- COUNTDOWN -->
+  <p class="text-sm">
+    ⏳ {{ days_left }} day(s) remaining
+  </p>
 
+  <!-- WARNING -->
+  {% if warning_message %}
+  <p class="text-red-500 font-semibold mt-2">
+    {{ warning_message }}
+  </p>
+  {% endif %}
+
+  <!-- PRICE -->
+  <p class="text-xs opacity-70 mt-2">
+    Plan: KSh 1,500 / month
+  </p>
+
+  <!-- PAY BUTTON -->
+  {% if subscription_status != "active" %}
+  <a href="{{ url_for('subscribe') }}"
+     class="inline-block mt-4 px-4 py-2 rounded-lg text-white font-semibold shadow"
+     style="background: var(--og-primary);">
+     💳 Pay Now
+  </a>
   {% endif %}
 
 </div>
 
 {% endif %}
-
         
 
 {% if live_total_revenue == 0 %}

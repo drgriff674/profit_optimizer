@@ -1014,6 +1014,45 @@ def dashboard():
     cached_data = get_dashboard_data(username)
     subscription = get_subscription(username)
 
+    from datetime import datetime
+    import math
+
+    subscription_status = "inactive"
+    days_left = 0
+
+    if subscription:
+
+        now = datetime.utcnow()
+
+        if subscription["status"] == "trial":
+            end = subscription["trial_end"]
+
+            if end and now < end:
+                subscription_status = "trial"
+                days_left = max(0, math.ceil((end - now).total_seconds()/86400))
+            else:
+                subscription_status = "expired"
+
+        elif subscription["status"] == "active":
+            end = subscription["subscription_end"]
+
+            if end and now < end:
+                subscription_status = "active"
+                days_left = max(0, math.ceil((end - now).total_seconds()/86400))
+            else:
+                subscription_status = "expired"
+
+            if subscription_status == "expired":
+                return redirect(url_for("subscribe"))
+
+            warning_message = None
+
+            if subscription_status == "trial" and days_left <= 5:
+                warning_message = f"⚠️ Trial ends in {days_left} days"
+
+            elif subscription_status == "active" and days_left <= 5:
+                warning_message = f"⚠️ Subscription expires in {days_left} days"
+    
     snapshot = cached_data.get("snapshot", {})
     intelligence = cached_data.get("intelligence", {})
     forecast_status = cached_data.get("forecast_status", {})
@@ -1113,6 +1152,9 @@ def dashboard():
         inventory_insights=inventory_insights,
         top_products=top_products,
         subscription=subscription,
+        subscription_status=subscription_status,
+        warning_message=warning_message,
+        days_left=days_left,
         current_date=datetime.utcnow().date()
     )
 
@@ -1124,6 +1166,56 @@ def api_dash():
     snap=get_dashboard_snapshot(username)
 
     return jsonify(snap)
+
+
+
+@app.route("/subscribe")
+@login_required
+def subscribe():
+
+    import requests, os
+    import uuid
+    order_id = f"{username}-{uuid.uuid4()}"
+
+    username = session["username"]
+    amount = 1500
+
+    token = get_pesapal_token().get("token")
+
+    url = "https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest"
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "id": order_id,  # 🔥 VERY IMPORTANT
+        "currency": "KES",
+        "amount": amount,
+        "description": "OptiGain Monthly Subscription",
+        "callback_url": "https://optigainapp.com/dashboard",
+
+        "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
+
+        "billing_address": {
+            "email_address": "user@optigain.com",
+            "phone_number": "0700000000",
+            "country_code": "KE",
+            "first_name": username,
+            "last_name": "User"
+        }
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    redirect_url = data.get("redirect_url")
+
+    if redirect_url:
+        return redirect(redirect_url)
+
+    return data
 
 @app.route("/api/products")
 @login_required
@@ -2439,76 +2531,33 @@ def pesapal_ipn():
 
     if status and status.strip().lower() == "completed":
 
-        from database import run_db_operation, update_dashboard_snapshot, update_dashboard_intelligence
+        from database import run_db_operation
 
         def operation(cur):
-            from datetime import date
-            today = date.today()
+            from datetime import datetime, timedelta
 
-            # ✅ FIRST: get username + amount
+            # 🔥 NOW merchant_reference = username
+            username = merchant_reference
+
+            now = datetime.utcnow()
+            end_date = now + timedelta(days=30)
+
+            # ✅ ACTIVATE SUBSCRIPTION
             cur.execute("""
-                SELECT b.username, b.account_number, b.paybill, s.total_amount
-                FROM sales s
-                JOIN businesses b ON s.business_id = b.id
-                WHERE s.sale_id = %s
-            """, (merchant_reference,))
+                UPDATE subscriptions
+                SET
+                    status = 'active',
+                    subscription_start = %s,
+                    subscription_end = %s,
+                    last_payment_reference = %s
+                WHERE username = %s
+            """, (now, end_date, order_tracking_id, username))
 
-            row = cur.fetchone()
-
-            if not row:
-                return
-
-            username = row["username"]
-            account_number = row["account_number"] or username
-            paybill = row["paybill"]
-            amount = float(row["total_amount"])
-
-            # 🔥 SET USER (RLS FIX)
-            cur.execute(f"SET app.current_username = '{username}'")
-
-            # ✅ INSERT INTO MPESA TRANSACTIONS (💥 THIS IS THE NEW PART)
-            cur.execute("""
-                INSERT INTO mpesa_transactions (
-                    transaction_id,
-                    amount,
-                    receiver,
-                    account_reference,
-                    transaction_type,
-                    status,
-                    local_date
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (transaction_id) DO NOTHING
-            """, (
-                order_tracking_id,     # unique ID from pesapal
-                amount,
-                paybill,
-                account_number,
-                "pesapal",
-                "confirmed",
-                today
-            ))
-
-            # ✅ mark sale completed
-            cur.execute("""
-                UPDATE sales
-                SET status = 'completed'
-                WHERE sale_id = %s AND status != 'completed'
-            """, (merchant_reference,))
-
-            process_payment(username, amount, today)
-
-            # ✅ update dashboard
-            update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
-
-            cache.delete_memoized(get_dashboard_data, username)
-
-            print("📊 DASHBOARD UPDATED FOR:", username)
-    
+            print("💳 SUBSCRIPTION ACTIVATED FOR:", username)
+            
         run_db_operation(operation, commit=True)
 
-        print("✅ SALE COMPLETED:", merchant_reference)
+        print("SUBSCRIPTION PAYMENT COMPLETED")
     return jsonify({"status": "processed"})
 
 @app.route("/pesapal/create-payment/<sale_id>")
