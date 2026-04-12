@@ -1400,10 +1400,12 @@ def create_sale():
         biz_data = cur.fetchone()
 
         # 🔥 decide status
-        if biz_data and biz_data.get("paybill"):
-            status = "pending"   # paybill user
+
+        paybill = biz_data.get("paybill") if biz_data else None
+        if paybill and paybill.strip() not in ["000000"]:
+            status = "pending"  #paybill user
         else:
-            status = "unpaid"    # normal user (till)
+            status = "unpaid"  #till user
 
         # insert sale
         cur.execute("""
