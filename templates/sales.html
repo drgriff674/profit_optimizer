@@ -477,14 +477,28 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 function markPaid(saleId) {
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+
     fetch(`/sales/mark-paid/${saleId}`, {
-        method: "POST"
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrf   // 🔥 THIS WAS MISSING
+        }
     })
-    .then(r => r.json())
+    .then(async r => {
+        const text = await r.text();
+
+        try {
+            return JSON.parse(text);
+        } catch {
+            throw new Error(text); // show raw server response
+        }
+    })
     .then(data => {
 
         if (!data.success) {
-            alert("Error: " + data.error);   // 👈 SHOW REAL ERROR
+            alert("Error: " + (data.error || "Unknown"));
             return;
         }
 
@@ -495,7 +509,6 @@ function markPaid(saleId) {
         console.error(err);
     });
 }
-
 </script>
 
 <!-- EDIT MODAL -->
