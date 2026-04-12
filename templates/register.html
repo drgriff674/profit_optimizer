@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
   <!-- OptiGain theme -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body class="min-h-screen flex items-center justify-center transition-colors"
@@ -151,9 +153,16 @@
   <div class="relative">
     <input id="password" type="password" name="password" required
       class="w-full rounded-lg px-4 py-2 border pr-10">
-    <button type="button" onclick="togglePassword('password', this)"
-      class="absolute right-2 top-2">👁</button>
-  </div>
+
+    <button type="button"
+  onclick="togglePassword('password', this)"
+  class="absolute right-3 top-2 opacity-70 hover:opacity-100"
+  style="color: var(--og-text-main);">
+  <i data-lucide="eye"></i>
+</button>
+
+</div>
+  
 </div>
 
 <!-- CONFIRM -->
@@ -162,9 +171,14 @@
   <div class="relative">
     <input id="confirm_password" type="password" name="confirm_password" required
       class="w-full rounded-lg px-4 py-2 border pr-10">
-    <button type="button" onclick="togglePassword('confirm_password', this)"
-      class="absolute right-2 top-2">👁</button>
-  </div>
+
+  <button type="button"
+  onclick="togglePassword('confirm_password', this)"
+  class="absolute right-3 top-2 opacity-70 hover:opacity-100"
+  style="color: var(--og-text-main);">
+  <i data-lucide="eye"></i>
+</button>
+
 </div>
 
 <!-- Terms & Privacy Agreement -->
@@ -248,19 +262,23 @@ and
   </script>
 
 <script>
+
 function togglePassword(fieldId, btn) {
 
   const field = document.getElementById(fieldId);
+  const icon = btn.querySelector("i");
 
   if (field.type === "password") {
     field.type = "text";
-    btn.innerText = "🙈";
+    icon.setAttribute("data-lucide", "eye-off");
   } else {
     field.type = "password";
-    btn.innerText = "👁";
+    icon.setAttribute("data-lucide", "eye");
   }
 
+  lucide.createIcons();
 }
+
 </script>
 
 <script>
@@ -306,6 +324,10 @@ function setMode(mode) {
 document.addEventListener("DOMContentLoaded", () => {
   setMode("normal");
 });
+</script>
+
+<script>
+lucide.createIcons();
 </script>
 
 </body>
