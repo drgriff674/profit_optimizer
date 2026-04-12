@@ -408,7 +408,7 @@ el.innerHTML = "";
 </div>
 
 ${
-    s.status === "pending"   // 🔵 PAYBILL USER
+    s.status === "pending"  || s.status==="unpaid" // 🔵 PAYBILL USER
     ? `<div class="mt-2 flex flex-col gap-2">
 
         <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
@@ -481,9 +481,16 @@ function markPaid(saleId) {
     fetch(`/sales/mark-paid/${saleId}`, {
         method: "POST"
     })
-    .then(() => loadSales());
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadSales();
+        } else {
+            alert("Failed to mark as paid 😅");
+        }
+    })
+    .catch(() => alert("Server error 😅"));
 }
-
 </script>
 
 <!-- EDIT MODAL -->

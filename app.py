@@ -1560,27 +1560,38 @@ def test_create_sale():
 def delete_sale(sale_id):
 
     from database import run_db_operation
-    from flask import session
+    from flask import session, jsonify
+
+    username = session["username"]
 
     def operation(cur):
 
+        # ✅ delete child items first (VERY IMPORTANT)
+        cur.execute("""
+            DELETE FROM sale_items
+            WHERE sale_id = %s
+        """, (sale_id,))
+
+        # ✅ delete sale safely
         cur.execute("""
             DELETE FROM sales
-            USING businesses b
-            WHERE s.sale_id = %s
-            AND s.business_id = b.id
-            AND b.username = %s
-            AND s.status !='completed'
             WHERE sale_id = %s
-        """, (sale_id, session["username"]))
+            AND status != 'completed'
+            AND business_id IN (
+                SELECT id FROM businesses WHERE username = %s
+            )
+        """, (sale_id, username))
 
         return cur.rowcount  
 
-    deleted = run_db_operation(operation, commit=True)
+    try:
+        deleted = run_db_operation(operation, commit=True)
+        print("DELETE RESULT:", deleted)
+        return jsonify({"deleted": deleted})
 
-    print("DELETE RESULT:",deleted)
-
-    return jsonify({"deleted": deleted})
+    except Exception as e:
+        print("DELETE ERROR:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/revenue/day/<date>/delete", methods=["POST"])
