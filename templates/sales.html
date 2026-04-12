@@ -33,7 +33,7 @@
   </div>
 
 {% if request.args.get("success") %}
-<div class="mb-4 p-3 rounded-lg bg-green-100 text-green-700 text-sm">
+<div class="flash-message mb-4 p-3 rounded-lg bg-green-100 text-green-700 text-sm">
   ✅ Payment successful!
 </div>
 {% endif %}
@@ -483,7 +483,7 @@ function markPaid(saleId) {
     fetch(`/sales/mark-paid/${saleId}`, {
         method: "POST",
         headers: {
-            "X-CSRFToken": csrf   // 🔥 THIS WAS MISSING
+            "X-CSRFToken": csrf
         }
     })
     .then(async r => {
@@ -492,7 +492,7 @@ function markPaid(saleId) {
         try {
             return JSON.parse(text);
         } catch {
-            throw new Error(text); // show raw server response
+            throw new Error(text);
         }
     })
     .then(data => {
@@ -502,13 +502,26 @@ function markPaid(saleId) {
             return;
         }
 
+        // ✅ refresh sales list
         loadSales();
+
+        // 🔥 instant dashboard update
+        fetch("/api/dashboard-snapshot")
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById("liveRevenue");
+            if (el && data.total_revenue !== undefined) {
+                el.innerText = "KSh " + Math.floor(data.total_revenue);
+            }
+        });
+
     })
     .catch(err => {
         alert("Server crashed 😅");
         console.error(err);
     });
 }
+
 </script>
 
 <!-- EDIT MODAL -->
@@ -578,6 +591,37 @@ toggle.addEventListener("click", () => {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 </script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const flashes = document.querySelectorAll(".flash-message");
+
+    if (flashes.length > 0) {
+
+        setTimeout(() => {
+
+            flashes.forEach(msg => {
+
+                msg.style.transition = "opacity 0.6s ease";
+                msg.style.opacity = "0";
+
+                setTimeout(() => {
+                    msg.remove();
+                }, 600);
+
+            });
+
+        }, 3000); // ⏱️ stays 3 seconds
+    }
+
+});
+</script>
+
+
+
 
 </body>
 </html>
