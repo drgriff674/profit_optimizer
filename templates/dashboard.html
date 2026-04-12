@@ -305,17 +305,19 @@ bg-gray-100 text-gray-700
     </h3>
 
     <!-- STATUS BADGE -->
-    <span class="text-xs px-3 py-1 rounded-full font-semibold
-      {% if subscription_status == 'trial' %}
-        bg-yellow-100 text-yellow-700
-      {% elif subscription_status == 'active' %}
-        bg-green-100 text-green-700
-      {% else %}
-        bg-red-100 text-red-700
-      {% endif %}
-    ">
-      {{ subscription_status|capitalize }}
-    </span>
+<span class="text-xs px-3 py-1 rounded-full font-semibold
+  {% if days_left <= 0 %}
+    bg-red-100 text-red-700
+  {% elif days_left <= 2 %}
+    bg-yellow-100 text-yellow-700
+  {% elif subscription_status == 'active' %}
+    bg-green-100 text-green-700
+  {% else %}
+    bg-gray-100 text-gray-700
+  {% endif %}
+">
+  {{ subscription_status|capitalize }}
+</span>
   </div>
 
   <!-- STATUS TEXT -->
@@ -336,9 +338,15 @@ bg-gray-100 text-gray-700
   {% endif %}
 
   <!-- COUNTDOWN -->
-  <p class="text-sm">
-    ⏳ {{ days_left }} day(s) remaining
-  </p>
+  <p id="subscriptionCountdown" class="text-sm font-semibold">
+  ⏳ {{ days_left }} day(s) remaining
+</p>
+
+{% if days_left <= 0 %}
+<p class="text-red-600 font-semibold mt-2">
+  🚫 Subscription expired — pay to continue using system
+</p>
+{% endif %}
 
   <!-- WARNING -->
   {% if warning_message %}
@@ -693,6 +701,30 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    let daysLeft = {{ days_left | int }};
+    const el = document.getElementById("subscriptionCountdown");
+
+    if (!el) return;
+
+    function updateText() {
+
+        if (daysLeft > 1) {
+            el.innerText = "⏳ " + daysLeft + " days remaining";
+        } else if (daysLeft === 1) {
+            el.innerText = "⏳ 1 day remaining";
+        } else {
+            el.innerText = "🚫 0 days remaining";
+        }
+    }
+
+    updateText();
+
+});
 </script>
 
 </body>

@@ -1045,7 +1045,7 @@ def dashboard():
             else:
                 subscription_status = "expired"
 
-            if subscription_status == "expired":
+            if days_left <= 0:
                 return redirect(url_for("subscribe"))
 
             warning_message = None
