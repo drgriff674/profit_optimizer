@@ -1511,63 +1511,67 @@ def create_sale_route():
 @login_required
 def mark_paid(sale_id):
 
-    from database import run_db_operation
-    from flask import session, jsonify
-    from datetime import date
+    username = session["username"]
 
-    try:
-        username = session["username"]
+    def operation(cur):
 
-        def operation(cur):
+        # get business
+        cur.execute("""
+            SELECT id FROM businesses WHERE username = %s LIMIT 1
+        """, (username,))
+        biz = cur.fetchone()
+        if not biz:
+            return {"success": False, "error": "Business not found"}
 
-            cur.execute("""
-                SELECT s.total_amount, s.status
-                FROM sales s
-                JOIN businesses b ON s.business_id = b.id
-                WHERE s.sale_id = %s
-                AND b.username = %s
-            """, (sale_id, username))
+        business_id = biz["id"]
 
-            sale = cur.fetchone()
+        # get sale amount BEFORE update
+        cur.execute("""
+            SELECT total_amount FROM sales
+            WHERE sale_id = %s AND business_id = %s
+        """, (sale_id, business_id))
 
-            if not sale:
-                return {"error": "not_found"}
+        sale = cur.fetchone()
+        if not sale:
+            return {"success": False, "error": "Sale not found"}
 
-            if sale["status"] == "completed":
-                return {"error": "already_done"}
+        amount = float(sale["total_amount"])
 
-            amount = float(sale["total_amount"])
+        # update status
+        cur.execute("""
+            UPDATE sales
+            SET status = 'completed'
+            WHERE sale_id = %s AND business_id = %s
+        """, (sale_id, business_id))
 
-            cur.execute("""
-                UPDATE sales
-                SET status = 'completed'
-                WHERE sale_id = %s
-            """, (sale_id,))
+        if cur.rowcount == 0:
+            return {"success": False, "error": "Update failed"}
 
-            cur.execute("""
-                INSERT INTO revenue_days (username, revenue_date)
-                VALUES (%s, %s)
-                ON CONFLICT (username, revenue_date) DO NOTHING
-            """, (username, date.today()))
+        # 🔥 ADD TO REVENUE DAYS
+        from datetime import date
 
-            cur.execute("""
-                UPDATE revenue_days
-                SET total_amount = total_amount + %s
-                WHERE username = %s AND revenue_date = %s
-            """, (amount, username, date.today()))
+        today = date.today()
 
-            return {"success": True}
+        cur.execute("""
+            INSERT INTO revenue_days (username, revenue_date)
+            VALUES (%s, %s)
+            ON CONFLICT (username, revenue_date) DO NOTHING
+        """, (username, today))
 
-        result = run_db_operation(operation, commit=True)
+        cur.execute("""
+            UPDATE revenue_days
+            SET total_amount = total_amount + %s
+            WHERE username = %s AND revenue_date = %s
+        """, (amount, username, today))
 
-        return jsonify(result or {"success": False})
+        return {"success": True}
 
-    except Exception as e:
-        print("🔥 MARK PAID ERROR:", str(e))
-        return jsonify({
-            "success": False,
-            "error": str(e)   # 👈 THIS IS THE KEY
-        })
+    result = run_db_operation(operation, commit=True)
+
+    # 🔥🔥 THIS IS WHAT YOU WERE MISSING
+    update_dashboard_snapshot(username)
+
+    return jsonify(result)
     
 @app.route("/test/create-sale")
 @login_required
