@@ -482,14 +482,20 @@ function markPaid(saleId) {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            loadSales();
-        } else {
-            alert("Failed to mark as paid 😅");
+
+        if (!data.success) {
+            alert("Error: " + data.error);   // 👈 SHOW REAL ERROR
+            return;
         }
+
+        loadSales();
     })
-    .catch(() => alert("Server error 😅"));
+    .catch(err => {
+        alert("Server crashed 😅");
+        console.error(err);
+    });
 }
+
 </script>
 
 <!-- EDIT MODAL -->
