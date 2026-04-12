@@ -1511,25 +1511,53 @@ def create_sale_route():
 @login_required
 def mark_paid(sale_id):
 
+    from database import run_db_operation, process_payment
+    from flask import session, jsonify
+    from datetime import date
+
     username = session["username"]
 
     def operation(cur):
+
+        # 🔍 Get sale details safely
+        cur.execute("""
+            SELECT s.total_amount, s.status
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE s.sale_id = %s
+            AND b.username = %s
+        """, (sale_id, username))
+
+        sale = cur.fetchone()
+
+        if not sale:
+            return {"error": "not_found"}
+
+        # 🚫 prevent double payment (VERY IMPORTANT)
+        if sale["status"] == "completed":
+            return {"error": "already_completed"}
+
+        amount = float(sale["total_amount"])
+
+        # ✅ mark as completed
         cur.execute("""
             UPDATE sales
             SET status = 'completed'
             WHERE sale_id = %s
-            AND business_id IN (
-                SELECT id FROM businesses WHERE username = %s
-            )
-        """, (sale_id, username))
+        """, (sale_id,))
 
-        return cur.rowcount  # 🔥 tells us if anything was updated
+        return {"amount": amount}
 
-    updated = run_db_operation(operation, commit=True)
+    result = run_db_operation(operation, commit=True)
 
-    return jsonify({
-        "success": updated > 0
-    })
+    # ❌ handle errors safely
+    if not result or "error" in result:
+        return jsonify({"success": False})
+
+    # 💰 ADD TO REVENUE SYSTEM
+    process_payment(username, result["amount"], date.today())
+
+    return jsonify({"success": True})
 
 @app.route("/test/create-sale")
 @login_required
