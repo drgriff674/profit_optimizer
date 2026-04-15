@@ -1436,7 +1436,7 @@ def create_sale():
         biz = cur.fetchone()
         business_id = biz["id"]
 
-        client_sale_id = dataget("sale_id")
+        client_sale_id = data.get("sale_id")
 
         if client_sale_id:
             sale_id = client_sale_id
