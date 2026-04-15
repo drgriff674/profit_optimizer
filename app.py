@@ -2448,7 +2448,7 @@ def live_performance():
     for d in dates:
         cash = cash_map.get(d, 0)
         sales = sales_map.get(d, 0)
-        expenses = expenses_map.get(d, 0)
+        expenses = expense_map.get(d, 0)
 
         revenue = cash + sales
 
