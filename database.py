@@ -214,8 +214,14 @@ def init_db():
             status TEXT DEFAULT 'pending',
             raw_payload JSON,
             origin_ip TEXT,
-            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            sale_id TEXT
         );
+        """)
+
+        cur.execute("""
+        ALTER TABLE mpesa_transactions
+        ADD COLUMN IF NOT EXISTS sale_id TEXT;
         """)
 
         cur.execute("""

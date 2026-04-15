@@ -11,6 +11,10 @@
 
 <body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
 
+<div id="network-status"
+       class="text-center text-xs py-2 font-medium">
+</div>
+
 <!-- HEADER -->
 <header
   class="flex items-center justify-between px-6 py-4
@@ -43,6 +47,7 @@
   </div>
 </header>
 
+
 <!-- MAIN -->
 <main class="flex items-center justify-center px-4 py-10">
 
@@ -69,7 +74,7 @@
     </div>
 
     <!-- FORM -->
-    <form method="POST" action="{{ url_for('revenue_entry') }}" class="space-y-4">
+    <form id="revenueForm" method="POST" action="{{ url_for('revenue_entry') }}" class="space-y-4">
 
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -173,9 +178,9 @@
 
   {% if not is_locked %}
     <a
-      href="{{ url_for('edit_revenue_entry', entry_id=e.id) }}"
-      class="text-blue-600 text-xs hover:underline"
-    >
+      href="#"
+           onclick="handleEditClick"('{{ e.id }}')
+           class="text-blue-600 text-xs hover:underline">
       Edit
     </a>
   {% endif %}
@@ -205,6 +210,75 @@
     const isDark = document.documentElement.classList.toggle("dark");
     localStorage.setItem("theme", isDark ? "dark" : "light");
   });
+</script>
+
+<script>
+
+// ================= OFFLINE SAVE =================
+document.getElementById("revenueForm").addEventListener("submit", function(e) {
+
+    if (!navigator.onLine) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        const data = {
+            date: formData.get("date"),
+            amount: formData.get("amount"),
+            category: formData.get("category")
+        };
+
+        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+        queue.push({
+            type: "revenue",
+            data: data,
+            synced: false
+        });
+
+        localStorage.setItem("offline_queue", JSON.stringify(queue));
+
+        alert("📴 Revenue saved offline — will sync later");
+
+        this.reset();
+    }
+});
+
+
+// ================= NETWORK STATUS =================
+function updateNetworkStatus() {
+    const el = document.getElementById("network-status");
+
+    if (!el) return;
+
+    if (navigator.onLine) {
+        el.innerText = "🟢 Online — syncing...";
+        el.className = "text-center text-xs py-2 bg-green-500 text-white";
+    } else {
+        el.innerText = "🔴 Offline — auto sync when back";
+        el.className = "text-center text-xs py-2 bg-red-500 text-white";
+    }
+}
+
+window.addEventListener("online", updateNetworkStatus);
+window.addEventListener("offline", updateNetworkStatus);
+
+updateNetworkStatus();
+
+</script>
+
+<script>
+
+function handleEditClick(id) {
+
+    if (!navigator.onLine) {
+        alert("📴 You must be online to edit entries");
+        return;
+    }
+
+    window.location.href = "/edit_revenue_entry/" + id;
+}
+
 </script>
 
 </body>

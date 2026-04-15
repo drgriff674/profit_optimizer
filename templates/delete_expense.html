@@ -37,8 +37,9 @@
     </p>
 
     <!-- Actions -->
-    <form method="POST" class="flex gap-3 justify-center">
+    <form id="deleteForm"  class="flex gap-3 justify-center">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="hidden" id="expense_id" value="{{ expense_id }}">
       <button
         type="submit"
         class="px-5 py-2.5 rounded-lg
@@ -61,6 +62,96 @@
     </form>
 
   </div>
+
+<script>
+
+document.getElementById("deleteForm").addEventListener("submit", function(e) {
+
+    const expenseId = document.getElementById("expense_id").value;
+
+    // 🔴 OFFLINE MODE
+    if (!navigator.onLine) {
+        e.preventDefault();
+
+        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+        queue.push({
+            type: "delete_expense",
+            data: { expense_id: expenseId },
+            synced: false
+        });
+
+        localStorage.setItem("offline_queue", JSON.stringify(queue));
+
+        alert("📴 Delete saved — will sync when online");
+
+        window.location.href = "/dashboard";
+        return;
+    }
+
+    // 🟢 ONLINE MODE
+    e.preventDefault();
+
+    fetch(`/expense/delete/${expenseId}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ expense_id: expenseId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = "/dashboard";
+        } else {
+            alert("❌ Failed to delete");
+        }
+    });
+
+});
+
+// ================= SYNC ENGINE =================
+async function syncOfflineData() {
+
+    if (!navigator.onLine) return;
+
+    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+    for (let item of queue) {
+
+        if (item.synced) continue;
+
+        try {
+            let endpoint = "";
+
+            if (item.type === "delete_expense") {
+                endpoint = `/expense/delete/${item.data.expense_id}`;
+            }
+
+            await fetch(endpoint, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(item.data)
+            });
+
+            item.synced = true;
+
+        } catch (e) {
+            console.log("Still offline...");
+            return;
+        }
+    }
+
+    localStorage.setItem("offline_queue", JSON.stringify(queue));
+}
+
+// run every 5s
+setInterval(syncOfflineData, 5000);
+
+// instant sync
+window.addEventListener("online", syncOfflineData);
+
+</script>
 
 </body>
 </html>

@@ -146,6 +146,18 @@ def generate_revenue_day_export_data(username, revenue_date):
 
         is_locked = day["locked"] if day else False
         locked_total = float(day["total_amount"]) if day else 0
+        
+        #sales
+        cur.execute("""
+            SELECT COALESCE(SUM(s.total_amount),0) AS sales_total
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND DATE(s.created_at) = %s
+              AND s.status = 'completed'
+        """, (username, revenue_date))
+
+        sales_total = float(cur.fetchone()["sales_total"])
 
         # --- cash ---
         cur.execute("""
@@ -208,6 +220,23 @@ def generate_revenue_day_export_data(username, revenue_date):
 
             mpesa_entries = cur.fetchall()
 
+            # --- expenses ---
+            cur.execute("""
+                SELECT COALESCE(SUM(amount),0) AS expense_total
+                FROM expenses
+                WHERE username=%s AND expense_date=%s
+            """, (username, revenue_date))
+
+            expense_total = float(cur.fetchone()["expense_total"])
+
+            cur.execute("""
+                SELECT category, amount
+                FROM expenses
+                WHERE username=%s AND expense_date=%s
+            """, (username, revenue_date))
+
+            expense_entries = cur.fetchall()
+
         return {
             "date": revenue_date,
             "biz": biz,
@@ -217,7 +246,9 @@ def generate_revenue_day_export_data(username, revenue_date):
             "mpesa_total": mpesa_total,
             "mpesa_entries": mpesa_entries,
             "manual_entries": manual_entries,
-            "expense_total": 0
+            "sales_total": sales_total,
+            "expense_total": expense_total,
+            "expense_entries": expense_entries
         }
 
     db = run_db_operation(operation)
@@ -248,7 +279,7 @@ def generate_revenue_ai_summary(username, date):
         f"- {k}: KSh {v:,.0f}" for k,v in categories.items()
     ) or "No manual category splits recorded."
 
-    gross_total=cash_total+mpesa_total
+    gross_total=cash_total + data.get("sales_total", 0)
     net_total=gross_total-expense_total
 
     prompt = f"""
@@ -258,7 +289,7 @@ def generate_revenue_ai_summary(username, date):
 
     Financial data:
     Cash revenue: KSh {cash_total:,.0f}
-    MPesa revenue: KSh {mpesa_total:,.0f}
+    MPesa payments(not part of revenue): KSh {mpesa_total:,.0f}
     Gross revenue: KSh {gross_total:,.0f}
     Expenses: KSh {expense_total:,.0f}
     Net revenue: KSh {net_total:,.0f}
@@ -320,10 +351,28 @@ def ensure_business_exists(username):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+
+        if os.getenv("DEV_MODE") == "true":
+            session["username"] = "dev_user"
+
+            # ✅ ADD THIS BLOCK
+            def operation(cur):
+                cur.execute("""
+                    INSERT INTO users (username, password, role)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (username) DO NOTHING
+                """, ("dev_user", "dev_password", "owner"))
+
+            run_db_operation(operation, commit=True)
+
+            return f(*args, **kwargs)
+
         if "username" not in session:
             flash("Please log in first.", "error")
             return redirect(url_for("login"))
+
         return f(*args, **kwargs)
+
     return decorated_function
 
 def start_otp_flow(purpose, data, email):
@@ -1371,9 +1420,12 @@ def create_product():
 def create_sale():
 
     username = session["username"]
-    data = request.get_json() or {}
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form.to_dict()
 
-    items = data.get("items", [])
+    items = data.get("items",[])
 
     def operation(cur):
 
@@ -1384,9 +1436,13 @@ def create_sale():
         biz = cur.fetchone()
         business_id = biz["id"]
 
-        import random
+        client_sale_id = dataget("sale_id")
 
-        sale_id = str(random.randint(100000,999999))
+        if client_sale_id:
+            sale_id = client_sale_id
+        else:
+            import random
+            sale_id = str(random.randint(100000,999999))
 
         total = 0
 
@@ -1413,19 +1469,25 @@ def create_sale():
         cur.execute("""
             INSERT INTO sales (sale_id, business_id, total_amount, status)
             VALUES (%s, %s, %s, %s)
+            ON CONFLICT (sale_id) DO NOTHING
         """, (sale_id, business_id, total, status))
 
         # insert items
-        for item in items:
-            cur.execute("""
-                INSERT INTO sale_items (sale_id, product_id, quantity, price)
-                VALUES (%s, %s, %s, %s)
-            """, (
-                sale_id,
-                item["product_id"],
-                item["quantity"],
-                item["price"]
-            ))
+        # ✅ only insert items if sale is new
+        cur.execute("SELECT 1 FROM sale_items WHERE sale_id=%s LIMIT 1", (sale_id,))
+        existing_items = cur.fetchone()
+
+        if not existing_items:
+            for item in items:
+                cur.execute("""
+                    INSERT INTO sale_items (sale_id, product_id, quantity, price)
+                    VALUES (%s, %s, %s, %s)
+                """, (
+                    sale_id,
+                    item["product_id"],
+                    item["quantity"],
+                    item["price"]
+                ))
 
         return sale_id, status
 
@@ -1487,27 +1549,7 @@ def sales_page():
         sales=data["sales"]
     )
 
-@app.route("/api/create-sale", methods=["POST"])
-def create_sale_route():
 
-    data = request.get_json()
-
-    username = data.get("username")
-    items = data.get("items", [])
-
-    # get business
-    def operation(cur):
-        cur.execute("SELECT id FROM businesses WHERE username=%s LIMIT 1", (username,))
-        return cur.fetchone()
-
-    biz = run_db_operation(operation)
-
-    if not biz:
-        return jsonify({"error": "Business not found"}), 400
-
-    result = create_sale(biz["id"], items)
-
-    return jsonify(result)
 
 @app.route("/sales/mark-paid/<sale_id>", methods=["POST"])
 @login_required
@@ -1710,7 +1752,10 @@ def generate_ai_summary_for_day_route(date):
 
     save_ai_summary_for_day(username, date, summary)
 
-    locked_total = data["cash_total"] + data["mpesa_total"]
+    gross_total = data["cash_total"] + data["sales_total"]
+    expense_total = data["expense_total"]
+
+    locked_total = gross_total - expense_total
 
     def operation(cur):
         cur.execute("""
@@ -1740,7 +1785,7 @@ def export_revenue_day_csv(date):
     mpesa_total = data.get("mpesa_total", 0)
     expense_total = data.get("expense_total", 0)
 
-    gross_total = cash_total + mpesa_total
+    gross_total = cash_total + data.get("sales_total", 0)
     net_total = gross_total - expense_total
 
     manual_entries = data.get("manual_entries", [])
@@ -1756,7 +1801,7 @@ def export_revenue_day_csv(date):
 
     writer.writerow(["Totals"])
     writer.writerow(["Cash", data["cash_total"]])
-    writer.writerow(["MPesa", data["mpesa_total"]])
+    writer.writerow(["MPesa (Payments Only)",data["mpesa_total"]])
     writer.writerow(["Gross Revenue", gross_total])
     writer.writerow(["Expenses",-expense_total])
     writer.writerow(["Net Revenue", net_total])
@@ -1806,7 +1851,7 @@ def export_revenue_day_pdf(date):
     mpesa_total = float(data.get("mpesa_total", 0))
     expense_total = float(data.get("expense_total", 0))
 
-    gross_total = cash_total + mpesa_total
+    gross_total = cash_total + data.get("sales_total", 0)
     net_total = gross_total - expense_total
 
     html = render_template(
@@ -1900,46 +1945,25 @@ def revenue_day_detail(date):
             is_locked = False
             locked_total = 0
 
-        mpesa_total = 0.0
+        
 
-        if not is_locked and biz:
+        cur.execute("""
+            SELECT 
+                m.amount,
+                m.transaction_id,
+                m.created_at
+            FROM mpesa_transactions m
+            JOIN sales s ON m.sale_id = s.sale_id
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND DATE(m.created_at) = %s
+              AND s.status = 'completed'
+            ORDER BY m.created_at DESC
+        """, (username, date))
 
-            paybill = biz["paybill"]
-            account_number = biz["account_number"]
+        mpesa_transactions = cur.fetchall()
 
-            cur.execute("""
-                SELECT COALESCE(SUM(amount),0) AS mpesa_total
-                FROM mpesa_transactions
-                WHERE status='confirmed'
-                  AND local_date=%s
-                  AND (
-                        account_reference=%s
-                        OR receiver=%s
-                      )
-            """,(date,account_number,paybill))
-
-            row = cur.fetchone()
-            mpesa_total = float(row["mpesa_total"]) if row else 0.0
-
-        mpesa_transactions = []
-
-        if biz:
-            paybill = biz["paybill"]
-            account_number = biz["account_number"]
-
-            cur.execute("""
-                SELECT amount, transaction_id, created_at
-                FROM mpesa_transactions
-                WHERE status='confirmed'
-                  AND local_date=%s
-                  AND (
-                        account_reference=%s
-                        OR receiver=%s
-                      )
-                ORDER BY created_at DESC
-            """, (date, account_number, paybill))
-
-            mpesa_transactions = cur.fetchall()
+        mpesa_total = sum(float(tx["amount"]) for tx in mpesa_transactions)
 
         return {
             "biz": biz,
@@ -1970,22 +1994,21 @@ def revenue_day_detail(date):
 
     if is_locked:
 
-        gross_total = locked_total
         net_revenue = locked_total
-        mpesa_total = max(0, locked_total - cash_total - sales_total + expense_total)
+        gross_total = cash_total + sales_total
 
     else:
 
-        gross_total = mpesa_total + cash_total + sales_total
+        gross_total = cash_total + sales_total
         net_revenue = gross_total - expense_total
 
-        if abs(manual_total - net_revenue) > 0.01:
+        if abs(manual_total - gross_total) > 0.01:
             anomalies.append({
                 "anomaly_type": "manual_split_mismatch",
                 "severity": "warning",
                 "message": (
                     f"Manual split total (KSh {manual_total:.2f}) "
-                    f"does not match net revenue (KSh {net_revenue:.2f})."
+                    f"does not match total revenue (KSh {net_revenue:.2f})."
                 )
             })
 
@@ -1996,6 +2019,7 @@ def revenue_day_detail(date):
         manual_entries=manual_entries,
         mpesa_total=mpesa_total,
         cash_total=cash_total,
+        sales_total=sales_total,
         gross_total=gross_total,
         net_revenue=net_revenue,
         is_locked=is_locked,
@@ -2078,22 +2102,7 @@ def lock_revenue_day_route():
 
         cash_total = float(cur.fetchone()["cash_total"])
 
-        # mpesa total
-        cur.execute("""
-            SELECT COALESCE(SUM(m.amount),0) AS mpesa_total
-            FROM mpesa_transactions m
-            JOIN businesses b
-              ON (
-                    (b.account_number IS NOT NULL AND m.account_reference=b.account_number)
-                    OR
-                    (b.account_number IS NULL AND m.receiver=b.paybill)
-                 )
-            WHERE b.username=%s
-              AND m.status='confirmed'
-              AND m.local_date=%s
-        """,(username,revenue_date))
-
-        mpesa_total = float(cur.fetchone()["mpesa_total"])
+       
 
         # sales total (FIXED ✅)
         cur.execute("""
@@ -2107,7 +2116,7 @@ def lock_revenue_day_route():
 
         sales_total = float(cur.fetchone()["sales_total"])
 
-        gross_total = cash_total + mpesa_total + sales_total
+        gross_total = cash_total + sales_total
         net_total = gross_total - expense_total
 
         cur.execute("""
@@ -2149,28 +2158,50 @@ def cash_revenue_entry():
     username = session["username"]
 
     if request.method == "POST":
+        try:
 
-        amount = float(request.form["amount"])
-        date = request.form["date"]
-        description = request.form.get("description")
+            # 🔥 SUPPORT BOTH JSON + FORM
+            if request.is_json:
+                data = request.get_json()
 
-        def operation(cur):
-            cur.execute("""
-                INSERT INTO cash_revenue (username, amount, description, revenue_date)
-                VALUES (%s, %s, %s, %s)
-            """, (username, amount, description, date))
+                amount = float(data.get("amount"))
+                date = data.get("date")
+                description = data.get("description")
 
-        run_db_operation(operation, commit=True)
+            else:
+                amount = float(request.form["amount"])
+                date = request.form["date"]
+                description = request.form.get("description")
 
-        log_audit(username,"ADD_CASH_REVENUE",f"{amount}", request.remote_addr)
+            def operation(cur):
+                cur.execute("""
+                    INSERT INTO cash_revenue (username, amount, description, revenue_date)
+                    VALUES (%s, %s, %s, %s)
+                """, (username, amount, description, date))
 
-        update_dashboard_snapshot(username)
-        update_dashboard_intelligence(username)
+            run_db_operation(operation, commit=True)
 
-        cache.delete_memoized(get_dashboard_data, username)
+            log_audit(username,"ADD_CASH_REVENUE",f"{amount}", request.remote_addr)
 
-        flash("✅ Cash revenue added", "success")
-        return redirect(url_for("dashboard"))
+            update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
+
+            cache.delete_memoized(get_dashboard_data, username)
+
+            # 🔥 JSON RESPONSE (OFFLINE SYNC)
+            if request.is_json:
+                return jsonify({"success": True})
+
+            flash("✅ Cash revenue added", "success")
+            return redirect(url_for("dashboard"))
+
+        except Exception as e:
+            print("CASH ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
+            flash("❌ Failed to save cash revenue", "error")
 
     return render_template("cash_revenue_entry.html")
 
@@ -2198,27 +2229,48 @@ def edit_revenue_entry(entry_id):
     # -------- update entry --------
     if request.method == "POST":
 
-        new_category = request.form["category"]
-        new_amount = float(request.form["amount"])
+        try:
 
-        def update_entry(cur):
-            cur.execute("""
-                UPDATE revenue_entries
-                SET category = %s,
-                    amount = %s
-                WHERE id = %s AND username = %s
-            """, (new_category, new_amount, entry_id, username))
+            # 🔥 SUPPORT JSON + FORM
+            data = request.get_json() if request.is_json else None
 
-        run_db_operation(update_entry, commit=True)
+            if data:
+                new_category = data.get("category")
+                new_amount = float(data.get("amount"))
+            else:
+                new_category = request.form["category"]
+                new_amount = float(request.form["amount"])
 
-        log_audit(username,"EDIT_REVENUE_ENTRY",f"id:{entry_id}", request.remote_addr)
+            def update_entry(cur):
+                cur.execute("""
+                    UPDATE revenue_entries
+                    SET category = %s,
+                        amount = %s
+                    WHERE id = %s AND username = %s
+                """, (new_category, new_amount, entry_id, username))
 
-        flash("Entry updated. You can continue editing", "success")
+            run_db_operation(update_entry, commit=True)
 
-        return redirect(url_for(
-            "revenue_entry",
-            date=entry["revenue_date"]
-        ))
+            log_audit(username,"EDIT_REVENUE_ENTRY",f"id:{entry_id}", request.remote_addr)
+
+            # 🔥 JSON RESPONSE (FOR OFFLINE SYNC)
+            if request.is_json:
+                return jsonify({"success": True})
+
+            flash("Entry updated. You can continue editing", "success")
+
+            return redirect(url_for(
+                "revenue_entry",
+                date=entry["revenue_date"]
+            ))
+
+        except Exception as e:
+            print("EDIT ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
+            flash("❌ Failed to update entry", "error")
 
     return render_template(
         "edit_revenue_entry.html",
@@ -2355,6 +2407,19 @@ def live_performance():
         """,(username,))
         mpesa_rows = cur.fetchall()
 
+        # SALES per day
+        cur.execute("""
+            SELECT
+                DATE(s.created_at) AS day,
+                SUM(s.total_amount) AS sales
+            FROM sales s
+            JOIN businesses b ON s.business_id = b.id
+            WHERE b.username = %s
+              AND s.status = 'completed'
+            GROUP BY day
+        """, (username,))
+        sales_rows = cur.fetchall()
+
         # EXPENSES per day
         cur.execute("""
             SELECT expense_date AS day, SUM(amount) AS expenses
@@ -2364,28 +2429,35 @@ def live_performance():
         """,(username,))
         expense_rows = cur.fetchall()
 
-        return cash_rows, mpesa_rows, expense_rows
+        return cash_rows, mpesa_rows, sales_rows, expense_rows
 
-    cash_rows, mpesa_rows, expense_rows = run_db_operation(operation)
+    cash_rows, mpesa_rows, sales_rows, expense_rows = run_db_operation(operation)
 
     # maps
     cash_map = {str(r["day"]): float(r["cash"]) for r in cash_rows}
     mpesa_map = {str(r["day"]): float(r["mpesa"]) for r in mpesa_rows}
+    sales_map = {str(r["day"]): float(r["sales"]) for r in sales_rows}
     expense_map = {str(r["day"]): float(r["expenses"]) for r in expense_rows}
 
-    dates = sorted(set(cash_map) | set(mpesa_map) | set(expense_map))
+    dates = sorted(set(cash_map) | set(sales_map) | set(expense_map))
 
     revenue_values = []
     expense_values = []
     profit_values = []
 
     for d in dates:
-        gross = cash_map.get(d, 0) + mpesa_map.get(d, 0)
-        exp = expense_map.get(d, 0)
+        cash = cash_map.get(d, 0)
+        sales = sales_map.get(d, 0)
+        expenses = expenses_map.get(d, 0)
 
-        revenue_values.append(gross)
-        expense_values.append(exp)
-        profit_values.append(gross - exp)
+        revenue = cash + sales
+
+        profit = revenue - expenses
+
+        
+        revenue_values.append(revenue)
+        expense_values.append(expenses)
+        profit_values.append(profit)
 
     return render_template(
         "charts/live_performance.html",
@@ -2949,9 +3021,10 @@ def payment_confirm():
                     origin_ip,
                     status,
                     created_at,
-                    local_date
+                    local_date,
+                    sale_id
                 )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'confirmed',NOW(),%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),%s,%s)
                 ON CONFLICT (transaction_id) DO NOTHING
             """, (
                 transaction_id,
@@ -2963,7 +3036,9 @@ def payment_confirm():
                 description,
                 json.dumps(data),
                 request.remote_addr,
-                local_date
+                "confirmed",        
+                local_date,
+                account_ref         
             ))
 
             return username_local, local_date
@@ -2974,7 +3049,7 @@ def payment_confirm():
             try:
                 def link_sale(cur):
 
-                    # 1️⃣ UPDATE SALE
+                    
                     cur.execute("""
                         UPDATE sales
                         SET status = 'completed'
@@ -2990,7 +3065,7 @@ def payment_confirm():
 
                     business_id = updated["business_id"]
 
-                    # 2️⃣ GET USERNAME FROM BUSINESS
+                    
                     cur.execute("""
                         SELECT username FROM businesses
                         WHERE id = %s
@@ -3010,7 +3085,7 @@ def payment_confirm():
 
                 username_from_sale = run_db_operation(link_sale, commit=True)
 
-                # 3️⃣ 🔥 FORCE DASHBOARD UPDATE
+                
                 if username_from_sale:
                     process_payment(username_from_sale, amount, local_date)
                     
@@ -4581,27 +4656,51 @@ def expense_entry():
 
     if request.method == "POST":
         try:
+
+            # 🔥 SUPPORT JSON + FORM
+            if request.is_json:
+                data = request.get_json()
+
+                amount = float(data.get("amount"))
+                category = data.get("category")
+                description = data.get("description")
+                expense_date = data.get("date")
+
+            else:
+                amount = float(request.form["amount"])
+                category = request.form.get("category")
+                description = request.form.get("description")
+                expense_date = request.form["date"]
+
+            # 🔥 SAVE
             save_expense(
                 username=username,
-                amount=float(request.form["amount"]),
-                category=request.form.get("category"),
-                description=request.form.get("description"),
-                expense_date=request.form["date"]
+                amount=amount,
+                category=category,
+                description=description,
+                expense_date=expense_date
             )
 
-            log_audit(username,"ADD_EXPENSE",f"{request.form['amount']}", request.remote_addr)
+            log_audit(username, "ADD_EXPENSE", f"{amount}", request.remote_addr)
 
             update_dashboard_snapshot(username)
             update_dashboard_intelligence(username)
             cache.delete_memoized(get_dashboard_data, username)
-            
+
+            if request.is_json:
+                return jsonify({"success": True})
+
             flash("✅ Expense added successfully!", "success")
             return redirect(url_for("expense_entry"))
+
         except Exception as e:
-            print(e)
+            print("EXPENSE ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
             flash("❌ Failed to save expense.", "error")
 
-    # 🔹 NEW: load user-defined categories
     categories = load_expense_categories(username)
 
     return render_template(
@@ -4617,6 +4716,48 @@ def delete_expense():
     expenses = load_expenses(session["username"])
     return render_template("delete_expense.html", entries=expenses)
 
+@app.route("/expense/delete/<int:expense_id>", methods=["POST"])
+@login_required
+def delete_expense_action(expense_id):
+
+    username = session["username"]
+
+    try:
+
+        # 🔥 SUPPORT JSON + NORMAL
+        if request.is_json:
+            data = request.get_json()
+            expense_id = data.get("expense_id")
+
+        def operation(cur):
+            cur.execute("""
+                DELETE FROM expenses
+                WHERE id = %s AND username = %s
+            """, (expense_id, username))
+
+        run_db_operation(operation, commit=True)
+
+        log_audit(username, "DELETE_EXPENSE", str(expense_id), request.remote_addr)
+
+        update_dashboard_snapshot(username)
+        update_dashboard_intelligence(username)
+        cache.delete_memoized(get_dashboard_data, username)
+
+        if request.is_json:
+            return jsonify({"success": True})
+
+        flash("✅ Expense deleted", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        print("DELETE ERROR:", e)
+
+        if request.is_json:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+        flash("❌ Failed to delete expense", "error")
+        return redirect(url_for("dashboard"))
+
 @app.route("/revenue_entry", methods=["GET", "POST"])
 def revenue_entry():
     if "username" not in session:
@@ -4625,32 +4766,61 @@ def revenue_entry():
     username = session["username"]
 
     # ✅ Determine selected date
-    selected_date = request.form.get("date") or request.args.get("date")
+    # 🔥 SUPPORT JSON + FORM + QUERY
+    data = request.get_json() if request.is_json else None
+
+    if data:
+        selected_date = data.get("date")
+    else:
+        selected_date = request.form.get("date") or request.args.get("date")
+        
     if not selected_date:
         selected_date = date.today().isoformat()
 
     if request.method == "POST":
-        save_revenue_entry(
-            username=username,
-            category=request.form["category"],
-            amount=float(request.form["amount"]),
-            revenue_date=selected_date
-        )
+        try:
 
-        log_audit(
-            username,
-            "ADD_REVENUE_ENTRY",
-            f"{request.form['category']}:{request.form['amount']}",
-            request.remote_addr
+            # 🔥 SUPPORT JSON + FORM
+            if data:
+                category = data.get("category")
+                amount = float(data.get("amount"))
+            else:
+                category = request.form["category"]
+                amount = float(request.form["amount"])
+                
+            save_revenue_entry(
+                username=username,
+                category=category,
+                amount=amount,
+                revenue_date=selected_date
             )
 
-        update_dashboard_intelligence(username)
-        cache.delete_memoized(get_dashboard_data, username)
-        flash("✅ Revenue entry added", "success")
+            log_audit(
+                username,
+                "ADD_REVENUE_ENTRY",
+                f"{category}:{amount}",
+                request.remote_addr
+            )
 
-        # 🔑 Redirect WITH date preserved
-        return redirect(url_for("revenue_entry", date=selected_date))
+            update_dashboard_intelligence(username)
+            cache.delete_memoized(get_dashboard_data, username)
 
+            # 🔥 JSON RESPONSE
+            if request.is_json:
+                return jsonify({"success": True})
+
+            flash("✅ Revenue entry added", "success")
+
+            return redirect(url_for("revenue_entry", date=selected_date))
+
+        except Exception as e:
+            print("REVENUE ENTRY ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
+            flash("❌ Failed to save revenue entry", "error")
+            
     # ✅ Load entries for that date
     entries = load_revenue_entries_for_day(session["username"], selected_date)
 

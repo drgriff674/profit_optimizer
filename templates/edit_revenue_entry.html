@@ -7,7 +7,7 @@
 
   <h1 class="text-lg font-semibold mb-4">✏️ Edit Revenue Entry</h1>
 
-  <form method="POST" class="space-y-4 bg-white p-4 rounded shadow">
+  <form id="editRevenueForm" class="space-y-4 bg-white p-4 rounded shadow">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 
@@ -38,6 +38,106 @@
     </button>
 
   </form>
+
+<script>
+
+document.getElementById("editRevenueForm").addEventListener("submit", function(e) {
+
+    const category = document.querySelector("[name='category']").value;
+    const amount = document.querySelector("[name='amount']").value;
+
+    const entryId = {{ entry.id }};
+
+    // 🔴 OFFLINE MODE
+    if (!navigator.onLine) {
+        e.preventDefault();
+
+        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+        queue.push({
+            type: "edit_revenue",
+            data: {
+                entry_id: entryId,
+                category: category,
+                amount: amount
+            },
+            synced: false
+        });
+
+        localStorage.setItem("offline_queue", JSON.stringify(queue));
+
+        alert("📴 Changes saved offline — will sync later");
+
+        window.location.href = "/revenue_entry";
+        return;
+    }
+
+    // 🟢 ONLINE MODE
+    e.preventDefault();
+
+    fetch(`/revenue/entry/${entryId}/edit`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            category: category,
+            amount: amount
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = "/revenue_entry";
+        } else {
+            alert("❌ Failed to update");
+        }
+    });
+
+});
+
+// ================= SYNC ENGINE =================
+async function syncOfflineData() {
+
+    if (!navigator.onLine) return;
+
+    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+    for (let item of queue) {
+
+        if (item.synced) continue;
+
+        try {
+            let endpoint = "";
+
+            if (item.type === "edit_revenue") {
+                endpoint = `/revenue/entry/${item.data.entry_id}/edit`;
+            }
+
+            await fetch(endpoint, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(item.data)
+            });
+
+            item.synced = true;
+
+        } catch (e) {
+            console.log("Still offline...");
+            return;
+        }
+    }
+
+    localStorage.setItem("offline_queue", JSON.stringify(queue));
+}
+
+// run every 5s
+setInterval(syncOfflineData, 5000);
+
+// instant sync
+window.addEventListener("online", syncOfflineData);
+
+</script>
 
 </body>
 </html>

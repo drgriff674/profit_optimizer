@@ -10,6 +10,10 @@
 
 <body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
 
+<div id="network-status"
+        class="text-center text-xs py-2 font-medium">
+</div>
+
 <!-- HEADER -->
 <header
   class="flex items-center justify-between px-6 py-4
@@ -27,6 +31,7 @@
     ⬅ Dashboard
   </a>
 </header>
+
 
 <!-- MAIN -->
 <main class="flex items-center justify-center px-4 py-10">
@@ -47,7 +52,7 @@
       </p>
     </div>
 
-    <form method="POST" class="space-y-4">
+    <form id="cashForm" method="POST" class="space-y-4">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <!-- Date -->
@@ -122,6 +127,62 @@
 
   </div>
 </main>
+
+<script>
+
+// ================= OFFLINE SAVE =================
+document.getElementById("cashForm").addEventListener("submit", function(e) {
+
+    if (!navigator.onLine) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        const data = {
+            date: formData.get("date"),
+            amount: formData.get("amount"),
+            description: formData.get("description")
+        };
+
+        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+        queue.push({
+            type: "cash",
+            data: data,
+            synced: false
+        });
+
+        localStorage.setItem("offline_queue", JSON.stringify(queue));
+
+        alert("📴 Saved offline — will sync when back online");
+
+        this.reset();
+    }
+});
+
+
+// ================= NETWORK STATUS =================
+function updateNetworkStatus() {
+    const el = document.getElementById("network-status");
+
+    if (!el) return;
+
+    if (navigator.onLine) {
+        el.innerText = "🟢 Online — syncing...";
+        el.className = "text-center text-xs py-2 bg-green-500 text-white";
+    } else {
+        el.innerText = "🔴 Offline — auto sync when back";
+        el.className = "text-center text-xs py-2 bg-red-500 text-white";
+    }
+}
+
+window.addEventListener("online", updateNetworkStatus);
+window.addEventListener("offline", updateNetworkStatus);
+
+// run once
+updateNetworkStatus();
+
+</script>
 
 </body>
 </html>

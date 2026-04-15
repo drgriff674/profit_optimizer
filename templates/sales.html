@@ -12,6 +12,10 @@
 
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white transition">
 
+<div id="network-status"
+     class="text-center text-xs py-2 font-medium">
+</div>
+
 <!-- TOP BAR -->
 <div class="flex justify-between items-center mb-4 
             bg-white dark:bg-slate-800 
@@ -117,6 +121,21 @@
 let cart = [];
 let currentEditId = null;
 let previousSales = {};
+
+
+// 🔥 OFFLINE STORAGE
+function saveOffline(type, data) {
+    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+    queue.push({
+        id: data.sale_id || Date.now(),
+        type: type,
+        data: data,
+        synced: false
+    });
+
+    localStorage.setItem("offline_queue", JSON.stringify(queue));
+}
 
 // ================= CART =================
 function renderCart() {
@@ -311,10 +330,30 @@ function confirmDelete() {
 function createSale() {
     if (!cart.length) return alert("Cart is empty 😅");
 
+    const saleId = Date.now().toString();
+
+  const payload = {
+       sale_id: saleId,
+       items: cart
+  };
+
+    // 🔴 OFFLINE MODE
+    if (!navigator.onLine) {
+        saveOffline("sale", payload);
+
+        alert("📴 Offline: sale saved, will sync automatically");
+
+        cart = [];
+        renderCart();
+
+        return;
+    }
+
+    // 🟢 ONLINE MODE
     fetch("/sales/create", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({items:cart})
+        body:JSON.stringify(payload)
     })
     .then(r=>{
         if(!r.ok) throw new Error("Server error");
@@ -322,15 +361,21 @@ function createSale() {
     })
     .then(data=>{
         console.log("SALE CREATED:", data);
+
         cart=[]; 
         renderCart(); 
         loadSales();
     })
     .catch(err=>{
         console.error(err);
-        alert("Something broke 😅 check console");
+
+        // 🔥 fallback to offline
+        saveOffline("sale", payload);
+
+        alert("⚠️ Network lost: saved offline");
     });
 }
+
 
 function deleteSale(saleId) {
     if (!confirm("Cancel this sale?")) return;
@@ -467,6 +512,43 @@ ${
         });
     });
 }
+
+
+// 🔄 AUTO SYNC ENGINE
+async function syncOfflineData() {
+
+    if (!navigator.onLine) return;
+
+    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+    for (let item of queue) {
+
+        if (item.synced) continue;
+
+        try {
+            let endpoint = "";
+
+            if (item.type === "sale") endpoint = "/sales/create";
+
+            await fetch(endpoint, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(item.data)
+            });
+
+            item.synced = true;
+
+        } catch (e) {
+            console.log("Still offline...");
+            return;
+        }
+    }
+
+    localStorage.setItem("offline_queue", JSON.stringify(queue));
+}
+
+// ✅ ADD THIS RIGHT HERE
+setInterval(syncOfflineData, 5000);
 
 // INIT
 document.addEventListener("DOMContentLoaded",()=>{
@@ -620,6 +702,26 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
+<script>
+function updateNetworkStatus() {
+    const el = document.getElementById("network-status");
+
+    if (!el) return;
+
+    if (navigator.onLine) {
+        el.innerText = "🟢 Online — syncing...";
+        el.className = "text-center text-xs py-2 bg-green-500 text-white";
+    } else {
+        el.innerText = "🔴 Offline — auto sync when back";
+        el.className = "text-center text-xs py-2 bg-red-500 text-white";
+    }
+}
+
+window.addEventListener("online", updateNetworkStatus);
+window.addEventListener("offline", updateNetworkStatus);
+
+updateNetworkStatus();
+</script>
 
 
 

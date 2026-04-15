@@ -51,7 +51,7 @@ Currently: {{ days }}
 </p>
 
 <p class="text-sm font-semibold mb-3">
-  Model confidence: {{ confidence }}
+  Model confidence: {{ confidence_level }}
 </p>
 
     <!-- CHART -->
@@ -121,11 +121,13 @@ const layout = {
   margin: { t: 30, l: 60, r: 20, b: 50 },
 
   xaxis: {
-    title: "Date"
+    title: "Date",
+    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
   },
 
   yaxis: {
-    title: "Revenue (KSh)"
+    title: "Revenue (KSh)",
+    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
   },
 
   paper_bgcolor: "transparent",
@@ -133,7 +135,10 @@ const layout = {
 
   hovermode: "x unified",
 
-  font: { size: 14 }
+  font: {
+    size: 14,
+    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
+  }
 };
 
 Plotly.newPlot(

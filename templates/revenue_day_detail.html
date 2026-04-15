@@ -19,14 +19,21 @@
 <div class="grid grid-cols-5 gap-4">
 
   <div class="p-4 bg-white rounded shadow">
-    <p class="text-sm text-slate-500">MPesa (Gross)</p>
-    <p class="font-semibold">KSh {{ "%.2f"|format(mpesa_total) }}</p>
+    <p class="text-sm text-slate-500">Sales</p>
+    <p class="font-semibold">KSh {{ "%.2f"|format(sales_total) }}</p>
   </div>
 
- <div class="p-4 bg-white rounded shadow">
+  <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Cash</p>
     <p class="font-semibold">KSh {{ "%.2f"|format(cash_total) }}</p>
- </div>
+  </div>
+
+  <div class="p-4 bg-white rounded shadow">
+    <p class="text-sm text-slate-500">Total Revenue</p>
+    <p class="font-bold text-lg">
+      KSh {{ "%.2f"|format(gross_total) }}
+    </p>
+  </div>
 
   <div class="p-4 bg-white rounded shadow">
     <p class="text-sm text-slate-500">Expenses</p>
@@ -36,16 +43,9 @@
   </div>
 
   <div class="p-4 bg-white rounded shadow">
-    <p class="text-sm text-slate-500">Net Revenue</p>
+    <p class="text-sm text-slate-500">Profit</p>
     <p class="font-bold text-lg">
       KSh {{ "%.2f"|format(net_revenue) }}
-    </p>
-  </div>
-
-  <div class="p-4 bg-white rounded shadow">
-    <p class="text-sm text-slate-500">Manual Split</p>
-    <p class="font-semibold">
-      KSh {{ "%.2f"|format(manual_total) }}
     </p>
   </div>
 
@@ -53,7 +53,7 @@
 
   <!-- Manual entries -->
   <div class="bg-white rounded shadow p-4">
-    <h2 class="font-semibold mb-2">Manual Entries</h2>
+    <h2 class="font-semibold mb-2">Revenue Split (Operations)</h2>
     {% for e in manual_entries %}
       <div class="flex justify-between text-sm py-1">
         <span>{{ e.category }}</span>

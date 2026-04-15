@@ -55,35 +55,49 @@
     document.getElementById("liveChart").innerHTML =
       "<p class='text-center opacity-70'>No locked financial data yet</p>";
   } else {
-    Plotly.newPlot("liveChart", [
-      {
-        x: dates,
-        y: revenue,
-        name: "Revenue",
-        mode: "lines+markers",
-        line: { width: 3 }
-      },
-      {
-        x: dates,
-        y: expenses,
-        name: "Expenses",
-        mode: "lines+markers",
-        line: { width: 3, dash: "dot" }
-      },
-      {
-        x: dates,
-        y: profit,
-        name: "Profit",
-        mode: "lines+markers",
-        line: { width: 3 }
-      }
-    ], {
-      margin: { t: 30 },
-      xaxis: { title: "Date" },
-      yaxis: { title: "Amount (KSh)" },
-      paper_bgcolor: "transparent",
-      plot_bgcolor: "transparent"
-    }, { responsive: true });
+   Plotly.newPlot("liveChart", [
+  {
+    x: dates,
+    y: revenue,
+    name: "Revenue",
+    mode: "lines",
+    line: { width: 4 }
+  },
+  {
+    x: dates,
+    y: profit,
+    name: "Profit",
+    mode: "lines",
+    line: { width: 4 }
+  },
+  {
+    x: dates,
+    y: expenses,
+    name: "Expenses",
+    mode: "lines",
+    line: { width: 2, dash: "dot" }
+  }
+], {
+  margin: { t: 30 },
+
+  xaxis: {
+    title: "Date",
+    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
+  },
+
+  yaxis: {
+    title: "Amount (KSh)",
+    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
+  },
+
+  paper_bgcolor: "transparent",
+  plot_bgcolor: "transparent",
+
+  legend: {
+    orientation: "h"
+  }
+
+}, { responsive: true });
   }
 </script>
 </body>
