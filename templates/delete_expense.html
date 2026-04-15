@@ -92,7 +92,7 @@ document.getElementById("deleteForm").addEventListener("submit", function(e) {
     // 🟢 ONLINE MODE
     e.preventDefault();
 
-    fetch(`/expense/delete/${expenseId}`, {
+    fetch(`/delete_expense/${expenseId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -101,12 +101,28 @@ document.getElementById("deleteForm").addEventListener("submit", function(e) {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success) {
-            window.location.href = "/dashboard";
-        } else {
-            alert("❌ Failed to delete");
-        }
+    if (data.success) {
+        window.location.href = "/dashboard";
+    } else {
+        throw new Error("Delete failed");
+    }
+})
+.catch(() => {
+
+    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
+
+    queue.push({
+        type: "delete_expense",
+        data: { expense_id: expenseId },
+        synced: false
     });
+
+    localStorage.setItem("offline_queue", JSON.stringify(queue));
+
+    alert("📴 Network lost — delete saved offline");
+
+    window.location.href = "/dashboard";
+});
 
 });
 
@@ -125,7 +141,7 @@ async function syncOfflineData() {
             let endpoint = "";
 
             if (item.type === "delete_expense") {
-                endpoint = `/expense/delete/${item.data.expense_id}`;
+                endpoint = `/delete_expense/${item.data.expense_id}`;
             }
 
             await fetch(endpoint, {

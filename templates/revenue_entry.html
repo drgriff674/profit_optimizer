@@ -216,17 +216,31 @@
 
 // ================= OFFLINE SAVE =================
 document.getElementById("revenueForm").addEventListener("submit", function(e) {
+    e.preventDefault();
 
-    if (!navigator.onLine) {
-        e.preventDefault();
+    const formData = new FormData(this);
 
-        const formData = new FormData(this);
+    const data = {
+        date: formData.get("date"),
+        amount: formData.get("amount"),
+        category: formData.get("category")
+    };
 
-        const data = {
-            date: formData.get("date"),
-            amount: formData.get("amount"),
-            category: formData.get("category")
-        };
+    fetch("/revenue_entry", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    })
+    .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+    })
+    .then(() => {
+        alert("✅ Revenue saved");
+        this.reset();
+        location.reload(); // optional to refresh entries
+    })
+    .catch(err => {
 
         let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
 
@@ -238,12 +252,10 @@ document.getElementById("revenueForm").addEventListener("submit", function(e) {
 
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
-        alert("📴 Revenue saved offline — will sync later");
-
+        alert("📴 Revenue saved offline");
         this.reset();
-    }
+    });
 });
-
 
 // ================= NETWORK STATUS =================
 function updateNetworkStatus() {

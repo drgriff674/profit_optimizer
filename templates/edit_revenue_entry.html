@@ -49,28 +49,11 @@ document.getElementById("editRevenueForm").addEventListener("submit", function(e
     const entryId = {{ entry.id }};
 
     // 🔴 OFFLINE MODE
-    if (!navigator.onLine) {
-        e.preventDefault();
-
-        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
-
-        queue.push({
-            type: "edit_revenue",
-            data: {
-                entry_id: entryId,
-                category: category,
-                amount: amount
-            },
-            synced: false
-        });
-
-        localStorage.setItem("offline_queue", JSON.stringify(queue));
-
-        alert("📴 Changes saved offline — will sync later");
-
-        window.location.href = "/revenue_entry";
-        return;
-    }
+   if (!navigator.onLine) {
+    e.preventDefault();
+    alert("📴 You must be online to edit revenue");
+    return;
+}
 
     // 🟢 ONLINE MODE
     e.preventDefault();
@@ -85,57 +68,15 @@ document.getElementById("editRevenueForm").addEventListener("submit", function(e
             amount: amount
         })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = "/revenue_entry";
-        } else {
-            alert("❌ Failed to update");
-        }
-    });
+   .then(() => {
+    window.location.href = "/revenue_entry";
+})
+.catch(() => {
+    alert("❌ Failed to update");
+});
 
 });
 
-// ================= SYNC ENGINE =================
-async function syncOfflineData() {
-
-    if (!navigator.onLine) return;
-
-    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
-
-    for (let item of queue) {
-
-        if (item.synced) continue;
-
-        try {
-            let endpoint = "";
-
-            if (item.type === "edit_revenue") {
-                endpoint = `/revenue/entry/${item.data.entry_id}/edit`;
-            }
-
-            await fetch(endpoint, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(item.data)
-            });
-
-            item.synced = true;
-
-        } catch (e) {
-            console.log("Still offline...");
-            return;
-        }
-    }
-
-    localStorage.setItem("offline_queue", JSON.stringify(queue));
-}
-
-// run every 5s
-setInterval(syncOfflineData, 5000);
-
-// instant sync
-window.addEventListener("online", syncOfflineData);
 
 </script>
 

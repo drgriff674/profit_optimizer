@@ -327,55 +327,46 @@ function confirmDelete() {
 }
 
 // ================= SALES =================
+// ================= SALES =================
 function createSale() {
     if (!cart.length) return alert("Cart is empty 😅");
 
     const saleId = Date.now().toString();
 
-  const payload = {
-       sale_id: saleId,
-       items: cart
-  };
+    const payload = {
+        sale_id: saleId,
+        items: cart
+    };
 
-    // 🔴 OFFLINE MODE
-    if (!navigator.onLine) {
-        saveOffline("sale", payload);
-
-        alert("📴 Offline: sale saved, will sync automatically");
+    // 🟢 ALWAYS TRY ONLINE FIRST
+    fetch("/sales/create", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(r => {
+        if (!r.ok) throw new Error("Server error");
+        return r.json();
+    })
+    .then(data => {
+        console.log("SALE CREATED:", data);
 
         cart = [];
         renderCart();
-
-        return;
-    }
-
-    // 🟢 ONLINE MODE
-    fetch("/sales/create", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload)
-    })
-    .then(r=>{
-        if(!r.ok) throw new Error("Server error");
-        return r.json();
-    })
-    .then(data=>{
-        console.log("SALE CREATED:", data);
-
-        cart=[]; 
-        renderCart(); 
         loadSales();
     })
-    .catch(err=>{
-        console.error(err);
+    .catch(err => {
+        console.error("NETWORK FAIL:", err);
 
-        // 🔥 fallback to offline
+        // 🔥 ONLY fallback here
         saveOffline("sale", payload);
 
-        alert("⚠️ Network lost: saved offline");
+        alert("📴 Network issue — saved offline");
+
+        cart = [];
+        renderCart();
     });
 }
-
 
 function deleteSale(saleId) {
     if (!confirm("Cancel this sale?")) return;
