@@ -172,6 +172,9 @@ def generate_revenue_day_export_data(username, revenue_date):
         mpesa_total = 0
         mpesa_entries = []
 
+        expense_total = 0.0
+        exepense_entries = []
+
         # --- mpesa if business exists ---
         if biz:
 
@@ -1850,8 +1853,9 @@ def export_revenue_day_pdf(date):
     cash_total = float(data.get("cash_total", 0))
     mpesa_total = float(data.get("mpesa_total", 0))
     expense_total = float(data.get("expense_total", 0))
+    sales_total = float(data.get("sales_total", ))
 
-    gross_total = cash_total + data.get("sales_total", 0)
+    gross_total = cash_total + sales_total
     net_total = gross_total - expense_total
 
     html = render_template(
@@ -1862,6 +1866,7 @@ def export_revenue_day_pdf(date):
         expense_entries=expense_entries,
         cash_total=cash_total,
         mpesa_total=mpesa_total,
+        sales_total=sales_total,
         gross_total=gross_total,
         expense_total=expense_total,
         net_total=net_total
@@ -1992,25 +1997,19 @@ def revenue_day_detail(date):
     expense_total = expenses["total"]
     expense_entries = expenses["entries"]
 
-    if is_locked:
+    gross_total = cash_total + sales_total
+    net_revenue = gross_total - expense_total
 
-        net_revenue = locked_total
-        gross_total = cash_total + sales_total
+    if abs(manual_total - gross_total) > 0.01:
+        anomalies.append({
+            "anomaly_type": "manual_split_mismatch",
+            "severity": "warning",
+            "message": (
+                f"Manual split total (KSh {manual_total:.2f}) "
+                f"does not match total revenue (KSh {net_revenue:.2f})."
+            )
+        })
 
-    else:
-
-        gross_total = cash_total + sales_total
-        net_revenue = gross_total - expense_total
-
-        if abs(manual_total - gross_total) > 0.01:
-            anomalies.append({
-                "anomaly_type": "manual_split_mismatch",
-                "severity": "warning",
-                "message": (
-                    f"Manual split total (KSh {manual_total:.2f}) "
-                    f"does not match total revenue (KSh {net_revenue:.2f})."
-                )
-            })
 
     return render_template(
         "revenue_day_detail.html",
