@@ -1439,15 +1439,19 @@ def create_sale():
         biz = cur.fetchone()
         business_id = biz["id"]
 
-        client_sale_id = data.get("sale_id")
+        import random
 
-        if client_sale_id:
-            sale_id = client_sale_id
-        else:
-            import random
-            sale_id = str(random.randint(100000,999999))
-
+        # 🔒 ALWAYS generate safe 6-digit sale_id
+        while True:
+            sale_id = str(random.randint(100000, 999999))
+            cur.execute("SELECT 1 FROM sales WHERE sale_id=%s", (sale_id,))
+            if not cur.fetchone():
+                break
         total = 0
+
+	
+
+	
 
         for item in items:
             total += item["price"] * item["quantity"]
@@ -1632,8 +1636,8 @@ def test_create_sale():
         if not biz:
             return "No business"
 
-        import uuid
-        sale_id = str(uuid.uuid4())
+        import random
+        sale_id = str(random.randint(100000, 999999))
 
         cur.execute("""
             INSERT INTO sales (sale_id, business_id, total_amount, status)

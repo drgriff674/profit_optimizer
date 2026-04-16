@@ -128,7 +128,7 @@ function saveOffline(type, data) {
     let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
 
     queue.push({
-        id: data.sale_id || Date.now(),
+        id: Date.now(),
         type: type,
         data: data,
         synced: false
@@ -331,10 +331,8 @@ function confirmDelete() {
 function createSale() {
     if (!cart.length) return alert("Cart is empty 😅");
 
-    const saleId = Date.now().toString();
 
     const payload = {
-        sale_id: saleId,
         items: cart
     };
 
