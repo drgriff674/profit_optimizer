@@ -2938,7 +2938,8 @@ def payment_confirm():
             sender_name = data.get("FirstName", "Unknown")
             sender_phone = data.get("MSISDN", "")
             description = data.get("TransactionType", "C2B Paybill")
-            account_ref = data.get("BillRefNumber", "")
+            account_ref = str(data.get("BillRefNumber", "")).strip()
+            print("CLEAN ACCOUNT REF (C2B):", repr(account_ref))
             shortcode = data.get("BusinessShortCode")
 
         # ============================================================
@@ -2967,7 +2968,7 @@ def payment_confirm():
                 elif item.get("Name") == "PhoneNumber":
                     sender_phone = str(item.get("Value", ""))
                 elif item.get("Name") == "AccountReference":
-                    account_ref = str(item.get("Value", ""))
+                    account_ref = str(item.get("Value", "")).strip()
                 
         else:
             print("❌ Unknown callback format")
@@ -3067,7 +3068,7 @@ def payment_confirm():
                     cur.execute("""
                         UPDATE sales
                         SET status = 'completed'
-                        WHERE sale_id = %s AND status = 'pending'
+                        WHERE TRIM(sale_id) = %s AND status = 'pending'
                         RETURNING business_id
                     """, (account_ref,))
 
@@ -3117,7 +3118,7 @@ def payment_confirm():
             request.remote_addr
             )
         
-        if username_local:
+        if not username_from_sale and username_local:
             process_payment(username_local, amount, local_date)
             
             update_dashboard_snapshot(username_local)

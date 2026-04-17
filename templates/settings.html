@@ -192,11 +192,53 @@ Change Password
 
 <!-- BILLING -->
 <div id="billing" class="tab hidden">
+
 <div class="rounded-xl shadow-sm p-6 border"
      style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
-<h2 class="text-lg font-semibold mb-2">Subscription</h2>
-<p>Billing features coming soon.</p>
+
+<h2 class="text-lg font-semibold mb-4">💳 Subscription Plan</h2>
+
+<!-- PLAN CARD -->
+<div class="p-5 rounded-xl mb-4 border"
+     style="background: rgba(37,99,235,0.05); border-color: rgba(37,99,235,0.2);">
+
+  <h3 class="text-xl font-bold mb-1">
+    OptiGain Pro
+  </h3>
+
+  <p class="text-sm opacity-70 mb-3">
+    Full access to revenue tracking, forecasting, inventory & AI insights
+  </p>
+
+  <div class="text-3xl font-bold text-blue-600 mb-2">
+    KSh 1,500 <span class="text-sm font-medium text-gray-500">/ month</span>
+  </div>
+
+  <ul class="text-sm space-y-1 mb-4 opacity-80">
+    <li>✔ Unlimited sales tracking</li>
+    <li>✔ Automatic M-Pesa payment matching</li>
+    <li>✔ Inventory management</li>
+    <li>✔ AI financial insights</li>
+    <li>✔ Revenue forecasting</li>
+  </ul>
+
+  <a href="{{ url_for('subscribe') }}"
+     class="inline-block px-5 py-2.5 rounded-lg text-white font-semibold
+            bg-gradient-to-r from-blue-600 to-blue-500
+            hover:from-blue-700 hover:to-blue-600
+            shadow-md hover:shadow-lg transition">
+    💳 Upgrade Now
+  </a>
+
 </div>
+
+<!-- INFO -->
+<p class="text-xs opacity-60">
+Payments are securely processed. No data loss when upgrading.
+</p>
+
+</div>
+
 </div>
 
 <!-- SUPPORT -->

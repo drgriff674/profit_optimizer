@@ -32,123 +32,171 @@
 
    <nav class="mt-4 px-4 space-y-2 pb-10">
 
+<!-- DASHBOARD (ACTIVE) -->
 <a href="{{ url_for('dashboard') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300
-hover:bg-blue-600 hover:text-white transition">
+bg-blue-600 text-white shadow-sm">
 📊 Dashboard
 </a>
 
+<!-- SALES -->
 <a href="{{ url_for('sales_page') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300
-hover:bg-blue-600 hover:text-white transition">
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 hover:shadow-sm
+transition-all duration-200">
 🧾 Sales
 </a>
 
+<!-- REVENUE -->
 <div>
 <button onclick="toggleMenu('revenueMenu',this)"
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition">
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 hover:shadow-sm
+transition-all duration-200">
 <span>💰 Revenue</span><span>▾</span>
 </button>
 
 <div id="revenueMenu" class="ml-4 mt-1 hidden space-y-1">
 
 <a href="{{ url_for('revenue_overview') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Overview
 </a>
 
 <a href="{{ url_for('cash_revenue_entry') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 ➕ Add Cash Revenue
 </a>
 
 <a href="{{ url_for('revenue_entry') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Split revenue
 </a>
 
 </div>
 </div>
 
+<!-- EXPENSES -->
 <div>
 <button onclick="toggleMenu('expensesMenu', this)"
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition">
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 hover:shadow-sm
+transition-all duration-200">
 <span>➖ Expenses</span><span>▾</span>
 </button>
 
-<div id="expensesMenu" class="ml-4 mt-1 hidden">
+<div id="expensesMenu" class="ml-4 mt-1 hidden space-y-1">
 <a href="{{ url_for('expense_entry') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Add Expense
 </a>
 </div>
 </div>
 
+<!-- INVENTORY -->
 <div>
 <button onclick="toggleMenu('inventoryMenu',this)"
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition">
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 hover:shadow-sm
+transition-all duration-200">
 <span>📦 Inventory</span><span>▾</span>
 </button>
 
 <div id="inventoryMenu" class="ml-4 mt-1 hidden space-y-1">
 
 <a href="{{ url_for('inventory_setup') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Setup Inventory
 </a>
 
 <a href="{{ url_for('inventory_adjust') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 🧾 Inventory Adjustment
 </a>
 
 </div>
 </div>
 
+<!-- FORECAST -->
 <div>
 <button onclick="toggleMenu('forecastMenu',this)"
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
-text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition">
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 hover:shadow-sm
+transition-all duration-200">
 <span>📈 Forecasting</span><span>▾</span>
 </button>
 
 <div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
 
 <a href="{{ url_for('trend_forecaster') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Trend Forecaster
 </a>
 
 <a href="{{ url_for('profit_calculator') }}"
-class="block px-3 py-2 text-sm rounded-lg text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-3 py-2 text-sm rounded-lg
+text-slate-600 dark:text-slate-400
+hover:bg-blue-600 hover:text-white transition">
 Profit Calculator
 </a>
 
 </div>
 </div>
 
+<!-- OTHER LINKS -->
 <a href="{{ url_for('ask') }}"
-class="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-4 py-2.5 rounded-lg text-sm font-medium
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 transition-all duration-200">
 🤖 Business Assistant
 </a>
 
 <a href="{{ url_for('profile') }}"
-class="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-4 py-2.5 rounded-lg text-sm font-medium
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 transition-all duration-200">
 👤 My Profile
 </a>
 
 <a href="{{ url_for('settings') }}"
-class="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-4 py-2.5 rounded-lg text-sm font-medium
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 transition-all duration-200">
 ⚙️ Settings
 </a>
 
 <a href="{{ url_for('logout') }}"
-class="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-blue-600 hover:text-white">
+class="block px-4 py-2.5 rounded-lg text-sm font-medium
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 transition-all duration-200">
 🚪 Logout
 </a>
 
@@ -338,17 +386,21 @@ bg-gray-100 text-gray-700
   </p>
 
   <!-- PAY BUTTON -->
-  {% if subscription_status != "active" %}
-  <a href="{{ url_for('subscribe') }}"
-     class="inline-block mt-4 px-4 py-2 rounded-lg text-white font-semibold shadow"
-      bg-white dark:bg-slate-900;">
-     💳 Pay Now
-  </a>
-  {% endif %}
+ {% if subscription_status != "active" %}
+<a href="{{ url_for('subscribe') }}"
+   class="inline-flex items-center gap-2 mt-4 px-5 py-2.5 
+          rounded-lg font-semibold text-white
+          bg-gradient-to-r from-blue-600 to-blue-500
+          hover:from-blue-700 hover:to-blue-600
+          shadow-md hover:shadow-lg
+          transition-all duration-200">
+   💳 Pay Now
+</a>
+{% endif %}
 
 </div>
-
 {% endif %}
+
         
 
 {% if live_total_revenue == 0 %}
@@ -413,7 +465,7 @@ bg-gray-100 text-gray-700
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
   <div class="p-5 rounded-xl shadow"
-     bg-white dark:bg-slate-900
+     bg-white dark:bg-slate-900>
 
   <h3 class="text-lg font-semibold mb-2">
     📊 Revenue Intelligence
