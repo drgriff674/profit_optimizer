@@ -78,7 +78,8 @@
   {% endfor %}
 </div>
 
- <!-- MPesa Transactions -->
+ {% if is_paybill_user %}
+<!-- MPesa Transactions -->
 <div class="bg-white rounded shadow p-4">
   <h2 class="font-semibold mb-2">MPesa Transactions</h2>
 
@@ -111,6 +112,7 @@
 
   </div>
 </div>
+{% endif %}
 
   <div class="bg-white rounded shadow p-4">
   <h2 class="font-semibold mb-2">⚠️ Anomalies</h2>

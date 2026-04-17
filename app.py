@@ -1998,6 +1998,13 @@ def revenue_day_detail(date):
 
     db = run_db_operation(operation)
 
+    biz = db["biz"]
+
+    is_paybill_user = False
+
+    if biz and biz.get("paybill") and biz["paybill"].strip() != "000000":
+        is_paybill_user = True
+
     mpesa_transactions = db["mpesa_transactions"]
     sales_total = db["sales_total"]
 
@@ -2041,7 +2048,8 @@ def revenue_day_detail(date):
         ai_summary=ai_summary,
         expense_total=expense_total,
         expense_entries=expense_entries,
-        mpesa_transactions=mpesa_transactions
+        mpesa_transactions=mpesa_transactions,
+        is_paybill_user=is_paybill_user
     )
 
 @app.route("/revenue/overview")
