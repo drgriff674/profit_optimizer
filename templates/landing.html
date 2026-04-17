@@ -18,15 +18,49 @@
     }
 
     .hero-bg {
-      background: linear-gradient(135deg, #020617, #0f172a);
-    }
+  background: linear-gradient(135deg, #020617, #0f172a, #020617);
+  background-size: 200% 200%;
+  animation: gradientMove 6s ease infinite;
+}
+
+.hero-bg {
+  position: relative;
+  overflow: hidden;
+}
+
+/* 🔥 glowing light */
+.hero-bg::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: rgba(37,99,235,0.25);
+  filter: blur(140px);
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
     .btn-main {
-      background: linear-gradient(135deg,#2563eb,#1d4ed8);
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-weight: 700;
-    }
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(37,99,235,0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(37,99,235,0.6);
+}
 
     .btn-outline {
       border: 1px solid rgba(255,255,255,0.2);
@@ -55,6 +89,40 @@
   transition: all 0.8s ease;
 }
 
+/* LOADER ANIMATION */
+@keyframes logoFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes textFade {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-logo {
+  animation: logoFade 1.2s ease-out;
+}
+
+.animate-text {
+  animation: textFade 1s ease-out;
+}
+
 .reveal.active {
   opacity: 1;
   transform: translateY(0);
@@ -66,12 +134,20 @@
 <body>
 
 <!-- LOADER -->
-<div id="loader" class="fixed inset-0 flex items-center justify-center bg-[#020617] z-50">
-  <div class="text-center">
-    <img src="{{ url_for('static', filename='logo.png') }}"
-         class="w-20 mx-auto mb-4 animate-pulse">
-    <p class="text-gray-400">Launching OptiGain...</p>
-  </div>
+<div id="loader"
+     class="fixed inset-0 flex flex-col items-center justify-center bg-[#020617] z-50">
+
+  <img src="{{ url_for('static', filename='logo.png') }}"
+       class="w-20 mb-4 animate-logo">
+
+  <h1 class="text-white text-2xl font-bold tracking-wide animate-text">
+    OptiGain
+  </h1>
+
+  <p class="text-gray-400 text-sm mt-2 animate-text">
+    Financial intelligence for your business
+  </p>
+
 </div>
 
 <!-- NAV -->
@@ -102,7 +178,7 @@
 <!-- HERO -->
 <section class="hero-bg py-20 text-center">
 
-  <div class="max-w-5xl mx-auto px-6">
+  <div class="max-w-5xl mx-auto px-6 relative z-10">
 
     <!-- IMAGE FIRST -->
     <div class="img-overlay mb-10 reveal">
@@ -116,7 +192,7 @@
   Financial Intelligence & Inventory — One Platform
 </p>
 
-<h1 class="text-5xl md:text-6xl font-bold leading-tight mb-6">
+<h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6 tracking-tight">
       Understand your business in
       <span class="text-blue-400">real numbers</span>
     </h1>
@@ -125,6 +201,12 @@
       Track revenue, expenses, stock and profit automatically.
       No spreadsheets. No guesswork.
     </p>
+
+<p class="text-lg mb-8">
+  <span class="font-semibold text-gray-300">7-day free trial</span>
+  <span class="mx-2 text-gray-500">—</span>
+  <span class="text-blue-400 font-extrabold text-2xl">KES 1,500/month</span>
+</p>
 
     <div class="flex justify-center gap-4">
       <a href="{{ url_for('register') }}" class="btn-main">Start Free</a>
@@ -221,12 +303,12 @@
 <!-- CTA -->
 <section class="py-24 text-center">
 
-  <h2 class="text-4xl font-bold mb-6">
+  <h2 class="text-4xl md:text-5xl font-extrabold mb-6">
     Start controlling your business today
   </h2>
 
   <a href="{{ url_for('register') }}" class="btn-main">
-    Get Started
+    Start Free Trial
   </a>
 
 </section>
@@ -254,11 +336,16 @@
 <script>
 window.addEventListener("load", () => {
   const loader = document.getElementById("loader");
+
   setTimeout(() => {
     loader.style.opacity = "0";
-    loader.style.transition = "0.5s";
-    setTimeout(() => loader.remove(), 500);
-  }, 800);
+    loader.style.transition = "opacity 0.6s ease";
+
+    setTimeout(() => {
+      loader.style.display = "none";
+    }, 600);
+
+  }, 1400); // gives time for animation to feel premium
 });
 
 /* SCROLL REVEAL */
@@ -270,7 +357,7 @@ function revealOnScroll() {
   reveals.forEach((el) => {
     const elementTop = el.getBoundingClientRect().top;
 
-    if (elementTop < windowHeight - 100) {
+    if (elementTop < windowHeight - 80) {
       el.classList.add("active");
     }
   });
