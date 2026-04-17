@@ -20,9 +20,33 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 
 </head>
+<body class="min-h-screen flex">
 
-<body class="min-h-screen transition-colors"
-    style="background: var(--og-bg);">
+<!-- LEFT SIDE -->
+<div class="hidden md:flex w-1/2 items-center justify-center p-12"
+     style="background: linear-gradient(135deg,#2563eb,#1e3a8a); color:white;">
+
+  <div class="max-w-md">
+
+    <h1 class="text-3xl font-bold mb-4">
+      Understand your business in real numbers
+    </h1>
+
+    <p class="opacity-90 mb-6">
+      Track revenue, expenses, and profit automatically using real data.
+    </p>
+
+    <div class="space-y-2 text-sm">
+      <div>✔ Real-time revenue tracking</div>
+      <div>✔ Paybill automation</div>
+      <div>✔ AI insights</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RIGHT SIDE -->
+<div class="w-full md:w-1/2 flex items-center justify-center px-6">
 
   <!-- Dark mode toggle -->
   <button
@@ -42,125 +66,17 @@
 Install OptiGain App
 </button>
 
-<h1 class="text-4xl font-bold text-center mb-6">
-
-Welcome to OptiGain
-</h1>
-
-<p class="text-center opacity-70 mb-10">
-Track your revenue, understand your profit, and grow your business with real data - not
-guesswork.
-</p>
-
-<section class="max-w-4xl mx-auto px-6 pt-12 pb-8 reveal">
-
-<img
-src="{{ url_for('static', filename='images/hero.jpg') }}"
-class="w-full max-w-4xl rounded-xl shadow-xl mx-auto"
-/>
-
-</section>
-
-<section class="max-w-4xl mx-auto px-6 py-10 reveal">
-
-<img
-src="{{ url_for('static', filename='images/features.jpg') }}"
-class="w-full max-w-4xl rounded-xl shadow-xl mx-auto"
-/>
-
-</section>
-
-<section class="max-w-4xl mx-auto px-6 py-10 reveal">
-
-<img
-src="{{ url_for('static', filename='images/features-info.jpg') }}"
-class="w-full max-w-4xl rounded-xl shadow-xl mx-auto"
-/>
-
-</section>
-
-<!-- 🔥 ONBOARDING / STORY SECTION -->
-<section class="max-w-3xl mx-auto px-6 py-12 text-center reveal">
-
-  <h2 class="text-2xl font-semibold mb-4">
-    Why OptiGain Exists
-  </h2>
-
-  <p class="text-sm opacity-80 mb-6">
-    Most small businesses don’t fail because they lack customers —  
-    they fail because they don’t truly understand their numbers.
-  </p>
-
-  <p class="text-sm opacity-80 mb-8">
-    OptiGain was built to change that.  
-    To give you clear visibility into your revenue, expenses, and profit —  
-    without complicated systems or accounting knowledge.
-  </p>
-
-  <!-- FEATURES GRID -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mt-6">
-
-    <div class="p-4 rounded-lg shadow"
-         style="background: var(--og-surface-elevated);">
-      <div class="text-lg mb-1">💰</div>
-      <strong>Track Revenue</strong>
-      <p class="opacity-70 mt-1">
-        Cash + Paybill payments automatically
-      </p>
-    </div>
-
-    <div class="p-4 rounded-lg shadow"
-         style="background: var(--og-surface-elevated);">
-      <div class="text-lg mb-1">📊</div>
-      <strong>Understand Profit</strong>
-      <p class="opacity-70 mt-1">
-        Know exactly what you’re making
-      </p>
-    </div>
-
-    <div class="p-4 rounded-lg shadow"
-         style="background: var(--og-surface-elevated);">
-      <div class="text-lg mb-1">🤖</div>
-      <strong>Get Insights</strong>
-      <p class="opacity-70 mt-1">
-        AI helps you grow smarter
-      </p>
-    </div>
-
-  </div>
-
-  <!-- HOW IT WORKS -->
-  <div class="mt-10 text-left text-sm space-y-3">
-
-    <h3 class="font-semibold text-center mb-3">
-      How it works
-    </h3>
-
-    <div>1️⃣ Create a sale → system generates account number</div>
-    <div>2️⃣ Customer pays via Paybill or cash</div>
-    <div>3️⃣ Revenue updates automatically</div>
-    <div>4️⃣ Add expenses → see real profit instantly</div>
-
-  </div>
-
-  <!-- CTA -->
-  <p class="mt-8 text-sm font-medium"
-     style="color: var(--og-primary);">
-    🚀 Create your account below and start controlling your business like a pro
-  </p>
-
-</section>
-
-<h2 class="text-2xl font-semibold text-center mt-24 mb-8">
-Login or Create Your Account
-</h2>
 
  <!-- Auth Card -->
-<section class="max-w-2xl mx-auto px-6 pb-16 reveal">
+<section class="w-full max-w-md">
 
 <div
-  class="w-full rounded-2xl shadow-xl p-10 border"
-  style="background: var(--og-surface); color: var(--og-text-main); border:1px solid var(--og-border-subtle);"
+  class="w-full rounded-2xl p-8 shadow-xl border backdrop-blur-sm"
+  style="
+    background: var(--og-surface);
+    color: var(--og-text-main);
+    border: 1px solid var(--og-border-subtle);
+  "
 >
 
     <!-- Branding -->
@@ -173,7 +89,7 @@ Login or Create Your Account
       <h1 class="text-2xl font-bold text-center">
         Welcome back to OptiGain
       </h1>
-      <p class="text-sm mt-1 opacity-70 text-center">
+      <p class="text-sm text-center mt-4">
         Continue tracking your revenue, profit, and business performance
       </p>
     </div>
@@ -183,7 +99,8 @@ Login or Create Your Account
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div>
-        <label class="block text-sm font-medium mb-1">
+        <label class="block text-sm font-medium mb-1"
+                     style="color:var(--og-text-main);">
           Username
         </label>
         <input
@@ -238,7 +155,9 @@ Login or Create Your Account
 
 <button
   type="submit"
-  class="w-full py-2.5 rounded-lg font-semibold shadow transition transform hover:-translate-y-0.5 hover:opacity-90 active:scale-[0.99]"
+   class="w-full py-3 rounded-lg font-semibold text-white
+       bg-gradient-to-r from-blue-600 to-blue-500
+       hover:scale-[1.01] transition"
   style="background: var(--og-primary); color: white;"
 >
   Login
@@ -367,6 +286,8 @@ window.addEventListener("beforeinstallprompt", (e) => {
 <script>
 lucide.createIcons();
 </script>
+
+</div>
 
 </body>
 </html>

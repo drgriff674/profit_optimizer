@@ -523,14 +523,21 @@ uploaded_csvs = {}
 
 
 @app.route("/")
-def index():
-    return redirect(url_for("login"))
+def landing():
+
+    if "username" in session:
+        return redirect(url_for("dashboard"))
+
+    return render_template("landing.html")
 
 
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def login():
+
+    if "username" in session:
+        return redirect(url_for("dashboard"))
 
     if request.method == "POST":
 
@@ -580,6 +587,9 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def register():
+
+    if "username" in session:
+        return redirect(url_for("dashboard"))
     if request.method == "POST":
 
         new_user = request.form["username"].strip()
@@ -666,6 +676,7 @@ def register():
             return redirect(url_for("register"))
 
     return render_template("register.html")
+
 
 
 @app.route("/verify", methods=["GET", "POST"])
@@ -1008,7 +1019,7 @@ def logout():
     log_audit(username,"LOGOUT","User logged out", request.remote_addr)
     
     session.clear()
-    return redirect(url_for("login"))
+    return redirect(url_for("landing"))
 
 @app.route("/terms")
 def terms():

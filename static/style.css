@@ -33,7 +33,7 @@ html.dark {
 /* ---------- GLOBAL ---------- */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:'inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--og-bg);
   color: var(--og-text-main);
   transition: background 0.3s ease, color 0.3s ease;
