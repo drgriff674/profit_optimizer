@@ -21,6 +21,7 @@ from functools import wraps
 from xhtml2pdf import pisa
 import json
 import os
+import traceback
 import threading
 from openai import OpenAI
 import pandas as pd
@@ -1060,172 +1061,157 @@ def get_dashboard_data(username):
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    print("SESSION USER ON DASHBOARD:",session.get("username"))
+    try:  # 👈 START HERE
 
-    username = session["username"]
-    business_id = get_business_id(username)
+        print("SESSION USER ON DASHBOARD:",session.get("username"))
 
-    ensure_business_exists(username)
+        username = session["username"]
+        business_id = get_business_id(username)
 
+        ensure_business_exists(username)
 
-    latest_payment = None
-    warning_message = None
+        latest_payment = None
+        warning_message = None
 
-    notifications = []
-    forecast_data = []
-    last_synced = None
+        notifications = []
+        forecast_data = []
+        last_synced = None
 
-    import time
-    start_total = time.time()
+        import time
+        start_total = time.time()
 
-    
-    t1 = time.time()
-    bundle = get_dashboard_bundle(username)
-    print("⏱️ dashboard_bundle:", time.time() - t1)
+        t1 = time.time()
+        bundle = get_dashboard_bundle(username)
+        print("⏱️ dashboard_bundle:", time.time() - t1)
 
-    snapshot = bundle.get("snapshot", {})
-    intelligence = bundle.get("intelligence", {})
-    subscription = bundle.get("subscription")
-    latest_report = bundle.get("weekly_report")
-    inventory_insights = bundle.get("inventory_insights", [])
-    top_products = bundle.get("top_products", [])
-    
-    from datetime import datetime
-    import math
+        snapshot = bundle.get("snapshot", {})
+        intelligence = bundle.get("intelligence", {})
+        subscription = bundle.get("subscription")
+        latest_report = bundle.get("weekly_report")
+        inventory_insights = bundle.get("inventory_insights", [])
+        top_products = bundle.get("top_products", [])
 
-    subscription_status = "inactive"
-    days_left = 0
+        from datetime import datetime
+        import math
 
-    if subscription:
+        subscription_status = "inactive"
+        days_left = 0
 
-        now = datetime.utcnow()
+        if subscription:
+            now = datetime.utcnow()
 
-        if subscription["status"] == "trial":
-            end = subscription["trial_end"]
+            if subscription["status"] == "trial":
+                end = subscription["trial_end"]
 
-            if end and now < end:
-                subscription_status = "trial"
-                days_left = max(0, math.ceil((end - now).total_seconds()/86400))
-            else:
-                subscription_status = "expired"
+                if end and now < end:
+                    subscription_status = "trial"
+                    days_left = max(0, math.ceil((end - now).total_seconds()/86400))
+                else:
+                    subscription_status = "expired"
 
-        elif subscription["status"] == "active":
-            end = subscription["subscription_end"]
+            elif subscription["status"] == "active":
+                end = subscription["subscription_end"]
 
-            if end and now < end:
-                subscription_status = "active"
-                days_left = max(0, math.ceil((end - now).total_seconds()/86400))
-            else:
-                subscription_status = "expired"
+                if end and now < end:
+                    subscription_status = "active"
+                    days_left = max(0, math.ceil((end - now).total_seconds()/86400))
+                else:
+                    subscription_status = "expired"
 
-            if days_left <= 0:
-                return redirect(url_for("subscribe"))
+                if days_left <= 0:
+                    return redirect(url_for("subscribe"))
 
-            warning_message = None
+                warning_message = None
 
-            if subscription_status == "trial" and days_left <= 5:
-                warning_message = f"⚠️ Trial ends in {days_left} days"
+                if subscription_status == "trial" and days_left <= 5:
+                    warning_message = f"⚠️ Trial ends in {days_left} days"
 
-            elif subscription_status == "active" and days_left <= 5:
-                warning_message = f"⚠️ Subscription expires in {days_left} days"
-    
+                elif subscription_status == "active" and days_left <= 5:
+                    warning_message = f"⚠️ Subscription expires in {days_left} days"
 
-    forecast_status = bundle.get("forecast_status", {})
+        forecast_status = bundle.get("forecast_status", {})
 
-    answer = None
+        answer = None
 
-    #  User files (not cached)
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
-    os.makedirs(user_folder, exist_ok=True)
-    t6 = time.time()
-    files = sorted(os.listdir(user_folder))
-    print("⏱️ files load:", time.time() - t6)
+        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
+        os.makedirs(user_folder, exist_ok=True)
 
-    
-    # kpi logic
-    
-    kpis = {
-        "total_profit": "KSh 0",
-        "avg_profit": "KSh 0",
-        "total_expenses":"KSh 0",
-        "profit_growth": "0%",
-        "largest_expense": "N/A",
-    }
+        files = sorted(os.listdir(user_folder))
 
-    
-    
-    if not snapshot:
-        snapshot = {}
+        kpis = {
+            "total_profit": "KSh 0",
+            "avg_profit": "KSh 0",
+            "total_expenses":"KSh 0",
+            "profit_growth": "0%",
+            "largest_expense": "N/A",
+        }
 
-    total_revenue = snapshot.get("total_revenue", 0)
-    total_expenses = snapshot.get("total_expenses", 0)
-    profit = snapshot.get("total_profit", 0)
+        total_revenue = snapshot.get("total_revenue", 0)
+        total_expenses = snapshot.get("total_expenses", 0)
+        profit = snapshot.get("total_profit", 0)
 
-    kpis["total_profit"] = f"KSh {profit:,.0f}"
-    kpis["avg_profit"] = f"KSh {profit:,.0f}"
-    kpis["total_expenses"] = f"KSh {total_expenses:,.0f}"
-    kpis["largest_expense"] = snapshot.get("largest_expense","N/A")
+        kpis["total_profit"] = f"KSh {profit:,.0f}"
+        kpis["avg_profit"] = f"KSh {profit:,.0f}"
+        kpis["total_expenses"] = f"KSh {total_expenses:,.0f}"
+        kpis["largest_expense"] = snapshot.get("largest_expense","N/A")
 
-    growth = snapshot.get("profit_growth",0)
-    kpis["profit_growth"] = f"{growth:.2f}%"
+        growth = snapshot.get("profit_growth",0)
+        kpis["profit_growth"] = f"{growth:.2f}%"
 
-    live_total_revenue = total_revenue
+        live_total_revenue = total_revenue
 
-    
-    
-    # AI Insights
-    
-    if request.method == "POST":
-        question = request.form.get("question", "").strip()
-        if AI_ENABLED and question:
+        if request.method == "POST":
+            question = request.form.get("question", "").strip()
+            if AI_ENABLED and question:
+                try:
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=[{"role": "user", "content": question}],
+                    )
+                    answer = response.choices[0].message.content.strip()
+                    notifications.append(f"💡 Smart Insight: {answer}")
+                except Exception as e:
+                    notifications.append(f"AI error: {str(e)}")
+
+        forecast_chart = []
+        for item in forecast_data:
             try:
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": question}],
-                )
-                answer = response.choices[0].message.content.strip()
-                notifications.append(f"💡 Smart Insight: {answer}")
-            except Exception as e:
-                notifications.append(f"AI error: {str(e)}")
+                forecast_chart.append({
+                    "date": item["date"],
+                    "predicted_revenue": float(item["predicted_revenue"])
+                })
+            except Exception:
+                continue
 
-    
-    # forecast chart
-    
-    forecast_chart = []
-    for item in forecast_data:
-        try:
-            forecast_chart.append({
-                "date": item["date"],
-                "predicted_revenue": float(item["predicted_revenue"])
-            })
-        except Exception:
-            continue
-    
+        return render_template(
+            "dashboard.html",
+            files=files,
+            notifications=notifications,
+            answer=answer,
+            kpis=kpis,
+            forecast_data=forecast_data,
+            forecast_chart=json.dumps(forecast_chart),
+            last_synced=last_synced,
+            current_year=datetime.now().year,
+            latest_payment=latest_payment,
+            intelligence=intelligence,
+            forecast_status=forecast_status,
+            live_total_revenue=live_total_revenue,
+            weekly_report=latest_report,
+            inventory_insights=inventory_insights,
+            top_products=top_products,
+            subscription=subscription,
+            subscription_status=subscription_status,
+            warning_message=warning_message,
+            days_left=days_left,
+            current_date=datetime.utcnow().date()
+        )
 
-    return render_template(
-        "dashboard.html",
-        files=files,
-        notifications=notifications,
-        answer=answer,
-        kpis=kpis,
-        forecast_data=forecast_data,
-        forecast_chart=json.dumps(forecast_chart),
-        last_synced=last_synced,
-        current_year=datetime.now().year,
-        latest_payment=latest_payment,
-        intelligence=intelligence,
-        forecast_status=forecast_status,
-        live_total_revenue=live_total_revenue,
-        weekly_report=latest_report,
-        inventory_insights=inventory_insights,
-        top_products=top_products,
-        subscription=subscription,
-        subscription_status=subscription_status,
-        warning_message=warning_message,
-        days_left=days_left,
-        current_date=datetime.utcnow().date()
-    )
-
+    except Exception as e:  # 👈 END HERE
+        print("🔥 DASHBOARD CRASH:", str(e))
+        traceback.print_exc()
+        return "Dashboard crashed", 500
+    
 @app.route("/api/dashboard-snapshot")
 @login_required
 def api_dash():
