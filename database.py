@@ -538,30 +538,21 @@ def init_db():
 
     
 
-from concurrent.futures import ThreadPoolExecutor
+
 from datetime import datetime
 
 def get_dashboard_bundle(username):
 
     today = datetime.utcnow().date()
 
-    with ThreadPoolExecutor(max_workers=6) as executor:
-
-        f_snapshot = executor.submit(get_dashboard_snapshot, username)
-        f_intel = executor.submit(get_dashboard_intelligence, username)
-        f_sub = executor.submit(get_subscription, username)
-        f_report = executor.submit(get_latest_weekly_report, username)
-        f_inventory = executor.submit(get_weekly_inventory_insights, username)
-        f_products = executor.submit(get_top_products_for_day, username, today)
-
-        return {
-            "snapshot": f_snapshot.result() or {},
-            "intelligence": f_intel.result() or {},
-            "subscription": f_sub.result(),
-            "weekly_report": f_report.result(),
-            "inventory_insights": f_inventory.result() or [],
-            "top_products": f_products.result() or []
-        }
+    return {
+        "snapshot": get_dashboard_snapshot(username) or {},
+        "intelligence": get_dashboard_intelligence(username) or {},
+        "subscription": get_subscription(username),
+        "weekly_report": get_latest_weekly_report(username),
+        "inventory_insights": get_weekly_inventory_insights(username) or [],
+        "top_products": get_top_products_for_day(username, today) or []
+    }
 def process_payment(username, amount, local_date):
     def operation(cur):
 
