@@ -58,12 +58,17 @@ document.getElementById("editRevenueForm").addEventListener("submit", function(e
     // 🟢 ONLINE MODE
     e.preventDefault();
 
-    fetch(`/revenue/entry/${entryId}/edit`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+const csrf = document.querySelector('[name="csrf_token"]').value;
+
+
+fetch(`/revenue/entry/${entryId}/edit`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf
+    },
+
+            body: JSON.stringify({
             category: category,
             amount: amount
         })

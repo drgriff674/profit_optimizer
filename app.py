@@ -1063,8 +1063,6 @@ def dashboard():
 
     ensure_business_exists(username)
 
-    cache.delete_memoized(get_dashboard_data, username)
-
 
     latest_payment = None
     warning_message = None

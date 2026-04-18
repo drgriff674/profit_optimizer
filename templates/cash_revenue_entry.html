@@ -145,11 +145,16 @@ document.getElementById("cashForm").addEventListener("submit", function(e) {
     };
 
     // 🟢 TRY ONLINE FIRST
-    fetch("/revenue/cash", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    })
+        const csrf = document.querySelector('[name="csrf_token"]').value;
+
+fetch("/revenue/cash", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf
+    },
+    body: JSON.stringify(data)
+})
     .then(r => {
         if (!r.ok) throw new Error("Server error");
         return r.json();
@@ -159,8 +164,12 @@ document.getElementById("cashForm").addEventListener("submit", function(e) {
         this.reset();
     })
     .catch(err => {
-        console.log("OFFLINE FALLBACK:", err);
 
+    console.log("ERROR:", err);
+
+    if (!navigator.onLine) {
+
+        // ✅ REAL OFFLINE
         let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
 
         queue.push({
@@ -172,8 +181,16 @@ document.getElementById("cashForm").addEventListener("submit", function(e) {
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
         alert("📴 Saved offline — will sync later");
-        this.reset();
-    });
+
+    } else {
+
+        // ❌ SERVER / CSRF / ROUTE ERROR
+        alert("❌ Server error — check logs");
+
+    }
+
+    this.reset();
+});
 });
 
 // ================= NETWORK STATUS =================

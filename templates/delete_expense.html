@@ -92,10 +92,13 @@ document.getElementById("deleteForm").addEventListener("submit", function(e) {
     // 🟢 ONLINE MODE
     e.preventDefault();
 
-    fetch(`/delete_expense/${expenseId}`, {
+const csrf = document.querySelector('[name="csrf_token"]').value;
+
+    fetch(`/expense/delete/${expenseId}`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-CSRFToken": csrf
         },
         body: JSON.stringify({ expense_id: expenseId })
     })

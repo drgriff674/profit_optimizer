@@ -181,7 +181,7 @@
   {% if not is_locked %}
     <a
       href="#"
-           onclick="handleEditClick"('{{ e.id }}')
+           onclick="handleEditClick"('{{ e.id }}')"
            class="text-blue-600 text-xs hover:underline">
       Edit
     </a>
@@ -227,13 +227,18 @@ document.getElementById("revenueForm").addEventListener("submit", function(e) {
         amount: formData.get("amount"),
         category: formData.get("category")
     };
+const csrf = document.querySelector('[name="csrf_token"]').value;
 
-    fetch("/revenue_entry", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    })
-    .then(r => {
+fetch("/revenue_entry", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf
+    },
+    body: JSON.stringify(data)
+})
+
+        .then(r => {
         if (!r.ok) throw new Error("Server error");
         return r.json();
     })
@@ -242,7 +247,12 @@ document.getElementById("revenueForm").addEventListener("submit", function(e) {
         this.reset();
         location.reload(); // optional to refresh entries
     })
-    .catch(err => {
+
+.catch(err => {
+
+    console.log("ERROR:", err);
+
+    if (!navigator.onLine) {
 
         let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
 
@@ -255,9 +265,16 @@ document.getElementById("revenueForm").addEventListener("submit", function(e) {
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
         alert("📴 Revenue saved offline");
-        this.reset();
-    });
+
+    } else {
+
+        alert("❌ Server error — check logs");
+
+    }
+
+    this.reset();
 });
+    });
 
 // ================= NETWORK STATUS =================
 function updateNetworkStatus() {

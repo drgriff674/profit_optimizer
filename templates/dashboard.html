@@ -692,19 +692,6 @@ setInterval(pollLatestPayment, 5000);
 </script>
 
 
-<script>
-setInterval(function(){
-    fetch("/api/dashboard-snapshot")
-    .then(r=>r.json())
-    .then(data=>{
-        const el = document.getElementById("liveRevenue");
-
-        if (el && data.total_revenue !== undefined) {
-            el.innerText = "KSh " + Math.floor(data.total_revenue);
-        }
-    });
-}, 5000);
-</script>
 
 <script>
 

@@ -539,12 +539,35 @@ async function syncOfflineData() {
 // ✅ ADD THIS RIGHT HERE
 setInterval(syncOfflineData, 5000);
 
+let salesInterval = null;
+
+function startPolling() {
+    if (!salesInterval) {
+        salesInterval = setInterval(loadSales, 8000);
+    }
+}
+
+function stopPolling() {
+    clearInterval(salesInterval);
+    salesInterval = null;
+}
+
+// Only poll when tab is active
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        stopPolling();
+    } else {
+        loadSales();
+        startPolling();
+    }
+});
+
 // INIT
 document.addEventListener("DOMContentLoaded",()=>{
     loadProducts();
     loadSales();
 
-    setInterval(loadSales, 3000);	
+    startPolling();	
 });
 
 function markPaid(saleId) {
