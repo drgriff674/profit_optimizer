@@ -93,6 +93,7 @@ from database import(
     get_subscription,
     get_business_id,
     get_business_id_cached,
+    get_dashboard_bundle,
 )
 import pytz
 from flask_caching import Cache
@@ -1079,12 +1080,15 @@ def dashboard():
 
     
     t1 = time.time()
-    cached_data = get_dashboard_data(username)
-    print("⏱️ get_dashboard_data:", time.time() - t1)
+    bundle = get_dashboard_bundle(username)
+    print("⏱️ dashboard_bundle:", time.time() - t1)
 
-    t2 = time.time()
-    subscription = get_subscription(username)
-    print("⏱️ get_subscription:", time.time() - t2)
+    snapshot = bundle.get("snapshot", {})
+    intelligence = bundle.get("intelligence", {})
+    subscription = bundle.get("subscription")
+    latest_report = bundle.get("weekly_report")
+    inventory_insights = bundle.get("inventory_insights", [])
+    top_products = bundle.get("top_products", [])
     
     from datetime import datetime
     import math
@@ -1125,27 +1129,8 @@ def dashboard():
             elif subscription_status == "active" and days_left <= 5:
                 warning_message = f"⚠️ Subscription expires in {days_left} days"
     
-    snapshot = cached_data.get("snapshot", {})
-    intelligence = cached_data.get("intelligence", {})
-    forecast_status = cached_data.get("forecast_status", {})
 
-    
-    t3 = time.time()
-    latest_report = get_latest_weekly_report(username)
-    print("⏱️ weekly_report:", time.time() - t3)
-
-    t4 = time.time()
-    inventory_insights = get_weekly_inventory_insights(username)
-    print("⏱️ inventory_insights:", time.time() - t4)
-
-    from datetime import datetime
-    today = datetime.now().date()
-
-    t5 = time.time()
-    top_products = get_top_products_for_day(username, today)
-    print("⏱️ top_products:", time.time() - t5)
-    
-    print("TOTAL dashboard time:", time.time() - start_total)
+    forecast_status = bundle.get("forecast_status", {})
 
     answer = None
 

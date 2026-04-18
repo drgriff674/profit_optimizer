@@ -464,20 +464,19 @@ bg-gray-100 text-gray-700
    <!-- 🧠 INTELLIGENCE ROW -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-  <div class="p-5 rounded-xl shadow"
-     bg-white dark:bg-slate-900>
+  <div class="p-5 rounded-xl shadow bg-white dark:bg-slate-900">
 
   <h3 class="text-lg font-semibold mb-2">
     📊 Revenue Intelligence
   </h3>
 
-  <p><strong>Locked days:</strong> {{ intelligence.locked_days }}</p>
-  <p><strong>Anomaly days:</strong> {{ intelligence.anomaly_days }}</p>
-  <p><strong>MPesa days:</strong> {{ intelligence.mpesa_days }}</p>
+ <p><strong>Locked days:</strong> {{ intelligence.get("locked_days", 0) }}</p>
+<p><strong>Anomaly days:</strong> {{ intelligence.get("anomaly_days", 0) }}</p>
+<p><strong>MPesa days:</strong> {{ intelligence.get("mpesa_days", 0) }}</p>
 
   <hr class="my-3 opacity-30">
 
-  {% if intelligence.locked_days < 7 %}
+  {% if intelligence.get("locked_days", 0) < 7 %}
       <p class="text-red-500 font-semibold">
         🔴 System learning — lock more days
       </p>
@@ -486,7 +485,7 @@ bg-gray-100 text-gray-700
         AI insights activate after 7 locked days
       </p>
 
-  {% elif intelligence.locked_days < 14 %}
+  {% elif intelligence.get("locked_days", 0) < 14 %}
       <p class="text-yellow-500 font-semibold">
         🟡 Forecast building confidence
       </p>
