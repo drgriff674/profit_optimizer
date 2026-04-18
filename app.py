@@ -424,6 +424,8 @@ except ImportError:
 
 app = Flask(__name__)
 
+
+
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
@@ -1033,6 +1035,10 @@ def terms():
 def privacy():
     return render_template("privacy.html")
 
+cache.memoize(timeout=60)
+def get_dashboard_bundle_cached(username):
+    return get_dashboard_bundle(username)
+
 @cache.memoize(timeout=3600)
 def get_business_info_cached(username):
 
@@ -1081,7 +1087,7 @@ def dashboard():
         start_total = time.time()
 
         t1 = time.time()
-        bundle = get_dashboard_bundle(username)
+        bundle = get_dashboard_bundle_cached(username)
         print("⏱️ dashboard_bundle:", time.time() - t1)
 
         snapshot = bundle.get("snapshot", {})
