@@ -91,6 +91,7 @@ from database import(
     get_top_products_for_day,
     process_payment,
     get_subscription,
+    get_business_id,
 )
 import pytz
 from flask_caching import Cache
@@ -1043,7 +1044,7 @@ def get_business_info_cached(username):
 
     return run_db_operation(operation)
 
-@cache.memoize(timeout=120)
+@cache.memoize(timeout=600)
 def get_dashboard_data(username):
 
     data = {}
@@ -1060,6 +1061,7 @@ def dashboard():
     print("SESSION USER ON DASHBOARD:",session.get("username"))
 
     username = session["username"]
+    business_id = get_business_id(username)
 
     ensure_business_exists(username)
 

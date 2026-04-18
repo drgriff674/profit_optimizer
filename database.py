@@ -602,14 +602,17 @@ def create_sale(business_id, items):
     return run_db_operation(operation, commit=True)
 
 
+from datetime import datetime, timedelta
+
 def get_top_products_for_day(username, date):
 
     def operation(cur):
 
+        # 🔥 get business id
         cur.execute("""
-            SELECT b.id
-            FROM businesses b
-            WHERE b.username = %s
+            SELECT id
+            FROM businesses
+            WHERE username = %s
             LIMIT 1
         """, (username,))
 
@@ -618,6 +621,10 @@ def get_top_products_for_day(username, date):
             return []
 
         business_id = biz["id"]
+
+        # 🔥 FIX DATE FILTER (IMPORTANT)
+        start = datetime.combine(date, datetime.min.time())
+        end = start + timedelta(days=1)
 
         cur.execute("""
             SELECT 
@@ -628,17 +635,32 @@ def get_top_products_for_day(username, date):
             JOIN sale_items si ON s.sale_id = si.sale_id
             JOIN products p ON p.id = si.product_id
             WHERE s.business_id = %s
-              AND DATE(s.created_at) = %s
+              AND s.created_at >= %s
+              AND s.created_at < %s
               AND s.status = 'completed'
             GROUP BY p.name
             ORDER BY total_sold DESC
             LIMIT 5
-        """, (business_id, date))
+        """, (business_id, start, end))
 
         return cur.fetchall()
 
     return run_db_operation(operation)
 
+def get_business_id(username):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT id
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        row = cur.fetchone()
+        return row["id"] if row else None
+
+    return run_db_operation(operation)
 
 #revenue cash functions
 def add_cash_revenue(username, amount, revenue_date, description=None):
