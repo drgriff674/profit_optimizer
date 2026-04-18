@@ -1097,7 +1097,7 @@ def dashboard():
         subscription_status = "inactive"
         days_left = 0
 
-        if subscription:
+        if subscription and isinstance(subscription, dict):
             now = datetime.utcnow()
 
             if subscription["status"] == "trial":

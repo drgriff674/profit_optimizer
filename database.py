@@ -551,7 +551,8 @@ def get_dashboard_bundle(username):
         "subscription": get_subscription(username),
         "weekly_report": get_latest_weekly_report(username),
         "inventory_insights": get_weekly_inventory_insights(username) or [],
-        "top_products": get_top_products_for_day(username, today) or []
+        "top_products": get_top_products_for_day(username, today) or [],
+        "forecast_status": get_locked_revenue_for_forecast(username) or {}
     }
 def process_payment(username, amount, local_date):
     def operation(cur):
