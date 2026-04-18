@@ -1075,9 +1075,14 @@ def dashboard():
     start_total = time.time()
 
     
+    t1 = time.time()
     cached_data = get_dashboard_data(username)
-    subscription = get_subscription(username)
+    print("⏱️ get_dashboard_data:", time.time() - t1)
 
+    t2 = time.time()
+    subscription = get_subscription(username)
+    print("⏱️ get_subscription:", time.time() - t2)
+    
     from datetime import datetime
     import math
 
@@ -1122,12 +1127,21 @@ def dashboard():
     forecast_status = cached_data.get("forecast_status", {})
 
     
+    t3 = time.time()
     latest_report = get_latest_weekly_report(username)
+    print("⏱️ weekly_report:", time.time() - t3)
+
+    t4 = time.time()
     inventory_insights = get_weekly_inventory_insights(username)
+    print("⏱️ inventory_insights:", time.time() - t4)
 
     from datetime import datetime
     today = datetime.now().date()
+
+    t5 = time.time()
     top_products = get_top_products_for_day(username, today)
+    print("⏱️ top_products:", time.time() - t5)
+    
     print("TOTAL dashboard time:", time.time() - start_total)
 
     answer = None
@@ -1135,7 +1149,9 @@ def dashboard():
     #  User files (not cached)
     user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
     os.makedirs(user_folder, exist_ok=True)
+    t6 = time.time()
     files = sorted(os.listdir(user_folder))
+    print("⏱️ files load:", time.time() - t6)
 
     
     # kpi logic
