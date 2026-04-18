@@ -608,19 +608,9 @@ def get_top_products_for_day(username, date):
 
     def operation(cur):
 
-        # 🔥 get business id
-        cur.execute("""
-            SELECT id
-            FROM businesses
-            WHERE username = %s
-            LIMIT 1
-        """, (username,))
-
-        biz = cur.fetchone()
-        if not biz:
+        business_id = get_business_id_cached(username)
+        if not business_id:
             return []
-
-        business_id = biz["id"]
 
         # 🔥 FIX DATE FILTER (IMPORTANT)
         start = datetime.combine(date, datetime.min.time())
@@ -661,6 +651,17 @@ def get_business_id(username):
         return row["id"] if row else None
 
     return run_db_operation(operation)
+
+def get_business_id_cached(username):
+    if not hasattr(get_business_id_cached, "cache"):
+        get_business_id_cached.cache = {}
+
+    if username in get_business_id_cached.cache:
+        return get_business_id_cached.cache[username]
+
+    biz_id = get_business_id(username)
+    get_business_id_cached.cache[username] = biz_id
+    return biz_id
 
 #revenue cash functions
 def add_cash_revenue(username, amount, revenue_date, description=None):
@@ -1800,18 +1801,10 @@ def get_weekly_inventory_insights(username):
 
     def operation(cur):
 
-        cur.execute("""
-            SELECT id
-            FROM businesses
-            WHERE username = %s
-            LIMIT 1
-        """, (username,))
-
-        biz = cur.fetchone()
-        if not biz:
+        business_id = get_business_id_cached(username)
+        if not business_id:
             return []
 
-        business_id = biz["id"]
 
         # movements last 7 days
         cur.execute("""
