@@ -538,119 +538,30 @@ def init_db():
 
     
 
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+
 def get_dashboard_bundle(username):
 
-    def operation(cur):
+    today = datetime.utcnow().date()
 
-        data = {}
+    with ThreadPoolExecutor(max_workers=6) as executor:
 
-        # ---------- SNAPSHOT ----------
-        cur.execute("""
-            SELECT *
-            FROM dashboard_snapshot
-            WHERE username=%s
-        """, (username,))
-        data["snapshot"] = cur.fetchone() or {}
+        f_snapshot = executor.submit(get_dashboard_snapshot, username)
+        f_intel = executor.submit(get_dashboard_intelligence, username)
+        f_sub = executor.submit(get_subscription, username)
+        f_report = executor.submit(get_latest_weekly_report, username)
+        f_inventory = executor.submit(get_weekly_inventory_insights, username)
+        f_products = executor.submit(get_top_products_for_day, username, today)
 
-        # ---------- INTELLIGENCE ----------
-        cur.execute("""
-            SELECT *
-            FROM dashboard_intelligence
-            WHERE username=%s
-        """, (username,))
-        data["intelligence"] = cur.fetchone() or {}
-
-        # ---------- SUBSCRIPTION ----------
-        cur.execute("""
-            SELECT *
-            FROM subscriptions
-            WHERE username=%s
-            LIMIT 1
-        """, (username,))
-        data["subscription"] = cur.fetchone()
-
-        # ---------- WEEKLY REPORT ----------
-        cur.execute("""
-            SELECT report, locked_days, created_at
-            FROM weekly_ai_reports
-            WHERE username=%s
-            ORDER BY created_at DESC
-            LIMIT 1
-        """, (username,))
-        data["weekly_report"] = cur.fetchone()
-
-        # ---------- BUSINESS ID (ONLY ONCE 🔥) ----------
-        cur.execute("""
-            SELECT id
-            FROM businesses
-            WHERE username=%s
-            LIMIT 1
-        """, (username,))
-        biz = cur.fetchone()
-
-        if not biz:
-            data["top_products"] = []
-            data["inventory_insights"] = []
-            return data
-
-        business_id = biz["id"]
-
-        # ---------- TOP PRODUCTS ----------
-        from datetime import datetime, timedelta
-        today = datetime.utcnow().date()
-        start = datetime.combine(today, datetime.min.time())
-        end = start + timedelta(days=1)
-
-        cur.execute("""
-            SELECT 
-                p.name,
-                SUM(si.quantity) as total_sold,
-                SUM(si.quantity * si.price) as revenue
-            FROM sales s
-            JOIN sale_items si ON s.sale_id = si.sale_id
-            JOIN products p ON p.id = si.product_id
-            WHERE s.business_id = %s
-              AND s.created_at >= %s
-              AND s.created_at < %s
-              AND s.status = 'completed'
-            GROUP BY p.name
-            ORDER BY total_sold DESC
-            LIMIT 5
-        """, (business_id, start, end))
-
-        data["top_products"] = cur.fetchall()
-
-        # ---------- INVENTORY INSIGHTS ----------
-        cur.execute("""
-            SELECT movement_type, COUNT(*) as count
-            FROM inventory_movements
-            WHERE business_id = %s
-            AND created_at >= CURRENT_DATE - INTERVAL '7 days'
-            GROUP BY movement_type
-        """, (business_id,))
-
-        rows = cur.fetchall()
-
-        insights = []
-        for r in rows:
-            mtype = r["movement_type"]
-            count = r["count"]
-
-            if mtype == "adjustment":
-                insights.append(f"📦 {count} adjustments this week.")
-            elif mtype == "restock":
-                insights.append(f"📥 {count} restocks this week.")
-            elif mtype == "sale":
-                insights.append(f"📤 {count} sales movements.")
-            elif mtype == "usage":
-                insights.append(f"📤 {count} usage movements.")
-
-        data["inventory_insights"] = insights
-
-        return data
-
-    return run_db_operation(operation)
-
+        return {
+            "snapshot": f_snapshot.result() or {},
+            "intelligence": f_intel.result() or {},
+            "subscription": f_sub.result(),
+            "weekly_report": f_report.result(),
+            "inventory_insights": f_inventory.result() or [],
+            "top_products": f_products.result() or []
+        }
 def process_payment(username, amount, local_date):
     def operation(cur):
 
