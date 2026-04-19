@@ -464,7 +464,7 @@ def check_subscription():
 
     if user and user.get("subscription_status") != "active":
         flash("❌ Subscription expired — pay to continue", "error")
-        return redirect(url_for("landing"))
+        return redirect(url_for("landing", expired=True))
     
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -581,7 +581,7 @@ def landing():
         # ❌ expired users stay on landing
         return render_template("landing.html", expired=True)
 
-    return render_template("landing.html")
+    return render_template("landing.html", expired=expired)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -1119,6 +1119,12 @@ def dashboard():
 
         username = session["username"]
         business_id = get_business_id(username)
+
+        # 🔒 HARD SUBSCRIPTION CHECK (EARLY EXIT)
+        user = get_user(username)
+
+        if not user or user.get("subscription_status") != "active":
+            return redirect(url_for("landing", expired=True))
 
         ensure_business_exists(username)
 

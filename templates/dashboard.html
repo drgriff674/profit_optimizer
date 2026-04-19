@@ -751,13 +751,6 @@ if (btn) {
 }
 </script>
 
-{% if subscription_status != "active" %}
-<script>
-    setTimeout(() => {
-        window.location.href = "{{ url_for('landing') }}?expired=true";
-    }, 1500);
-</script>
-{% endif %}
 
 
 </body>

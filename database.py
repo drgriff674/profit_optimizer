@@ -1818,15 +1818,18 @@ def get_user(username):
 
     def operation(cur):
         cur.execute(
-            "SELECT username, password, role FROM users WHERE username=%s",
+            "SELECT username, password, role, subscription_status FROM users WHERE username=%s",
             (username,)
         )
 
         user = cur.fetchone()
 
+        # ✅ SAFE FALLBACK (ONLY HERE)
         if user:
-            # ✅ make sure subscription_status exists (avoid crashes later)
-            user["subscription_status"] = user.get("subscription_status", "active")
+            subscription_status = user.get("subscription_status")
+
+            if not subscription_status:
+                user["subscription_status"] = "expired"
 
         return user
 
