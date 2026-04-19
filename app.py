@@ -573,7 +573,7 @@ def landing():
 
     expired = request.args.get("expired")
 
-    # 🚫 if expired, NEVER redirect back
+    # ✅ if expired → NEVER redirect
     if expired:
         return render_template("landing.html", expired=True)
 
@@ -581,8 +581,12 @@ def landing():
         bundle = get_dashboard_bundle(session["username"])
         subscription = bundle.get("subscription")
 
-        if subscription and subscription.get("status") == "active":
+        # ✅ allow active + trial
+        if subscription and subscription.get("status") in ["active", "trial"]:
             return redirect(url_for("dashboard"))
+
+        # ❌ expired users stay here
+        return render_template("landing.html", expired=True)
 
     return render_template("landing.html", expired=False)
 
@@ -590,8 +594,15 @@ def landing():
 @limiter.limit("5 per minute")
 def login():
 
+    # 🔒 smarter session handling
     if "username" in session:
-        return redirect(url_for("dashboard"))
+        bundle = get_dashboard_bundle(session["username"])
+        subscription = bundle.get("subscription")
+
+        if subscription and subscription.get("status") in ["active", "trial"]:
+            return redirect(url_for("dashboard"))
+
+        session.clear()  # 👈 prevent redirect loops
 
     if request.method == "POST":
 
@@ -604,8 +615,9 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
-                # ✅ IF USER HAS EMAIL → OTP FLOW
+                # ✅ OTP FLOW
                 if user.get("email"):
+                    session["pending_user"] = user["username"]
 
                     log_audit(username, "LOGIN_OTP_SENT", "OTP sent", request.remote_addr)
 
@@ -617,18 +629,21 @@ def login():
 
                     return redirect(url_for("verify"))
 
-                # ✅ NORMAL USER → LOGIN DIRECTLY
-                else:
-                    session["username"] = user["username"]
+                # ✅ NORMAL LOGIN
+                session.permanent = True
+                session["username"] = user["username"]
 
-                    log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
+                log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
 
-                    return redirect(url_for("dashboard"))  # change if needed
+                return redirect(url_for("dashboard"))
 
             flash("❌ Invalid username or password", "error")
 
-            log_audit(username or "unknown","LOGIN_FAILED","Invalid credentials", request.remote_addr)
-            
+            log_audit(username if username else "unknown",
+                      "LOGIN_FAILED",
+                      "Invalid credentials",
+                      request.remote_addr)
+
             return redirect(url_for("login"))
 
         except Exception as e:
@@ -643,7 +658,7 @@ def login():
 def register():
 
     if "username" in session:
-        return redirect(url_for("dashboard"))
+        session.clear()
     if request.method == "POST":
 
         new_user = request.form["username"].strip()
@@ -1161,7 +1176,7 @@ def dashboard():
         forecast_status = get_locked_revenue_for_forecast(username)
 
         print("🔥 bundle: done")
-        if not subscription or subscription.get("status") !="active":
+        if not subscription or subscription.get("status") not in ["active", "trial"]:
             return redirect(url_for("landing", expired=True))
         
 
