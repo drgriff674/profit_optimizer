@@ -751,6 +751,26 @@ if (btn) {
 }
 </script>
 
+<script>
+document.addEventListener("click", function (e) {
+  const link = e.target.closest("a");
+
+  if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+
+  const href = link.getAttribute("href");
+
+  if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
+
+  document.body.style.transition = "opacity 0.2s ease";
+  document.body.style.opacity = "0.6";
+});
+
+window.addEventListener("pageshow", function () {
+  document.body.style.opacity = "1";
+});
+</script>
+
+
 
 
 </body>
