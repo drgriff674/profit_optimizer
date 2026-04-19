@@ -638,6 +638,12 @@ def login():
 
                 log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
 
+                # 🔥 HANDLE REDIRECT AFTER LOGIN (PAYMENT FLOW)
+                next_page = session.pop("next_after_login", None)
+
+                if next_page == "subscribe":
+                    return redirect(url_for("subscribe"))
+
                 return redirect(url_for("dashboard"))
 
             flash("❌ Invalid username or password", "error")
@@ -1318,16 +1324,25 @@ def api_dash():
 @app.route("/subscribe")
 def subscribe():
 
-    import requests, os
-    import uuid
-    from flask import session
+    import requests, uuid
 
-    username = session["username"]
+    username = session.get("username")
+
+    # 🔥 handle not logged in users
+    if not username:
+        session["next_after_login"] = "subscribe"
+        return redirect(url_for("login"))
 
     order_id = f"{username}-{uuid.uuid4()}"
     amount = 1500
 
-    token = get_pesapal_token().get("token")
+    # 🔒 get token safely
+    token_data = get_pesapal_token()
+
+    if not token_data or "token" not in token_data:
+        return "❌ Failed to get payment token", 500
+
+    token = token_data["token"]
 
     url = "https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest"
 
@@ -1337,11 +1352,11 @@ def subscribe():
     }
 
     payload = {
-        "id": order_id,  # 🔥 VERY IMPORTANT
+        "id": order_id,
         "currency": "KES",
         "amount": amount,
         "description": "OptiGain Monthly Subscription",
-        "callback_url": "https://optigainapp.com/payment-success",
+        "callback_url": url_for("payment_success", _external=True),
 
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
 
@@ -1354,15 +1369,18 @@ def subscribe():
         }
     }
 
-    response = requests.post(url, json=payload, headers=headers)
-    data = response.json()
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        data = response.json()
+    except Exception as e:
+        return f"❌ Payment request failed: {str(e)}", 500
 
     redirect_url = data.get("redirect_url")
 
     if redirect_url:
         return redirect(redirect_url)
 
-    return data
+    return "❌ Payment initialization failed. Try again.", 500
 
 @app.route("/payment-success")
 def payment_success():
