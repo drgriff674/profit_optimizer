@@ -570,10 +570,16 @@ uploaded_csvs = {}
 def landing():
 
     if "username" in session:
-        return redirect(url_for("dashboard"))
+        user = get_user(session["username"])
+
+        # ✅ only allow dashboard if ACTIVE
+        if user and user.get("subscription_status") == "active":
+            return redirect(url_for("dashboard"))
+
+        # ❌ expired users stay on landing
+        return render_template("landing.html", expired=True)
 
     return render_template("landing.html")
-
 
 
 @app.route("/login", methods=["GET", "POST"])

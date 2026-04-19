@@ -1803,14 +1803,32 @@ def get_latest_weekly_report(username):
 
     return run_db_operation(operation)
 
+import os
+
 def get_user(username):
+
+    # 🚀 DEV MODE: skip database completely
+    if os.getenv("DEV_MODE") == "true":
+        return {
+            "username": "dev_user",
+            "password": "dev_password",
+            "role": "owner",
+            "subscription_status": "active"
+        }
 
     def operation(cur):
         cur.execute(
-            "SELECT username,email, password, role FROM users WHERE username=%s",
+            "SELECT username, password, role FROM users WHERE username=%s",
             (username,)
         )
-        return cur.fetchone()
+
+        user = cur.fetchone()
+
+        if user:
+            # ✅ make sure subscription_status exists (avoid crashes later)
+            user["subscription_status"] = user.get("subscription_status", "active")
+
+        return user
 
     return run_db_operation(operation)
 
