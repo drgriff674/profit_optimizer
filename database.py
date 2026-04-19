@@ -1939,18 +1939,7 @@ def create_user_with_business(username, email, password, role, business_name, pa
 
     return run_db_operation(operation, commit=True)
 
-def get_subscription(username):
 
-    def operation(cur):
-        cur.execute("""
-            SELECT *
-            FROM subscriptions
-            WHERE username = %s
-            LIMIT 1
-        """, (username,))
-        return cur.fetchone()
-
-    return run_db_operation(operation)
 
 def get_business_info(username):
 
@@ -1976,6 +1965,49 @@ def get_user_by_email(email):
         )
 
         return cur.fetchone()
+
+    return run_db_operation(operation)
+
+from datetime import datetime
+
+def get_subscription(username):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT status, trial_end, subscription_end
+            FROM subscriptions
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        sub = cur.fetchone()
+
+        if not sub:
+            return None
+
+        now = datetime.utcnow()
+
+        status = sub.get("status")
+
+        # 🧪 TRIAL LOGIC
+        if status == "trial":
+            end = sub.get("trial_end")
+
+            if end and now < end:
+                sub["status"] = "trial"
+            else:
+                sub["status"] = "expired"
+
+        # 💳 ACTIVE SUBSCRIPTION
+        elif status == "active":
+            end = sub.get("subscription_end")
+
+            if end and now < end:
+                sub["status"] = "active"
+            else:
+                sub["status"] = "expired"
+
+        return sub
 
     return run_db_operation(operation)
 

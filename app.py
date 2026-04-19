@@ -429,43 +429,43 @@ app = Flask(__name__)
 @app.before_request
 def check_subscription():
 
-    allowed_routes = [
+    print("🔥 BEFORE REQUEST HIT:", request.endpoint)
+
+    allowed_routes = {
         "login",
-        "register",   # 👈 ADD THIS (important)
+        "register",
         "subscribe",
         "landing",
-        "static",
         "logout",
-        "verify"      # 👈 ADD THIS (OTP flow)
-    ]
+        "verify"
+    }
 
+    # 🚫 skip if no endpoint (rare but safe)
     if not request.endpoint:
         return
 
+    # ✅ allow public routes + static files
     if request.endpoint in allowed_routes:
         return
 
-    # allow APIs
-    if request.path.startswith("/api/"):
+    if request.endpoint.startswith("static"):
         return
 
-    # 🚀 DEV MODE BYPASS
-    if os.getenv("DEV_MODE") == "true":
-        return
-
-    # 🚀 DEV USER BYPASS
-    if "username" in session and session["username"] == "dev_user":
-        return
-
-    # 🔒 NOT LOGGED IN
+    # 🔒 not logged in → go login
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # 🔒 REAL SUBSCRIPTION CHECK (FIXED)
-    bundle = get_dashboard_bundle(session["username"])
-    subscription = bundle.get("subscription")
+    # 🔥 ALWAYS use real subscription (NOT bundle)
+    subscription = get_subscription(session["username"])
 
+    print("🔍 subscription:", subscription)
+
+    # 🔒 BLOCK if expired / missing
     if not subscription or subscription.get("status") not in ["active", "trial"]:
+        print("🚫 BLOCKING USER")
+
+        session.clear()  # 🔥 force logout (CRITICAL)
+
         flash("❌ Subscription expired — pay to continue", "error")
         return redirect(url_for("landing", expired=True))
     
