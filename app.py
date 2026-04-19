@@ -452,18 +452,20 @@ def check_subscription():
         return
 
     # 🚀 DEV USER BYPASS
-    if "username" in session:
-        if session["username"] == "dev_user":
-            return
+    if "username" in session and session["username"] == "dev_user":
+        return
 
-    # 🔒 NORMAL SUBSCRIPTION CHECK
-    if "username" in session:
-        user = get_user(session["username"])
+    # 🔒 NOT LOGGED IN → BLOCK
+    if "username" not in session:
+        return redirect(url_for("login"))
 
-        if user and user.get("subscription_status") != "active":
-            flash("❌ Subscription expired — pay to continue", "error")
-            return redirect(url_for("landing"))
+    # 🔒 SUBSCRIPTION CHECK
+    user = get_user(session["username"])
 
+    if user and user.get("subscription_status") != "active":
+        flash("❌ Subscription expired — pay to continue", "error")
+        return redirect(url_for("landing"))
+    
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
