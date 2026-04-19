@@ -120,7 +120,7 @@
 <script>
 let cart = [];
 let currentEditId = null;
-let previousSales = {};
+let previousSales = JSON.parse(localStorage.getItem("previousSales") || "{}");
 
 
 // 🔥 OFFLINE STORAGE
@@ -408,6 +408,7 @@ el.innerHTML = "";
             const justPaid = prevStatus !=="completed" && s.status === "completed";
 
             previousSales[s.sale_id] = s.status;
+            localStorage.setItem("previousSales", JSON.stringify(previousSales));
 
             let existing = document.getElementById("sale-" + s.sale_id);
 
@@ -485,7 +486,7 @@ ${
    
     ${
         justPaid
-        ? `<div class="text-green-600 text-xs mt-1">
+        ? `<div class="text-green-600 text-xs mt-1 payment-msg">
              💰 Payment received
            </div>`
         : ""
@@ -736,6 +737,15 @@ updateNetworkStatus();
 </script>
 
 <script>
+setTimeout(() => {
+  document.querySelectorAll(".payment-msg").forEach(el => {
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 300);
+  });
+}, 3000);
+</script>
+
+<script>
 document.addEventListener("click", function (e) {
   const link = e.target.closest("a");
 
@@ -753,6 +763,28 @@ window.addEventListener("pageshow", function () {
   document.body.style.opacity = "1";
 });
 </script>
+
+<script>
+document.addEventListener("click", function (e) {
+  const link = e.target.closest("a");
+
+  // ignore invalid or special links
+  if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+
+  const href = link.getAttribute("href");
+
+  if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
+
+  // ⚡ subtle click feedback
+  document.body.style.transition = "transform 0.1s ease";
+  document.body.style.transform = "scale(0.995)";
+
+  setTimeout(() => {
+    document.body.style.transform = "scale(1)";
+  }, 120);
+});
+</script>
+
 
 
 

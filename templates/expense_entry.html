@@ -283,18 +283,20 @@ updateNetworkStatus();
 document.addEventListener("click", function (e) {
   const link = e.target.closest("a");
 
+  // ignore invalid or special links
   if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
 
   const href = link.getAttribute("href");
 
   if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
 
-  document.body.style.transition = "opacity 0.2s ease";
-  document.body.style.opacity = "0.6";
-});
+  // ⚡ subtle click feedback
+  document.body.style.transition = "transform 0.1s ease";
+  document.body.style.transform = "scale(0.995)";
 
-window.addEventListener("pageshow", function () {
-  document.body.style.opacity = "1";
+  setTimeout(() => {
+    document.body.style.transform = "scale(1)";
+  }, 120);
 });
 </script>
 
