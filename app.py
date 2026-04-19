@@ -573,18 +573,18 @@ def landing():
 
     expired = request.args.get("expired")
 
-    if "username" in session:
-        user = get_user(session["username"])
-
-        # ✅ only allow dashboard if ACTIVE
-        if user and user.get("subscription_status") == "active":
-            return redirect(url_for("dashboard"))
-
-        # ❌ expired users stay on landing
+    # 🚫 if expired, NEVER redirect back
+    if expired:
         return render_template("landing.html", expired=True)
 
-    return render_template("landing.html", expired=expired)
+    if "username" in session:
+        bundle = get_dashboard_bundle(session["username"])
+        subscription = bundle.get("subscription")
 
+        if subscription and subscription.get("status") == "active":
+            return redirect(url_for("dashboard"))
+
+    return render_template("landing.html", expired=False)
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
@@ -1135,19 +1135,35 @@ def dashboard():
         import time
         start_total = time.time()
 
-        t1 = time.time()
-        bundle = get_dashboard_bundle_cached(username)
-        print("⏱️ dashboard_bundle:", time.time() - t1)
+        print("🔥 bundle: start")
 
-        snapshot = bundle.get("snapshot", {})
-        intelligence = bundle.get("intelligence", {})
-        subscription = bundle.get("subscription")
+        print("→ snapshot")
+        snapshot = get_dashboard_snapshot(username)
 
+        print("→ intelligence")
+        intelligence = get_dashboard_intelligence(username)
+
+        print("→ subscription")
+        subscription = get_subscription(username)
+
+        print("→ weekly_report")
+        latest_report = get_latest_weekly_report(username)
+
+        print("→ inventory")
+        inventory_insights = get_weekly_inventory_insights(username)
+
+        print("→ top_products")
+        from datetime import datetime
+        today = datetime.utcnow().date()
+        top_products = get_top_products_for_day(username, today)
+
+        print("→ forecast")
+        forecast_status = get_locked_revenue_for_forecast(username)
+
+        print("🔥 bundle: done")
         if not subscription or subscription.get("status") !="active":
             return redirect(url_for("landing", expired=True))
-        latest_report = bundle.get("weekly_report")
-        inventory_insights = bundle.get("inventory_insights", [])
-        top_products = bundle.get("top_products", [])
+        
 
         from datetime import datetime
         import math
@@ -1187,7 +1203,7 @@ def dashboard():
                 elif subscription_status == "active" and days_left <= 5:
                     warning_message = f"⚠️ Subscription expires in {days_left} days"
 
-        forecast_status = bundle.get("forecast_status", {})
+        
 
         answer = None
 
