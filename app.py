@@ -571,6 +571,8 @@ uploaded_csvs = {}
 @app.route("/")
 def landing():
 
+    expired = request.args.get("expired")
+
     if "username" in session:
         user = get_user(session["username"])
 
