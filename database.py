@@ -1807,7 +1807,7 @@ import os
 
 def get_user(username):
 
-    # 🚀 DEV MODE: skip database completely
+    # 🚀 DEV MODE
     if os.getenv("DEV_MODE") == "true":
         return {
             "username": "dev_user",
@@ -1824,11 +1824,9 @@ def get_user(username):
 
         user = cur.fetchone()
 
-        # ✅ SAFE FALLBACK (ONLY HERE)
         if user:
-            subscription_status = user.get("subscription_status")
-
-            if not subscription_status:
+            # fallback safety (in case DB returns NULL)
+            if not user.get("subscription_status"):
                 user["subscription_status"] = "expired"
 
         return user
