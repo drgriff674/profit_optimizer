@@ -1120,12 +1120,7 @@ def dashboard():
         username = session["username"]
         business_id = get_business_id(username)
 
-        # 🔒 HARD SUBSCRIPTION CHECK (EARLY EXIT)
-        user = get_user(username)
-
-        if not user or user.get("subscription_status") != "active":
-            return redirect(url_for("landing", expired=True))
-
+        
         ensure_business_exists(username)
 
         latest_payment = None
@@ -1145,6 +1140,9 @@ def dashboard():
         snapshot = bundle.get("snapshot", {})
         intelligence = bundle.get("intelligence", {})
         subscription = bundle.get("subscription")
+
+        if not subscription or subscription.get("status") !="active":
+            return redirect(url_for("landing", expired=True))
         latest_report = bundle.get("weekly_report")
         inventory_insights = bundle.get("inventory_insights", [])
         top_products = bundle.get("top_products", [])
@@ -1177,7 +1175,7 @@ def dashboard():
                     subscription_status = "expired"
 
                 if days_left <= 0:
-                    return redirect(url_for("subscribe"))
+                    return redirect(url_for("landing", expired=True))
 
                 warning_message = None
 
