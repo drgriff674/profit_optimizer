@@ -1316,7 +1316,6 @@ def api_dash():
 
 
 @app.route("/subscribe")
-@login_required
 def subscribe():
 
     import requests, os
@@ -1342,7 +1341,7 @@ def subscribe():
         "currency": "KES",
         "amount": amount,
         "description": "OptiGain Monthly Subscription",
-        "callback_url": "https://optigainapp.com/dashboard",
+        "callback_url": "https://optigainapp.com/payment-success",
 
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
 
@@ -1364,6 +1363,27 @@ def subscribe():
         return redirect(redirect_url)
 
     return data
+
+@app.route("/payment-success")
+def payment_success():
+
+    username = session.get("username")
+
+    # basic safety check
+    if not username:
+        return redirect(url_for("login"))
+
+    # 🔒 prevent double activation
+    subscription = get_subscription(username)
+
+    if subscription and subscription.get("status") == "active":
+        return redirect(url_for("dashboard"))
+
+    activate_subscription(username)
+
+    flash("✅ Payment successful! Subscription activated.", "success")
+
+    return render_template("payment_success.html")
 
 @app.route("/api/products")
 @login_required
@@ -2905,9 +2925,7 @@ def create_payment(sale_id):
 
     return data
 
-@app.route("/payment-success")
-def payment_success():
-    return redirect("/sales?success=1")
+
     
 # ✅ GET ACCESS TOKEN
 @app.route("/get_token")
