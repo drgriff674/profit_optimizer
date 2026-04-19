@@ -355,6 +355,8 @@ def ensure_business_exists(username):
 
     run_db_operation(operation, commit=True)
 
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -424,7 +426,43 @@ except ImportError:
 
 app = Flask(__name__)
 
+@app.before_request
+def check_subscription():
 
+    allowed_routes = [
+        "login",
+        "subscribe",
+        "landing",
+        "static",
+        "logout"
+    ]
+
+    if not request.endpoint:
+        return
+
+    if request.endpoint in allowed_routes:
+        return
+
+    # allow APIs
+    if request.path.startswith("/api/"):
+        return
+
+    # 🚀 DEV MODE BYPASS
+    if os.getenv("DEV_MODE") == "true":
+        return
+
+    # 🚀 DEV USER BYPASS
+    if "username" in session:
+        if session["username"] == "dev_user":
+            return
+
+    # 🔒 NORMAL SUBSCRIPTION CHECK
+    if "username" in session:
+        user = get_user(session["username"])
+
+        if user and user.get("subscription_status") != "active":
+            flash("❌ Subscription expired — pay to continue", "error")
+            return redirect(url_for("landing"))
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)

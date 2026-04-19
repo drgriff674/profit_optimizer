@@ -607,12 +607,10 @@ bg-gray-100 text-gray-700
 
 </div>
 
-
 <script>
-function toggleMenu(id,btn) {
+function toggleMenu(id, btn) {
   const el = document.getElementById(id);
   if (!el) return;
-  
   el.classList.toggle("hidden");
   btn.classList.toggle("active-menu");
 }
@@ -625,10 +623,12 @@ toggle?.addEventListener("click", () => {
   sidebar.classList.toggle("-translate-x-full");
   overlay.classList.toggle("hidden");
 });
+
 overlay?.addEventListener("click", () => {
   sidebar.classList.add("-translate-x-full");
   overlay.classList.add("hidden");
 });
+</script>
 
 <script>
 let lastSeenPaymentId = localStorage.getItem("lastPaymentId");
