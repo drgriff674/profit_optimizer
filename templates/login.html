@@ -155,14 +155,27 @@ Install OptiGain App
 
 <button
   type="submit"
-   class="w-full py-3 rounded-lg font-semibold text-white
+  class="w-full py-3 rounded-lg font-semibold text-white
        bg-gradient-to-r from-blue-600 to-blue-500
        hover:scale-[1.01] transition"
-  style="background: var(--og-primary); color: white;"
 >
   Login
 </button>
 
+{% if next_action == "subscribe" %}
+
+<p class="text-base font-semibold mb-3 mt-4 tracking-wide text-center"
+   style="color: #22c55e;">
+  You're one step away from activating your subscription
+</p>
+
+<a href="{{ url_for('subscribe') }}"
+   class="block w-full py-3 rounded-lg font-semibold text-white
+          bg-green-600 hover:bg-green-700 transition text-center">
+   💳 Continue to Payment
+</a>
+
+{% endif %}
     </form>
 
 <p class="text-xs text-center opacity-60 mt-3">

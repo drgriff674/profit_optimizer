@@ -659,7 +659,10 @@ def login():
             flash(f"⚠️ Database error: {str(e)}", "error")
             return redirect(url_for("login"))
 
-    return render_template("login.html")
+    return render_template(
+        "login.html",
+        next_action=session.get("next_after_login")
+        )
 
 
 @app.route("/register", methods=["GET", "POST"])
