@@ -431,10 +431,12 @@ def check_subscription():
 
     allowed_routes = [
         "login",
+        "register",   # 👈 ADD THIS (important)
         "subscribe",
         "landing",
         "static",
-        "logout"
+        "logout",
+        "verify"      # 👈 ADD THIS (OTP flow)
     ]
 
     if not request.endpoint:
@@ -455,14 +457,15 @@ def check_subscription():
     if "username" in session and session["username"] == "dev_user":
         return
 
-    # 🔒 NOT LOGGED IN → BLOCK
+    # 🔒 NOT LOGGED IN
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # 🔒 SUBSCRIPTION CHECK
-    user = get_user(session["username"])
+    # 🔒 REAL SUBSCRIPTION CHECK (FIXED)
+    bundle = get_dashboard_bundle(session["username"])
+    subscription = bundle.get("subscription")
 
-    if user and user.get("subscription_status") != "active":
+    if not subscription or subscription.get("status") not in ["active", "trial"]:
         flash("❌ Subscription expired — pay to continue", "error")
         return redirect(url_for("landing", expired=True))
     
