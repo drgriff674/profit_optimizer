@@ -14,6 +14,12 @@
 <body class="min-h-screen transition-colors"
       style="background: var(--og-bg); color: var(--og-text-main);">
 
+<div id="pageLoader"
+     class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
+  <div class="text-lg font-semibold animate-pulse">
+    Loading...
+
+
 <!-- HEADER -->
 <header class="flex items-center gap-3 px-4 py-4 border-b"
         style="border-color: var(--og-border); background: var(--og-surface);">
@@ -100,5 +106,7 @@
 }, { responsive: true });
   }
 </script>
+
+<script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 </body>
 </html>
