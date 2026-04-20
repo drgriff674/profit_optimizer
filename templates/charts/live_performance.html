@@ -14,14 +14,16 @@
 <body class="min-h-screen transition-colors"
       style="background: var(--og-bg); color: var(--og-text-main);">
 
+<!-- ✅ FIXED LOADER -->
 <div id="pageLoader"
      class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
   <div class="text-lg font-semibold animate-pulse">
     Loading...
-
+  </div>
+</div>
 
 <!-- HEADER -->
-<header class="flex items-center gap-3 px-4 py-4 border-b"
+<header class="flex items-center justify-between px-4 py-4 border-b"
         style="border-color: var(--og-border); background: var(--og-surface);">
 
   <a href="{{ url_for('dashboard') }}"
@@ -33,11 +35,16 @@
   <h1 class="text-lg font-semibold">
     📉 Live Financial Performance
   </h1>
+
+  <!-- 🌙 DARK MODE -->
+  <button id="darkToggle"
+          class="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700">
+    🌙
+  </button>
 </header>
 
 <!-- CONTENT -->
 <main class="p-4">
-
   <div class="rounded-xl shadow p-4"
        style="background: var(--og-surface);">
 
@@ -46,67 +53,47 @@
     </p>
 
     <div id="liveChart" class="w-full h-[70vh]"></div>
-
   </div>
-
 </main>
 
 <script>
-  const dates = {{ dates | tojson | safe }};
-  const revenue = {{ revenue_values | tojson | safe }};
-  const expenses = {{ expense_values | tojson | safe }};
-  const profit = {{ profit_values | tojson | safe }};
+const dates = {{ dates | tojson | safe }};
+const revenue = {{ revenue_values | tojson | safe }};
+const expenses = {{ expense_values | tojson | safe }};
+const profit = {{ profit_values | tojson | safe }};
 
-  if (!dates.length) {
-    document.getElementById("liveChart").innerHTML =
-      "<p class='text-center opacity-70'>No locked financial data yet</p>";
-  } else {
-   Plotly.newPlot("liveChart", [
-  {
-    x: dates,
-    y: revenue,
-    name: "Revenue",
-    mode: "lines",
-    line: { width: 4 }
-  },
-  {
-    x: dates,
-    y: profit,
-    name: "Profit",
-    mode: "lines",
-    line: { width: 4 }
-  },
-  {
-    x: dates,
-    y: expenses,
-    name: "Expenses",
-    mode: "lines",
-    line: { width: 2, dash: "dot" }
-  }
-], {
-  margin: { t: 30 },
-
-  xaxis: {
-    title: "Date",
-    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
-  },
-
-  yaxis: {
-    title: "Amount (KSh)",
-    color: getComputedStyle(document.body).getPropertyValue('--og-text-main')
-  },
-
-  paper_bgcolor: "transparent",
-  plot_bgcolor: "transparent",
-
-  legend: {
-    orientation: "h"
-  }
-
-}, { responsive: true });
-  }
+if (!dates.length) {
+  document.getElementById("liveChart").innerHTML =
+    "<p class='text-center opacity-70'>No locked financial data yet</p>";
+} else {
+  Plotly.newPlot("liveChart", [
+    { x: dates, y: revenue, name: "Revenue", mode: "lines", line: { width: 4 } },
+    { x: dates, y: profit, name: "Profit", mode: "lines", line: { width: 4 } },
+    { x: dates, y: expenses, name: "Expenses", mode: "lines", line: { width: 2, dash: "dot" } }
+  ], {
+    paper_bgcolor: "transparent",
+    plot_bgcolor: "transparent"
+  }, { responsive: true });
+}
 </script>
 
+<!-- 🌙 DARK MODE SCRIPT -->
+<script>
+const btn = document.getElementById("darkToggle");
+const root = document.documentElement;
+
+if (localStorage.getItem("theme") === "dark") {
+  root.classList.add("dark");
+}
+
+btn?.addEventListener("click", () => {
+  const isDark = root.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+});
+</script>
+
+<!-- ✅ GLOBAL NAV -->
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+
 </body>
 </html>
