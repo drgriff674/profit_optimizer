@@ -5,12 +5,18 @@
     <title>Dashboard - OptiGain</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" media="print" onload="this.media='all'">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 
 <body class="min-h-screen flex transition-colors">
+
+<div id="pageLoader"
+     class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
+  <div class="text-lg font-semibold animate-pulse">
+    Loading...
+  </div>
+</div>
 
 
 <!-- MOBILE SIDEBAR OVERLAY -->
@@ -676,7 +682,16 @@ function showPaymentPopup(amount) {
 }
 
 // Poll every 5 seconds
-setInterval(pollLatestPayment, 5000);
+let isTabActive = true;
+
+document.addEventListener("visibilitychange", () => {
+  isTabActive = !document.hidden;
+});
+
+setInterval(() => {
+  if (isTabActive) pollLatestPayment();
+}, 10000);
+
 </script>
 
 
@@ -755,19 +770,21 @@ if (btn) {
 document.addEventListener("click", function (e) {
   const link = e.target.closest("a");
 
-  // ignore invalid or special links
   if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
 
   const href = link.getAttribute("href");
 
   if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
 
-  // ⚡ subtle click feedback
-  document.body.style.transition = "transform 0.1s ease";
+  e.preventDefault();
+
+  const loader = document.getElementById("pageLoader");
+  if (loader) loader.classList.remove("hidden");
+
   document.body.style.transform = "scale(0.995)";
 
   setTimeout(() => {
-    document.body.style.transform = "scale(1)";
+    window.location.href = href;
   }, 120);
 });
 </script>

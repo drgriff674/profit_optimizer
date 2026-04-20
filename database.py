@@ -14,18 +14,11 @@ connection_pool = pool.ThreadedConnectionPool(
 #  Railway PostgreSQL connection string
 
 def get_db_connection():
-    conn = connection_pool.getconn()
-
     try:
-        cur = conn.cursor()
-        cur.execute("SELECT 1")
-        cur.close()
-    except:
-        conn = psycopg2.connect(
-            DATABASE_URL,
-            sslmode="require"
-        )
-    return conn
+        return connection_pool.getconn()
+    except Exception as e:
+        print("Pool error:", e)
+        return psycopg2.connect(DATABASE_URL, sslmode="require")
         
     
 
@@ -403,6 +396,11 @@ def init_db():
         """)
 
         cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_sales_created_status
+        ON sales(created_at, status);
+        """)
+
+        cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id
         ON sale_items(sale_id);
         """)
@@ -543,15 +541,16 @@ from datetime import datetime
 
 def get_dashboard_bundle(username):
 
-    today = datetime.utcnow().date()
-
     return {
         "snapshot": get_dashboard_snapshot(username) or {},
         "intelligence": get_dashboard_intelligence(username) or {},
         "subscription": get_subscription(username),
-        "weekly_report": get_latest_weekly_report(username),
-        "inventory_insights": get_weekly_inventory_insights(username) or [],
-        "top_products": get_top_products_for_day(username, today) or [],
+
+        # 🔥 TEMP DISABLED (heavy)
+        "weekly_report": None,
+        "inventory_insights": [],
+        "top_products": [],
+
         "forecast_status": get_locked_revenue_for_forecast(username) or {}
     }
 def process_payment(username, amount, local_date):
@@ -669,16 +668,7 @@ def get_business_id(username):
 
     return run_db_operation(operation)
 
-def get_business_id_cached(username):
-    if not hasattr(get_business_id_cached, "cache"):
-        get_business_id_cached.cache = {}
 
-    if username in get_business_id_cached.cache:
-        return get_business_id_cached.cache[username]
-
-    biz_id = get_business_id(username)
-    get_business_id_cached.cache[username] = biz_id
-    return biz_id
 
 #revenue cash functions
 def add_cash_revenue(username, amount, revenue_date, description=None):
@@ -1537,10 +1527,16 @@ def get_dashboard_snapshot(username):
 
     def operation(cur):
 
-        cur.execute(
-            "SELECT * FROM dashboard_snapshot WHERE username=%s",
-            (username,)
-        )
+        cur.execute("""
+            SELECT 
+                total_revenue,
+                total_expenses,
+                total_profit,
+                largest_expense,
+                profit_growth
+            FROM dashboard_snapshot
+            WHERE username = %s
+        """, (username,))
 
         row = cur.fetchone()
 

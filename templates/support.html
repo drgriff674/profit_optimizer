@@ -7,6 +7,14 @@
 
 <body class="min-h-screen flex items-center justify-center">
 
+<div id="pageLoader"
+     class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
+  <div class="text-lg font-semibold animate-pulse">
+    Loading...
+  </div>
+</div>
+
+
 <div class="w-full max-w-md p-6 shadow rounded-xl text-center">
 
 <h2 class="text-xl font-bold mb-4">
@@ -42,19 +50,21 @@ Our team usually responds within 24 hours.
 document.addEventListener("click", function (e) {
   const link = e.target.closest("a");
 
-  // ignore invalid or special links
   if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
 
   const href = link.getAttribute("href");
 
   if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
 
-  // ⚡ subtle click feedback
-  document.body.style.transition = "transform 0.1s ease";
+  e.preventDefault();
+
+  const loader = document.getElementById("pageLoader");
+  if (loader) loader.classList.remove("hidden");
+
   document.body.style.transform = "scale(0.995)";
 
   setTimeout(() => {
-    document.body.style.transform = "scale(1)";
+    window.location.href = href;
   }, 120);
 });
 </script>

@@ -93,7 +93,6 @@ from database import(
     process_payment,
     get_subscription,
     get_business_id,
-    get_business_id_cached,
     get_dashboard_bundle,
 )
 import pytz
@@ -1115,6 +1114,10 @@ def get_dashboard_bundle_cached(username):
     return get_dashboard_bundle(username)
 
 @cache.memoize(timeout=3600)
+def get_business_id_cached(username):
+    return get_business_id(username)
+
+@cache.memoize(timeout=3600)
 def get_business_info_cached(username):
 
     def operation(cur):
@@ -1147,10 +1150,9 @@ def dashboard():
         print("SESSION USER ON DASHBOARD:",session.get("username"))
 
         username = session["username"]
-        business_id = get_business_id(username)
 
-        
-        ensure_business_exists(username)
+        if not get_business_info_cached(username):
+            ensure_business_exists(username)
 
         latest_payment = None
         warning_message = None
@@ -1162,31 +1164,18 @@ def dashboard():
         import time
         start_total = time.time()
 
-        print("🔥 bundle: start")
+        username = session["username"]
 
-        print("→ snapshot")
-        snapshot = get_dashboard_snapshot(username)
+        # 🔥 use cached bundle
+        bundle = get_dashboard_bundle_cached(username)
 
-        print("→ intelligence")
-        intelligence = get_dashboard_intelligence(username)
-
-        print("→ subscription")
-        subscription = get_subscription(username)
-
-        print("→ weekly_report")
-        latest_report = get_latest_weekly_report(username)
-
-        print("→ inventory")
-        inventory_insights = get_weekly_inventory_insights(username)
-
-        print("→ top_products")
-        from datetime import datetime
-        today = datetime.utcnow().date()
-        top_products = get_top_products_for_day(username, today)
-
-        print("→ forecast")
-        forecast_status = get_locked_revenue_for_forecast(username)
-
+        snapshot = bundle["snapshot"]
+        intelligence = bundle["intelligence"]
+        subscription = bundle["subscription"]
+        latest_report = bundle["weekly_report"]
+        inventory_insights = bundle["inventory_insights"]
+        top_products = bundle["top_products"]
+        forecast_status = bundle["forecast_status"]
         print("🔥 bundle: done")
         if not subscription or subscription.get("status") not in ["active", "trial"]:
             return redirect(url_for("landing", expired=True))
@@ -1318,7 +1307,7 @@ def dashboard():
 def api_dash():
 
     username=session["username"]
-    snap=get_dashboard_snapshot(username)
+    snap=get_dashboard_bundle_cached(username)["snapshot"]
 
     return jsonify(snap)
 
