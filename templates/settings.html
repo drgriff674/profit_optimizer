@@ -9,7 +9,6 @@
 <body class="min-h-screen transition-colors"
       style="background: var(--og-surface); color: var(--og-text-main);">
 
-<!-- LOADER -->
 <div id="pageLoader"
      class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
   <div class="text-lg font-semibold animate-pulse">
@@ -62,10 +61,9 @@ Support
 
 </div>
 
-<!-- ================= ACCOUNT ================= -->
+<!-- ACCOUNT -->
 <div id="account" class="tab">
 
-<!-- EMAIL -->
 <div class="rounded-xl shadow-sm p-6 mb-6 border"
      style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
 
@@ -78,11 +76,11 @@ Update the email associated with your account
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 <input type="email" name="email" value="{{ user.email }}" required
-class="w-full rounded-lg px-4 py-3 mb-4 border"
+class="w-full rounded-lg px-4 py-3 mb-4 border focus:ring-2 focus:ring-blue-500"
 style="background: var(--og-surface); color: var(--og-text-main);" />
 
 <button type="submit"
-class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90"
+class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90 transition"
 style="background: var(--og-primary);">
 Update Email
 </button>
@@ -90,31 +88,30 @@ Update Email
 </form>
 </div>
 
-<!-- DELETE (IMPROVED) -->
+<!-- DELETE -->
 <form method="POST" action="{{ url_for('delete_account') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
 <div class="rounded-xl p-6 border"
-     style="background: rgba(255,0,0,0.04); border-color: rgba(255,0,0,0.25);">
+     style="background: rgba(255,0,0,0.05); border-color: rgba(255,0,0,0.3);">
 
 <h2 class="text-lg font-semibold mb-2 text-red-500">
-⚠️ Delete Account
+Delete Account
 </h2>
 
 <p class="text-sm mb-4 text-red-400">
-This permanently deletes your business data, revenue, and records.
-This action cannot be undone.
+This action is permanent and cannot be undone.
 </p>
 
 <div class="relative mb-4">
 <input id="delete_password" type="password" name="password" required
-placeholder="Confirm your password"
-class="w-full rounded-lg px-4 py-3 pr-12 border focus:ring-2 focus:ring-red-400"
+placeholder="Enter your password to confirm"
+class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-red-400"
 style="background: var(--og-surface); color: var(--og-text-main);" />
 
 <button type="button"
-onclick="togglePassword('delete_password', this)"
-class="absolute right-3 top-3 text-sm opacity-70 hover:opacity-100">
+onclick="togglePassword('delete_password')"
+class="absolute right-3 top-3 opacity-70 hover:opacity-100">
 👁
 </button>
 </div>
@@ -126,11 +123,12 @@ Delete My Account
 </button>
 
 </div>
+
 </form>
 
 </div>
 
-<!-- ================= SECURITY ================= -->
+<!-- SECURITY -->
 <div id="security" class="tab hidden">
 
 <div class="rounded-xl shadow-sm p-6 mb-6 border"
@@ -147,19 +145,17 @@ Use a strong password to keep your account secure
 <div class="relative mb-3">
 <input id="current_password" type="password" name="current_password" required
 placeholder="Current password"
-class="w-full rounded-lg px-4 py-3 pr-12 border focus:ring-2 focus:ring-green-400"
+class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-green-400"
 style="background: var(--og-surface); color: var(--og-text-main);" />
-<button type="button" onclick="togglePassword('current_password', this)"
-class="absolute right-3 top-3 text-sm opacity-70 hover:opacity-100">👁</button>
+<button type="button" onclick="togglePassword('current_password')" class="absolute right-3 top-3">👁</button>
 </div>
 
 <div class="relative mb-3">
 <input id="new_password" type="password" name="new_password" required
 placeholder="New password"
-class="w-full rounded-lg px-4 py-3 pr-12 border focus:ring-2 focus:ring-green-400"
+class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-green-400"
 style="background: var(--og-surface); color: var(--og-text-main);" />
-<button type="button" onclick="togglePassword('new_password', this)"
-class="absolute right-3 top-3 text-sm opacity-70 hover:opacity-100">👁</button>
+<button type="button" onclick="togglePassword('new_password')" class="absolute right-3 top-3">👁</button>
 </div>
 
 <button type="submit"
@@ -169,49 +165,83 @@ Change Password
 </button>
 
 </form>
-</div>
+
 </div>
 
-<!-- ================= BILLING (UNCHANGED) ================= -->
+</div>
+
+<!-- BILLING (UNCHANGED EXACTLY) -->
 <div id="billing" class="tab hidden">
-<!-- leave exactly as you had -->
+
+<div class="rounded-xl shadow-sm p-6 border"
+     style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
+
+<h2 class="text-lg font-semibold mb-4">💳 Subscription Plan</h2>
+
+<div class="p-5 rounded-xl mb-4 border"
+     style="background: rgba(37,99,235,0.05); border-color: rgba(37,99,235,0.2);">
+
+  <h3 class="text-xl font-bold mb-1">
+    OptiGain Pro
+  </h3>
+
+  <p class="text-sm opacity-70 mb-3">
+    Full access to revenue tracking, forecasting, inventory & AI insights
+  </p>
+
+  <div class="text-3xl font-bold text-blue-600 mb-2">
+    KSh 1,500 <span class="text-sm font-medium text-gray-500">/ month</span>
+  </div>
+
+  <ul class="text-sm space-y-1 mb-4 opacity-80">
+    <li>✔ Unlimited sales tracking</li>
+    <li>✔ Automatic M-Pesa payment matching</li>
+    <li>✔ Inventory management</li>
+    <li>✔ AI financial insights</li>
+    <li>✔ Revenue forecasting</li>
+  </ul>
+
+  <a href="{{ url_for('subscribe') }}"
+     class="inline-block px-5 py-2.5 rounded-lg text-white font-semibold
+            bg-gradient-to-r from-blue-600 to-blue-500
+            hover:from-blue-700 hover:to-blue-600
+            shadow-md hover:shadow-lg transition">
+    💳 Upgrade Now
+  </a>
+
 </div>
 
-<!-- ================= SUPPORT (UPGRADED) ================= -->
-<div id="support" class="tab hidden">
+<p class="text-xs opacity-60">
+Payments are securely processed. No data loss when upgrading.
+</p>
 
+</div>
+
+</div>
+
+<!-- SUPPORT -->
+<div id="support" class="tab hidden">
 <div class="rounded-xl shadow-sm p-6 border"
      style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
 
 <h2 class="text-lg font-semibold mb-2">Support</h2>
 
-<p class="text-sm opacity-70 mb-4">
+<p class="mb-4 text-sm opacity-70">
 Need help with payments, revenue tracking, or system issues?
-We're here to help you run your business smoothly.
+Reach out and we’ll assist you quickly.
 </p>
 
 <div class="space-y-2 text-sm">
+<div>📧 optigaintechnologies@gmail.com</div>
+<div>📞 0702432710</div>
+<div class="opacity-60 mt-3">Response time: within a few hours</div>
+</div>
 
-<p>📧 <span class="font-medium">optigaintechnologies@gmail.com</span></p>
-<p>📞 <span class="font-medium">0702432710</span></p>
-
-<p class="mt-4 opacity-70">
-Response time: usually within a few hours.
-</p>
-
-<p class="opacity-70">
-For faster help, include your issue and screenshots.
-</p>
-
+</div>
 </div>
 
 </div>
 
-</div>
-
-</div>
-
-<!-- SCRIPTS -->
 <script>
 function showTab(tab, event){
 document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));
@@ -230,10 +260,9 @@ event.target.classList.remove("opacity-70");
 </script>
 
 <script>
-function togglePassword(id, btn){
+function togglePassword(id){
 const field = document.getElementById(id);
 field.type = field.type === "password" ? "text" : "password";
-btn.textContent = field.type === "password" ? "👁" : "🙈";
 }
 </script>
 
