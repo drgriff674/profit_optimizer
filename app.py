@@ -2251,7 +2251,7 @@ def lock_revenue_day_route():
 
         sales_total = float(cur.fetchone()["sales_total"])
 
-        total_amount = gross_total
+        gross_total = cash_total + sales_total
 
         cur.execute("""
             INSERT INTO revenue_days (username, revenue_date, locked, total_amount)
@@ -2260,7 +2260,7 @@ def lock_revenue_day_route():
             DO UPDATE SET
                 locked = TRUE,
                 total_amount = EXCLUDED.total_amount
-        """, (username, revenue_date, net_total))
+        """, (username, revenue_date, gross_total))
 
         return {"already_locked": False}
 
