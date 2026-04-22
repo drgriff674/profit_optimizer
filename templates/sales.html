@@ -107,7 +107,7 @@
       Total: KSh <span id="total">0</span>
     </div>
 
-    <button onclick="createSale()"
+    <button onclick="createSale(); this.blur();"
   class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm shadow-sm transition active:scale-[0.98]">
   💳 Create Sale
 </button>
@@ -354,14 +354,27 @@ function createSale() {
         if (!r.ok) throw new Error("Server error");
         return r.json();
     })
-    .then(data => {
-        console.log("SALE CREATED:", data);
 
-        cart = [];
-        renderCart();
-        loadSales();
-    })
-    .catch(err => {
+.then(data => {
+    console.log("SALE CREATED:", data);
+
+    // 🔥 instant feedback
+    if (data.status === "unpaid") {
+        showToast("💰 Sale created — mark as paid");
+    } else {
+        showToast("📱 Waiting for customer payment");
+    }
+
+    // 🔥 show instantly (no delay)
+    injectSaleUI(data);
+
+    cart = [];
+    renderCart();
+
+    // 🔄 sync with server shortly after
+    setTimeout(loadSales, 500);
+})
+      .catch(err => {
         console.error("NETWORK FAIL:", err);
 
         // 🔥 ONLY fallback here
@@ -605,6 +618,8 @@ function markPaid(saleId) {
             return;
         }
 
+showToast("💰 Payment confirmed");
+
         // ✅ refresh sales list
         loadSales();
 
@@ -623,6 +638,39 @@ function markPaid(saleId) {
         alert("Server crashed 😅");
         console.error(err);
     });
+}
+
+function showToast(msg) {
+    const toast = document.createElement("div");
+    toast.className = "fixed top-5 right-5 bg-blue-600 text-white px-4 py-2 rounded-lg shadow z-50";
+    toast.innerText = msg;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 2500);
+}
+
+function injectSaleUI(data) {
+    const el = document.getElementById("salesList");
+
+    const html = `
+    <li class="flex flex-col border-b pb-2 animate-pulse">
+
+        <div class="flex justify-between items-center">
+            <div>
+                <div>${data.sale_id}</div>
+                <div class="text-xs text-gray-400">Processing...</div>
+            </div>
+
+            <span class="text-xs text-yellow-500">
+                ${data.status}
+            </span>
+        </div>
+
+    </li>
+    `;
+
+    el.insertAdjacentHTML("afterbegin", html);
 }
 
 </script>
@@ -753,26 +801,12 @@ setTimeout(() => {
 }, 3000);
 </script>
 
-<script>
-document.addEventListener("click", function (e) {
-  const link = e.target.closest("a");
 
-  if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
 
-  const href = link.getAttribute("href");
-
-  if (!href || href.startsWith("#") || href.startsWith("javascript")) return;
-
-  document.body.style.transition = "opacity 0.2s ease";
-  document.body.style.opacity = "0.6";
-});
-
-window.addEventListener("pageshow", function () {
-  document.body.style.opacity = "1";
-});
-</script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+
+
 
 
 

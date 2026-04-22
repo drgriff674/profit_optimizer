@@ -113,13 +113,13 @@
 
       <!-- Submit -->
       <button
-        type="submit"
-        class="w-full bg-green-600 hover:bg-green-700
-               text-white font-medium py-2 rounded-lg transition"
-      >
-        Save Cash Revenue
-      </button>
-
+  id="saveBtn"
+  type="submit"
+  class="w-full bg-green-600 hover:bg-green-700
+         text-white font-medium py-2 rounded-lg transition"
+>
+  Save Cash Revenue
+</button>
     </form>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -154,6 +154,10 @@ document.getElementById("cashForm").addEventListener("submit", function(e) {
     // 🟢 TRY ONLINE FIRST
         const csrf = document.querySelector('[name="csrf_token"]').value;
 
+const btn = document.getElementById("saveBtn");
+btn.innerText = "Saving...";
+btn.disabled = true;
+
 fetch("/revenue/cash", {
     method: "POST",
     headers: {
@@ -166,17 +170,23 @@ fetch("/revenue/cash", {
         if (!r.ok) throw new Error("Server error");
         return r.json();
     })
-    .then(() => {
-        alert("✅ Cash saved");
-        this.reset();
-    })
-    .catch(err => {
+
+.then(() => {
+    const btn = document.getElementById("saveBtn");
+    btn.innerText = "Saved ✅";
+
+    setTimeout(() => {
+        window.location.href = "/dashboard";
+    }, 400);
+})
+.catch(err => {
 
     console.log("ERROR:", err);
 
+    const btn = document.getElementById("saveBtn");
+
     if (!navigator.onLine) {
 
-        // ✅ REAL OFFLINE
         let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
 
         queue.push({
@@ -187,18 +197,22 @@ fetch("/revenue/cash", {
 
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
-        alert("📴 Saved offline — will sync later");
+        btn.innerText = "Saved Offline 📲";
 
     } else {
 
-        // ❌ SERVER / CSRF / ROUTE ERROR
-        alert("❌ Server error — check logs");
-
+        btn.innerText = "Error ❌";
     }
+
+    setTimeout(() => {
+        btn.innerText = "Save Cash Revenue";
+        btn.disabled = false;
+    }, 2000);
 
     this.reset();
 });
-});
+
+        });
 
 // ================= NETWORK STATUS =================
 function updateNetworkStatus() {

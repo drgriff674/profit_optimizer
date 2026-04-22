@@ -162,6 +162,7 @@
 
       <!-- Submit -->
       <button
+id="saveExpenseBtn"
         type="submit"
         class="w-full rounded-lg bg-blue-600 hover:bg-blue-700
                text-white font-medium py-2 transition"
@@ -218,6 +219,10 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
 
 const csrf = document.querySelector('[name="csrf_token"]').value;
 
+const btn = document.getElementById("saveExpenseBtn");
+btn.innerText = "Saving...";
+btn.disabled = true;
+
 fetch("/expense_entry", {
     method: "POST",
     headers: {
@@ -231,14 +236,24 @@ fetch("/expense_entry", {
         if (!r.ok) throw new Error("Server error");
         return r.json();
     })
-    .then(() => {
-        alert("✅ Expense saved");
-        this.reset();
-    })
+   .then(() => {
+    const btn = document.getElementById("saveExpenseBtn");
+
+    btn.innerText = "Saved ✅";
+    btn.disabled = true;
+
+    this.reset();
+
+    setTimeout(() => {
+        window.location.href = "/dashboard";
+    }, 400);
+})
 
 .catch(err => {
 
     console.log("ERROR:", err);
+
+    const btn = document.getElementById("saveExpenseBtn");
 
     if (!navigator.onLine) {
 
@@ -252,16 +267,21 @@ fetch("/expense_entry", {
 
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
-        alert("📴 Expense saved offline");
+        btn.innerText = "Saved Offline 📲";
 
     } else {
 
-        alert("❌ Server error — check logs");
-
+        btn.innerText = "Error ❌";
     }
+
+    setTimeout(() => {
+        btn.innerText = "Save Expense";
+        btn.disabled = false;
+    }, 2000);
 
     this.reset();
 });
+
     });
 
 // ================= NETWORK STATUS =================

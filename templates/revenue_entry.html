@@ -36,7 +36,7 @@
   </div>
 
   <div class="flex items-center gap-4">
-    <a
+    
        <a href="{{ url_for('dashboard') }}"
    class="block px-4 py-2.5 rounded-lg text-sm font-medium
           text-slate-600 dark:text-slate-300
@@ -142,6 +142,7 @@
 
       <!-- Submit -->
       <button
+id="saveRevenueBtn"
         type="submit"
         class="w-full rounded-lg bg-blue-600 hover:bg-blue-700
                text-white font-medium py-2 transition"
@@ -188,7 +189,7 @@
   {% if not is_locked %}
     <a
       href="#"
-           onclick="handleEditClick"('{{ e.id }}')"
+           onclick="handleEditClick('{{ e.id }}')"
            class="text-blue-600 text-xs hover:underline">
       Edit
     </a>
@@ -236,6 +237,10 @@ document.getElementById("revenueForm").addEventListener("submit", function(e) {
     };
 const csrf = document.querySelector('[name="csrf_token"]').value;
 
+const btn = document.getElementById("saveRevenueBtn");
+btn.innerText = "Saving...";
+btn.disabled = true;
+
 fetch("/revenue_entry", {
     method: "POST",
     headers: {
@@ -250,14 +255,23 @@ fetch("/revenue_entry", {
         return r.json();
     })
     .then(() => {
-        alert("✅ Revenue saved");
-        this.reset();
-        location.reload(); // optional to refresh entries
-    })
+    const btn = document.getElementById("saveRevenueBtn");
+
+    btn.innerText = "Saved ✅";
+    btn.disabled = true;
+
+    this.reset();
+
+    setTimeout(() => {
+        window.location.href = "/dashboard";
+    }, 400);
+})
 
 .catch(err => {
 
     console.log("ERROR:", err);
+
+    const btn = document.getElementById("saveRevenueBtn");
 
     if (!navigator.onLine) {
 
@@ -271,16 +285,23 @@ fetch("/revenue_entry", {
 
         localStorage.setItem("offline_queue", JSON.stringify(queue));
 
-        alert("📴 Revenue saved offline");
+        btn.innerText = "Saved Offline 📲";
 
     } else {
 
-        alert("❌ Server error — check logs");
-
+        btn.innerText = "Error ❌";
     }
+
+    setTimeout(() => {
+        btn.innerText = "Add Revenue Entry";
+        btn.disabled = false;
+    }, 2000);
 
     this.reset();
 });
+
+
+
     });
 
 // ================= NETWORK STATUS =================

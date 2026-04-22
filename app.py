@@ -1575,7 +1575,10 @@ def create_sale():
 	
 
         for item in items:
-            total += item["price"] * item["quantity"]
+            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+            p = cur.fetchone()
+            if p:
+                total += float(p["price"]) * int(item["quantity"])
 
         # 🔥 get business payment info
         cur.execute("""
@@ -2138,7 +2141,7 @@ def revenue_day_detail(date):
             "severity": "warning",
             "message": (
                 f"Manual split total (KSh {manual_total:.2f}) "
-                f"does not match total revenue (KSh {net_revenue:.2f})."
+                f"does not match total revenue (KSh {gross_total:.2f})."
             )
         })
 
@@ -2248,8 +2251,7 @@ def lock_revenue_day_route():
 
         sales_total = float(cur.fetchone()["sales_total"])
 
-        gross_total = cash_total + sales_total
-        net_total = gross_total - expense_total
+        total_amount = gross_total
 
         cur.execute("""
             INSERT INTO revenue_days (username, revenue_date, locked, total_amount)
@@ -2270,8 +2272,7 @@ def lock_revenue_day_route():
 
     log_audit(username,"LOCK_REVENUE_DAY", revenue_date, request.remote_addr)
 
-    update_dashboard_snapshot(username)
-    update_dashboard_intelligence(username)
+    
     cache.delete_memoized(get_dashboard_data, username)
 
     # run background intelligence pipeline
@@ -2292,14 +2293,11 @@ def cash_revenue_entry():
     if request.method == "POST":
         try:
 
-            # 🔥 SUPPORT BOTH JSON + FORM
             if request.is_json:
                 data = request.get_json()
-
                 amount = float(data.get("amount"))
                 date = data.get("date")
                 description = data.get("description")
-
             else:
                 amount = float(request.form["amount"])
                 date = request.form["date"]
@@ -2315,16 +2313,24 @@ def cash_revenue_entry():
 
             log_audit(username,"ADD_CASH_REVENUE",f"{amount}", request.remote_addr)
 
+            
             update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
+            # update_dashboard_intelligence(username)
+            # cache.delete_memoized(get_dashboard_data, username)
 
-            cache.delete_memoized(get_dashboard_data, username)
-
-            # 🔥 JSON RESPONSE (OFFLINE SYNC)
             if request.is_json:
                 return jsonify({"success": True})
 
             flash("✅ Cash revenue added", "success")
+            return redirect(url_for("dashboard"))
+
+        except Exception as e:
+            print("CASH ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
+            flash("❌ Failed to save cash revenue", "error")
             return redirect(url_for("dashboard"))
 
         except Exception as e:
@@ -4815,8 +4821,7 @@ def expense_entry():
             log_audit(username, "ADD_EXPENSE", f"{amount}", request.remote_addr)
 
             update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
-            cache.delete_memoized(get_dashboard_data, username)
+
 
             if request.is_json:
                 return jsonify({"success": True})
@@ -4933,8 +4938,7 @@ def revenue_entry():
                 request.remote_addr
             )
 
-            update_dashboard_intelligence(username)
-            cache.delete_memoized(get_dashboard_data, username)
+            
 
             # 🔥 JSON RESPONSE
             if request.is_json:
