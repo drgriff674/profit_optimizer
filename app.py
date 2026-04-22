@@ -2174,12 +2174,33 @@ def revenue_overview():
     def operation(cur):
         cur.execute("""
             SELECT
-                revenue_date,
-                locked,
-                total_amount AS total_revenue
-            FROM revenue_days
-            WHERE username = %s
-            ORDER BY revenue_date DESC
+                rd.revenue_date,
+                rd.locked,
+
+                -- 💰 GROSS REVENUE
+                rd.total_amount AS gross_total,
+
+                -- 💸 EXPENSES
+                COALESCE(e.total_expense, 0) AS expense_total,
+
+                -- 📈 PROFIT
+                (rd.total_amount - COALESCE(e.total_expense, 0)) AS profit
+
+            FROM revenue_days rd
+
+            LEFT JOIN (
+                SELECT
+                    username,
+                    expense_date,
+                    SUM(amount) AS total_expense
+                FROM expenses
+                GROUP BY username, expense_date
+            ) e
+            ON rd.username = e.username
+            AND rd.revenue_date = e.expense_date
+
+            WHERE rd.username = %s
+            ORDER BY rd.revenue_date DESC
         """, (username,))
 
         return cur.fetchall()

@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <title>OptiGain • Revenue Overview</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 
-<body class="min-h-screen bg-sky-50 dark:bg-slate-950">
+<body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
+
 <div id="pageLoader"
      class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
   <div class="text-lg font-semibold animate-pulse">
@@ -14,19 +16,31 @@
   </div>
 </div>
 
-
 <!-- HEADER -->
 <header class="px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
   <div class="flex justify-between items-center max-w-4xl mx-auto">
+
     <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
       📊 Revenue Overview
     </h1>
-    <a
-      href="{{ url_for('dashboard') }}"
-      class="text-sm text-blue-600 hover:underline"
-    >
-      ⬅ Dashboard
-    </a>
+
+    <div class="flex items-center gap-4">
+      <a href="{{ url_for('dashboard') }}"
+         class="text-sm text-blue-600 hover:underline">
+        ⬅ Dashboard
+      </a>
+
+      <!-- 🌙 DARK MODE -->
+      <button id="darkToggle"
+        class="px-3 py-1.5 rounded-lg text-sm 
+               bg-slate-100 dark:bg-slate-700 
+               hover:bg-slate-200 dark:hover:bg-slate-600 
+               text-slate-800 dark:text-white 
+               transition">
+        🌙
+      </button>
+    </div>
+
   </div>
 </header>
 
@@ -36,75 +50,105 @@
   {% if days %}
     <div class="overflow-x-auto">
       <table class="w-full border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+
         <thead class="bg-slate-100 dark:bg-slate-800 text-sm">
           <tr>
             <th class="px-4 py-2 text-left">Date</th>
-            <th class="px-4 py-2 text-right">Total Revenue</th>
+            <th class="px-4 py-2 text-right">Profit</th>
             <th class="px-4 py-2 text-center">Status</th>
             <th class="px-4 py-2 text-center">Action</th>
           </tr>
         </thead>
 
         <tbody class="divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+
           {% for d in days %}
-            <tr class="bg-white dark:bg-slate-900">
-  <!-- DATE -->
-  <td class="px-4 py-2">
-    {{ d.revenue_date }}
-  </td>
 
-  <!-- TOTAL -->
-  <td class="px-4 py-2 text-right font-semibold">
-   {% if d.locked %}
-    KSh {{"%.2f"|format(d.total_revenue) }}
-   {% else %}
-    -
-   {% endif %}
-  </td>
+          <tr class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
 
-  <!-- STATUS -->
-  <td class="px-4 py-2 text-center">
-  {% if d.locked %}
-    <span class="text-green-600 font-medium">🔒 Closed</span>
-  {% else %}
-    <span class="text-yellow-600 font-medium">🔓 Open</span>
-  {% endif %}
-</td>
+            <!-- DATE -->
+            <td class="px-4 py-2">
+              {{ d.revenue_date }}
+            </td>
 
-  
-<!-- ACTION -->
-<td class="px-4 py-2 text-center space-x-3">
+            <!-- 💰 PROFIT COLUMN -->
+            <td class="px-4 py-2 text-right">
 
-  <!-- View -->
-  <a
-    href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
-    class="text-blue-600 hover:underline"
-  >
-    View
-  </a>
+              {% if d.locked %}
 
-  <!-- Delete -->
-  <form
-    method="POST"
-    action="{{ url_for('delete_revenue_day', date=d.revenue_date) }}"
-    class="inline"
-    onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')"
-  >
-    <button
-      type="submit"
-      class="text-red-600 hover:text-red-800 text-sm"
-      title="Delete day"
-    >
-      🗑
-    </button>
-  </form>
+                <!-- PROFIT -->
+                <div class="font-semibold
+                            {% if d.profit >= 0 %}
+                              text-green-600 dark:text-green-400
+                            {% else %}
+                              text-red-600 dark:text-red-400
+                            {% endif %}">
 
-</td>
-</tr>
+                  KSh {{ "%.2f"|format(d.profit) }}
+
+                  <!-- 🔼🔽 TREND -->
+                  {% if not loop.first %}
+                    {% set prev = days[loop.index0 - 1].profit %}
+                    {% if d.profit > prev %}
+                      <span class="text-green-500 text-xs">↑</span>
+                    {% elif d.profit < prev %}
+                      <span class="text-red-500 text-xs">↓</span>
+                    {% endif %}
+                  {% endif %}
+
+                </div>
+
+                <!-- CONTEXT -->
+                <div class="text-xs text-slate-500 dark:text-slate-400">
+                  Rev: KSh {{ "%.2f"|format(d.gross_total) }} • 
+                  Exp: KSh {{ "%.2f"|format(d.expense_total) }}
+                </div>
+
+              {% else %}
+                -
+              {% endif %}
+
+            </td>
+
+            <!-- STATUS -->
+            <td class="px-4 py-2 text-center">
+              {% if d.locked %}
+                <span class="text-green-600 font-medium">🔒 Closed</span>
+              {% else %}
+                <span class="text-yellow-600 font-medium">🔓 Open</span>
+              {% endif %}
+            </td>
+
+            <!-- ACTION -->
+            <td class="px-4 py-2 text-center space-x-3">
+
+              <a href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
+                 class="text-blue-600 hover:underline">
+                View
+              </a>
+
+              <form method="POST"
+                    action="{{ url_for('delete_revenue_day', date=d.revenue_date) }}"
+                    class="inline"
+                    onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')">
+
+                <button type="submit"
+                        class="text-red-600 hover:text-red-800 text-sm"
+                        title="Delete day">
+                  🗑
+                </button>
+              </form>
+
+            </td>
+
+          </tr>
+
           {% endfor %}
+
         </tbody>
       </table>
     </div>
+
   {% else %}
     <p class="text-center text-slate-500 dark:text-slate-400">
       No revenue days recorded yet.
@@ -113,8 +157,22 @@
 
 </main>
 
-<script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+<!-- 🌙 DARK MODE SCRIPT -->
+<script>
+const toggle = document.getElementById("darkToggle");
+const saved = localStorage.getItem("theme");
 
+if (saved === "dark") {
+  document.documentElement.classList.add("dark");
+}
+
+toggle?.addEventListener("click", () => {
+  const isDark = document.documentElement.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+});
+</script>
+
+<script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
 </body>
 </html>
