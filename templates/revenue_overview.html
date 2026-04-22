@@ -30,7 +30,6 @@
         ⬅ Dashboard
       </a>
 
-      <!-- 🌙 DARK MODE -->
       <button id="darkToggle"
         class="px-3 py-1.5 rounded-lg text-sm 
                bg-slate-100 dark:bg-slate-700 
@@ -64,19 +63,20 @@
 
           {% for d in days %}
 
-          <tr class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+          <!-- ✅ row now trackable -->
+          <tr data-date="{{ d.revenue_date }}"
+              class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
 
-            <!-- DATE -->
-            <td class="px-4 py-2">
+            <!-- DATE (🔥 FIXED VISIBILITY) -->
+            <td class="px-4 py-2 font-medium text-slate-800 dark:text-slate-200">
               {{ d.revenue_date }}
             </td>
 
-            <!-- 💰 PROFIT COLUMN -->
+            <!-- PROFIT -->
             <td class="px-4 py-2 text-right">
 
               {% if d.locked %}
 
-                <!-- PROFIT -->
                 <div class="font-semibold
                             {% if d.profit >= 0 %}
                               text-green-600 dark:text-green-400
@@ -86,7 +86,6 @@
 
                   KSh {{ "%.2f"|format(d.profit) }}
 
-                  <!-- 🔼🔽 TREND -->
                   {% if not loop.first %}
                     {% set prev = days[loop.index0 - 1].profit %}
                     {% if d.profit > prev %}
@@ -98,7 +97,6 @@
 
                 </div>
 
-                <!-- CONTEXT -->
                 <div class="text-xs text-slate-500 dark:text-slate-400">
                   Rev: KSh {{ "%.2f"|format(d.gross_total) }} • 
                   Exp: KSh {{ "%.2f"|format(d.expense_total) }}
@@ -113,9 +111,9 @@
             <!-- STATUS -->
             <td class="px-4 py-2 text-center">
               {% if d.locked %}
-                <span class="text-green-600 font-medium">🔒 Closed</span>
+                <span class="text-green-600 dark:text-green-400 font-medium">🔒 Closed</span>
               {% else %}
-                <span class="text-yellow-600 font-medium">🔓 Open</span>
+                <span class="text-yellow-600 dark:text-yellow-400 font-medium">🔓 Open</span>
               {% endif %}
             </td>
 
@@ -127,17 +125,13 @@
                 View
               </a>
 
-              <form method="POST"
-                    action="{{ url_for('delete_revenue_day', date=d.revenue_date) }}"
-                    class="inline"
-                    onsubmit="return confirm('Delete this revenue day and all its entries? This cannot be undone.')">
-
-                <button type="submit"
-                        class="text-red-600 hover:text-red-800 text-sm"
-                        title="Delete day">
-                  🗑
-                </button>
-              </form>
+              <!-- 🔥 NEW DELETE BUTTON -->
+              <button
+                onclick="deleteRevenueDay('{{ d.revenue_date }}')"
+                class="px-2 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
+                title="Delete day">
+                ✕
+              </button>
 
             </td>
 
@@ -157,7 +151,7 @@
 
 </main>
 
-<!-- 🌙 DARK MODE SCRIPT -->
+<!-- 🌙 DARK MODE -->
 <script>
 const toggle = document.getElementById("darkToggle");
 const saved = localStorage.getItem("theme");
@@ -170,6 +164,49 @@ toggle?.addEventListener("click", () => {
   const isDark = document.documentElement.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
+</script>
+
+<!-- 🔥 DELETE LOGIC -->
+<script>
+function deleteRevenueDay(date) {
+
+  if (!confirm("Delete this revenue day and all its entries?")) return;
+
+  fetch(`/revenue/day/${date}/delete`, {
+    method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  })
+  .then(r => r.json())
+  .then(data => {
+
+    if (data.locked) {
+      alert("🔒 This day is locked and cannot be deleted");
+      return;
+    }
+
+    if (data.success) {
+
+      const row = document.querySelector(`[data-date="${date}"]`);
+
+      if (row) {
+        row.style.transition = "0.3s";
+        row.style.opacity = "0";
+        row.style.transform = "translateX(20px)";
+        setTimeout(() => row.remove(), 300);
+      }
+
+    } else {
+      alert("Failed to delete");
+    }
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Server error 😅");
+  });
+}
 </script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>

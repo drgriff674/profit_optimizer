@@ -937,7 +937,13 @@ def detect_revenue_anomalies(username, revenue_date):
 
     def operation(cur):
 
-        # --- totals ---
+        # 🔥 PREVENT DUPLICATES (VERY IMPORTANT)
+        cur.execute("""
+            DELETE FROM revenue_anomalies
+            WHERE username=%s AND revenue_date=%s
+        """,(username, revenue_date))
+
+        # --- TOTAL REVENUE (GROSS) ---
         cur.execute("""
             SELECT total_amount
             FROM revenue_days
@@ -947,9 +953,21 @@ def detect_revenue_anomalies(username, revenue_date):
         row = cur.fetchone()
         total = float(row["total_amount"]) if row else 0
 
+        # --- EXPENSES (FOR PROFIT INSIGHT ONLY) ---
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM expenses
+            WHERE username=%s AND expense_date=%s
+        """,(username, revenue_date))
+
+        expense_total = float(cur.fetchone()["total"])
+        profit = total - expense_total
+
         anomalies = []
 
-        # --- Rule A: MPesa dominance ---
+        # ================================
+        # 🟢 RULE A: MPesa dominance
+        # ================================
         if total > 0:
             cur.execute("""
                 SELECT COALESCE(SUM(m.amount), 0) AS mpesa_total
@@ -975,7 +993,9 @@ def detect_revenue_anomalies(username, revenue_date):
                     "MPesa accounts for more than 80% of total revenue"
                 ))
 
-        # --- Rule C ---
+        # ================================
+        # 🔴 RULE B: ZERO revenue
+        # ================================
         if total == 0:
             anomalies.append((
                 "ZERO_REVENUE",
@@ -983,7 +1003,9 @@ def detect_revenue_anomalies(username, revenue_date):
                 "Revenue day locked with zero total"
             ))
 
-        # --- Rule B ---
+        # ================================
+        # ⚠️ RULE C: SUDDEN DROP (based on revenue_entries history)
+        # ================================
         cur.execute("""
             SELECT AVG(day_total) AS avg_total
             FROM (
@@ -1003,13 +1025,70 @@ def detect_revenue_anomalies(username, revenue_date):
             avg_total = float(avg_row["avg_total"])
 
             if avg_total > 0 and total < avg_total * 0.7:
+                drop_pct = round((1 - total/avg_total) * 100)
                 anomalies.append((
                     "SUDDEN_DROP",
                     "warning",
-                    "Revenue dropped more than 30% vs recent average"
+                    f"Revenue dropped {drop_pct}% vs recent average"
                 ))
 
-        # --- Save anomalies ---
+        # ================================
+        # 🔥 NEW RULE D: NEGATIVE PROFIT
+        # ================================
+        if total > 0 and profit < 0:
+            anomalies.append((
+                "NEGATIVE_PROFIT",
+                "critical",
+                "Business ran at a loss (expenses exceeded revenue)"
+            ))
+
+        # ================================
+        # ⚠️ NEW RULE E: LOW PROFIT MARGIN
+        # ================================
+        if total > 0:
+            margin = profit / total
+
+            if margin < 0.2:
+                anomalies.append((
+                    "LOW_PROFIT_MARGIN",
+                    "warning",
+                    "Profit margin below 20% — costs may be too high"
+                ))
+
+        # ================================
+        # ⚠️ NEW RULE F: HIGH EXPENSE RATIO
+        # ================================
+        if total > 0:
+            expense_ratio = expense_total / total
+
+            if expense_ratio > 0.6:
+                anomalies.append((
+                    "HIGH_EXPENSE_RATIO",
+                    "warning",
+                    "Expenses exceed 60% of revenue"
+                ))
+
+        # ================================
+        # ⚠️ NEW RULE G: MANUAL SPLIT MISMATCH
+        # ================================
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM revenue_entries
+            WHERE username=%s AND revenue_date=%s
+        """,(username,revenue_date))
+
+        manual_total = float(cur.fetchone()["total"])
+
+        if abs(manual_total - total) > 1:
+            anomalies.append((
+                "MANUAL_SPLIT_MISMATCH",
+                "warning",
+                "Manual revenue split does not match total revenue"
+            ))
+
+        # ================================
+        # 💾 SAVE
+        # ================================
         for a in anomalies:
             cur.execute("""
                 INSERT INTO revenue_anomalies
@@ -1019,6 +1098,7 @@ def detect_revenue_anomalies(username, revenue_date):
 
     run_db_operation(operation, commit=True)
 
+    
 # INVENTORY HELPERS
 def create_inventory_item(business_id, name, category, unit):
 

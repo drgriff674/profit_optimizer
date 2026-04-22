@@ -1852,15 +1852,21 @@ def delete_revenue_day(date):
 
     result = run_db_operation(operation, commit=True)
 
-    if result == "locked":
-        log_audit(username,"DELETE_REVENUE_DAY", date,request.remote_addr)
-        flash("This revenue day is locked and cannot be deleted.", "error")
-        return redirect(url_for("revenue_overview"))
+    # 🔥 JSON MODE (for fetch)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({
+            "success": result == "deleted",
+            "locked": result == "locked"
+        })
 
-    # refresh dashboard cache
+    # 🔁 NORMAL MODE (fallback)
+    if result == "locked":
+        flash("This revenue day is locked and cannot be deleted.", "error")
+    else:
+        flash("Revenue day deleted.", "success")
+
     cache.delete_memoized(get_dashboard_data, username)
 
-    flash("Revenue day deleted.", "success")
     return redirect(url_for("revenue_overview"))
 
 @app.route("/revenue/day/<date>/ai-summary", methods=["POST"])
