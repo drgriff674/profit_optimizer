@@ -1117,6 +1117,17 @@ def logout():
     session.clear()
     return redirect(url_for("landing"))
 
+@app.route("/fix-emails")
+def fix_emails():
+    def operation(cur):
+        cur.execute("""
+            UPDATE users
+            SET email = username || '@optigain.local'
+            WHERE email IS NULL
+        """)
+    run_db_operation(operation, commit=True)
+    return "Emails fixed"
+
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
