@@ -430,6 +430,11 @@ def check_subscription():
 
     print("🔥 BEFORE REQUEST HIT:", request.endpoint)
 
+    # 🚀 PAYMENT + WEBHOOK BYPASS
+    if request.path.startswith("/payment/") or request.path.startswith("/pesapal/"):
+        print("💰 PAYMENT/IPN BYPASS ACTIVE:", request.path)
+        return
+
     allowed_routes = {
         "login",
         "register",
@@ -452,7 +457,6 @@ def check_subscription():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # 🔥 👇 STEP 3 GOES EXACTLY HERE 👇
     user = get_user(session["username"])
 
     if user:
@@ -462,7 +466,6 @@ def check_subscription():
         print("🚀 ADMIN BYPASS ACTIVE")
         return
 
-    # 🔥 normal users continue
     subscription = get_subscription(session["username"])
 
     print("🔍 subscription:", subscription)
