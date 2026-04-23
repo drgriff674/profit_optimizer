@@ -128,25 +128,19 @@ const otpTime = {{ session.get("otp_time", 0) }};
 const expiry = otpTime + 300;
 
 function updateTimer(){
-  const now = Math.floor(Date.now()/1000);
-  let remaining = expiry - now;
+  const now = Math.floor(Date.now() / 1000); // force clean seconds
+  let remaining = Math.max(0, expiry - now);
 
-  if (remaining <= 0){
-    document.getElementById("countdown").innerText = "00:00";
-    return;
-  }
-
-  const m = Math.floor(remaining/60);
+  const m = Math.floor(remaining / 60);
   const s = remaining % 60;
 
   document.getElementById("countdown").innerText =
-    String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+    String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
 
-setInterval(updateTimer,1000);
+setInterval(updateTimer, 1000);
 updateTimer();
 </script>
-
 <script>
 lucide.createIcons();
 </script>

@@ -126,18 +126,20 @@
   ❌ Your subscription has expired
 
   <div style="margin-top:15px;">
-    <a href="{{ url_for('subscribe') }}"
-       style="
-         background:#2563eb;
-         color:white;
-         padding:12px 20px;
-         border-radius:8px;
-         text-decoration:none;
-         font-weight:700;
-       ">
-       💳 Pay Now to Continue
-    </a>
-  </div>
+
+<a href="{{ url_for('subscribe') }}"
+   style="
+     background: linear-gradient(135deg,#2563eb,#1d4ed8);
+     color:white;
+     padding:12px 20px;
+     border-radius:10px;
+     text-decoration:none;
+     font-weight:700;
+     box-shadow: 0 8px 20px rgba(37,99,235,0.4);
+   ">
+   💳 Pay Now to Continue
+</a>
+     </div>
 
 </div>
 {% endif %}
