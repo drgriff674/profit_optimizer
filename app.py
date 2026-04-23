@@ -2355,10 +2355,9 @@ def lock_revenue_day_route():
             FROM sales s
             JOIN businesses b ON s.business_id = b.id
             WHERE b.username = %s
-              AND DATE((s.created_at AT TIME Z0NE 'UTC') AT TIME ZONE 'Africa/Nairobi') = %s
+              AND DATE((s.created_at AT TIME ZONE 'UTC') AT TIME ZONE 'Africa/Nairobi') = %s
               AND s.status = 'completed'
         """, (username, revenue_date))
-
         sales_total = float(cur.fetchone()["sales_total"])
 
         gross_total = cash_total + sales_total
