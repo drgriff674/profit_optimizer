@@ -123,12 +123,13 @@ function updateHidden(){
 </script>
 
 <!-- TIMER -->
+
 <script>
-const otpTime = {{ session.get("otp_time", 0) }};
+const otpTime = Math.floor({{ session.get("otp_time", 0) }});
 const expiry = otpTime + 300;
 
 function updateTimer(){
-  const now = Math.floor(Date.now() / 1000); // force clean seconds
+  const now = Math.floor(Date.now() / 1000);
   let remaining = Math.max(0, expiry - now);
 
   const m = Math.floor(remaining / 60);
@@ -141,6 +142,7 @@ function updateTimer(){
 setInterval(updateTimer, 1000);
 updateTimer();
 </script>
+
 <script>
 lucide.createIcons();
 </script>

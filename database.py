@@ -1883,21 +1883,31 @@ import os
 
 def get_user(username):
 
-    # 🚀 DEV MODE
     if os.getenv("DEV_MODE") == "true":
         return {
             "username": "dev_user",
             "password": "dev_password",
-            "role": "admin"   # ✅ FIXED
+            "role": "admin"
         }
 
     def operation(cur):
         cur.execute(
-            "SELECT username, email, password, role FROM users WHERE username=%s",
+            """
+            SELECT username, email, password, role 
+            FROM users 
+            WHERE username=%s
+            """,
             (username,)
         )
 
-        user = cur.fetchone()
+        row = cur.fetchone()
+
+        if not row:
+            return None
+
+        # 🔥 FORCE DICT (IMPORTANT)
+        user = dict(row)
+
         return user
 
     return run_db_operation(operation)

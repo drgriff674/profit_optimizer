@@ -390,7 +390,7 @@ def start_otp_flow(purpose, data, email):
     session["otp_code"] = otp
     session["otp_purpose"] = purpose
     session["otp_data"] = data
-    session["otp_time"] = time.time()
+    session["otp_time"] = int(time.time())   # ✅ FIXED HERE
     session["otp_attempts"] = 0
 
     send_otp_email(email, otp)
@@ -439,40 +439,38 @@ def check_subscription():
         "verify"
     }
 
-    # 🚫 skip if no endpoint (rare but safe)
     if not request.endpoint:
         return
 
-    # ✅ allow public routes + static files
     if request.endpoint in allowed_routes:
         return
 
     if request.endpoint.startswith("static"):
         return
 
-    # 🔒 not logged in → go login
+    # 🔒 not logged in
     if "username" not in session:
         return redirect(url_for("login"))
 
-    # 🔥 ADMIN BYPASS (NEW)
+    # 🔥 👇 STEP 3 GOES EXACTLY HERE 👇
     user = get_user(session["username"])
+
+    if user:
+        print("👤 USER ROLE:", user.get("role"))
+
     if user and user.get("role") == "admin":
+        print("🚀 ADMIN BYPASS ACTIVE")
         return
 
-    # 🔥 NORMAL USERS CONTINUE
-    subscription = get_subscription(session["username"])
-
-    # 🔥 ALWAYS use real subscription (NOT bundle)
+    # 🔥 normal users continue
     subscription = get_subscription(session["username"])
 
     print("🔍 subscription:", subscription)
 
-    # 🔒 BLOCK if expired / missing
     if not subscription or subscription.get("status") not in ["active", "trial"]:
         print("🚫 BLOCKING USER")
 
-        session.clear()  # 🔥 force logout (CRITICAL)
-
+        session.clear()
         flash("❌ Subscription expired — pay to continue", "error")
         return redirect(url_for("landing", expired=True))
     
@@ -588,14 +586,20 @@ def landing():
         return render_template("landing.html", expired=True)
 
     if "username" in session:
+
+        user = get_user(session["username"])
+
+        # 🔥 ADMIN BYPASS (THIS WAS MISSING)
+        if user and user.get("role") == "admin":
+            print("🚀 ADMIN ENTERING DASHBOARD")
+            return redirect(url_for("dashboard"))
+
         bundle = get_dashboard_bundle(session["username"])
         subscription = bundle.get("subscription")
 
-        # ✅ allow active + trial
         if subscription and subscription.get("status") in ["active", "trial"]:
             return redirect(url_for("dashboard"))
 
-        # ❌ expired users stay here
         return render_template("landing.html", expired=True)
 
     return render_template("landing.html", expired=False)
