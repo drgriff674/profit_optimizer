@@ -2352,7 +2352,7 @@ def lock_revenue_day_route():
             FROM sales s
             JOIN businesses b ON s.business_id = b.id
             WHERE b.username = %s
-              AND DATE(s.created_at AT TIME Z0NE 'UTC' AT TIME ZONE 'Africa/Nairobi') = %s
+              AND DATE((s.created_at AT TIME Z0NE 'UTC') AT TIME ZONE 'Africa/Nairobi') = %s
               AND s.status = 'completed'
         """, (username, revenue_date))
 
@@ -3140,7 +3140,6 @@ def payment_validate():
 
 @app.route("/payment/confirm", methods=["POST"])
 @csrf.exempt
-@limiter.limit("10 per second")
 def payment_confirm():
 
     print("🔥 CALLBACK HIT")

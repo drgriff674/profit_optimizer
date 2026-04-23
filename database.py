@@ -40,6 +40,8 @@ def run_db_operation(operation, commit=False):
         # ✅ ONLY SET RLS IF USER EXISTS
         if username:
             cur.execute("SET app.current_username = %s",(username,))
+        else:
+            cur.execute("RESET app.current_username")
 
         # --- run actual query ---
         result = operation(cur)
