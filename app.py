@@ -750,6 +750,15 @@ def register():
                 os.path.join(app.config["UPLOAD_FOLDER"], new_user), exist_ok=True
             )
 
+            def op(cur):
+                cur.execute("""
+                    INSERT INTO subscriptions (username, status, trial_start, trial_end)
+                    VALUES (%s, 'trial', NOW(), NOW() + INTERVAL '7 days')
+                    ON CONFLICT (username) DO NOTHING
+                """, (new_user,))
+
+            run_db_operation(op, commit=True)
+
             # ✅ NEW OTP SYSTEM (ONLY IF EMAIL EXISTS)
             if new_email:
                 start_otp_flow(
@@ -806,6 +815,7 @@ def verify():
         purpose = session.get("otp_purpose")
         data = session.get("otp_data")
 
+        
         # LOGIN
         if purpose == "login":
 
@@ -814,9 +824,20 @@ def verify():
 
             log_audit(session["username"], "LOGIN_SUCCESS", "User logged in", request.remote_addr)
 
-            # 🔥 CHECK SUBSCRIPTION RIGHT HERE
-            subscription = get_subscription(session["username"])
+            # ✅ ADD THIS BLOCK RIGHT HERE
+            user = get_user(session["username"])
+            if user and user.get("role") == "admin":
+                # 🧹 cleanup
+                session.pop("otp_code", None)
+                session.pop("otp_purpose", None)
+                session.pop("otp_data", None)
+                session.pop("otp_time", None)
+                session.pop("otp_attempts", None)
 
+                return redirect(url_for("dashboard"))
+
+            # 🔥 THEN continue normal flow
+            subscription = get_subscription(session["username"])
             # 🧹 cleanup FIRST
             session.pop("otp_code", None)
             session.pop("otp_purpose", None)
@@ -939,7 +960,7 @@ def resend_otp():
     otp = random.randint(100000, 999999)
 
     session["otp_code"] = otp
-    session["otp_time"] = time.time()
+    session["otp_time"] = int(time.time())
     session["otp_attempts"] = 0
 
     send_otp_email(email, otp)
