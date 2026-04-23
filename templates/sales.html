@@ -127,6 +127,21 @@
 
 <script>
 let cart = [];
+
+function formatTime(timestamp) {
+    if (!timestamp) return "";
+
+    const date = new Date(timestamp);
+
+    return date.toLocaleString("en-KE", {
+        timeZone: "Africa/Nairobi",
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
 let currentEditId = null;
 let previousSales = JSON.parse(localStorage.getItem("previousSales") || "{}");
 
@@ -439,11 +454,17 @@ el.innerHTML = "";
 
     <div class="flex justify-between items-center">
 
-    <div>
-        <div>${s.sale_id}</div>
-        <div class="text-xs text-gray-400">KSh ${s.total_amount}</div>
+   <div>
+    <div>${s.sale_id}</div>
+
+    <div class="text-xs text-gray-400">
+        KSh ${s.total_amount}
     </div>
 
+    <div class="text-[11px] text-gray-400">
+        ${formatTime(s.created_at)}
+    </div>
+</div>
     <div class="flex items-center gap-2">
 
         <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'} text-xs">

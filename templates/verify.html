@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
 <head>
-<title>Verification – OptiGain</title>
+<meta charset="UTF-8">
+<title>Verify – OptiGain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 
-<body class="min-h-screen flex items-center justify-center bg-gray-50">
+<body class="min-h-screen flex items-center justify-center"
+      style="background: var(--og-surface); color: var(--og-text-main);">
 
-<div class="w-full max-w-md p-8 bg-white shadow-xl rounded-2xl">
+<div class="w-full max-w-md p-8 rounded-2xl shadow-xl border backdrop-blur-sm"
+     style="background: var(--og-surface); border:1px solid var(--og-border-subtle);">
 
-<h2 class="text-2xl font-bold mb-2 text-center">
+<h2 class="text-2xl font-bold text-center mb-2">
 Verification Required
 </h2>
 
@@ -17,69 +25,130 @@ Verification Required
 Enter the 6-digit code sent to your email
 </p>
 
-<p class="text-sm text-center mb-4">
-Code expires in <span id="countdown">05:00</span>
-</p>
+<!-- TIMER -->
+<div class="text-center mb-6">
+  <div class="text-sm opacity-70">Code expires in</div>
+  <div id="countdown" class="text-2xl font-bold tracking-widest mt-1">
+    05:00
+  </div>
+</div>
 
-<form method="POST" class="space-y-4">
+<form method="POST" class="space-y-5">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<input
-type="text"
-name="otp"
-maxlength="6"
-required
-placeholder="Enter code"
-class="w-full border rounded-lg px-4 py-3 text-center text-lg tracking-widest"
-/>
+<!-- OTP BOXES -->
+<div class="flex justify-between gap-2">
+  <input class="otp-box" maxlength="1">
+  <input class="otp-box" maxlength="1">
+  <input class="otp-box" maxlength="1">
+  <input class="otp-box" maxlength="1">
+  <input class="otp-box" maxlength="1">
+  <input class="otp-box" maxlength="1">
+</div>
+
+<input type="hidden" name="otp" id="otpHidden">
 
 <button
 type="submit"
-class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:opacity-90">
-Verify
+class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90"
+style="background: var(--og-primary);">
+Verify Code
 </button>
 
 </form>
 
-<div class="text-center mt-4">
-
-<p class="text-sm opacity-70">
-Didn’t receive the code?
-</p>
+<div class="text-center mt-5">
+<p class="text-sm opacity-70">Didn’t receive the code?</p>
 
 <a href="{{ url_for('resend_otp') }}"
-class="text-blue-600 font-semibold hover:underline">
+class="font-semibold hover:underline"
+style="color: var(--og-primary);">
 Resend code
 </a>
-
 </div>
 
 </div>
 
+<!-- OTP STYLE -->
+<style>
+.otp-box{
+  width: 100%;
+  height: 55px;
+  text-align: center;
+  font-size: 22px;
+  border-radius: 10px;
+  border:1px solid var(--og-border-subtle);
+  background: var(--og-surface);
+}
+.otp-box:focus{
+  outline: none;
+  border-color: var(--og-primary);
+}
+</style>
+
+<!-- OTP LOGIC -->
+<script>
+const inputs = document.querySelectorAll(".otp-box");
+const hidden = document.getElementById("otpHidden");
+
+inputs.forEach((input, index) => {
+
+  input.addEventListener("input", () => {
+    if (input.value.length === 1 && index < inputs.length - 1) {
+      inputs[index + 1].focus();
+    }
+    updateHidden();
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Backspace" && !input.value && index > 0) {
+      inputs[index - 1].focus();
+    }
+  });
+
+});
+
+// paste support
+document.addEventListener("paste", (e) => {
+  const paste = e.clipboardData.getData("text").slice(0,6);
+  paste.split("").forEach((char, i) => {
+    if(inputs[i]) inputs[i].value = char;
+  });
+  updateHidden();
+});
+
+function updateHidden(){
+  hidden.value = Array.from(inputs).map(i => i.value).join("");
+}
+</script>
+
+<!-- TIMER -->
 <script>
 const otpTime = {{ session.get("otp_time", 0) }};
 const expiry = otpTime + 300;
 
 function updateTimer(){
-const now = Math.floor(Date.now()/1000);
-let remaining = expiry - now;
+  const now = Math.floor(Date.now()/1000);
+  let remaining = expiry - now;
 
-if(remaining <= 0){
-document.getElementById("countdown").innerText = "Expired";
-return;
-}
+  if (remaining <= 0){
+    document.getElementById("countdown").innerText = "00:00";
+    return;
+  }
 
-let minutes = Math.floor(remaining / 60);
-let seconds = remaining % 60;
+  const m = Math.floor(remaining/60);
+  const s = remaining % 60;
 
-if(seconds < 10){ seconds = "0" + seconds; }
-
-document.getElementById("countdown").innerText =
-minutes + ":" + seconds;
+  document.getElementById("countdown").innerText =
+    String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
 }
 
 setInterval(updateTimer,1000);
 updateTimer();
+</script>
+
+<script>
+lucide.createIcons();
 </script>
 
 </body>

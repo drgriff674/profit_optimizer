@@ -199,7 +199,23 @@ Install OptiGain App
           {% for category, msg in messages %}
             <div class="rounded-lg px-4 py-2 text-sm shadow"
                  style="background: var(--og-surface-elevated);">
-              {{ msg }}
+              
+
+{% if "expired" in msg.lower() %}
+<div>
+  {{ msg }}
+
+  <div style="margin-top:10px;">
+    <a href="{{ url_for('subscribe') }}"
+       class="block w-full py-2 rounded-lg text-white bg-red-600 text-center mt-2">
+       💳 Pay Now
+    </a>
+  </div>
+</div>
+{% else %}
+{{ msg }}
+{% endif %}
+
             </div>
           {% endfor %}
         </div>

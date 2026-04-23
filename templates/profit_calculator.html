@@ -1,166 +1,157 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OptiGain • Profit Calculator</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OptiGain • Profit Calculator</title>
 
-  <!-- Tailwind CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
-<body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
-
-<div id="pageLoader"
-     class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
-  <div class="text-lg font-semibold animate-pulse">
-    Loading...
-  </div>
-</div>
-
+<body class="min-h-screen"
+      style="background: var(--og-surface); color: var(--og-text-main);">
 
 <!-- HEADER -->
-<header class="flex items-center justify-between px-6 py-4
-               bg-white dark:bg-slate-900
-               border-b border-slate-200 dark:border-slate-800">
+<header class="flex items-center justify-between px-6 py-4 border-b"
+        style="border-color: var(--og-border-subtle);">
 
   <div class="flex items-center gap-3">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="h-8" alt="OptiGain">
-    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-      Profit Calculator
-    </h1>
+    <img src="{{ url_for('static', filename='logo.png') }}" class="h-8">
+    <h1 class="text-lg font-semibold">Profit Calculator</h1>
   </div>
 
-  <div class="flex items-center gap-3">
-    <a href="{{ url_for('dashboard') }}"
-       class="text-sm font-medium text-slate-600 dark:text-slate-300
-              hover:text-blue-600 dark:hover:text-blue-400 transition">
-      ⬅ Dashboard
-    </a>
+  <a href="{{ url_for('dashboard') }}" class="text-sm opacity-70 hover:opacity-100">
+    ⬅ Dashboard
+  </a>
 
-    <button id="darkToggle"
-            class="w-9 h-9 rounded-full bg-blue-600 text-white shadow">
-      🌙
-    </button>
-  </div>
 </header>
 
 <!-- MAIN -->
-<main class="flex items-center justify-center px-4 py-10">
-  <section class="w-full max-w-md
-                   bg-white dark:bg-slate-900
-                   border border-slate-200 dark:border-slate-800
-                   rounded-xl shadow p-6">
+<main class="flex justify-center py-10 px-4">
 
-    <h2 class="text-2xl font-bold text-center text-slate-900 dark:text-white">
-      📊 Profit Calculator
-    </h2>
+<div class="w-full max-w-md p-6 rounded-2xl shadow border"
+     style="background: var(--og-surface); border-color: var(--og-border-subtle);">
 
-    <p class="text-sm text-center text-slate-600 dark:text-slate-400 mt-2 mb-6">
-      Calculate net profit and convert currencies instantly.
-    </p>
+<h2 class="text-2xl font-bold text-center mb-2">📊 Profit Calculator</h2>
+<p class="text-sm text-center opacity-70 mb-6">
+Calculate profit in KES and convert instantly
+</p>
 
-    <!-- FORM -->
-    <div class="space-y-4">
+<!-- INPUTS -->
+<div class="space-y-4">
 
-      <input id="revenue" type="number" step="0.01" placeholder="Revenue"
-        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-               bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-        required>
+<input id="revenue" type="number" placeholder="Revenue (KES)"
+class="w-full px-4 py-3 rounded-lg border"
+style="background: var(--og-surface); border-color: var(--og-border-subtle);">
 
-      <input id="expenses" type="number" step="0.01" placeholder="Expenses"
-        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-               bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-        required>
+<input id="expenses" type="number" placeholder="Expenses (KES)"
+class="w-full px-4 py-3 rounded-lg border"
+style="background: var(--og-surface); border-color: var(--og-border-subtle);">
 
-      <select id="currency"
-        class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600
-               bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
-        <option value="USD">USD ($)</option>
-        <option value="KES">KES (KSh)</option>
-        <option value="EUR">EUR (€)</option>
-        <option value="GBP">GBP (£)</option>
-      </select>
+<!-- CURRENCY -->
+<select id="currency"
+class="w-full px-4 py-3 rounded-lg border"
+style="background: var(--og-surface); border-color: var(--og-border-subtle);">
 
-      <button id="calculateBtn"
-        class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700
-               text-white font-semibold transition">
-        Calculate Profit
-      </button>
-    </div>
+<option value="KES">🇰🇪 KES (KSh)</option>
+<option value="USD">🇺🇸 USD ($)</option>
+<option value="EUR">🇪🇺 EUR (€)</option>
+<option value="GBP">🇬🇧 GBP (£)</option>
+<option value="NGN">🇳🇬 NGN</option>
+<option value="ZAR">🇿🇦 ZAR</option>
+<option value="INR">🇮🇳 INR</option>
+<option value="CNY">🇨🇳 CNY</option>
+<option value="JPY">🇯🇵 JPY</option>
 
-    <!-- RESULT -->
-    <div id="resultBox"
-      class="hidden mt-6 rounded-lg p-4 text-center
-             bg-blue-50 dark:bg-blue-900/30
-             border border-blue-200 dark:border-blue-800">
+</select>
 
-      <p class="text-sm text-blue-700 dark:text-blue-300">Net Profit</p>
-      <p id="profitValue"
-         class="text-2xl font-bold text-blue-600 dark:text-blue-400"></p>
-    </div>
+<button id="calculateBtn"
+class="w-full py-3 rounded-lg text-white font-semibold"
+style="background: var(--og-primary);">
+Calculate Profit
+</button>
 
-  </section>
+</div>
+
+<!-- RESULT -->
+<div id="resultBox"
+class="hidden mt-6 text-center p-4 rounded-xl border"
+style="background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2);">
+
+<p class="text-sm opacity-70">Net Profit</p>
+
+<p id="profitKES" class="text-lg font-semibold mt-1"></p>
+<p id="profitConverted" class="text-2xl font-bold mt-2"></p>
+
+</div>
+
+</div>
+
 </main>
 
-<!-- SCRIPTS -->
+<!-- SCRIPT -->
 <script>
-  /* ===== DARK MODE ===== */
-  const toggle = document.getElementById("darkToggle");
 
-  if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark");
+/* 🔥 BASE = KES */
+let rates = {
+  KES: 1,
+  USD: 0.0078,
+  EUR: 0.0072,
+  GBP: 0.0062,
+  NGN: 12.5,
+  ZAR: 0.14,
+  INR: 0.65,
+  CNY: 0.056,
+  JPY: 1.1
+};
+
+let profitKES = null;
+
+/* 🔥 OPTIONAL: LIVE RATES */
+fetch("https://api.exchangerate.host/latest?base=KES")
+.then(res => res.json())
+.then(data => {
+  if(data && data.rates){
+    rates = data.rates;
+    rates["KES"] = 1;
   }
+})
+.catch(()=>console.log("Using fallback rates"));
 
-  toggle.addEventListener("click", () => {
-    document.documentElement.classList.toggle("dark");
-    localStorage.setItem(
-      "theme",
-      document.documentElement.classList.contains("dark") ? "dark" : "light"
-    );
-  });
+/* CALCULATE */
+document.getElementById("calculateBtn").onclick = () => {
 
-  /* ===== PROFIT CALCULATOR ===== */
-  const rates = {
-    USD: 1,
-    KES: 128.5,
-    EUR: 0.93,
-    GBP: 0.81
-  };
+  const revenue = Number(document.getElementById("revenue").value);
+  const expenses = Number(document.getElementById("expenses").value);
 
-  let profitUSD = null;
+  if(isNaN(revenue) || isNaN(expenses)) return;
 
-  const calculateBtn = document.getElementById("calculateBtn");
-  const resultBox = document.getElementById("resultBox");
-  const profitValue = document.getElementById("profitValue");
-  const currencySelect = document.getElementById("currency");
+  profitKES = revenue - expenses;
 
-  function updateDisplay() {
-    const currency = currencySelect.value;
-    const converted = profitUSD * rates[currency];
-    profitValue.textContent = converted.toFixed(2) + " " + currency;
-  }
+  document.getElementById("resultBox").classList.remove("hidden");
 
-  calculateBtn.addEventListener("click", () => {
-    const revenue = Number(document.getElementById("revenue").value);
-    const expenses = Number(document.getElementById("expenses").value);
+  updateDisplay();
+};
 
-    if (isNaN(revenue) || isNaN(expenses)) return;
+function updateDisplay(){
+  const currency = document.getElementById("currency").value;
 
-    profitUSD = revenue - expenses;
-    resultBox.classList.remove("hidden");
-    updateDisplay();
-  });
+  document.getElementById("profitKES").textContent =
+    "KES: " + profitKES.toFixed(2);
 
-  currencySelect.addEventListener("change", () => {
-    if (profitUSD !== null) {
-      updateDisplay();
-    }
-  });
+  const converted = profitKES * (rates[currency] || 1);
+
+  document.getElementById("profitConverted").textContent =
+    converted.toFixed(2) + " " + currency;
+}
+
+document.getElementById("currency").addEventListener("change", ()=>{
+  if(profitKES !== null) updateDisplay();
+});
+
 </script>
-
-<script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
-
 
 </body>
 </html>

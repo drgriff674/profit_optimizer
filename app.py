@@ -454,6 +454,14 @@ def check_subscription():
     if "username" not in session:
         return redirect(url_for("login"))
 
+    # 🔥 ADMIN BYPASS (NEW)
+    user = get_user(session["username"])
+    if user and user.get("role") == "admin":
+        return
+
+    # 🔥 NORMAL USERS CONTINUE
+    subscription = get_subscription(session["username"])
+
     # 🔥 ALWAYS use real subscription (NOT bundle)
     subscription = get_subscription(session["username"])
 
@@ -798,20 +806,29 @@ def verify():
         if purpose == "login":
 
             session["username"] = data["username"]
-            
-            log_audit(session["username"],"LOGIN_SUCCESS","User logged in",request.remote_addr)
             session["email"] = data["email"]
-            
 
-    
+            log_audit(session["username"], "LOGIN_SUCCESS", "User logged in", request.remote_addr)
+
+            # 🔥 CHECK SUBSCRIPTION RIGHT HERE
+            subscription = get_subscription(session["username"])
+
+            # 🧹 cleanup FIRST
             session.pop("otp_code", None)
             session.pop("otp_purpose", None)
             session.pop("otp_data", None)
             session.pop("otp_time", None)
             session.pop("otp_attempts", None)
 
+            # 🚫 IF EXPIRED → GO LANDING WITH MESSAGE
+            if not subscription or subscription.get("status") not in ["active", "trial"]:
+                flash("❌ Subscription expired — pay to continue", "error")
+                return redirect(url_for("landing", expired=True))
+
+            # ✅ OTHERWISE → NORMAL FLOW
             flash("✅ Login successful", "success")
             return redirect(url_for("dashboard"))
+            
         
         # REGISTER
         elif purpose == "register":
@@ -1370,6 +1387,9 @@ def subscribe():
         "Content-Type": "application/json"
     }
 
+    # 🔥 YOU ADDED THIS
+    user = get_user(username)
+
     payload = {
         "id": order_id,
         "currency": "KES",
@@ -1380,14 +1400,15 @@ def subscribe():
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
 
         "billing_address": {
-            "email_address": "user@optigain.com",
+            # 🔥 YOU CHANGED ONLY THIS LINE
+            "email_address": user.get("email") or f"{username}@optigain.local",
+
             "phone_number": "0700000000",
             "country_code": "KE",
             "first_name": username,
             "last_name": "User"
         }
     }
-
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=15)
         data = response.json()
@@ -1489,7 +1510,7 @@ def api_sales():
             return []
 
         cur.execute("""
-            SELECT sale_id, total_amount, status
+            SELECT sale_id, total_amount, status, created_at
             FROM sales
             WHERE business_id = %s
             ORDER BY created_at DESC
@@ -1501,7 +1522,6 @@ def api_sales():
     sales = run_db_operation(operation)
 
     return jsonify({"sales": sales})
-
 
 @app.route("/products/create", methods=["POST"])
 @csrf.exempt
@@ -1623,12 +1643,18 @@ def create_sale():
         else:
             status = "unpaid"  #till user
 
+        import pytz
+        from datetime import datetime
+
+        nairobi = pytz.timezone("Africa/Nairobi")
+        local_time = datetime.now(nairobi)
+
         # insert sale
         cur.execute("""
-            INSERT INTO sales (sale_id, business_id, total_amount, status)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO sales (sale_id, business_id, total_amount, status, created_at)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (sale_id) DO NOTHING
-        """, (sale_id, business_id, total, status))
+        """, (sale_id, business_id, total, status, local_time))
 
         # insert items
         # ✅ only insert items if sale is new
@@ -1750,9 +1776,11 @@ def mark_paid(sale_id):
             return {"success": False, "error": "Update failed"}
 
         # 🔥 ADD TO REVENUE DAYS
-        from datetime import date
+        import pytz
+        from datetime import datetime
 
-        today = date.today()
+        nairobi = pytz.timezone("Africa/Nairobi")
+        today = datetime.now(nairobi).date()
 
         cur.execute("""
             INSERT INTO revenue_days (username, revenue_date)
@@ -2079,7 +2107,7 @@ def revenue_day_detail(date):
             FROM sales s
             JOIN businesses b ON s.business_id = b.id
             WHERE b.username = %s
-              AND DATE(s.created_at) = %s
+              AND DATE(s.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Nairobi') = %s
               AND s.status = 'completed'
         """, (username, date))
 
@@ -2122,7 +2150,7 @@ def revenue_day_detail(date):
             JOIN sales s ON m.sale_id = s.sale_id
             JOIN businesses b ON s.business_id = b.id
             WHERE b.username = %s
-              AND DATE(m.created_at) = %s
+              AND DATE(m.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Nairobi') = %s
               AND s.status = 'completed'
             ORDER BY m.created_at DESC
         """, (username, date))
@@ -2299,7 +2327,7 @@ def lock_revenue_day_route():
             FROM sales s
             JOIN businesses b ON s.business_id = b.id
             WHERE b.username = %s
-              AND DATE(s.created_at) = %s
+              AND DATE(s.created_at AT TIME Z0NE 'UTC' AT TIME ZONE 'Africa/Nairobi') = %s
               AND s.status = 'completed'
         """, (username, revenue_date))
 

@@ -111,6 +111,37 @@
 
 </header>
 
+{% if expired %}
+<div style="
+  max-width:800px;
+  margin:20px auto;
+  background:#fee;
+  color:#900;
+  padding:20px;
+  border-radius:12px;
+  text-align:center;
+  font-weight:600;
+">
+
+  ❌ Your subscription has expired
+
+  <div style="margin-top:15px;">
+    <a href="{{ url_for('subscribe') }}"
+       style="
+         background:#2563eb;
+         color:white;
+         padding:12px 20px;
+         border-radius:8px;
+         text-decoration:none;
+         font-weight:700;
+       ">
+       💳 Pay Now to Continue
+    </a>
+  </div>
+
+</div>
+{% endif %}
+
 <!-- HERO -->
 <section id="home" class="hero-bg py-20 text-center">
 

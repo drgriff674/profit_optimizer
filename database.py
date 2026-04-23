@@ -1888,8 +1888,7 @@ def get_user(username):
         return {
             "username": "dev_user",
             "password": "dev_password",
-            "role": "owner",
-            "subscription_status": "active"
+            "role": "admin"   # ✅ FIXED
         }
 
     def operation(cur):
@@ -1899,12 +1898,6 @@ def get_user(username):
         )
 
         user = cur.fetchone()
-
-        if user:
-            # fallback safety (in case DB returns NULL)
-            if not user.get("subscription_status"):
-                user["subscription_status"] = "expired"
-
         return user
 
     return run_db_operation(operation)
