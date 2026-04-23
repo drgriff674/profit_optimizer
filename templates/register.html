@@ -145,17 +145,14 @@
     ">
 </div>
 
-<!-- 🔥 WRAPPED SECTION STARTS HERE -->
-<div id="paybillFields">
-
-  <!-- EMAIL -->
- <div>
+<!-- EMAIL (FOR ALL USERS) -->
+<div>
   <label class="block text-sm font-medium mb-1"
          style="color: var(--og-text-main);">
     Email
   </label>
 
-  <input type="email" name="email"
+  <input type="email" name="email" required
     class="w-full rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-[var(--og-primary)]"
     style="
       background: var(--og-surface);
@@ -374,19 +371,17 @@ function setMode(mode) {
   const btnPaybill = document.getElementById("btnPaybill");
 
   // 🔥 get inputs
-  const email = document.querySelector("input[name='email']");
+  
   const business = document.querySelector("input[name='business_name']");
   const paybill = document.querySelector("input[name='paybill']");
 
   hiddenInput.value = mode;
 
   if (mode === "normal") {
-    paybillFields.style.display = "none";
+  paybillFields.style.display = "none";
 
-    // ❌ remove required
-    email.required = false;
-    business.required = false;
-    paybill.required = false;
+  business.required = false;
+  paybill.required = false;
 
     btnNormal.classList.add("bg-blue-600", "text-white");
     btnPaybill.classList.remove("bg-blue-600", "text-white");

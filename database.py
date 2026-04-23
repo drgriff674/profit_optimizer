@@ -1894,7 +1894,7 @@ def get_user(username):
 
     def operation(cur):
         cur.execute(
-            "SELECT username, password, role, subscription_status FROM users WHERE username=%s",
+            "SELECT username, email, password, role, FROM users WHERE username=%s",
             (username,)
         )
 

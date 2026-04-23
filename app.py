@@ -689,7 +689,9 @@ def register():
 
         # ✅ NORMAL USER
         if setup_type == "normal":
-            new_email = None
+            if not new_email:
+                flash("Email is required.", "error")
+                return redirect(url_for("register"))
             business_name = f"{new_user}'s Business"
             paybill = "000000"
             account_number = None
@@ -1057,10 +1059,17 @@ def delete_account():
         return redirect(url_for("settings"))
 
     # 🔐 Step 2: start OTP flow
+
+    email= user.get("email")
+
+    if not email:
+        flash("Add an email before deleting account,", "error")
+        return redirect(url_for("settings"))
+    
     start_otp_flow(
         "delete_account",
         {"username": username},
-        user["email"]
+        email
     )
 
     flash("📧 Verification code sent. Confirm deletion.", "error")
@@ -1083,10 +1092,17 @@ def change_password():
         return redirect(url_for("settings"))
 
     # 🔐 Start OTP instead of updating immediately
+
+    email = user.get("email")
+
+    if not email:
+        flash("Please add an email first in settings.", "error")
+        return redirect(url_for("settings"))
+    
     start_otp_flow(
         "change_password",
         {"new_password": new_password},
-        user["email"]
+        email
     )
 
     flash("📧 Verification code sent to your email.", "info")
