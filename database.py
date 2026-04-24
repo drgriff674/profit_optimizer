@@ -549,9 +549,9 @@ def get_dashboard_bundle(username):
         "subscription": get_subscription(username),
 
         # 🔥 TEMP DISABLED (heavy)
-        "weekly_report": None,
-        "inventory_insights": [],
-        "top_products": [],
+        "weekly_report": get_latest_weekly_report(username),
+        "inventory_insights": get_weekly_inventory_insights(username),
+        "top_products": get_top_products_for_day(username, datetime.utc().date()),
 
         "forecast_status": get_locked_revenue_for_forecast(username) or {}
     }
@@ -1709,9 +1709,7 @@ def run_weekly_intelligence(username):
         if len(rows) < 7:
             return
 
-        # only run every 7 days
-        if len(rows) % 7 != 0:
-            return
+        
 
         last7 = rows[:7]
 
@@ -1751,7 +1749,7 @@ def generate_weekly_ai_report_if_ready(username):
         locked = cur.fetchone()["locked_days"]
 
         # only fire every 7 days
-        if locked % 7 != 0:
+        if locked < 7:
             return
 
         # check if this report already exists
