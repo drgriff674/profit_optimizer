@@ -63,10 +63,10 @@
 </div>
 
 <!-- GRID -->
-<div class="grid grid-cols-3 gap-6 h-[85vh] overflow-hidden">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto md:h-[85vh] px-2">
 
 <!-- PRODUCTS -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col px-3 max-h-[300px] md:max-h-none overflow-y-auto">
   <h3 class="font-semibold mb-3">Products</h3>
 
   <div class="mb-4 space-y-2">
@@ -95,7 +95,7 @@
 </div>
 
 <!-- CART -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col overflow-hidden p-4">
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 min-h-[200px]">
 
   <h3 class="font-semibold mb-3">Cart</h3>
 
@@ -117,7 +117,7 @@
 </div>
 
 <!-- SALES -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col overflow-hidden p-4">
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 max-h-[300px] md:max-h-none overflow-y-auto">
   <h3 class="font-semibold mb-3">Recent Sales</h3>
 
   <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
