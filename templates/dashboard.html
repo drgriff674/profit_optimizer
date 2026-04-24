@@ -638,62 +638,85 @@ overlay?.addEventListener("click", () => {
 
 <script>
 let lastSeenPaymentId = localStorage.getItem("lastPaymentId");
+let firstPoll = true; // prevents old payment popup on login
 
 async function pollLatestPayment() {
+
   try {
     const res = await fetch("/api/latest-payment");
     const data = await res.json();
 
-    if (data.payment) {
-      const paymentId = String(data.payment.id);
+    if (!data.payment) return;
 
-      // Only trigger if new payment
-      if (paymentId !== lastSeenPaymentId) {
-    lastSeenPaymentId = paymentId;
-    localStorage.setItem("lastPaymentId", paymentId);
+    const paymentId = String(data.payment.id);
 
-    showPaymentPopup(data.payment.amount);
-
-    // 🔥 INSTANT REVENUE UPDATE (ADD THIS HERE)
-    fetch("/api/dashboard-snapshot")
-      .then(r => r.json())
-      .then(data => {
-        const el = document.getElementById("liveRevenue");
-        if (el && data.total_revenue !== undefined) {
-          el.innerText = "KSh " + Math.floor(data.total_revenue);
-        }
-      });
-}
+    // FIRST LOAD:
+    // remember current latest payment,
+    // but do NOT show popup
+    if (firstPoll) {
+        lastSeenPaymentId = paymentId;
+        localStorage.setItem("lastPaymentId", paymentId);
+        firstPoll = false;
+        return;
     }
-  } catch (e) {
-    console.error("Polling error:", e);
+
+    // only show popup for truly NEW payments
+    if (paymentId !== lastSeenPaymentId) {
+
+        lastSeenPaymentId = paymentId;
+        localStorage.setItem("lastPaymentId", paymentId);
+
+        showPaymentPopup(data.payment.amount);
+
+        // live revenue refresh
+        fetch("/api/dashboard-snapshot")
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById("liveRevenue");
+            if (el && data.total_revenue !== undefined) {
+                el.innerText =
+                  "KSh " + Math.floor(data.total_revenue);
+            }
+        });
+    }
+
+  } catch(e){
+      console.error("Polling error:", e);
   }
 }
 
 function showPaymentPopup(amount) {
-  const popup = document.createElement("div");
-  popup.className =
-    "fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50";
-  popup.innerText = `💰 Payment received: KSh ${amount}`;
 
-  document.body.appendChild(popup);
+ const popup = document.createElement("div");
 
-  setTimeout(() => popup.remove(), 4000);
+ popup.className =
+ "fixed top-5 right-5 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50";
+
+ popup.innerText =
+ `💰 Payment received: KSh ${amount}`;
+
+ document.body.appendChild(popup);
+
+ setTimeout(() => popup.remove(),4000);
 }
 
-// Poll every 5 seconds
+// run once silently on load
+pollLatestPayment();
+
+// then poll every 10 sec
 let isTabActive = true;
 
-document.addEventListener("visibilitychange", () => {
-  isTabActive = !document.hidden;
+document.addEventListener("visibilitychange",()=>{
+    isTabActive = !document.hidden;
 });
 
-setInterval(() => {
-  if (isTabActive) pollLatestPayment();
-}, 10000);
+setInterval(()=>{
+   if(isTabActive){
+      pollLatestPayment();
+   }
+},10000);
 
 </script>
-
 
 
 <script>
