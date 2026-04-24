@@ -1486,7 +1486,7 @@ def update_dashboard_snapshot(username):
 
         sales_total = float(cur.fetchone()["total"])
 
-        revenue=cash+mpesa+sales_total
+        revenue=cash + mpesa
 
         # EXPENSE TOTAL
         cur.execute("""
