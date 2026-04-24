@@ -10,66 +10,135 @@
 
 </head>
 
-<body class="min-h-screen"
-      style="background: var(--og-surface); color: var(--og-text-main);">
+<body class="min-h-screen transition-colors"
+style="background: var(--og-surface); color: var(--og-text-main);">
 
 <!-- HEADER -->
 <header class="flex items-center justify-between px-6 py-4 border-b"
-        style="border-color: var(--og-border-subtle);">
+style="border-color: var(--og-border-subtle);">
 
-  <div class="flex items-center gap-3">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="h-8">
-    <h1 class="text-lg font-semibold">Profit Calculator</h1>
-  </div>
+<div class="flex items-center gap-3">
+<img src="{{ url_for('static', filename='logo.png') }}" class="h-8">
+<h1 class="text-lg font-semibold">
+📊 Profit Calculator
+</h1>
+</div>
 
-  <a href="{{ url_for('dashboard') }}" class="text-sm opacity-70 hover:opacity-100">
-    ⬅ Dashboard
-  </a>
+<div class="flex items-center gap-4">
+
+<a href="{{ url_for('dashboard') }}"
+class="text-sm opacity-70 hover:opacity-100">
+⬅ Dashboard
+</a>
+
+<!-- DARK MODE -->
+<button id="darkToggle"
+class="w-10 h-10 rounded-full
+bg-slate-200 dark:bg-slate-700
+hover:scale-105 transition
+flex items-center justify-center">
+🌙
+</button>
+
+</div>
 
 </header>
 
 <!-- MAIN -->
 <main class="flex justify-center py-10 px-4">
 
-<div class="w-full max-w-md p-6 rounded-2xl shadow border"
-     style="background: var(--og-surface); border-color: var(--og-border-subtle);">
+<div class="w-full max-w-md p-7 rounded-3xl shadow-xl border"
+style="
+background: var(--og-surface);
+border-color: var(--og-border-subtle);
+">
 
-<h2 class="text-2xl font-bold text-center mb-2">📊 Profit Calculator</h2>
-<p class="text-sm text-center opacity-70 mb-6">
+<h2 class="text-3xl font-bold text-center mb-2">
+Profit Calculator
+</h2>
+
+<p class="text-sm text-center opacity-70 mb-7">
 Calculate profit in KES and convert instantly
 </p>
 
 <!-- INPUTS -->
-<div class="space-y-4">
+<div class="space-y-5">
 
-<input id="revenue" type="number" placeholder="Revenue (KES)"
-class="w-full px-4 py-3 rounded-lg border"
-style="background: var(--og-surface); border-color: var(--og-border-subtle);">
+<!-- REVENUE -->
+<div>
+<label class="block text-sm font-medium mb-2">
+Revenue (KES)
+</label>
 
-<input id="expenses" type="number" placeholder="Expenses (KES)"
-class="w-full px-4 py-3 rounded-lg border"
-style="background: var(--og-surface); border-color: var(--og-border-subtle);">
+<input
+id="revenue"
+type="number"
+placeholder="Enter revenue"
+class="w-full px-4 py-3 rounded-xl border
+focus:ring-2 focus:ring-blue-500 outline-none"
+style="
+background: var(--og-surface);
+border-color: var(--og-border-subtle);
+">
+</div>
+
+<!-- EXPENSES -->
+<div>
+<label class="block text-sm font-medium mb-2">
+Expenses (KES)
+</label>
+
+<input
+id="expenses"
+type="number"
+placeholder="Enter expenses"
+class="w-full px-4 py-3 rounded-xl border
+focus:ring-2 focus:ring-blue-500 outline-none"
+style="
+background: var(--og-surface);
+border-color: var(--og-border-subtle);
+">
+</div>
 
 <!-- CURRENCY -->
-<select id="currency"
-class="w-full px-4 py-3 rounded-lg border"
-style="background: var(--og-surface); border-color: var(--og-border-subtle);">
+<div>
 
-<option value="KES">🇰🇪 KES (KSh)</option>
-<option value="USD">🇺🇸 USD ($)</option>
-<option value="EUR">🇪🇺 EUR (€)</option>
-<option value="GBP">🇬🇧 GBP (£)</option>
-<option value="NGN">🇳🇬 NGN</option>
-<option value="ZAR">🇿🇦 ZAR</option>
-<option value="INR">🇮🇳 INR</option>
-<option value="CNY">🇨🇳 CNY</option>
-<option value="JPY">🇯🇵 JPY</option>
+<label class="block text-sm font-medium mb-2">
+🌍 Display Currency
+</label>
+
+<select
+id="currency"
+class="w-full px-4 py-3 rounded-xl border font-medium
+focus:ring-2 focus:ring-blue-500 outline-none"
+style="
+background: var(--og-surface);
+border-color: var(--og-border-subtle);
+">
+
+<option value="KES" selected>🇰🇪 KSh</option>
+<option value="USD">🇺🇸 $</option>
+<option value="EUR">🇪🇺 €</option>
+<option value="GBP">🇬🇧 £</option>
+<option value="NGN">🇳🇬 ₦</option>
+<option value="ZAR">🇿🇦 R</option>
+<option value="INR">🇮🇳 ₹</option>
+<option value="CNY">🇨🇳 ¥</option>
+<option value="JPY">🇯🇵 ¥</option>
 
 </select>
 
-<button id="calculateBtn"
-class="w-full py-3 rounded-lg text-white font-semibold"
-style="background: var(--og-primary);">
+<p class="text-xs opacity-60 mt-2">
+Choose a currency to instantly convert profit
+</p>
+
+</div>
+
+<button
+id="calculateBtn"
+class="w-full py-3 rounded-xl text-white font-semibold
+bg-gradient-to-r from-blue-600 to-blue-500
+hover:scale-[1.01] transition">
 Calculate Profit
 </button>
 
@@ -77,13 +146,23 @@ Calculate Profit
 
 <!-- RESULT -->
 <div id="resultBox"
-class="hidden mt-6 text-center p-4 rounded-xl border"
-style="background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2);">
+class="hidden mt-7 text-center p-5 rounded-2xl border"
+style="
+background: rgba(37,99,235,0.08);
+border-color: rgba(37,99,235,0.2);
+">
 
-<p class="text-sm opacity-70">Net Profit</p>
+<p class="text-sm opacity-70">
+Net Profit
+</p>
 
-<p id="profitKES" class="text-lg font-semibold mt-1"></p>
-<p id="profitConverted" class="text-2xl font-bold mt-2"></p>
+<p id="profitKES"
+class="text-lg font-semibold mt-2">
+</p>
+
+<p id="profitConverted"
+class="text-3xl font-bold mt-3">
+</p>
 
 </div>
 
@@ -91,64 +170,103 @@ style="background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.2);">
 
 </main>
 
-<!-- SCRIPT -->
 <script>
 
-/* 🔥 BASE = KES */
+/* BASE KES */
 let rates = {
-  KES: 1,
-  USD: 0.0078,
-  EUR: 0.0072,
-  GBP: 0.0062,
-  NGN: 12.5,
-  ZAR: 0.14,
-  INR: 0.65,
-  CNY: 0.056,
-  JPY: 1.1
+KES:1,
+USD:0.0078,
+EUR:0.0072,
+GBP:0.0062,
+NGN:12.5,
+ZAR:0.14,
+INR:0.65,
+CNY:0.056,
+JPY:1.1
 };
 
 let profitKES = null;
 
-/* 🔥 OPTIONAL: LIVE RATES */
+/* LIVE RATES */
 fetch("https://api.exchangerate.host/latest?base=KES")
-.then(res => res.json())
-.then(data => {
-  if(data && data.rates){
-    rates = data.rates;
-    rates["KES"] = 1;
-  }
+.then(res=>res.json())
+.then(data=>{
+if(data && data.rates){
+rates=data.rates;
+rates["KES"]=1;
+}
 })
 .catch(()=>console.log("Using fallback rates"));
 
 /* CALCULATE */
-document.getElementById("calculateBtn").onclick = () => {
+document.getElementById("calculateBtn").onclick=()=>{
 
-  const revenue = Number(document.getElementById("revenue").value);
-  const expenses = Number(document.getElementById("expenses").value);
+const revenue=
+Number(document.getElementById("revenue").value);
 
-  if(isNaN(revenue) || isNaN(expenses)) return;
+const expenses=
+Number(document.getElementById("expenses").value);
 
-  profitKES = revenue - expenses;
+if(isNaN(revenue)||isNaN(expenses)) return;
 
-  document.getElementById("resultBox").classList.remove("hidden");
+profitKES=revenue-expenses;
 
-  updateDisplay();
+document
+.getElementById("resultBox")
+.classList.remove("hidden");
+
+updateDisplay();
+
 };
 
 function updateDisplay(){
-  const currency = document.getElementById("currency").value;
 
-  document.getElementById("profitKES").textContent =
-    "KES: " + profitKES.toFixed(2);
+const currency=
+document.getElementById("currency").value;
 
-  const converted = profitKES * (rates[currency] || 1);
+const symbols={
+KES:"🇰🇪 KSh",
+USD:"🇺🇸 $",
+EUR:"🇪🇺 €",
+GBP:"🇬🇧 £",
+NGN:"🇳🇬 ₦",
+ZAR:"🇿🇦 R",
+INR:"🇮🇳 ₹",
+CNY:"🇨🇳 ¥",
+JPY:"🇯🇵 ¥"
+};
 
-  document.getElementById("profitConverted").textContent =
-    converted.toFixed(2) + " " + currency;
+document.getElementById("profitKES").textContent=
+"KES: "+profitKES.toFixed(2);
+
+const converted=
+profitKES*(rates[currency]||1);
+
+document.getElementById("profitConverted").textContent=
+symbols[currency]+" "+converted.toFixed(2);
+
 }
 
-document.getElementById("currency").addEventListener("change", ()=>{
-  if(profitKES !== null) updateDisplay();
+document
+.getElementById("currency")
+.addEventListener("change",()=>{
+if(profitKES!==null) updateDisplay();
+});
+
+/* DARK MODE */
+const btn=document.getElementById("darkToggle");
+const root=document.documentElement;
+
+if(localStorage.getItem("theme")==="dark"){
+root.classList.add("dark");
+}
+
+btn.addEventListener("click",()=>{
+const dark=root.classList.toggle("dark");
+localStorage.setItem(
+"theme",
+dark?"dark":"light"
+);
 });
 
 </script>
