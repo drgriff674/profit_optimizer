@@ -626,7 +626,7 @@ def get_top_products_for_day(username, date):
 
     def operation(cur):
 
-        business_id = get_business_id_cached(username)
+        business_id = get_business_id(username)
         if not business_id:
             return []
 
