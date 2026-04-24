@@ -551,7 +551,7 @@ def get_dashboard_bundle(username):
         # 🔥 TEMP DISABLED (heavy)
         "weekly_report": get_latest_weekly_report(username),
         "inventory_insights": get_weekly_inventory_insights(username),
-        "top_products": get_top_products_for_day(username, datetime.utc().date()),
+        "top_products": get_top_products_for_day(username, datetime.utcnow().date()),
 
         "forecast_status": get_locked_revenue_for_forecast(username) or {}
     }
@@ -1916,7 +1916,7 @@ def get_weekly_inventory_insights(username):
 
     def operation(cur):
 
-        business_id = get_business_id_cached(username)
+        business_id = get_business_id(username)
         if not business_id:
             return []
 
