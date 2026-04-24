@@ -64,66 +64,120 @@ Support
 <!-- ACCOUNT -->
 <div id="account" class="tab">
 
-<div class="rounded-xl shadow-sm p-6 mb-6 border"
-     style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
+<div class="rounded-3xl shadow-xl p-8 mb-8 border
+backdrop-blur-sm"
+style="background: var(--og-surface); border-color: rgba(148,163,184,.18);">
 
-<h2 class="text-lg font-semibold mb-1">Email Address</h2>
-<p class="text-sm opacity-70 mb-4">
+<h2 class="text-xl font-bold mb-1">Email Address</h2>
+<p class="text-sm opacity-70 mb-5">
 Update the email associated with your account
 </p>
 
 <form method="POST" action="{{ url_for('settings') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<input type="email" name="email" value="{{ user.email }}" required
-class="w-full rounded-lg px-4 py-3 mb-4 border focus:ring-2 focus:ring-blue-500"
-style="background: var(--og-surface); color: var(--og-text-main);" />
+<input
+type="email"
+name="email"
+value="{{ user.email }}"
+required
+class="w-full rounded-2xl px-5 py-4 mb-5 border shadow-sm
+focus:ring-2 focus:ring-blue-500 focus:shadow-md
+transition-all"
+style="
+background: var(--og-surface);
+color: var(--og-text-main);
+border-color: rgba(148,163,184,.25);
+"/>
 
-<button type="submit"
-class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90 transition"
-style="background: var(--og-primary);">
+<button
+type="submit"
+class="group w-full py-4 rounded-2xl
+font-semibold text-white
+shadow-lg hover:shadow-xl
+active:scale-[0.99]
+transition-all duration-200
+bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500">
+
+<span class="flex items-center justify-center gap-2">
 Update Email
+<span class="group-hover:translate-x-1 transition">
+→
+</span>
+</span>
+
 </button>
 
 </form>
 </div>
 
-<!-- DELETE -->
+<!-- DELETE ACCOUNT -->
 <form method="POST" action="{{ url_for('delete_account') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="rounded-xl p-6 border"
-     style="background: rgba(255,0,0,0.05); border-color: rgba(255,0,0,0.3);">
+<div
+class="rounded-3xl p-8 border shadow-lg"
+style="
+background: linear-gradient(
+135deg,
+rgba(127,29,29,.08),
+rgba(239,68,68,.04)
+);
+border-color: rgba(239,68,68,.30);
+">
 
-<h2 class="text-lg font-semibold mb-2 text-red-500">
+<h2 class="text-xl font-bold mb-2 text-red-500">
 Delete Account
 </h2>
 
-<p class="text-sm mb-4 text-red-400">
+<p class="text-sm mb-5 text-red-400">
 This action is permanent and cannot be undone.
 </p>
 
-<div class="relative mb-4">
-<input id="delete_password" type="password" name="password" required
+<div class="relative mb-5">
+
+<input
+id="delete_password"
+type="password"
+name="password"
+required
 placeholder="Enter your password to confirm"
-class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-red-400"
-style="background: var(--og-surface); color: var(--og-text-main);" />
+class="w-full rounded-2xl px-5 py-4 pr-20 border shadow-sm
+focus:ring-2 focus:ring-red-400 focus:shadow-md
+transition-all"
+style="
+background: var(--og-surface);
+color: var(--og-text-main);
+border-color: rgba(239,68,68,.25);
+"
+/>
 
-<button type="button"
-onclick="togglePassword('delete_password')"
-class="absolute right-3 top-3 opacity-70 hover:opacity-100">
-👁
+<button
+type="button"
+onclick="togglePassword('delete_password', this)"
+class="absolute right-4 top-1/2 -translate-y-1/2
+text-xs font-semibold
+px-3 py-1 rounded-full
+bg-red-100/70 hover:bg-red-200 transition">
+Show
 </button>
+
 </div>
 
-<button type="submit"
-class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90 transition"
-style="background:#dc2626;">
-Delete My Account
+<button
+type="submit"
+class="w-full py-4 rounded-2xl
+font-semibold text-white
+shadow-lg hover:shadow-xl
+active:scale-[0.99]
+transition-all duration-200
+bg-gradient-to-r from-red-600 to-rose-500">
+
+Delete Account
+
 </button>
 
 </div>
-
 </form>
 
 </div>
@@ -131,37 +185,92 @@ Delete My Account
 <!-- SECURITY -->
 <div id="security" class="tab hidden">
 
-<div class="rounded-xl shadow-sm p-6 mb-6 border"
-     style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
+<div
+class="rounded-3xl shadow-xl p-8 border"
+style="background: var(--og-surface); border-color: rgba(148,163,184,.18);">
 
-<h2 class="text-lg font-semibold mb-1">Change Password</h2>
-<p class="text-sm opacity-70 mb-4">
+<h2 class="text-xl font-bold mb-1">
+Change Password
+</h2>
+
+<p class="text-sm opacity-70 mb-5">
 Use a strong password to keep your account secure
 </p>
 
 <form method="POST" action="{{ url_for('change_password') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="relative mb-3">
-<input id="current_password" type="password" name="current_password" required
+<div class="relative mb-4">
+
+<input
+id="current_password"
+type="password"
+name="current_password"
+required
 placeholder="Current password"
-class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-green-400"
-style="background: var(--og-surface); color: var(--og-text-main);" />
-<button type="button" onclick="togglePassword('current_password')" class="absolute right-3 top-3">👁</button>
+class="w-full rounded-2xl px-5 py-4 pr-20 border shadow-sm
+focus:ring-2 focus:ring-emerald-400 focus:shadow-md
+transition-all"
+style="
+background: var(--og-surface);
+color: var(--og-text-main);
+border-color: rgba(148,163,184,.25);
+"
+/>
+
+<button
+type="button"
+onclick="togglePassword('current_password', this)"
+class="absolute right-4 top-1/2 -translate-y-1/2
+text-xs font-semibold
+px-3 py-1 rounded-full
+bg-slate-200/70 hover:bg-slate-300 transition">
+Show
+</button>
+
 </div>
 
-<div class="relative mb-3">
-<input id="new_password" type="password" name="new_password" required
+<div class="relative mb-5">
+
+<input
+id="new_password"
+type="password"
+name="new_password"
+required
 placeholder="New password"
-class="w-full rounded-lg px-4 py-3 pr-10 border focus:ring-2 focus:ring-green-400"
-style="background: var(--og-surface); color: var(--og-text-main);" />
-<button type="button" onclick="togglePassword('new_password')" class="absolute right-3 top-3">👁</button>
+class="w-full rounded-2xl px-5 py-4 pr-20 border shadow-sm
+focus:ring-2 focus:ring-emerald-400 focus:shadow-md
+transition-all"
+style="
+background: var(--og-surface);
+color: var(--og-text-main);
+border-color: rgba(148,163,184,.25);
+"
+/>
+
+<button
+type="button"
+onclick="togglePassword('new_password', this)"
+class="absolute right-4 top-1/2 -translate-y-1/2
+text-xs font-semibold
+px-3 py-1 rounded-full
+bg-slate-200/70 hover:bg-slate-300 transition">
+Show
+</button>
+
 </div>
 
-<button type="submit"
-class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90 transition"
-style="background:#16a34a;">
-Change Password
+<button
+type="submit"
+class="w-full py-4 rounded-2xl
+font-semibold text-white
+shadow-lg hover:shadow-xl
+active:scale-[0.99]
+transition-all duration-200
+bg-gradient-to-r from-emerald-600 to-green-500">
+
+Update Password
+
 </button>
 
 </form>
@@ -169,7 +278,6 @@ Change Password
 </div>
 
 </div>
-
 <!-- BILLING (UNCHANGED EXACTLY) -->
 <div id="billing" class="tab hidden">
 
@@ -260,12 +368,18 @@ event.target.classList.remove("opacity-70");
 </script>
 
 <script>
-function togglePassword(id){
+function togglePassword(id, btn){
 const field = document.getElementById(id);
-field.type = field.type === "password" ? "text" : "password";
+
+if(field.type==="password"){
+field.type="text";
+btn.textContent="Hide";
+}else{
+field.type="password";
+btn.textContent="Show";
+}
 }
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("darkToggle");
