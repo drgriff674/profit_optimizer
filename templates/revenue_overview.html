@@ -118,23 +118,30 @@
             </td>
 
             <!-- ACTION -->
-            <td class="px-4 py-2 text-center space-x-3">
+            <td class="px-4 py-2 text-center">
 
-              <a href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
-                 class="text-blue-600 hover:underline">
-                View
-              </a>
+  <div class="flex flex-col md:flex-row items-center justify-center gap-2">
 
-              <!-- 🔥 NEW DELETE BUTTON -->
-              <button
-                onclick="deleteRevenueDay('{{ d.revenue_date }}')"
-                class="px-2 py-1 text-xs rounded-lg bg-red-500 hover:bg-red-600 text-white transition"
-                title="Delete day">
-                ✕
-              </button>
+    <!-- VIEW -->
+    <a href="{{ url_for('revenue_day_detail', date=d.revenue_date) }}"
+       class="w-full md:w-auto text-center px-3 py-1 rounded-lg 
+              bg-blue-50 hover:bg-blue-100 
+              text-blue-600 text-xs font-medium transition">
+      👁 View
+    </a>
 
-            </td>
+    <!-- DELETE -->
+    <button
+      onclick="deleteRevenueDay('{{ d.revenue_date }}')"
+      class="w-full md:w-auto px-3 py-1 text-xs rounded-lg 
+             bg-red-500 hover:bg-red-600 text-white transition"
+      title="Delete day">
+      🗑 Delete
+    </button>
 
+  </div>
+
+</td>
           </tr>
 
           {% endfor %}
@@ -170,7 +177,7 @@ toggle?.addEventListener("click", () => {
 <script>
 function deleteRevenueDay(date) {
 
-  if (!confirm("Delete this revenue day and all its entries?")) return;
+  if (!confirm('Delete ${date}? This cannot be undone.')) return;
 
   fetch(`/revenue/day/${date}/delete`, {
     method: "POST",

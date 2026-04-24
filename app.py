@@ -441,7 +441,9 @@ def check_subscription():
         "subscribe",
         "landing",
         "logout",
-        "verify"
+        "verify",
+        "terms",
+        "privacy"
     }
 
     if not request.endpoint:
