@@ -188,39 +188,43 @@ document
 .getElementById("pageLoader")
 .classList.remove("hidden");
 
-fetch(/revenue/entry/${entryId}/edit,{
+fetch(/revenue/entry/${entryId}/edit, {
 method:"POST",
 headers:{
 "Content-Type":"application/json",
-"X-CSRFToken":csrf
+"X-CSRFToken": csrf
 },
-body:JSON.stringify({
-category:category,
-amount:amount
+body: JSON.stringify({
+category: category,
+amount: amount
 })
 })
-
 .then(response=>{
 if(!response.ok){
-throw new Error("Update failed");
+return response.text().then(t=>{
+throw new Error(t);
+});
 }
 return response.json();
 })
-
 .then(data=>{
 
 if(data.success){
+
 btn.innerText="Saved ✅";
 
 setTimeout(()=>{
 window.location.href="/revenue_entry";
 },500);
+
+}else{
+throw new Error(data.error || "Update failed");
 }
 
 })
-
 .catch(error=>{
-console.error(error);
+
+console.error("EDIT ERROR:", error);
 
 document
 .getElementById("pageLoader")
@@ -230,9 +234,9 @@ btn.disabled=false;
 btn.innerText="Save Changes";
 
 alert("❌ Failed to update revenue entry");
-});
 
 });
+
 </script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>

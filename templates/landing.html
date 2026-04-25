@@ -5,8 +5,34 @@
   <title>OptiGain – Smart Business Tracking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<!-- Favicon / Google logo -->
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="apple-touch-icon"
+href="{{ url_for('static', filename='logo.png') }}">
+
+<!-- Helps Google understand your brand -->
+<meta name="description"
+content="OptiGain is smart business tracking software for revenue, inventory, expenses and forecasting.">
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">
+{
+"@context":"https://schema.org",
+"@type":"SoftwareApplication",
+"name":"OptiGain",
+"url":"https://optigainapp.com",
+"applicationCategory":"BusinessApplication",
+"operatingSystem":"Web",
+"publisher":{
+"@type":"Organization",
+"name":"OptiGain Technologies"
+}
+}
+</script>
 
   <style>
     body {
@@ -263,19 +289,36 @@
 </section>
 
 <!-- FOOTER -->
-<footer class="text-center py-10 text-sm text-gray-500">
+<footer class="text-center py-10 text-sm text-gray-500 border-t border-white/10 mt-10">
 
-  <div class="flex justify-center gap-6 mb-4">
-    <a href="#home">Home</a>
-    <a href="#how">How it works</a>
-    <a href="#why">About</a>
-  </div>
+<div class="flex justify-center gap-6 mb-4">
+<a href="#home" class="hover:text-white transition">
+Home
+</a>
 
-  <p>📞 0702432710</p>
-  <p>✉️ optigaintechnologies@gmail.com</p>
-  <p>📍 Nairobi, Kenya</p>
+<a href="#how" class="hover:text-white transition">
+How it works
+</a>
+
+<a href="#why" class="hover:text-white transition">
+About
+</a>
+</div>
+
+<p>📞 0702432710</p>
+<p>✉️ optigaintechnologies@gmail.com</p>
+<p>📍 Nairobi, Kenya</p>
+
+<div class="mt-6 pt-4 border-t border-white/10 text-xs text-gray-600">
+© <span id="year"></span> OptiGain Technologies. All Rights Reserved.
+</div>
 
 </footer>
+
+<script>
+document.getElementById("year").textContent =
+new Date().getFullYear();
+</script>
 
 <script>
 // SMOOTH SCROLL

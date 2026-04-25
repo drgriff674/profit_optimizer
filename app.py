@@ -9,6 +9,7 @@ from flask import (
     session,
     flash,
     send_file,
+    send_from_directory,
     jsonify,
 )
 from flask_wtf.csrf import CSRFProtect
@@ -1385,6 +1386,14 @@ def api_dash():
 
     return jsonify(snap)
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path,'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
+
 
 
 @app.route("/subscribe")
@@ -2492,19 +2501,43 @@ def edit_revenue_entry(entry_id):
             data = request.get_json() if request.is_json else None
 
             if data:
-                new_category = data.get("category")
-                new_amount = float(data.get("amount"))
+                new_category = data.get("category", "").strip()
+                new_amount = float(data.get("amount",0))
             else:
                 new_category = request.form["category"]
                 new_amount = float(request.form["amount"])
 
             def update_entry(cur):
+
+                # get old amount before edit
                 cur.execute("""
-                    UPDATE revenue_entries
-                    SET category = %s,
-                        amount = %s
-                    WHERE id = %s AND username = %s
-                """, (new_category, new_amount, entry_id, username))
+                SELECT amount
+                FROM revenue_entries
+                WHERE id=%s
+                AND username=%s
+                """,(entry_id,username))
+
+                old_amount = float(cur.fetchone()["amount"])
+
+                # update revenue entry
+                cur.execute("""
+                UPDATE revenue_entries
+                SET category=%s,
+                amount=%s
+                WHERE id=%s
+                AND username=%s
+                """,(new_category,new_amount,entry_id,username))
+
+                # calculate difference
+                difference = new_amount - old_amount
+
+                # adjust daily revenue total
+                cur.execute("""
+                UPDATE revenue_days
+                SET total_amount = total_amount + %s
+                WHERE username=%s
+                AND revenue_date=%s
+                """,(difference,username,entry["revenue_date"]))
 
             run_db_operation(update_entry, commit=True)
 
