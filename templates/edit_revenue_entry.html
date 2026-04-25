@@ -40,49 +40,59 @@
   </form>
 
 <script>
+document.getElementById("editRevenueForm").addEventListener("submit", function(e){
 
-document.getElementById("editRevenueForm").addEventListener("submit", function(e) {
+e.preventDefault();
 
-    const category = document.querySelector("[name='category']").value;
-    const amount = document.querySelector("[name='amount']").value;
+const category =
+document.querySelector("[name='category']").value;
 
-    const entryId = {{ entry.id }};
+const amount =
+document.querySelector("[name='amount']").value;
 
-    // 🔴 OFFLINE MODE
-   if (!navigator.onLine) {
-    e.preventDefault();
-    alert("📴 You must be online to edit revenue");
-    return;
+const csrf =
+document.querySelector('[name="csrf_token"]').value;
+
+const entryId = {{ entry.id }};
+
+if(!navigator.onLine){
+alert("📴 You must be online to edit revenue");
+return;
 }
 
-    // 🟢 ONLINE MODE
-    e.preventDefault();
-
-const csrf = document.querySelector('[name="csrf_token"]').value;
-
-
-fetch(`/revenue/entry/${entryId}/edit`, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrf
-    },
-
-            body: JSON.stringify({
-            category: category,
-            amount: amount
-        })
-    })
-   .then(() => {
-    window.location.href = "/revenue_entry";
+fetch(/revenue/entry/${entryId}/edit,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":csrf
+},
+body: JSON.stringify({
+category: category,
+amount: amount
 })
-.catch(() => {
-    alert("❌ Failed to update");
+})
+
+.then(response => {
+if(!response.ok){
+throw new Error("Update failed");
+}
+return response.json();
+})
+
+.then(data=>{
+if(data.success){
+window.location.href="/revenue_entry";
+}else{
+alert("❌ Update failed");
+}
+})
+
+.catch(error=>{
+console.error(error);
+alert("❌ Failed to update revenue entry");
 });
 
 });
-
-
 </script>
 
 </body>

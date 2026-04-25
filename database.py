@@ -574,6 +574,9 @@ def process_payment(username, amount, local_date):
 
     run_db_operation(operation, commit=True)
 
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+
 def create_sale(business_id, items):
 
     import uuid
@@ -683,6 +686,9 @@ def add_cash_revenue(username, amount, revenue_date, description=None):
 
     run_db_operation(operation, commit=True)
 
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+
 def get_cash_revenue_for_day(username, revenue_date):
 
     def operation(cur):
@@ -764,6 +770,9 @@ def save_expense(username, amount, category, description, expense_date):
         """, (username, amount, category, description, expense_date))
 
     run_db_operation(operation, commit=True)
+
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
 
 def get_expenses_for_day(username, date):
 

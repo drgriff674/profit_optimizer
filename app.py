@@ -2478,7 +2478,15 @@ def edit_revenue_entry(entry_id):
     # -------- update entry --------
     if request.method == "POST":
 
+        if entry["locked"]:
+            return jsonify({
+                "success":False,
+                "error":"Locked entries cannot be edited"
+            }),403
+
         try:
+
+        
 
             # 🔥 SUPPORT JSON + FORM
             data = request.get_json() if request.is_json else None
@@ -2500,13 +2508,16 @@ def edit_revenue_entry(entry_id):
 
             run_db_operation(update_entry, commit=True)
 
+            update_dashboard_snapshot(username)
+            update_dashboard_intelligence(username)
+
             log_audit(username,"EDIT_REVENUE_ENTRY",f"id:{entry_id}", request.remote_addr)
 
             # 🔥 JSON RESPONSE (FOR OFFLINE SYNC)
             if request.is_json:
                 return jsonify({"success": True})
 
-            flash("Entry updated. You can continue editing", "success")
+            flash("Revenue entry updated successfuly", "success")
 
             return redirect(url_for(
                 "revenue_entry",
