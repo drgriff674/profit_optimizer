@@ -186,15 +186,15 @@ id="saveRevenueBtn"
     </span>
   </div>
 
-  {% if not is_locked %}
-    <a
-      href="#"
-           onclick="handleEditClick('{{ e.id }}')"
-           class="text-blue-600 text-xs hover:underline">
-      Edit
-    </a>
-  {% endif %}
-</div>
+{% if not is_locked %}
+<a
+href="{{ url_for('edit_revenue_entry', entry_id=e.id) }}"
+class="text-blue-600 text-xs hover:underline">
+Edit
+</a>
+{% endif %}
+
+  </div>
       {% endfor %}
     </div>
   </div>
@@ -326,19 +326,6 @@ updateNetworkStatus();
 
 </script>
 
-<script>
-
-function handleEditClick(id) {
-
-    if (!navigator.onLine) {
-        alert("📴 You must be online to edit entries");
-        return;
-    }
-
-    window.location.href = "/edit_revenue_entry/" + id;
-}
-
-</script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
