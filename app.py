@@ -177,30 +177,27 @@ def generate_revenue_day_export_data(username, revenue_date):
         mpesa_entries = []
 
         expense_total = 0.0
-        exepense_entries = []
+        expense_entries = []
 
-        # --- mpesa if business exists ---
+        #--- mpesa if business exists ---
         if biz:
 
-            paybill=biz["paybill"]
-            account_number=biz["account_number"]
+            paybill = biz["paybill"]
+            account_number = biz["account_number"]
 
             cur.execute("""
                 SELECT COALESCE(SUM(amount),0) AS mpesa_total
                 FROM mpesa_transactions
                 WHERE status='confirmed'
-                  AND (
-                        (%s IS NOT NULL AND account_reference=%s)
-                        OR
-                        (%s IS NULL AND receiver=%s)
-                      )
-                  AND local_date=%s
+                    AND local_date=%s
+                    AND (
+                        account_reference=%s
+                        OR receiver=%s
+                        )
             """,(
+                revenue_date,
                 account_number,
-                account_number,
-                account_number,
-                paybill,
-                revenue_date
+                paybill
             ))
 
             row=cur.fetchone()
@@ -210,19 +207,16 @@ def generate_revenue_day_export_data(username, revenue_date):
                 SELECT amount, created_at
                 FROM mpesa_transactions
                 WHERE status='confirmed'
-                  AND (
-                        (%s IS NOT NULL AND account_reference=%s)
-                        OR
-                        (%s IS NULL AND receiver=%s)
-                      )
-                  AND local_date=%s
+                    AND local_date=%s
+                    AND (
+                        account_reference=%s
+                        OR receiver=%s
+                        )
                 ORDER BY created_at ASC
             """,(
+                revenue_date,
                 account_number,
-                account_number,
-                account_number,
-                paybill,
-                revenue_date
+                paybill
             ))
 
             mpesa_entries = cur.fetchall()
@@ -296,7 +290,7 @@ def generate_revenue_ai_summary(username, date):
 
     Financial data:
     Cash revenue: KSh {cash_total:,.0f}
-    MPesa payments(not part of revenue): KSh {mpesa_total:,.0f}
+    MPesa payments processed: KSh {mpesa_total:,.0f}
     Gross revenue: KSh {gross_total:,.0f}
     Expenses: KSh {expense_total:,.0f}
     Net revenue: KSh {net_total:,.0f}
@@ -1984,9 +1978,9 @@ def generate_ai_summary_for_day_route(date):
     save_ai_summary_for_day(username, date, summary)
 
     gross_total = data["cash_total"] + data["sales_total"]
-    expense_total = data["expense_total"]
+    
 
-    locked_total = gross_total - expense_total
+    locked_total = gross_total 
 
     def operation(cur):
         cur.execute("""
@@ -2052,6 +2046,9 @@ def export_revenue_day_csv(date):
     writer.writerow([])
     writer.writerow(["MPesa Transactions"])
     writer.writerow(["Amount", "Time"])
+
+    if not mpesa_entries:
+        writer.writerow(["No Mpesa transactions found"])
     for m in mpesa_entries:
         writer.writerow([m["amount"], m["created_at"]])
 
@@ -3378,7 +3375,7 @@ def payment_confirm():
 
                 
                 if username_from_sale:
-                    process_payment(username_from_sale, amount, local_date)
+                    
                     
                     update_dashboard_snapshot(username_from_sale)
                     update_dashboard_intelligence(username_from_sale)
@@ -4489,7 +4486,6 @@ def advisor():
 
     return render_template("advisor.html", answer=answer)
 
-
 @app.route("/ask", methods=["GET", "POST"])
 @login_required
 def ask():
@@ -4500,23 +4496,34 @@ def ask():
         return render_template("ask.html")
 
     question = request.form.get("question") or (
-        request.json.get("question") if request.is_json else None
+    request.json.get("question") if request.is_json else None
     )
 
     if not question:
         if request.is_json:
             return jsonify({"error": "No question provided"}), 400
-        return render_template("ask.html", answer="Please enter a question.")
+
+        return render_template(
+            "ask.html",
+            answer="Please enter a question."
+        )
 
     if not AI_ENABLED:
         msg = "AI functionality is temporarily disabled."
+
         if request.is_json:
             return jsonify({"error": msg}), 503
-        return render_template("ask.html", answer=msg)
+
+        return render_template(
+            "ask.html",
+            answer=msg
+        )
 
     try:
 
-        # Pull real financial data for this user
+# -----------------------------
+# Pull business financial data
+# -----------------------------
         snapshot = get_dashboard_snapshot(username)
         intelligence = get_dashboard_intelligence_snapshot(username)
         forecast = get_locked_revenue_for_forecast(username)
@@ -4536,41 +4543,97 @@ Forecast Confidence: {forecast.get("confidence")}
 Forecast Horizon: {forecast.get("forecast_period")} days
 """
 
+        # Historical locked day data
+        historical_data = "\n".join(
+            f"{d['ds']}: KSh {d['y']}"
+            for d in forecast.get("data", [])
+        ) or "No locked revenue history available."
+
+# -----------------------------
+# AI call
+# -----------------------------
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
+
                 {
                     "role": "system",
                     "content": """
-You are OptiGain AI — a financial intelligence assistant.
+You are OptiGain AI, a strict business financial analyst.
 
-Your job is to analyze a user's business financial data and answer questions.
+You answer ONLY questions related to:
+• revenue
+• expenses
+• profit
+• locked revenue days
+• trends
+• anomalies
+• forecasts
+• inventory performance
+• payments and MPesa activity
+• business decisions using the user's data
+
+Never answer:
+• politics
+• coding
+• general knowledge
+• entertainment
+• unrelated personal questions
+
+If question is outside business finance reply exactly:
+
+I can only answer business financial questions.
+
+Use ONLY provided business data as source of truth.
+
+The user may ask:
+• Which locked day had highest revenue?
+• Which day had highest expenses?
+• Which day had best profit?
+• Are expenses too high?
+• What trend exists?
+• What does forecast suggest?
+
+Use historical locked-day data when relevant.
 
 Rules:
-- Only answer questions related to finance, business performance, revenue, expenses, forecasting, inventory, or profitability.
-- If the user asks unrelated questions (politics, general knowledge, etc), politely refuse.
-- Use the provided financial data as the source of truth.
-- Provide concise, actionable business insights.
-""",
-                },
-                {
-                    "role": "system",
-                    "content": financial_context
-                },
-                {
-                    "role": "user",
-                    "content": question
-                }
+• Maximum 90 words
+• Maximum 3 short paragraphs or bullets
+• Be concise and actionable
+• Mention figures when available
+• Do not invent missing data
+"""
+            },
+
+            {
+                "role": "system",
+                "content":
+                    financial_context +
+                    "\n\nLocked Revenue History:\n" +
+                    historical_data
+            },
+
+            {
+                "role": "user",
+                "content": question
+            }
+
             ],
-            temperature=0.4,
+                temperature=0.25,
+                max_tokens=120
         )
 
         answer = response.choices[0].message.content.strip()
 
         if request.is_json:
-            return jsonify({"answer": answer})
+            return jsonify({
+                "answer": answer
+            })
 
-        return render_template("ask.html", answer=answer)
+        return render_template(
+            "ask.html",
+            answer=answer
+        )
 
     except Exception as e:
 
@@ -4579,7 +4642,10 @@ Rules:
         if request.is_json:
             return jsonify({"error": msg}), 500
 
-        return render_template("ask.html", answer=msg)
+        return render_template(
+            "ask.html",
+            answer=msg
+        )
 
 @app.route("/admin")
 def admin():

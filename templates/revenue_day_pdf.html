@@ -1,147 +1,305 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      font-size: 12px;
-    }
+<meta charset="UTF-8">
 
-    h1 {
-      text-align: center;
-      margin-bottom: 5px;
-    }
+<style>
+body{
+font-family:Arial,sans-serif;
+font-size:11px;
+color:#1e293b;
+margin:28px;
+}
 
-    .subtitle {
-      text-align: center;
-      font-size: 11px;
-      margin-bottom: 15px;
-    }
+.header{
+text-align:center;
+border-bottom:3px solid #2563eb;
+padding-bottom:12px;
+margin-bottom:20px;
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      table-layout: fixed;
-    }
+.logo{
+font-size:24px;
+font-weight:bold;
+color:#2563eb;
+}
 
-    th, td {
-      border: 1px solid #333;
-      padding: 6px;
-      font-size: 11px;
-      word-wrap: break-word;
-    }
+.tagline{
+font-size:11px;
+color:#64748b;
+margin-top:4px;
+}
 
-    th {
-      background: #f0f0f0;
-    }
+.report-title{
+margin-top:10px;
+font-size:18px;
+font-weight:bold;
+}
 
-    .section {
-      margin-top: 20px;
-    }
+.subtitle{
+font-size:11px;
+color:#475569;
+}
 
-    .right {
-      text-align: right;
-    }
+.section{
+margin-top:22px;
+}
 
-    .bold {
-      font-weight: bold;
-    }
-  </style>
+.section-title{
+background:#eff6ff;
+border-left:5px solid #2563eb;
+padding:8px 10px;
+font-weight:bold;
+margin-bottom:8px;
+}
+
+.summary-box{
+background:#f8fafc;
+border:1px solid #cbd5e1;
+padding:12px;
+margin-top:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
+margin-top:8px;
+}
+
+th{
+background:#dbeafe;
+color:#1e3a8a;
+border:1px solid #94a3b8;
+padding:7px;
+font-size:11px;
+}
+
+td{
+border:1px solid #cbd5e1;
+padding:7px;
+font-size:11px;
+word-wrap:break-word;
+}
+
+.right{
+text-align:right;
+}
+
+.bold{
+font-weight:bold;
+}
+
+.profit{
+font-weight:bold;
+color:#15803d;
+}
+
+.expense{
+color:#dc2626;
+}
+
+.footer{
+margin-top:35px;
+padding-top:12px;
+border-top:1px solid #cbd5e1;
+text-align:center;
+font-size:10px;
+color:#64748b;
+}
+
+.small-note{
+margin-top:6px;
+font-size:9px;
+color:#94a3b8;
+}
+</style>
+
 </head>
 
 <body>
 
-<h1>Revenue Report</h1>
+<div class="header">
+<div class="logo">
+OptiGain Technologies
+</div>
+
+<div class="tagline">
+Smart Financial Intelligence Reports
+</div>
+
+<div class="report-title">
+Daily Revenue Performance Report
+</div>
+
 <div class="subtitle">
-  Date: {{ date }}
+Report Date: {{ date }}
+</div>
 </div>
 
 <div class="section">
-  <h3>Financial Summary</h3>
-  <table>
-  <tr>
-    <td>Sales</td>
-    <td class="right">KSh {{ "%.2f"|format(sales_total) }}</td>
-  </tr>
-  <tr>
-    <td>Cash</td>
-    <td class="right">KSh {{ "%.2f"|format(cash_total) }}</td>
-  </tr>
-  <tr>
-    <td class="bold">Total Revenue</td>
-    <td class="right bold">KSh {{ "%.2f"|format(gross_total) }}</td>
-  </tr>
-  <tr>
-    <td>Expenses</td>
-    <td class="right">- KSh {{ "%.2f"|format(expense_total) }}</td>
-  </tr>
-  <tr>
-    <td class="bold">Profit</td>
-    <td class="right bold">KSh {{ "%.2f"|format(net_total) }}</td>
-  </tr>
+<div class="section-title">
+Financial Summary
+</div>
+
+<table>
+<tr>
+<td>Sales Revenue</td>
+<td class="right">
+KSh {{ "%.2f"|format(sales_total) }}
+</td>
+</tr>
+
+<tr>
+<td>Cash Revenue</td>
+<td class="right">
+KSh {{ "%.2f"|format(cash_total) }}
+</td>
+</tr>
+
+<tr>
+<td>MPesa Payments</td>
+<td class="right">
+KSh {{ "%.2f"|format(mpesa_total) }}
+</td>
+</tr>
+
+<tr>
+<td class="bold">
+Gross Revenue
+</td>
+
+<td class="right bold">
+KSh {{ "%.2f"|format(gross_total) }}
+</td>
+</tr>
+
+<tr>
+<td>
+Expenses
+</td>
+
+<td class="right expense">
+• KSh {{ "%.2f"|format(expense_total) }}
+</td>
+</tr>
+
+<tr>
+<td class="bold">
+Net Profit
+</td>
+
+<td class="right profit">
+KSh {{ "%.2f"|format(net_total) }}
+</td>
+</tr>
+</table>
+
+</div>
+
+<div class="section">
+<div class="section-title">
+Cash Revenue Breakdown
+</div>
+
+<table>
+<tr>
+<th>Category</th>
+<th class="right">
+Amount (KSh)
+</th>
+</tr>
+
+{% for e in manual_entries %}
+<tr>
+<td>{{ e.category }}</td>
+<td class="right">
+{{ "%.2f"|format(e.amount) }}
+</td>
+</tr>
+
+{% else %}
+<tr>
+<td colspan="2">
+No manual entries recorded
+</td>
+</tr>
+{% endfor %}
 </table>
 </div>
 
 <div class="section">
-  <h3>Cash Breakdown</h3>
-  <table>
-    <tr>
-      <th>Category</th>
-      <th class="right">Amount (KSh)</th>
-    </tr>
-    {% for e in manual_entries %}
-      <tr>
-        <td>{{ e.category }}</td>
-        <td class="right">{{ "%.2f"|format(e.amount) }}</td>
-      </tr>
-    {% else %}
-      <tr>
-        <td colspan="2">No manual entries</td>
-      </tr>
-    {% endfor %}
-  </table>
+<div class="section-title">
+Expense Breakdown
+</div>
+
+<table>
+<tr>
+<th>Category</th>
+<th class="right">
+Amount (KSh)
+</th>
+</tr>
+
+{% for e in expense_entries %}
+<tr>
+<td>{{ e.category }}</td>
+<td class="right expense">
+• {{ "%.2f"|format(e.amount) }}
+</td>
+</tr>
+
+{% else %}
+<tr>
+<td colspan="2">
+No expenses recorded
+</td>
+</tr>
+{% endfor %}
+</table>
 </div>
 
 <div class="section">
-  <h3>Expenses</h3>
-  <table>
-    <tr>
-      <th>Category</th>
-      <th class="right">Amount (KSh)</th>
-    </tr>
-    {% for e in expense_entries %}
-      <tr>
-        <td>{{ e.category }}</td>
-        <td class="right">- {{ "%.2f"|format(e.amount) }}</td>
-      </tr>
-    {% else %}
-      <tr>
-        <td colspan="2">No expenses recorded</td>
-      </tr>
-    {% endfor %}
-  </table>
+<div class="section-title">
+MPesa Transactions
 </div>
 
-<div class="section">
-  <h3>MPesa Transactions (Gross Summary)</h3>
-  <table>
-    <tr>
-      <th class="right">Amount (KSh)</th>
-      <th>Time</th>
-    </tr>
-    {% for m in mpesa_entries %}
-      <tr>
-        <td class="right">{{ "%.2f"|format(m.amount) }}</td>
-        <td>{{ m.created_at }}</td>
-      </tr>
-    {% else %}
-      <tr>
-        <td colspan="2">No MPesa transactions</td>
-      </tr>
-    {% endfor %}
-  </table>
+<table>
+<tr>
+<th class="right">
+Amount (KSh)
+</th>
+<th>
+Time
+</th>
+</tr>
+
+{% for m in mpesa_entries %}
+<tr>
+<td class="right">
+{{ "%.2f"|format(m.amount) }}
+</td>
+<td>
+{{ m.created_at }}
+</td>
+</tr>
+
+{% else %}
+<tr>
+<td colspan="2">
+No MPesa transactions recorded
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+<div class="footer">
+© {{ date[:4] }} OptiGain Technologies — Confidential Financial Report
+
+<div class="small-note">
+Generated automatically by OptiGain Financial Intelligence Engine
+</div>
 </div>
 
 </body>
