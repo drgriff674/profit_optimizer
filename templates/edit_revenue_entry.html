@@ -7,7 +7,6 @@
 
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/output.css') }}">
-
 </head>
 
 <body class="min-h-screen bg-sky-50 dark:bg-slate-950 transition-colors">
@@ -28,8 +27,7 @@ bg-white dark:bg-slate-900
 border-b border-slate-200 dark:border-slate-800">
 
 <div class="flex items-center gap-3">
-<img src="{{ url_for('static', filename='logo.png') }}"
-class="h-9">
+<img src="{{ url_for('static', filename='logo.png') }}" class="h-9">
 <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
 Edit Revenue Entry
 </h1>
@@ -46,16 +44,13 @@ hover:bg-blue-600 hover:text-white transition">
 
 <button
 id="darkToggle"
-class="w-9 h-9 rounded-full bg-blue-600 text-white
-shadow hover:bg-blue-700 transition">
+class="w-9 h-9 rounded-full bg-blue-600 text-white shadow">
 🌙
 </button>
 
 </div>
-
 </header>
 
-<!-- Main -->
 <main class="flex items-center justify-center px-4 py-12">
 
 <div class="w-full max-w-md
@@ -69,21 +64,20 @@ rounded-2xl shadow-xl p-8">
 </h2>
 
 <p class="text-sm mt-2 text-slate-500 dark:text-slate-400">
-Modify this revenue entry and save changes.
+Modify or delete this split before locking the day.
 </p>
 </div>
 
 <form id="editRevenueForm" class="space-y-5">
 
-<input type="hidden"
+<input
+type="hidden"
 name="csrf_token"
 value="{{ csrf_token() }}">
 
 <!-- Category -->
 <div>
-<label
-class="block mb-2 text-sm font-medium
-text-slate-700 dark:text-slate-300">
+<label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
 Category
 </label>
 
@@ -96,16 +90,12 @@ border-slate-300 dark:border-slate-700
 bg-white dark:bg-slate-800
 px-4 py-3
 text-slate-900 dark:text-white
-focus:ring-2 focus:ring-blue-500
-outline-none"
-/>
+focus:ring-2 focus:ring-blue-500 outline-none">
 </div>
 
 <!-- Amount -->
 <div>
-<label
-class="block mb-2 text-sm font-medium
-text-slate-700 dark:text-slate-300">
+<label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
 Amount (KSh)
 </label>
 
@@ -120,9 +110,7 @@ border-slate-300 dark:border-slate-700
 bg-white dark:bg-slate-800
 px-4 py-3
 text-slate-900 dark:text-white
-focus:ring-2 focus:ring-green-500
-outline-none"
-/>
+focus:ring-2 focus:ring-green-500 outline-none">
 </div>
 
 <button
@@ -131,30 +119,49 @@ type="submit"
 class="w-full rounded-xl
 bg-gradient-to-r from-blue-600 to-blue-500
 hover:from-blue-700 hover:to-blue-600
-text-white font-semibold py-3
-shadow-md hover:shadow-lg
-transition">
+text-white font-semibold py-3 shadow-md">
 
 Save Changes
+</button>
 
+</form>
+
+<!-- DELETE -->
+<form
+method="POST"
+action="{{ url_for('delete_revenue_entry', entry_id=entry.id) }}"
+onsubmit="return confirm('Delete this revenue split permanently?');"
+class="mt-4">
+
+<input
+type="hidden"
+name="csrf_token"
+value="{{ csrf_token() }}">
+
+<button
+type="submit"
+class="w-full rounded-xl
+bg-red-600 hover:bg-red-700
+text-white font-semibold py-3 shadow-md">
+🗑 Delete Entry
 </button>
 
 </form>
 
 </div>
-
 </main>
 
 <script>
 // dark mode
 const toggle=document.getElementById("darkToggle");
+
 if(localStorage.getItem("theme")==="dark"){
 document.documentElement.classList.add("dark");
 }
 
 toggle?.addEventListener("click",()=>{
 const d=document.documentElement.classList.toggle("dark");
-localStorage.setItem("theme",d?"dark":"light");
+localStorage.setItem("theme", d ? "dark":"light");
 });
 </script>
 
@@ -176,11 +183,12 @@ document.querySelector('[name="csrf_token"]').value;
 const entryId={{ entry.id }};
 
 if(!navigator.onLine){
-alert("📴 You must be online to edit revenue");
+alert("📴 Must be online to edit revenue");
 return;
 }
 
 const btn=document.getElementById("saveBtn");
+
 btn.innerText="Saving...";
 btn.disabled=true;
 
@@ -188,17 +196,18 @@ document
 .getElementById("pageLoader")
 .classList.remove("hidden");
 
-fetch(/revenue/entry/${entryId}/edit, {
+fetch(/edit_entry/${entryId},{
 method:"POST",
 headers:{
 "Content-Type":"application/json",
-"X-CSRFToken": csrf
+"X-CSRFToken":csrf
 },
-body: JSON.stringify({
-category: category,
-amount: amount
+body:JSON.stringify({
+category:category,
+amount:amount
 })
 })
+
 .then(response=>{
 if(!response.ok){
 return response.text().then(t=>{
@@ -207,6 +216,7 @@ throw new Error(t);
 }
 return response.json();
 })
+
 .then(data=>{
 
 if(data.success){
@@ -218,13 +228,16 @@ window.location.href="/revenue_entry";
 },500);
 
 }else{
-throw new Error(data.error || "Update failed");
+throw new Error(
+data.error || "Update failed"
+);
 }
 
 })
+
 .catch(error=>{
 
-console.error("EDIT ERROR:", error);
+console.error(error);
 
 document
 .getElementById("pageLoader")
@@ -237,6 +250,7 @@ alert("❌ Failed to update revenue entry");
 
 });
 
+});
 </script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>

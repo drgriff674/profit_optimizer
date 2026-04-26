@@ -204,21 +204,33 @@ def generate_revenue_day_export_data(username, revenue_date):
             mpesa_total=float(row["mpesa_total"]) if row else 0.0
 
             cur.execute("""
-                SELECT amount, created_at
+                SELECT
+                    amount,
+
+                    TO_CHAR(
+                        (
+                        created_at
+                        AT TIME ZONE 'UTC'
+                        AT TIME ZONE 'Africa/Nairobi'
+                        ),
+                        'HH24:MI'
+                    ) AS created_at
+
                 FROM mpesa_transactions
+
                 WHERE status='confirmed'
                     AND local_date=%s
                     AND (
                         account_reference=%s
                         OR receiver=%s
-                        )
-                ORDER BY created_at ASC
-            """,(
-                revenue_date,
-                account_number,
-                paybill
-            ))
+                    )
 
+                    ORDER BY created_at ASC
+            """,(
+                    revenue_date,
+                    account_number,
+                    paybill
+            ))
             mpesa_entries = cur.fetchall()
 
             # --- expenses ---
@@ -2178,18 +2190,35 @@ def revenue_day_detail(date):
         
 
         cur.execute("""
-            SELECT 
+            SELECT
                 m.amount,
                 m.transaction_id,
-                m.created_at
-            FROM mpesa_transactions m
-            JOIN sales s ON m.sale_id = s.sale_id
-            JOIN businesses b ON s.business_id = b.id
-            WHERE b.username = %s
-              AND DATE(m.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Nairobi') = %s
-              AND s.status = 'completed'
-            ORDER BY m.created_at DESC
-        """, (username, date))
+
+                TO_CHAR(
+                    (
+                        m.created_at
+                        AT TIME ZONE 'UTC'
+                        AT TIME ZONE 'Africa/Nairobi'
+                    ),
+                    'HH24:MI'
+                ) AS created_at
+
+                FROM mpesa_transactions m
+                JOIN sales s
+                    ON m.sale_id = s.sale_id
+                JOIN businesses b
+                    ON s.business_id = b.id
+
+                WHERE b.username = %s
+                    AND DATE(
+                        m.created_at
+                        AT TIME ZONE 'UTC'
+                        AT TIME ZONE 'Africa/Nairobi'
+                ) = %s
+                AND s.status='completed'
+
+                ORDER BY m.created_at DESC
+        """,(username,date))
 
         mpesa_transactions = cur.fetchall()
 
@@ -2460,112 +2489,80 @@ def cash_revenue_entry():
 
     return render_template("cash_revenue_entry.html")
 
-@app.route("/revenue/entry/<int:entry_id>/edit", methods=["GET", "POST"])
+@app.route("/edit_entry/<int:entry_id>", methods=["GET","POST"])
 @login_required
-def edit_revenue_entry(entry_id):
+def edit_entry(entry_id):
 
-    username = session["username"]
+    username=session["username"]
 
-    # -------- fetch entry --------
-    def fetch_entry(cur):
-        cur.execute("""
-            SELECT *
-            FROM revenue_entries
-            WHERE id = %s AND username = %s
-            LIMIT 1
-        """, (entry_id, username))
-        return cur.fetchone()
+    if request.method=="POST":
 
-    entry = run_db_operation(fetch_entry)
+        data=request.get_json()
 
-    if not entry:
-        abort(404)
+        category=data["category"]
+        amount=float(data["amount"])
 
-    # -------- update entry --------
-    if request.method == "POST":
-
-        if entry["locked"]:
-            return jsonify({
-                "success":False,
-                "error":"Locked entries cannot be edited"
-            }),403
-
-        try:
-
-        
-
-            # 🔥 SUPPORT JSON + FORM
-            data = request.get_json() if request.is_json else None
-
-            if data:
-                new_category = data.get("category", "").strip()
-                new_amount = float(data.get("amount",0))
-            else:
-                new_category = request.form["category"]
-                new_amount = float(request.form["amount"])
-
-            def update_entry(cur):
-
-                # get old amount before edit
-                cur.execute("""
-                SELECT amount
-                FROM revenue_entries
-                WHERE id=%s
-                AND username=%s
-                """,(entry_id,username))
-
-                old_amount = float(cur.fetchone()["amount"])
-
-                # update revenue entry
-                cur.execute("""
-                UPDATE revenue_entries
+        def operation(cur):
+            cur.execute("""
+                UPDATE cash_revenue
                 SET category=%s,
                 amount=%s
                 WHERE id=%s
                 AND username=%s
-                """,(new_category,new_amount,entry_id,username))
+            """,(category,amount,entry_id,username))
 
-                # calculate difference
-                difference = new_amount - old_amount
+        run_db_operation(operation, commit=True)
 
-                # adjust daily revenue total
-                cur.execute("""
-                UPDATE revenue_days
-                SET total_amount = total_amount + %s
-                WHERE username=%s
-                AND revenue_date=%s
-                """,(difference,username,entry["revenue_date"]))
+        update_dashboard_snapshot(username)
+        update_dashboard_intelligence(username)
 
-            run_db_operation(update_entry, commit=True)
+        return jsonify({"success":True})
 
-            update_dashboard_snapshot(username)
-            update_dashboard_intelligence(username)
+        def operation(cur):
+            cur.execute("""
+                SELECT id,category,amount
+                FROM cash_revenue
+                WHERE id=%s
+                AND username=%s
+            """,(entry_id,username))
 
-            log_audit(username,"EDIT_REVENUE_ENTRY",f"id:{entry_id}", request.remote_addr)
+            return cur.fetchone()
 
-            # 🔥 JSON RESPONSE (FOR OFFLINE SYNC)
-            if request.is_json:
-                return jsonify({"success": True})
+        entry=run_db_operation(operation)
 
-            flash("Revenue entry updated successfuly", "success")
+        if not entry:
+            flash("Entry not found","error")
+            return redirect(url_for("revenue_entry"))
 
-            return redirect(url_for(
-                "revenue_entry",
-                date=entry["revenue_date"]
-            ))
+        return render_template(
+            "edit_entry.html",
+            entry=entry
 
-        except Exception as e:
-            print("EDIT ERROR:", e)
 
-            if request.is_json:
-                return jsonify({"success": False, "error": str(e)}), 500
+        )
 
-            flash("❌ Failed to update entry", "error")
 
-    return render_template(
-        "edit_revenue_entry.html",
-        entry=entry
-    )
+@app.route("/delete_revenue_entry/<int:entry_id>", methods=["POST"])
+@login_required
+def delete_revenue_entry(entry_id):
+
+    username=session["username"]
+
+    def operation(cur):
+        cur.execute("""
+            DELETE FROM cash_revenue
+            WHERE id=%s
+            AND username=%s
+        """,(entry_id,username))
+
+    run_db_operation(operation, commit=True)
+
+    update_dashboard_snapshot(username)
+    update_dashboard_intelligence(username)
+
+    flash("Entry deleted.","success")
+
+    return redirect(url_for("revenue_entry"))
 
 @app.route("/charts/revenue-forecast")
 @login_required
@@ -4949,59 +4946,7 @@ def send_reports():
     return redirect(url_for("admin"))
 
 
-@app.route("/edit_entry/<int:index>", methods=["GET", "POST"])
-def edit_entry(index):
-    if "username" not in session:
-        return redirect(url_for("login"))
 
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    manual_path = os.path.join(user_folder, "manual_entries.csv")
-
-    if not os.path.exists(manual_path):
-        flash("No data found to edit.", "error")
-        return redirect(url_for("manual_entry"))
-
-    df = pd.read_csv(manual_path)
-
-    if index >= len(df):
-        flash("Invalid entry selected.", "error")
-        return redirect(url_for("manual_entry"))
-
-    if request.method == "POST":
-        df.at[index, "Month"] = request.form.get("month")
-        df.at[index, "Revenue"] = float(request.form.get("revenue"))
-        df.at[index, "Expenses"] = float(request.form.get("expenses"))
-        df.at[index, "Description"] = request.form.get("description")
-        df.to_csv(manual_path, index=False)
-
-        flash("✅ Entry updated successfully!", "success")
-        return redirect(url_for("manual_entry"))
-
-    entry = df.iloc[index].to_dict()
-    return render_template("edit_entry.html", entry=entry, index=index)
-
-@app.route("/delete_entry/<int:index>")
-def delete_entry(index):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    manual_path = os.path.join(user_folder, "manual_entries.csv")
-
-    if not os.path.exists(manual_path):
-        flash("No data found.", "error")
-        return redirect(url_for("manual_entry"))
-
-    df = pd.read_csv(manual_path)
-
-    if index < len(df):
-        df = df.drop(index).reset_index(drop=True)
-        df.to_csv(manual_path, index=False)
-        flash("🗑️ Entry deleted successfully!", "success")
-    else:
-        flash("Invalid entry selected.", "error")
-
-    return redirect(url_for("manual_entry"))
 
 
 @app.route("/expense_entry", methods=["GET", "POST"])

@@ -188,7 +188,7 @@ id="saveRevenueBtn"
 
 {% if not is_locked %}
 <a
-href="{{ url_for('edit_revenue_entry', entry_id=e.id) }}"
+href="{{ url_for('edit_entry', index=loop.index0) }}"
 class="text-blue-600 text-xs hover:underline">
 Edit
 </a>
