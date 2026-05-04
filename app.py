@@ -420,9 +420,15 @@ except ImportError:
 app = Flask(__name__)
 
 @app.before_request
+def make_session_permanent():
+    session.permanent = True
+
+@app.before_request
 def check_subscription():
 
     print("🔥 BEFORE REQUEST HIT:", request.endpoint)
+
+    print("SESSION STATE:", dict(session))
 
     
     if request.path.startswith("/payment/") or request.path.startswith("/pesapal/"):
@@ -452,38 +458,38 @@ def check_subscription():
     
     username = session.get("username")
 
-
+    # 1. No session → go login
     if not username:
         return redirect(url_for("login"))
 
-
     user = get_user(username)
+
     print("👤 USER ROLE RAW:", user.get("role") if user else None)
 
-
+    # 2. Admin bypass (SAFE)
     if user and str(user.get("role", "")).lower().strip() == "admin":
         print("🚀 ADMIN BYPASS ACTIVE")
         return
-    
-    subscription = get_subscription(session["username"])
+
+    # 3. Subscription check (SAFE)
+    subscription = get_subscription(username)
 
     print("🔍 subscription:", subscription)
 
     if not subscription or subscription.get("status") not in ["active", "trial"]:
         print("🚫 BLOCKING USER")
 
-        
         flash("❌ Subscription expired — pay to continue", "error")
         return redirect(url_for("landing", expired=True))
-    
+        
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 
 app.config.update(
     SECRET_KEY=os.getenv("FLASK_SECRET_KEY", "dev_secret_key"),
-    SESSION_COOKIE_SECURE = False,
-    REMEMBER_COOKIE_SECURE=False,
+    SESSION_COOKIE_SECURE =True,
+    REMEMBER_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax'
 )
