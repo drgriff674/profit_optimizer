@@ -3802,10 +3802,56 @@ def profit_calculator():
 
     return render_template("profit_calculator.html", profit=profit)
 
+@app.route("/expense/entry", methods=["GET", "POST"])
+@login_required
+def expense_entry():
 
+    username = session["username"]
 
+    if request.method == "POST":
+        try:
 
+            if request.is_json:
+                data = request.get_json()
+                amount = float(data.get("amount"))
+                date = data.get("date")
+                description = data.get("description")
+                category = data.get("category")
+            else:
+                amount = float(request.form["amount"])
+                date = request.form["date"]
+                description = request.form.get("description")
+                category = request.form.get("category")
 
+            def operation(cur):
+                cur.execute("""
+                    INSERT INTO expenses (username, amount, category, description, expense_date)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (username, amount, category, description, date))
+
+            run_db_operation(operation, commit=True)
+
+            log_audit(username, "ADD_EXPENSE", f"{amount}", request.remote_addr)
+
+            # same pattern as cash
+            update_dashboard_snapshot(username)
+
+            if request.is_json:
+                return jsonify({"success": True})
+
+            flash("✅ Expense added", "success")
+            return redirect(url_for("dashboard"))
+
+        except Exception as e:
+            print("EXPENSE ERROR:", e)
+
+            if request.is_json:
+                return jsonify({"success": False, "error": str(e)}), 500
+
+            flash("❌ Failed to save expense", "error")
+            return redirect(url_for("dashboard"))
+
+    return render_template("expense_entry.html")
 
 
 @app.route("/delete_expense")
