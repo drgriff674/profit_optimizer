@@ -2458,6 +2458,21 @@ def cash_revenue_entry():
                     VALUES (%s, %s, %s, %s)
                 """, (username, amount, description, date))
 
+
+                # create revenue day if not exists
+                cur.execute("""
+                    INSERT INTO revenue_days (username, revenue_date)
+                    VALUES (%s, %s)
+                    ON CONFLICT (username, revenue_date) DO NOTHING
+                """, (username, date))
+
+                # update total
+                cur.execute("""
+                    UPDATE revenue_days
+                    SET total_amount = total_amount + %s
+                    WHERE username = %s AND revenue_date = %s
+                """, (amount, username, date))
+
             run_db_operation(operation, commit=True)
 
             log_audit(username,"ADD_CASH_REVENUE",f"{amount}", request.remote_addr)
@@ -3381,6 +3396,26 @@ def payment_confirm():
                         return None
 
                     business_id = updated["business_id"]
+
+                    import pytz
+                    from datetime import datetime
+
+                    nairobi = pytz.timezone("Africa/Nairobi")
+                    today = datetime.now(nairobi).date()
+
+                    # create revenue day if not exists
+                    cur.execute("""
+                        INSERT INTO revenue_days (username, revenue_date)
+                        VALUES (%s, %s)
+                        ON CONFLICT (username, revenue_date) DO NOTHING
+                    """, (username_from_sale, today))
+
+                    # add amount
+                    cur.execute("""
+                        UPDATE revenue_days
+                        SET total_amount = total_amount + %s
+                        WHERE username = %s AND revenue_date = %s
+                    """, (amount, username_from_sale, today))
 
                     
                     cur.execute("""
