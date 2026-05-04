@@ -23,7 +23,7 @@ content="OptiGain is a business management software for tracking revenue, expens
 
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/output.css') }}">
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script type="application/ld+json">
@@ -342,22 +342,22 @@ About
 
   <a href="https://instagram.com/optigainapp" target="_blank"
      class="hover:scale-110 hover:text-pink-500 transition">
-    <i data-lucide="instagram" class="w-6 h-6"></i>
+    <i data-lucide="camera" class="w-6 h-6"></i>
   </a>
 
   <a href="https://twitter.com/optigainapp" target="_blank"
      class="hover:scale-110 hover:text-blue-400 transition">
-    <i data-lucide="twitter" class="w-6 h-6"></i>
+    <i data-lucide="send" class="w-6 h-6"></i>
   </a>
 
   <a href="https://tiktok.com/@optigainapp" target="_blank"
      class="hover:scale-110 hover:text-white transition">
-    <i data-lucide="music-2" class="w-6 h-6"></i>
+    <i data-lucide="video" class="w-6 h-6"></i>
   </a>
 
   <a href="https://facebook.com/optigainapp" target="_blank"
      class="hover:scale-110 hover:text-blue-600 transition">
-    <i data-lucide="facebook" class="w-6 h-6"></i>
+    <i data-lucide="thumbs-up" class="w-6 h-6"></i>
   </a>
 
 </div>
@@ -444,8 +444,13 @@ window.addEventListener("beforeinstallprompt", (e) => {
 </script>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    lucide.createIcons();
+  window.addEventListener("load", () => {
+    if (window.lucide) {
+      lucide.createIcons();
+      console.log("✅ Lucide icons loaded");
+    } else {
+      console.log("❌ Lucide failed to load");
+    }
   });
 </script>
 

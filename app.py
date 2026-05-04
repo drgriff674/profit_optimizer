@@ -1233,6 +1233,12 @@ def dashboard():
 
         username = session["username"]
 
+        user = get_user(username)
+
+        is_admin = user and str(user.get("role", "")).lower().strip() == "admin"
+
+        print("👑 IS ADMIN:", is_admin)
+
         if not get_business_info_cached(username):
             ensure_business_exists(username)
 
@@ -1259,8 +1265,9 @@ def dashboard():
         top_products = bundle["top_products"]
         forecast_status = bundle["forecast_status"]
         print("🔥 bundle: done")
-        if not subscription or subscription.get("status") not in ["active", "trial"]:
-            return redirect(url_for("landing", expired=True))
+        if not is_admin:
+            if not subscription or subscription.get("status") not in ["active", "trial"]:
+                return redirect(url_for("landing", expired=True))
         
 
         from datetime import datetime
@@ -1290,7 +1297,7 @@ def dashboard():
                 else:
                     subscription_status = "expired"
 
-                if days_left <= 0:
+                if not is_admin and days_left <= 0:
                     return redirect(url_for("landing", expired=True))
 
                 warning_message = None
