@@ -367,22 +367,9 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
 
-        if os.getenv("DEV_MODE") == "true" and "username" not in session:
-            session["username"] = "dev_user"
+        username = session.get("username")
 
-            
-            def operation(cur):
-                cur.execute("""
-                    INSERT INTO users (username, password, role)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (username) DO NOTHING
-                """, ("dev_user", "dev_password", "owner"))
-
-            run_db_operation(operation, commit=True)
-
-            return f(*args, **kwargs)
-
-        if "username" not in session:
+        if not username:
             flash("Please log in first.", "error")
             return redirect(url_for("login"))
 
@@ -465,19 +452,18 @@ def check_subscription():
     
     username = session.get("username")
 
-    user = None
-    if username:
-        user = get_user(username)
-        print("👤 USER ROLE RAW:", user.get("role") if user else None)
-
-    
-    if user and str(user.get("role", "")).lower().strip() == "admin":
-        print("🚀 ADMIN BYPASS ACTIVE")
-        return
-
 
     if not username:
         return redirect(url_for("login"))
+
+
+    user = get_user(username)
+    print("👤 USER ROLE RAW:", user.get("role") if user else None)
+
+
+    if user and str(user.get("role", "")).lower().strip() == "admin":
+        print("🚀 ADMIN BYPASS ACTIVE")
+        return
     
     subscription = get_subscription(session["username"])
 
@@ -496,7 +482,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 app.config.update(
     SECRET_KEY=os.getenv("FLASK_SECRET_KEY", "dev_secret_key"),
-    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SECURE = True if os.getenv("ENV") == "production" else False,
     REMEMBER_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax'
