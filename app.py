@@ -367,7 +367,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
 
-        if os.getenv("DEV_MODE") == "true":
+        if os.getenv("DEV_MODE") == "true" and "username" not in session:
             session["username"] = "dev_user"
 
             
@@ -463,19 +463,22 @@ def check_subscription():
         return
 
     
-    if "username" not in session:
-        return redirect(url_for("login"))
+    username = session.get("username")
 
-    user = get_user(session["username"])
+    user = None
+    if username:
+        user = get_user(username)
+        print("👤 USER ROLE RAW:", user.get("role") if user else None)
 
-    if user:
-        print("👤 USER ROLE RAW:", user.get("role"))
-
-
+    
     if user and str(user.get("role", "")).lower().strip() == "admin":
         print("🚀 ADMIN BYPASS ACTIVE")
         return
 
+
+    if not username:
+        return redirect(url_for("login"))
+    
     subscription = get_subscription(session["username"])
 
     print("🔍 subscription:", subscription)
@@ -1253,6 +1256,9 @@ def dashboard():
         start_total = time.time()
 
         username = session["username"]
+
+        if is_admin:
+            cache.delete_memoized(get_dashboard_bundle_cached, username)
 
         #  cached bundle
         bundle = get_dashboard_bundle_cached(username)
