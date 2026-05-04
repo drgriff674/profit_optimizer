@@ -389,6 +389,8 @@ def start_otp_flow(purpose, data, email):
         "otp_attempts": 0
     })
 
+    session.modified = True
+
     send_otp_email(email, otp)
 
 def run_cron_jobs():
@@ -493,7 +495,7 @@ app.config.update(
     SESSION_COOKIE_SECURE =True,
     REMEMBER_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="None"
+    SESSION_COOKIE_SAMESITE="Lax"
 )
 
 
