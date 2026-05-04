@@ -381,11 +381,13 @@ def start_otp_flow(purpose, data, email):
 
     otp = str(random.randint(100000, 999999))
 
-    session["otp_code"] = otp
-    session["otp_purpose"] = purpose
-    session["otp_data"] = data
-    session["otp_time"] = int(time.time())   
-    session["otp_attempts"] = 0
+    session.update({
+        "otp_code": otp,
+        "otp_purpose": purpose,
+        "otp_data": data,
+        "otp_time": int(time.time()),
+        "otp_attempts": 0
+    })
 
     send_otp_email(email, otp)
 
@@ -618,13 +620,9 @@ def login():
 
     
     if "username" in session:
-        bundle = get_dashboard_bundle(session["username"])
-        subscription = bundle.get("subscription")
+        return redirect(url_for("dashboard"))
 
-        if subscription and subscription.get("status") in ["active", "trial"]:
-            return redirect(url_for("dashboard"))
-
-        session.clear()  
+          
 
     if request.method == "POST":
 
@@ -827,8 +825,10 @@ def verify():
         
         if purpose == "login":
 
-            session["username"] = data["username"]
-            session["email"] = data["email"]
+            session.update({
+                "username": data["username"],
+                "email": data["email"]
+            })
 
             log_audit(session["username"], "LOGIN_SUCCESS", "User logged in", request.remote_addr)
 
