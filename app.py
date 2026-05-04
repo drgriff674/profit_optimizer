@@ -106,17 +106,22 @@ import time
 import uuid
 
 def send_otp_email(receiver_email, otp):
+    try:
+        print("📤 Attempting to send OTP to:", receiver_email)
 
-    msg = Message(
-        subject="OptiGain Email Verification",
-        recipients=[receiver_email]
-    )
+        msg = Message(
+            subject="OptiGain Email Verification",
+            recipients=[receiver_email],
+        )
 
-    msg.body = f"Your OptiGain verification code is: {otp}"
+        msg.body = f"Your OptiGain verification code is: {otp}"
 
-    mail.send(msg)
+        mail.send(msg)
 
-    print("OTP email sent successfully")
+        print("✅ EMAIL SENT SUCCESSFULLY")
+
+    except Exception as e:
+        print("❌ EMAIL FAILED:", str(e))
 
 
 
