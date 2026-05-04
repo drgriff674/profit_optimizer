@@ -469,9 +469,10 @@ def check_subscription():
     user = get_user(session["username"])
 
     if user:
-        print("👤 USER ROLE:", user.get("role"))
+        print("👤 USER ROLE RAW:", user.get("role"))
 
-    if user and user.get("role") == "admin":
+
+    if user and str(user.get("role", "")).lower().strip() == "admin":
         print("🚀 ADMIN BYPASS ACTIVE")
         return
 
@@ -482,7 +483,7 @@ def check_subscription():
     if not subscription or subscription.get("status") not in ["active", "trial"]:
         print("🚫 BLOCKING USER")
 
-        session.clear()
+        
         flash("❌ Subscription expired — pay to continue", "error")
         return redirect(url_for("landing", expired=True))
     

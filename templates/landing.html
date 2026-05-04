@@ -444,7 +444,9 @@ window.addEventListener("beforeinstallprompt", (e) => {
 </script>
 
 <script>
-  lucide.createIcons();
+  document.addEventListener("DOMContentLoaded", () => {
+    lucide.createIcons();
+  });
 </script>
 
 </body>
