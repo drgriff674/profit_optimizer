@@ -1257,9 +1257,7 @@ def dashboard():
 
         username = session["username"]
 
-        if is_admin:
-            cache.delete_memoized(get_dashboard_bundle_cached, username)
-
+        
         #  cached bundle
         bundle = get_dashboard_bundle_cached(username)
 
