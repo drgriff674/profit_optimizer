@@ -145,23 +145,17 @@ hover:bg-blue-600 hover:text-white transition">
 
 <!-- FORECAST -->
 <div>
-<button onclick="toggleMenu('forecastMenu',this)"
+<button onclick="toggleMenu('calculatorMenu',this)"
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
 hover:bg-blue-600 hover:text-white
 hover:pl-5 hover:shadow-sm
 transition-all duration-200">
-<span>📈 Forecasting</span><span>▾</span>
+<span>🧮 Calculator</span><span>▾</span>
 </button>
 
-<div id="forecastMenu" class="ml-4 mt-1 hidden space-y-1">
+<div id="calculatorMenu" class="ml-4 mt-1 hidden space-y-1">
 
-<a href="{{ url_for('trend_forecaster') }}"
-class="block px-3 py-2 text-sm rounded-lg
-text-slate-600 dark:text-slate-400
-hover:bg-blue-600 hover:text-white transition">
-Trend Forecaster
-</a>
 
 <a href="{{ url_for('profit_calculator') }}"
 class="block px-3 py-2 text-sm rounded-lg
@@ -292,7 +286,13 @@ bg-gray-100 text-gray-700
             bg-white dark:bg-slate-900
             shadow-sm hover:shadow-md transition">
             <h5 class="text-[11px] uppercase opacity-60 tracking-wide">{{ title }}</h5>
-            <p class="text-2xl font-semibold leading-tight tracking-tight">{{ value }}</p>
+            <p class="text-2xl font-semibold leading-tight tracking-tight
+{% if 'Profit' in title %} text-green-600
+{% elif 'Expenses' in title %} text-red-500
+{% else %} text-slate-900 dark:text-white {% endif %}
+">
+{{ value }}
+</p>
         </div>
         {% endfor %}
  	</div>
@@ -370,6 +370,12 @@ bg-gray-100 text-gray-700
 
   <!-- COUNTDOWN -->
   <p id="subscriptionCountdown" class="text-sm font-semibold">
+
+{% if days_left <= 2 and days_left > 0 %}
+<p class="text-yellow-600 font-semibold mt-2">
+⚠️ Renew soon to avoid interruption
+</p>
+{% endif %}
   ⏳ {{ days_left }} day(s) remaining
 </p>
 
@@ -454,7 +460,7 @@ bg-gray-100 text-gray-700
   </ul>
 
   <div class="text-sm text-blue-600 mt-3">
-    👉 Start by creating your first sale
+    👉 Start by creating your first sale → then lock the day to unlock insights
   </div>
 
   <p class="text-xs mt-4 opacity-60">
@@ -484,13 +490,12 @@ bg-gray-100 text-gray-700
 
   {% if intelligence.get("locked_days", 0) < 7 %}
       <p class="text-red-500 font-semibold">
-        🔴 System learning — lock more days
-      </p>
+🔴 System learning
+</p>
 
-      <p class="text-xs opacity-70">
-        AI insights activate after 7 locked days
-      </p>
-
+<p class="text-xs opacity-70">
+Lock at least 7 days to activate forecasting & AI insights
+</p>
   {% elif intelligence.get("locked_days", 0) < 14 %}
       <p class="text-yellow-500 font-semibold">
         🟡 Forecast building confidence
@@ -560,6 +565,16 @@ bg-gray-100 text-gray-700
     <div class="text-sm text-red-500 font-medium">
       🔒 {{ forecast_status.days }} / 7 locked days
     </div>
+
+    <p class="text-xs mt-2 opacity-70">
+      Lock {{ 7-forecast_status.days }} more day(s) to unlock forecasting
+    </p>
+
+   <a href="{{ url_for('revenue_overview') }}"
+      class="inline-block mt-3 text-xs font-semibold text-blue-600 hover:underline">
+      Go lock a revenue day
+
+   </a>
   </div>
 
 {% else %}
@@ -575,16 +590,21 @@ bg-gray-100 text-gray-700
       Forecast horizon: {{ forecast_status.horizon }} days
     </p>
 
-    <p class="text-sm mb-3">
-      Confidence: 
-      {% if forecast_status.confidence == "Low" %}
-        <span class="text-yellow-500 font-medium">Low</span>
-      {% elif forecast_status.confidence == "Medium" %}
-        <span class="text-orange-500 font-medium">Medium</span>
-      {% else %}
-        <span class="text-green-600 font-medium">High</span>
-      {% endif %}
-    </p>
+    <div class="flex items-center gap-2 text-sm mb-3">
+<span>Confidence:</span>
+
+<span class="px-2 py-0.5 rounded-full text-xs font-semibold
+{% if forecast_status.confidence == "Low" %}
+bg-yellow-100 text-yellow-700
+{% elif forecast_status.confidence == "Medium" %}
+bg-orange-100 text-orange-700
+{% else %}
+bg-green-100 text-green-700
+{% endif %}
+">
+{{ forecast_status.confidence }}
+</span>
+</div>
 
     <div class="text-sm font-medium"
          style="color: var(--og-primary);">

@@ -30,20 +30,20 @@ def run_db_operation(operation, commit=False):
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # ✅ SAFE SESSION HANDLING
+        
         try:
             from flask import session
             username = session.get("username")
         except:
             username = None
 
-        # ✅ ONLY SET RLS IF USER EXISTS
+        
         if username:
             cur.execute("SET app.current_username = %s",(username,))
         else:
             cur.execute("RESET app.current_username")
 
-        # --- run actual query ---
+        #  run actual query 
         result = operation(cur)
 
         if commit:
@@ -66,7 +66,7 @@ def init_db():
     def operation(cur):
     
 
-        # --- USERS TABLE ---
+        #  USERS TABLE 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -76,7 +76,7 @@ def init_db():
         )
         """)
 
-        # --- CASH REVENUE ---
+        #  CASH REVENUE 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS cash_revenue (
             id SERIAL PRIMARY KEY,
@@ -105,7 +105,7 @@ def init_db():
         )
        """)
 
-        # --- EXPENSES TABLE (NEW) ---
+        # EXPENSES TABLE 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS expenses (
             id SERIAL PRIMARY KEY,
@@ -148,7 +148,7 @@ def init_db():
         """)
 
 
-         # --- INVENTORY MOVEMENTS TABLE ---
+         #  INVENTORY MOVEMENTS TABLE 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS inventory_movements (
             id SERIAL PRIMARY KEY,
@@ -195,7 +195,7 @@ def init_db():
         ADD COLUMN IF NOT EXISTS source TEXT;
         """)
 
-        # --- MPESA TRANSACTIONS TABLE ---
+        # MPESA TRANSACTIONS TABLE 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS mpesa_transactions (
             id SERIAL PRIMARY KEY,
@@ -327,7 +327,7 @@ def init_db():
         );
         """)
 
-        # --- PRODUCTS (WHAT CAN BE SOLD) ---
+        # products
         cur.execute("""
         CREATE TABLE IF NOT EXISTS products (
             id SERIAL PRIMARY KEY,
@@ -339,7 +339,7 @@ def init_db():
         )
         """)
 
-        # --- SALES ---
+        # sales
         cur.execute("""
         CREATE TABLE IF NOT EXISTS sales (
             id SERIAL PRIMARY KEY,
@@ -352,7 +352,7 @@ def init_db():
         )
         """)
 
-        # --- SALE ITEMS ---
+        # sale items
         cur.execute("""
         CREATE TABLE IF NOT EXISTS sale_items (
             id SERIAL PRIMARY KEY,
@@ -463,7 +463,7 @@ def init_db():
         ON mpesa_transactions(local_date);
         """)
 
-        # --- SUBSCRIPTIONS TABLE ---
+        # subscription table
         cur.execute("""
         CREATE TABLE IF NOT EXISTS subscriptions (
             id SERIAL PRIMARY KEY,
@@ -484,7 +484,7 @@ def init_db():
         );
         """)
 
-        # --- MPESA HARD SECURITY ---
+        # mpesa security
         cur.execute("""
         DO $$
         BEGIN
@@ -513,7 +513,7 @@ def init_db():
         ALTER COLUMN status SET NOT NULL;
         """)
 
-        # --- PREVENT UPDATES (IMMUTABLE TRANSACTIONS) ---
+        
         cur.execute("""
         CREATE OR REPLACE FUNCTION prevent_mpesa_update()
         RETURNS trigger AS $$
@@ -548,7 +548,7 @@ def get_dashboard_bundle(username):
         "intelligence": get_dashboard_intelligence(username) or {},
         "subscription": get_subscription(username),
 
-        # 🔥 TEMP DISABLED (heavy)
+        
         "weekly_report": get_latest_weekly_report(username),
         "inventory_insights": get_weekly_inventory_insights(username),
         "top_products": get_top_products_for_day(username, datetime.utcnow().date()),
@@ -558,14 +558,14 @@ def get_dashboard_bundle(username):
 def process_payment(username, amount, local_date):
     def operation(cur):
 
-        # 🔥 ensure day exists (same logic as MPesa)
+        
         cur.execute("""
             INSERT INTO revenue_days (username, revenue_date)
             VALUES (%s, %s)
             ON CONFLICT (username, revenue_date) DO NOTHING
         """, (username, local_date))
 
-        # 💰 update total
+        
         cur.execute("""
             UPDATE revenue_days
             SET total_amount = total_amount + %s
@@ -633,7 +633,7 @@ def get_top_products_for_day(username, date):
         if not business_id:
             return []
 
-        # 🔥 FIX DATE FILTER (IMPORTANT)
+        
         start = datetime.combine(date, datetime.min.time())
         end = start + timedelta(days=1)
 
@@ -749,7 +749,7 @@ def save_user(username, password, role):
     run_db_operation(operation, commit=True)
     
 
-#  Debug: print all users directly from DB
+#  Debug
 def debug_print_users():
 
     def operation(cur):
@@ -760,7 +760,7 @@ def debug_print_users():
     print("📌 Current users in DB:", rows)
     
 
-#  EXPENSE HELPERS (NEW – USED BY MANUAL ENTRY)
+#  expense helpers
 def save_expense(username, amount, category, description, expense_date):
 
     def operation(cur):
@@ -812,7 +812,7 @@ def load_expenses(username):
 
     return run_db_operation(operation)
 
-#  REVENUE ENTRY HELPERS (MANUAL DAILY SPLITS)
+#  revenue entry helpers
 def save_revenue_entry(username, category, amount, revenue_date):
 
     def operation(cur):
@@ -948,13 +948,13 @@ def detect_revenue_anomalies(username, revenue_date):
 
     def operation(cur):
 
-        # 🔥 PREVENT DUPLICATES (VERY IMPORTANT)
+        
         cur.execute("""
             DELETE FROM revenue_anomalies
             WHERE username=%s AND revenue_date=%s
         """,(username, revenue_date))
 
-        # --- TOTAL REVENUE (GROSS) ---
+        
         cur.execute("""
             SELECT total_amount
             FROM revenue_days
@@ -964,7 +964,7 @@ def detect_revenue_anomalies(username, revenue_date):
         row = cur.fetchone()
         total = float(row["total_amount"]) if row else 0
 
-        # --- EXPENSES (FOR PROFIT INSIGHT ONLY) ---
+        
         cur.execute("""
             SELECT COALESCE(SUM(amount),0) AS total
             FROM expenses
@@ -976,9 +976,7 @@ def detect_revenue_anomalies(username, revenue_date):
 
         anomalies = []
 
-        # ================================
-        # 🟢 RULE A: MPesa dominance
-        # ================================
+        
         if total > 0:
             cur.execute("""
                 SELECT COALESCE(SUM(m.amount), 0) AS mpesa_total
@@ -1004,9 +1002,7 @@ def detect_revenue_anomalies(username, revenue_date):
                     "MPesa accounts for more than 80% of total revenue"
                 ))
 
-        # ================================
-        # 🔴 RULE B: ZERO revenue
-        # ================================
+        
         if total == 0:
             anomalies.append((
                 "ZERO_REVENUE",
@@ -1014,9 +1010,7 @@ def detect_revenue_anomalies(username, revenue_date):
                 "Revenue day locked with zero total"
             ))
 
-        # ================================
-        # ⚠️ RULE C: SUDDEN DROP (based on revenue_entries history)
-        # ================================
+        
         cur.execute("""
             SELECT AVG(day_total) AS avg_total
             FROM (
@@ -1043,9 +1037,7 @@ def detect_revenue_anomalies(username, revenue_date):
                     f"Revenue dropped {drop_pct}% vs recent average"
                 ))
 
-        # ================================
-        # 🔥 NEW RULE D: NEGATIVE PROFIT
-        # ================================
+        
         if total > 0 and profit < 0:
             anomalies.append((
                 "NEGATIVE_PROFIT",
@@ -1053,9 +1045,7 @@ def detect_revenue_anomalies(username, revenue_date):
                 "Business ran at a loss (expenses exceeded revenue)"
             ))
 
-        # ================================
-        # ⚠️ NEW RULE E: LOW PROFIT MARGIN
-        # ================================
+        
         if total > 0:
             margin = profit / total
 
@@ -1066,9 +1056,7 @@ def detect_revenue_anomalies(username, revenue_date):
                     "Profit margin below 20% — costs may be too high"
                 ))
 
-        # ================================
-        # ⚠️ NEW RULE F: HIGH EXPENSE RATIO
-        # ================================
+        
         if total > 0:
             expense_ratio = expense_total / total
 
@@ -1079,9 +1067,7 @@ def detect_revenue_anomalies(username, revenue_date):
                     "Expenses exceed 60% of revenue"
                 ))
 
-        # ================================
-        # ⚠️ NEW RULE G: MANUAL SPLIT MISMATCH
-        # ================================
+        
         cur.execute("""
             SELECT COALESCE(SUM(amount),0) AS total
             FROM revenue_entries
@@ -1097,9 +1083,7 @@ def detect_revenue_anomalies(username, revenue_date):
                 "Manual revenue split does not match total revenue"
             ))
 
-        # ================================
-        # 💾 SAVE
-        # ================================
+        
         for a in anomalies:
             cur.execute("""
                 INSERT INTO revenue_anomalies
@@ -1110,7 +1094,7 @@ def detect_revenue_anomalies(username, revenue_date):
     run_db_operation(operation, commit=True)
 
     
-# INVENTORY HELPERS
+# inventory helpers
 def create_inventory_item(business_id, name, category, unit):
 
     def operation(cur):
@@ -1128,7 +1112,7 @@ def get_dashboard_revenue_intelligence(username):
 
     def operation(cur):
 
-        # REAL locked business days (SOURCE OF TRUTH)
+        # REAL locked business days 
         cur.execute("""
             SELECT revenue_date
             FROM revenue_days
@@ -1299,7 +1283,7 @@ def get_live_financial_performance(username):
 
     def operation(cur):
 
-        # ---------- MPESA REVENUE ----------
+        
         cur.execute("""
             SELECT
                 m.local_date::timestamp AS timestamp,
@@ -1319,7 +1303,7 @@ def get_live_financial_performance(username):
         """, (username,))
         mpesa = cur.fetchall()
 
-        # ---------- CASH REVENUE ----------
+        
         cur.execute("""
             SELECT
                 revenue_date::timestamp AS timestamp,
@@ -1331,7 +1315,7 @@ def get_live_financial_performance(username):
         """, (username,))
         cash = cur.fetchall()
 
-        # ---------- COMBINE BOTH ----------
+        
         combined = {}
 
         for r in mpesa:
@@ -1345,7 +1329,7 @@ def get_live_financial_performance(username):
             for k, v in sorted(combined.items())
         ]
 
-        # ---------- EXPENSES ----------
+        
         cur.execute("""
             SELECT
                 expense_date::timestamp AS timestamp,
@@ -1484,7 +1468,7 @@ def update_dashboard_snapshot(username):
         """,(username,))
         mpesa=float(cur.fetchone()["total"])
 
-        # SALES TOTAL (ONLY COMPLETED SALES)
+        # SALES TOTAL )
         cur.execute("""
             SELECT COALESCE(SUM(s.total_amount),0) AS total
             FROM sales s
@@ -1791,7 +1775,7 @@ def generate_weekly_ai_report_if_ready(username):
             summary_lines.append(f"Day {i}: KSh {amount:,.0f}")
         summary = "Weekly revenue data:\n" + "\n".join(summary_lines)
 
-        # ---- CALL OPENAI ----
+        
         ai_text = call_openai(summary)
 
         # SAVE REPORT
@@ -1914,7 +1898,7 @@ def get_user(username):
         if not row:
             return None
 
-        # 🔥 FORCE DICT (IMPORTANT)
+        
         user = dict(row)
 
         return user
@@ -2077,7 +2061,7 @@ def get_subscription(username):
 
         status = sub.get("status")
 
-        # 🧪 TRIAL LOGIC
+        
         if status == "trial":
             end = sub.get("trial_end")
 
@@ -2086,7 +2070,7 @@ def get_subscription(username):
             else:
                 sub["status"] = "expired"
 
-        # 💳 ACTIVE SUBSCRIPTION
+        
         elif status == "active":
             end = sub.get("subscription_end")
 

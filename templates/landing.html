@@ -5,32 +5,45 @@
   <title>OptiGain – Smart Business Tracking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<meta name="application-name" content="OptiGain">
+<meta name="apple-mobile-web-app-title" content="OptiGain">
+
 <!-- Favicon / Google logo -->
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="shortcut icon" href="/favicon.ico">
-<link rel="apple-touch-icon"
-href="{{ url_for('static', filename='logo.png') }}">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
 
 <!-- Helps Google understand your brand -->
 <meta name="description"
-content="OptiGain is smart business tracking software for revenue, inventory, expenses and forecasting.">
+content="OptiGain is a business management software for tracking revenue, expenses, inventory, and forecasting profits in real time. Built for modern businesses in Kenya and beyond.">
+
+<meta property="og:title" content="OptiGain – Smart Business Tracking">
+<meta property="og:description" content="Track revenue, expenses, inventory and forecast profits in real time.">
+<meta property="og:image" content="https://optigainapp.com/static/logo.png">
+<meta property="og:type" content="website">
 
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/output.css') }}">
+<script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script type="application/ld+json">
 {
-"@context":"https://schema.org",
-"@type":"SoftwareApplication",
-"name":"OptiGain",
-"url":"https://optigainapp.com",
-"applicationCategory":"BusinessApplication",
-"operatingSystem":"Web",
-"publisher":{
-"@type":"Organization",
-"name":"OptiGain Technologies"
-}
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"OptiGain",
+  "url":"https://optigainapp.com",
+  "applicationCategory":"BusinessApplication",
+  "operatingSystem":"Web",
+  "description":"OptiGain helps businesses track revenue, expenses, inventory and forecast profits using real-time data.",
+  "offers":{
+    "@type":"Offer",
+    "price":"1500",
+    "priceCurrency":"KES"
+  },
+  "publisher":{
+    "@type":"Organization",
+    "name":"OptiGain Technologies"
+  }
 }
 </script>
 
@@ -128,11 +141,14 @@ href="{{ url_for('static', filename='css/output.css') }}">
     <a href="#home">Home</a>
     <a href="#how">How it works</a>
     <a href="#why">About</a>
+
+
   </div>
 
   <div class="flex gap-2">
-    <a href="{{ url_for('login') }}" class="btn-outline">Login</a>
-    <a href="{{ url_for('register') }}" class="btn-main">Get Started</a>
+  <a href="{{ url_for('login') }}" class="btn-outline">Login</a>
+  <a href="{{ url_for('register') }}" class="btn-main">Get Started</a>
+
   </div>
 
 </header>
@@ -187,9 +203,8 @@ href="{{ url_for('static', filename='css/output.css') }}">
     </p>
 
     <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 reveal">
-      Understand your business in
-      <span class="text-blue-400">real numbers</span>
-    </h1>
+  OptiGain – Business Software for Revenue, Inventory & Profit Tracking
+</h1>
 
     <p class="text-gray-400 text-sm sm:text-lg mb-8 max-w-2xl mx-auto reveal">
       Track revenue, expenses, stock and profit automatically.
@@ -203,8 +218,18 @@ href="{{ url_for('static', filename='css/output.css') }}">
 </p>
 
     <div class="flex flex-col sm:flex-row justify-center gap-3 reveal">
+
+
       <a href="{{ url_for('register') }}" class="btn-main w-full sm:w-auto text-center">Start Free</a>
       <a href="#how" class="btn-outline w-full sm:w-auto text-center">How it works</a>
+
+<button
+  id="installBtnHero"
+  class="btn-outline hidden"
+>
+  📲 Install App
+</button>
+
     </div>
 
   </div>
@@ -309,6 +334,38 @@ About
 <p>✉️ optigaintechnologies@gmail.com</p>
 <p>📍 Nairobi, Kenya</p>
 
+<p class="mt-6 text-sm text-gray-400">
+  Follow us: <span class="text-white font-semibold">@optigainapp</span>
+</p>
+
+<div class="mt-4 flex justify-center gap-6 text-gray-400">
+
+  <a href="https://instagram.com/optigainapp" target="_blank"
+     class="hover:scale-110 hover:text-pink-500 transition">
+    <i data-lucide="instagram" class="w-6 h-6"></i>
+  </a>
+
+  <a href="https://twitter.com/optigainapp" target="_blank"
+     class="hover:scale-110 hover:text-blue-400 transition">
+    <i data-lucide="twitter" class="w-6 h-6"></i>
+  </a>
+
+  <a href="https://tiktok.com/@optigainapp" target="_blank"
+     class="hover:scale-110 hover:text-white transition">
+    <i data-lucide="music-2" class="w-6 h-6"></i>
+  </a>
+
+  <a href="https://facebook.com/optigainapp" target="_blank"
+     class="hover:scale-110 hover:text-blue-600 transition">
+    <i data-lucide="facebook" class="w-6 h-6"></i>
+  </a>
+
+</div>
+
+<p class="text-xs mt-3 text-gray-500">
+  Get updates, features & business tips
+</p>
+
 <div class="mt-6 pt-4 border-t border-white/10 text-xs text-gray-600">
 © <span id="year"></span> OptiGain Technologies. All Rights Reserved.
 </div>
@@ -347,6 +404,47 @@ function revealOnScroll() {
 
 window.addEventListener("scroll", revealOnScroll);
 revealOnScroll();
+</script>
+
+<script>
+let deferredPrompt;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const btns = [
+    document.getElementById("installBtn"),
+    document.getElementById("installBtnHero")
+  ];
+
+  btns.forEach(btn => {
+    if (!btn) return;
+
+    btn.classList.remove("hidden");
+
+    // ✅ ADD THIS LINE HERE
+    btn.innerText = "📲 Install OptiGain (Recommended)";
+
+    btn.addEventListener("click", async () => {
+      btn.classList.add("hidden");
+
+      deferredPrompt.prompt();
+
+      const { outcome } = await deferredPrompt.userChoice;
+
+      if (outcome === "accepted") {
+        console.log("User installed OptiGain 🚀");
+      }
+
+      deferredPrompt = null;
+    });
+  });
+});
+</script>
+
+<script>
+  lucide.createIcons();
 </script>
 
 </body>

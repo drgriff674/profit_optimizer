@@ -119,9 +119,9 @@ def send_otp_email(receiver_email, otp):
     print("OTP email sent successfully")
 
 
-# ============================
+
 # Revenue helpers
-# ============================
+
 
 def generate_revenue_day_export_data(username, revenue_date): 
 
@@ -129,7 +129,7 @@ def generate_revenue_day_export_data(username, revenue_date):
 
     def operation(cur):
 
-        # --- business identifiers ---
+        
         cur.execute("""
             SELECT paybill, account_number
             FROM businesses
@@ -138,7 +138,7 @@ def generate_revenue_day_export_data(username, revenue_date):
         """, (username,))
         biz = cur.fetchone()
 
-        # --- locked day check ---
+        
         cur.execute("""
             SELECT locked, total_amount
             FROM revenue_days
@@ -179,7 +179,7 @@ def generate_revenue_day_export_data(username, revenue_date):
         expense_total = 0.0
         expense_entries = []
 
-        #--- mpesa if business exists ---
+        
         if biz:
 
             paybill = biz["paybill"]
@@ -233,7 +233,7 @@ def generate_revenue_day_export_data(username, revenue_date):
             ))
             mpesa_entries = cur.fetchall()
 
-            # --- expenses ---
+            
             cur.execute("""
                 SELECT COALESCE(SUM(amount),0) AS expense_total
                 FROM expenses
@@ -370,7 +370,7 @@ def login_required(f):
         if os.getenv("DEV_MODE") == "true":
             session["username"] = "dev_user"
 
-            # ✅ ADD THIS BLOCK
+            
             def operation(cur):
                 cur.execute("""
                     INSERT INTO users (username, password, role)
@@ -397,7 +397,7 @@ def start_otp_flow(purpose, data, email):
     session["otp_code"] = otp
     session["otp_purpose"] = purpose
     session["otp_data"] = data
-    session["otp_time"] = int(time.time())   # ✅ FIXED HERE
+    session["otp_time"] = int(time.time())   
     session["otp_attempts"] = 0
 
     send_otp_email(email, otp)
@@ -419,7 +419,7 @@ def run_cron_jobs():
 
     print("✅ Cron jobs done, cache refreshed")
 
-# ✅ Safe import for pdfkit (Render may not have wkhtmltopdf)
+
 try:
     import pdfkit
     pdfkit_available = True
@@ -437,7 +437,7 @@ def check_subscription():
 
     print("🔥 BEFORE REQUEST HIT:", request.endpoint)
 
-    # 🚀 PAYMENT + WEBHOOK BYPASS
+    
     if request.path.startswith("/payment/") or request.path.startswith("/pesapal/"):
         print("💰 PAYMENT/IPN BYPASS ACTIVE:", request.path)
         return
@@ -462,7 +462,7 @@ def check_subscription():
     if request.endpoint.startswith("static"):
         return
 
-    # 🔒 not logged in
+    
     if "username" not in session:
         return redirect(url_for("login"))
 
@@ -489,7 +489,7 @@ def check_subscription():
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# 🔒 SECURITY CONFIG
+
 app.config.update(
     SECRET_KEY=os.getenv("FLASK_SECRET_KEY", "dev_secret_key"),
     SESSION_COOKIE_SECURE=True,
@@ -498,17 +498,17 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax'
 )
 
-# 🛡 CSRF
+
 csrf = CSRFProtect(app)
 
-# 🚫 RATE LIMITER
+
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"]
 )
 
-#cache
+
 cache = Cache(app, config={
     "CACHE_TYPE":"SimpleCache",
     "CACHE_DEFAULT_TIMEOUT":300
@@ -528,7 +528,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# 📧 Mail configuration (uses environment variables)
+
 mail_port = os.getenv("MAIL_PORT")
 
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER") or "smtp.gmail.com"
@@ -546,7 +546,7 @@ def initialize_database():
 
 
 
-# Optional AI setup (works both local + Render)
+
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
 if OPENAI_KEY:
@@ -593,7 +593,7 @@ def landing():
 
     expired = request.args.get("expired")
 
-    # ✅ if expired → NEVER redirect
+    
     if expired:
         return render_template("landing.html", expired=True)
 
@@ -601,7 +601,7 @@ def landing():
 
         user = get_user(session["username"])
 
-        # 🔥 ADMIN BYPASS (THIS WAS MISSING)
+        
         if user and user.get("role") == "admin":
             print("🚀 ADMIN ENTERING DASHBOARD")
             return redirect(url_for("dashboard"))
@@ -620,7 +620,7 @@ def landing():
 @limiter.limit("5 per minute")
 def login():
 
-    # 🔒 smarter session handling
+    
     if "username" in session:
         bundle = get_dashboard_bundle(session["username"])
         subscription = bundle.get("subscription")
@@ -628,7 +628,7 @@ def login():
         if subscription and subscription.get("status") in ["active", "trial"]:
             return redirect(url_for("dashboard"))
 
-        session.clear()  # 👈 prevent redirect loops
+        session.clear()  
 
     if request.method == "POST":
 
@@ -641,7 +641,7 @@ def login():
 
             if user and check_password_hash(user["password"], password):
 
-                # ✅ OTP FLOW
+                
                 if user.get("email"):
                     session["pending_user"] = user["username"]
 
@@ -655,13 +655,13 @@ def login():
 
                     return redirect(url_for("verify"))
 
-                # ✅ NORMAL LOGIN
+                
                 session.permanent = True
                 session["username"] = user["username"]
 
                 log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
 
-                # 🔥 HANDLE REDIRECT AFTER LOGIN (PAYMENT FLOW)
+                
                 next_page = session.pop("next_after_login", None)
 
                 if next_page == "subscribe":
@@ -711,7 +711,7 @@ def register():
         paybill = request.form.get("paybill", "").strip()
         account_number = request.form.get("account_number", "").strip()
 
-        # ✅ NORMAL USER
+        
         if setup_type == "normal":
             if not new_email:
                 flash("Email is required.", "error")
@@ -720,7 +720,7 @@ def register():
             paybill = "000000"
             account_number = None
 
-        # ✅ PAYBILL USER
+        
         elif setup_type == "paybill":
             if not new_email or not business_name or not paybill:
                 flash("❌ Email, business name and paybill are required.", "error")
@@ -771,7 +771,7 @@ def register():
 
             run_db_operation(op, commit=True)
 
-            # ✅ NEW OTP SYSTEM (ONLY IF EMAIL EXISTS)
+            
             if new_email:
                 start_otp_flow(
                     "register",
@@ -782,7 +782,7 @@ def register():
                 flash("📧 Verification code sent to your email.", "success")
                 return redirect(url_for("verify"))
 
-            # ✅ NORMAL USER → skip OTP
+            
             flash("✅ Account created successfully.", "success")
             return redirect(url_for("login"))
 
@@ -807,12 +807,12 @@ def verify():
         otp_time = session.get("otp_time")
         attempts = session.get("otp_attempts", 0)
 
-        # ⏳ Expiry (5 minutes)
+        
         if not otp_time or time.time() - otp_time > 300:
             flash("⏳ Code expired. Please try again.", "error")
             return redirect(url_for("login"))
 
-        # 🚫 Too many attempts
+        
         if attempts >= 5:
             flash("❌ Too many attempts. Please try again.", "error")
             return redirect(url_for("login"))
@@ -828,7 +828,7 @@ def verify():
         data = session.get("otp_data")
 
         
-        # LOGIN
+        
         if purpose == "login":
 
             session["username"] = data["username"]
@@ -836,10 +836,10 @@ def verify():
 
             log_audit(session["username"], "LOGIN_SUCCESS", "User logged in", request.remote_addr)
 
-            # ✅ ADD THIS BLOCK RIGHT HERE
+            
             user = get_user(session["username"])
             if user and user.get("role") == "admin":
-                # 🧹 cleanup
+                
                 session.pop("otp_code", None)
                 session.pop("otp_purpose", None)
                 session.pop("otp_data", None)
@@ -848,26 +848,26 @@ def verify():
 
                 return redirect(url_for("dashboard"))
 
-            # 🔥 THEN continue normal flow
+            
             subscription = get_subscription(session["username"])
-            # 🧹 cleanup FIRST
+            
             session.pop("otp_code", None)
             session.pop("otp_purpose", None)
             session.pop("otp_data", None)
             session.pop("otp_time", None)
             session.pop("otp_attempts", None)
 
-            # 🚫 IF EXPIRED → GO LANDING WITH MESSAGE
+            
             if not subscription or subscription.get("status") not in ["active", "trial"]:
                 flash("❌ Subscription expired — pay to continue", "error")
                 return redirect(url_for("landing", expired=True))
 
-            # ✅ OTHERWISE → NORMAL FLOW
+            
             flash("✅ Login successful", "success")
             return redirect(url_for("dashboard"))
             
         
-        # REGISTER
+        
         elif purpose == "register":
             session["username"] = data["username"]
             
@@ -893,7 +893,7 @@ def verify():
             
             return redirect(url_for("reset_password"))
 
-        # CHANGE EMAIL
+        
         elif purpose == "change_email":
 
             def op(cur):
@@ -909,7 +909,7 @@ def verify():
             flash("✅ Email updated", "success")
             return redirect(url_for("settings"))
 
-        # CHANGE PASSWORD
+        
         elif purpose == "change_password":
 
             hashed = generate_password_hash(data["new_password"])
@@ -927,7 +927,7 @@ def verify():
             flash("✅ Password updated", "success")
             return redirect(url_for("settings"))
         
-        # DELETE ACCOUNT
+        
         elif purpose == "delete_account":
 
             def op(cur):
@@ -946,7 +946,7 @@ def verify():
 
             return redirect(url_for("register"))
 
-        # cleanup
+        
         session.pop("otp_code", None)
         session.pop("otp_purpose", None)
         session.pop("otp_data", None)
@@ -968,7 +968,7 @@ def resend_otp():
         flash("Session expired. Please try again.", "error")
         return redirect(url_for("login"))
 
-    # generate new OTP
+    
     otp = random.randint(100000, 999999)
 
     session["otp_code"] = otp
@@ -997,7 +997,7 @@ def forgot_password():
             flash("❌ No account found with that email.", "error")
             return redirect(url_for("forgot_password"))
 
-        # ✅ NEW SYSTEM
+        
         start_otp_flow(
             "reset_password",
             {"email": email},
@@ -1074,16 +1074,16 @@ def settings():
 
         new_email = request.form["email"].strip()
 
-        # 🧠 Optional sanity check (prevents useless OTPs)
+        
         if new_email == user["email"]:
             flash("⚠️ This is already your current email.", "error")
             return redirect(url_for("settings"))
 
-        # 🔐 Start OTP verification flow
+        
         start_otp_flow(
             "change_email",
             {"new_email": new_email},
-            new_email  # send OTP to NEW email
+            new_email  
         )
 
         flash("📧 Verification code sent to your new email.", "info")
@@ -1107,12 +1107,12 @@ def delete_account():
 
     user = get_user(username)
 
-    # 🔐 Step 1: verify password
+    
     if not check_password_hash(user["password"], password):
         flash("❌ Incorrect password.", "error")
         return redirect(url_for("settings"))
 
-    # 🔐 Step 2: start OTP flow
+    
 
     email= user.get("email")
 
@@ -1145,7 +1145,7 @@ def change_password():
         flash("❌ Current password incorrect.", "error")
         return redirect(url_for("settings"))
 
-    # 🔐 Start OTP instead of updating immediately
+   
 
     email = user.get("email")
 
@@ -1226,7 +1226,7 @@ def get_dashboard_data(username):
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    try:  # 👈 START HERE
+    try:  
 
         print("SESSION USER ON DASHBOARD:",session.get("username"))
 
@@ -1247,7 +1247,7 @@ def dashboard():
 
         username = session["username"]
 
-        # 🔥 use cached bundle
+        #  cached bundle
         bundle = get_dashboard_bundle_cached(username)
 
         snapshot = bundle["snapshot"]
@@ -1378,7 +1378,7 @@ def dashboard():
             current_date=datetime.utcnow().date()
         )
 
-    except Exception as e:  # 👈 END HERE
+    except Exception as e:  
         print("🔥 DASHBOARD CRASH:", str(e))
         traceback.print_exc()
         return "Dashboard crashed", 500
@@ -1409,7 +1409,7 @@ def subscribe():
 
     username = session.get("username")
 
-    # 🔥 handle not logged in users
+    # 
     if not username:
         session["next_after_login"] = "subscribe"
         return redirect(url_for("login"))
@@ -1417,7 +1417,7 @@ def subscribe():
     order_id = f"{username}-{uuid.uuid4()}"
     amount = 1500
 
-    # 🔒 get token safely
+    # 
     token_data = get_pesapal_token()
 
     if not token_data or "token" not in token_data:
@@ -1432,7 +1432,7 @@ def subscribe():
         "Content-Type": "application/json"
     }
 
-    # 🔥 YOU ADDED THIS
+    # 
     user = get_user(username)
 
     payload = {
@@ -1445,7 +1445,7 @@ def subscribe():
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
 
         "billing_address": {
-            # 🔥 YOU CHANGED ONLY THIS LINE
+            # 
             "email_address": user.get("email") or f"{username}@optigain.local",
 
             "phone_number": "0700000000",
@@ -1472,11 +1472,11 @@ def payment_success():
 
     username = session.get("username")
 
-    # basic safety check
+    # 
     if not username:
         return redirect(url_for("login"))
 
-    # 🔒 prevent double activation
+    # 
     subscription = get_subscription(username)
 
     if subscription and subscription.get("status") == "active":
@@ -1582,19 +1582,19 @@ def create_product():
         name = data.get("name")
         price = data.get("price")
 
-        # 🔒 validation
+        # 
         if not name or not price:
             return jsonify({"error": "Missing name or price"}), 400
 
         def operation(cur):
 
-            # 1️⃣ CHECK BUSINESS
+            # 
             cur.execute("""
                 SELECT id FROM businesses WHERE username=%s LIMIT 1
             """, (username,))
             biz = cur.fetchone()
 
-            # 2️⃣ AUTO-CREATE BUSINESS
+            # 
             if not biz:
                 print("⚠️ No business found — creating one")
 
@@ -1614,7 +1614,7 @@ def create_product():
             business_id = biz["id"]
             print("✅ USING BUSINESS ID:", business_id)
 
-            # 3️⃣ INSERT PRODUCT
+            # 
             cur.execute("""
                 INSERT INTO products (business_id, name, price)
                 VALUES (%s, %s, %s)
@@ -1654,7 +1654,7 @@ def create_sale():
 
         import random
 
-        # 🔒 ALWAYS generate safe 6-digit sale_id
+        # 
         while True:
             sale_id = str(random.randint(100000, 999999))
             cur.execute("SELECT 1 FROM sales WHERE sale_id=%s", (sale_id,))
@@ -1672,7 +1672,7 @@ def create_sale():
             if p:
                 total += float(p["price"]) * int(item["quantity"])
 
-        # 🔥 get business payment info
+        # 
         cur.execute("""
             SELECT paybill, account_number
             FROM businesses
@@ -1680,7 +1680,7 @@ def create_sale():
         """, (business_id,))
         biz_data = cur.fetchone()
 
-        # 🔥 decide status
+        # 
 
         paybill = biz_data.get("paybill") if biz_data else None
         if paybill and paybill.strip() not in ["000000"]:
@@ -1701,8 +1701,7 @@ def create_sale():
             ON CONFLICT (sale_id) DO NOTHING
         """, (sale_id, business_id, total, status, local_time))
 
-        # insert items
-        # ✅ only insert items if sale is new
+        
         cur.execute("SELECT 1 FROM sale_items WHERE sale_id=%s LIMIT 1", (sale_id,))
         existing_items = cur.fetchone()
 
@@ -1820,7 +1819,7 @@ def mark_paid(sale_id):
         if cur.rowcount == 0:
             return {"success": False, "error": "Update failed"}
 
-        # 🔥 ADD TO REVENUE DAYS
+        
         import pytz
         from datetime import datetime
 
@@ -1843,7 +1842,7 @@ def mark_paid(sale_id):
 
     result = run_db_operation(operation, commit=True)
 
-    # 🔥🔥 THIS IS WHAT YOU WERE MISSING
+    
     update_dashboard_snapshot(username)
 
     return jsonify(result)
@@ -1885,13 +1884,13 @@ def delete_sale(sale_id):
 
     def operation(cur):
 
-        # ✅ delete child items first (VERY IMPORTANT)
+        
         cur.execute("""
             DELETE FROM sale_items
             WHERE sale_id = %s
         """, (sale_id,))
 
-        # ✅ delete sale safely
+        
         cur.execute("""
             DELETE FROM sales
             WHERE sale_id = %s
@@ -1921,7 +1920,7 @@ def delete_revenue_day(date):
 
     def operation(cur):
 
-        # check if day is locked
+        
         cur.execute("""
             SELECT locked
             FROM revenue_days
@@ -1934,14 +1933,14 @@ def delete_revenue_day(date):
         if row and row["locked"]:
             return "locked"
 
-        # delete manual entries
+        
         cur.execute("""
             DELETE FROM revenue_entries
             WHERE username = %s
               AND revenue_date = %s
         """, (username, date))
 
-        # delete container day
+        
         cur.execute("""
             DELETE FROM revenue_days
             WHERE username = %s
@@ -1952,14 +1951,14 @@ def delete_revenue_day(date):
 
     result = run_db_operation(operation, commit=True)
 
-    # 🔥 JSON MODE (for fetch)
+    
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({
             "success": result == "deleted",
             "locked": result == "locked"
         })
 
-    # 🔁 NORMAL MODE (fallback)
+    
     if result == "locked":
         flash("This revenue day is locked and cannot be deleted.", "error")
     else:
@@ -2082,7 +2081,7 @@ def export_revenue_day_pdf(date):
     if not data:
         abort(404)
 
-    # --- SAFE VALUES ---
+    
     manual_entries = data.get("manual_entries", [])
     mpesa_entries = data.get("mpesa_entries", [])
     expense_entries = data.get("expense_entries", [])
@@ -2149,7 +2148,7 @@ def revenue_day_detail(date):
         row = cur.fetchone()
         cash_total = float(row["cash_total"]) if row else 0.0
 
-        # sales total (FIXED ✅)
+        # sales total
         cur.execute("""
             SELECT COALESCE(SUM(s.total_amount),0) AS sales_total
             FROM sales s
@@ -2363,7 +2362,7 @@ def lock_revenue_day_route():
 
     def operation(cur):
 
-        # stop if already locked
+        
         cur.execute("""
             SELECT locked
             FROM revenue_days
@@ -2386,7 +2385,7 @@ def lock_revenue_day_route():
 
        
 
-        # sales total (FIXED ✅)
+        # sales total 
         cur.execute("""
             SELECT COALESCE(SUM(s.total_amount),0) AS sales_total
             FROM sales s
@@ -2421,7 +2420,7 @@ def lock_revenue_day_route():
     
     cache.delete_memoized(get_dashboard_data, username)
 
-    # run background intelligence pipeline
+    
     threading.Thread(
         target=run_post_lock_tasks,
         args=(username, revenue_date)
@@ -2570,6 +2569,9 @@ def revenue_forecast():
 
     username = session["username"]
 
+    insight = None
+    action = None
+
     def operation(cur):
         cur.execute("""
             SELECT
@@ -2584,7 +2586,7 @@ def revenue_forecast():
 
     rows = run_db_operation(operation)
 
-    # Convert to DataFrame
+    
     df = pd.DataFrame(rows)
 
     if df.empty:
@@ -2597,7 +2599,7 @@ def revenue_forecast():
     df["ds"] = pd.to_datetime(df["ds"])
     df["y"] = df["y"].astype(float)
 
-    # Remove zero or invalid revenue days
+    
     df = df[df["y"] > 0]
     df = df.sort_values("ds")
 
@@ -2610,7 +2612,7 @@ def revenue_forecast():
             days=locked_days
         )
 
-    # Forecast maturity tiers
+    
     if locked_days < 14:
         forecast_period = 7
         confidence_level = "Low"
@@ -2622,8 +2624,8 @@ def revenue_forecast():
         confidence_level = "High"
 
     model = Prophet(
-        daily_seasonality=False,
-        weekly_seasonality=False,
+        daily_seasonality=True,
+        weekly_seasonality=True,
         yearly_seasonality=False,
         changepoint_prior_scale=0.15,
         seasonality_mode="additive"
@@ -2633,6 +2635,32 @@ def revenue_forecast():
 
     future = model.make_future_dataframe(periods=forecast_period)
     forecast = model.predict(future)
+
+    
+    window = min(7, len(df))
+    past_avg = df["y"].tail(window).mean()
+
+    future_df = forecast.tail(forecast_period)
+    future_avg = future_df["yhat"].mean()
+
+    growth = 0
+    if past_avg > 0:
+        growth = ((future_avg - past_avg) / past_avg) * 100
+
+    if growth > 5:
+        insight = f"📈 Revenue expected to grow by {round(growth,1)}%"
+    elif growth < -5:
+        insight = f"📉 Revenue may decline by {abs(round(growth,1))}%"
+    else:
+        insight = "⚖️ Revenue expected to remain stable"
+
+    
+    if growth > 5:
+        action = "Increase inventory — demand likely rising"
+    elif growth < -5:
+        action = "Control costs and reduce stock — possible slowdown ahead"
+    else:
+        action = "Maintain current strategy — business is stable"
 
     forecast["yhat"] = forecast["yhat"].clip(lower=0)
     forecast["yhat_upper"] = forecast["yhat_upper"].clip(lower=0)
@@ -2656,7 +2684,9 @@ def revenue_forecast():
         actual_values=actual_values,
         confidence_level=confidence_level,
         forecast_period=forecast_period,
-        not_ready=False
+        not_ready=False,
+        insight=insight,
+        action=action
     )
 
 @app.route("/charts/live-performance")
@@ -2667,7 +2697,7 @@ def live_performance():
 
     def operation(cur):
 
-        # CASH per day
+        
         cur.execute("""
             SELECT revenue_date AS day, SUM(amount) AS cash
             FROM cash_revenue
@@ -2676,7 +2706,7 @@ def live_performance():
         """,(username,))
         cash_rows = cur.fetchall()
 
-        # MPESA per day
+        
         cur.execute("""
             SELECT
                 m.local_date AS day,
@@ -2694,7 +2724,7 @@ def live_performance():
         """,(username,))
         mpesa_rows = cur.fetchall()
 
-        # SALES per day
+        
         cur.execute("""
             SELECT
                 DATE(s.created_at) AS day,
@@ -2707,7 +2737,7 @@ def live_performance():
         """, (username,))
         sales_rows = cur.fetchall()
 
-        # EXPENSES per day
+        
         cur.execute("""
             SELECT expense_date AS day, SUM(amount) AS expenses
             FROM expenses
@@ -2823,7 +2853,7 @@ def financial_data():
 
         def operation(cur):
 
-            # Revenue per day
+            
             cur.execute("""
                 SELECT
                     m.local_date AS date,
@@ -2841,7 +2871,7 @@ def financial_data():
             """, (username,))
             revenue_rows = cur.fetchall()
 
-            # Expenses per day
+            
             cur.execute("""
                 SELECT
                     DATE(expense_date) AS date,
@@ -2856,7 +2886,7 @@ def financial_data():
 
         revenue_rows, expense_rows = run_db_operation(operation)
 
-        # Convert to maps
+        
         revenue_map = {r["date"]: float(r["revenue"]) for r in revenue_rows}
         expense_map = {e["date"]: float(e["expenses"]) for e in expense_rows}
 
@@ -2931,7 +2961,7 @@ def create_sale_test_unique():
     business_id = 5  
 
     items = [
-        {"product_id": 7, "quantity": 2}  # ✅ biscuits
+        {"product_id": 7, "quantity": 2}  
     ]
 
     sale = create_sale(business_id, items)
@@ -2939,9 +2969,9 @@ def create_sale_test_unique():
     return sale
 
 
-# ============================
+
 # PESAPAL INTEGRATION
-# ============================
+
 
 def get_pesapal_token():
     import requests, os
@@ -3008,7 +3038,7 @@ def pesapal_ipn():
             now = datetime.utcnow()
             end_date = now + timedelta(days=30)
 
-            # ✅ ACTIVATE SUBSCRIPTION
+            #  ACTIVATE SUBSCRIPTION
             cur.execute("""
                 UPDATE subscriptions
                 SET
@@ -3032,7 +3062,7 @@ def create_payment(sale_id):
     import requests, os
     from database import run_db_operation
 
-    # 🔍 get sale amount from DB
+    # get sale amount from DB
     def operation(cur):
         cur.execute("""
             SELECT total_amount
@@ -3048,7 +3078,7 @@ def create_payment(sale_id):
 
     amount = float(sale["total_amount"])
 
-    # 🔐 get token
+    # get token
     token = get_pesapal_token().get("token")
 
     url = "https://pay.pesapal.com/v3/api/Transactions/SubmitOrderRequest"
@@ -3065,7 +3095,7 @@ def create_payment(sale_id):
         "description": "Payment for sale",
         "callback_url": "https://optigainapp.com/payment-success",
 
-        # 🔥 THIS IS YOUR IPN ID (VERY IMPORTANT)
+        
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
 
         "billing_address": {
@@ -3082,7 +3112,7 @@ def create_payment(sale_id):
 
     print("🧾 PAYMENT RESPONSE:", data)
 
-    # 🔗 redirect user to payment page
+    
     redirect_url = data.get("redirect_url")
 
     if redirect_url:
@@ -3092,7 +3122,7 @@ def create_payment(sale_id):
 
 
     
-# ✅ GET ACCESS TOKEN
+
 @app.route("/get_token")
 def get_token():
     import os, requests
@@ -3116,7 +3146,7 @@ def get_token():
 
 
 
-# ✅ REGISTER CALLBACK URL
+
 @app.route("/register_url", methods=["POST"])
 @csrf.exempt
 def register_url():
@@ -3197,9 +3227,9 @@ def payment_confirm():
     print("📦 DATA RECEIVED:", data)
 
     try:
-        # ============================================================
-        # 1️⃣ CASE A — C2B SIMULATOR (V1 CALLBACK)
-        # ============================================================
+        
+        # 1️CASE A — C2B SIMULATOR (V1 CALLBACK)
+        
         if "TransID" in data and "TransAmount" in data:
             print("✔ Detected: C2B Simulator")
 
@@ -3212,9 +3242,9 @@ def payment_confirm():
             print("CLEAN ACCOUNT REF (C2B):", repr(account_ref))
             shortcode = data.get("BusinessShortCode")
 
-        # ============================================================
-        # 2️⃣ CASE B — DARAJA V2 CALLBACK (STK-STYLE)
-        # ============================================================
+        
+        # 2️CASE B — DARAJA V2 CALLBACK (STK-STYLE)
+        
         elif "Body" in data and "stkCallback" in data["Body"]:
             print("🔥 Detected: REAL STK CALLBACK")
 
@@ -3251,12 +3281,10 @@ def payment_confirm():
         #DEBUG ......
         print("Callback amount received",amount)
 
-        # ============================================================
-        # SAVE TO DATABASE
-        # ============================================================
+        
         def operation(cur):
 
-            # 1️⃣ Try account reference first (BEST MATCH)
+            
             cur.execute("""
                 SELECT id, username
                 FROM businesses
@@ -3265,7 +3293,7 @@ def payment_confirm():
             """, (account_ref,))
             biz = cur.fetchone()
 
-            # 2️⃣ Fallback to paybill
+            
             if not biz and shortcode:
                 cur.execute("""
                     SELECT id, username
@@ -3275,7 +3303,7 @@ def payment_confirm():
                 """, (shortcode,))
                 biz = cur.fetchone()
 
-            # 3️⃣ Extract user
+            
             if biz:
                 business_id = biz["id"]
                 username_local = biz["username"]
@@ -3291,7 +3319,7 @@ def payment_confirm():
             nairobi = pytz.timezone("Africa/Nairobi")
             local_date = datetime.now(nairobi).date()
 
-            # 4️⃣ Insert transaction
+            
             cur.execute("""
                 INSERT INTO mpesa_transactions
                 (
@@ -3329,7 +3357,7 @@ def payment_confirm():
             return username_local, local_date
         username_local, local_date = run_db_operation(operation, commit=True)
 
-        # 🔗 LINK PAYMENT TO SALE + UPDATE DASHBOARD
+        
         if account_ref:
             try:
                 def link_sale(cur):
@@ -3404,7 +3432,7 @@ def payment_confirm():
         print("❌ ERROR in confirm callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
     
-# ✅ Query M-Pesa Account Balance (safe naming)
+
 @app.route("/api/account_balance")
 def account_balance():
     return jsonify({
@@ -3413,14 +3441,14 @@ def account_balance():
     })
 
 
-# ✅ Payment Timeout Callback
+
 @app.route("/payment/timeout", methods=["POST"])
 def payment_timeout():
     data = request.get_json(silent=True)
     print("⏱️ Payment Timeout:", data or "No payload")
     return jsonify({"ResultCode": 1, "ResultDesc": "Request timed out"})
 
-# ✅ Balance Result Callback
+
 @app.route("/payment/balance_result", methods=["POST"])
 def payment_balance_result():
     data = request.get_json(silent=True)
@@ -3428,7 +3456,7 @@ def payment_balance_result():
     return jsonify({"ResultCode": 0, "ResultDesc": "Balance result received"})
 
 
-# ✅ AI Insight Engine — analyzes latest financial data and generates insights
+
 @app.route("/api/ai_insights")#
 @login_required
 def ai_insights():
@@ -3449,13 +3477,13 @@ def ai_insights():
 
         insights = []
 
-        # Require revenue & expenses
+        
         if "revenue" not in df.columns or "expenses" not in df.columns:
             return jsonify(["Uploaded file is missing revenue or expenses columns."])
 
         df["profit"] = df["revenue"] - df["expenses"]
 
-        # ---- Recent trend (last 2 rows) ----
+        
         if len(df) >= 2:
             if df["profit"].iloc[-1] > df["profit"].iloc[-2]:
                 insights.append("Profit increased in the latest period ✅")
@@ -3464,7 +3492,7 @@ def ai_insights():
             else:
                 insights.append("Profit remained stable recently.")
 
-        # ---- Average profit margin (safe) ----
+        
         valid = df[df["revenue"] > 0]
         if not valid.empty:
             avg_margin = (valid["profit"] / valid["revenue"]).mean() * 100
@@ -3472,7 +3500,7 @@ def ai_insights():
         else:
             insights.append("Average profit margin unavailable (no revenue data).")
 
-        # ---- Best period (optional month column) ----
+        
         if "month" in df.columns:
             best_month = df.loc[df["profit"].idxmax(), "month"]
             insights.append(f"Highest profit recorded in {best_month}.")
@@ -3491,7 +3519,7 @@ def upload():
     if request.method == "POST":
         files = request.files.getlist("files")
 
-        # ✅ Validate uploads
+        
         if not files or not all(allowed_file(f.filename) for f in files):
             return "Only CSV files are allowed.", 400
 
@@ -3516,7 +3544,7 @@ def upload():
 
         cache.delete(f"dashboard_data_{session['username']}")    
 
-        # ✅ If only one file uploaded → just show summary, no comparison
+        
         if len(saved_paths) == 1:
             df = pd.read_csv(saved_paths[0])
             df.columns = df.columns.str.lower().str.strip()
@@ -3543,11 +3571,11 @@ def upload():
                 advice="📊 Uploaded single file — showing summary only.",
             )
 
-        # ✅ If two or more files → compare the latest two
+        
         df1 = pd.read_csv(saved_paths[-2])
         df2 = pd.read_csv(saved_paths[-1])
 
-        # Standardize and clean
+        
         for df in (df1, df2):
             df.columns = df.columns.str.lower().str.strip()
             df["revenue"] = pd.to_numeric(df["revenue"], errors="coerce")
@@ -3563,7 +3591,7 @@ def upload():
 
         session["comparison_data"] = comparison.to_json()
 
-        # ✅ Smart notifications
+        
         notifications = []
         revenue_diff = comparison["Revenue Difference"].sum()
         expense_diff = comparison["Expense Difference"].sum()
@@ -3589,899 +3617,7 @@ def upload():
     return render_template("upload.html")
 
 
-@app.route("/view/<filename>", methods=["GET", "POST"])
-def view_file(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
 
-    from urllib.parse import quote
-
-    # Search text (if user submits search)
-    search_query = request.form.get("search") if request.method == "POST" else ""
-
-    # Locate file in user's folder
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found.", 404
-
-    # ✅ Read SINGLE CSV (faster than merging many)
-    try:
-        df = pd.read_csv(filepath, on_bad_lines="skip")
-    except Exception as e:
-        print(f"Error loading {filepath}: {e}")
-        return "Failed to load data.", 400
-
-    # Normalise columns
-    df.columns = df.columns.str.lower().str.strip()
-
-    # Ensure columns exist
-    if "revenue" not in df.columns or "expenses" not in df.columns:
-        return "CSV must contain 'revenue' and 'expenses' columns.", 400
-
-    # Convert numeric safely
-    df["revenue"] = pd.to_numeric(df["revenue"], errors="coerce").fillna(0)
-    df["expenses"] = pd.to_numeric(df["expenses"], errors="coerce").fillna(0)
-
-    # Optional: simple search filter
-    if search_query:
-        mask = df.astype(str).apply(lambda col: col.str.contains(search_query, case=False, na=False))
-        df = df[mask.any(axis=1)]
-
-    # ✅ Categorisation (same logic as before)
-    def categorize(description):
-        desc = str(description).lower()
-        if any(word in desc for word in ["facebook", "ad", "campaign", "seo"]):
-            return "Marketing"
-        elif any(word in desc for word in ["sales", "client", "deal"]):
-            return "Sales"
-        elif any(word in desc for word in ["research", "development", "prototype"]):
-            return "R&D"
-        elif any(word in desc for word in ["office", "admin", "maintenance"]):
-            return "Operations"
-        else:
-            return "Other"
-
-    if "description" in df.columns:
-        df["category"] = df["description"].apply(categorize)
-
-    # ✅ Core metrics
-    total_revenue = float(df["revenue"].sum())
-    total_expenses = float(df["expenses"].sum())
-    profit = total_revenue - total_expenses
-    profit_margin = round((profit / total_revenue) * 100, 2) if total_revenue > 0 else 0.0
-    avg_revenue = round(float(df["revenue"].mean()), 2)
-    avg_expenses = round(float(df["expenses"].mean()), 2)
-
-    # Try to use "month" column if present, otherwise fake index
-    x_axis = df["month"] if "month" in df.columns else df.index.astype(str)
-
-    # ✅ Bar chart: Revenue vs Expenses
-    bar_fig = go.Figure()
-    bar_fig.add_trace(go.Bar(name="Revenue", x=x_axis, y=df["revenue"]))
-    bar_fig.add_trace(go.Bar(name="Expenses", x=x_axis, y=df["expenses"]))
-    bar_fig.update_layout(
-        barmode="group",
-        title="Monthly Revenue vs Expenses",
-        xaxis_title="Period",
-        yaxis_title="Amount (KSh)",
-    )
-    # Only first chart includes plotly.js to keep payload smaller
-    bar_chart = pyo.plot(bar_fig, output_type="div", include_plotlyjs=True)
-
-    # ✅ Pie Chart: Profit vs Expenses
-    pie_fig = go.Figure(
-        data=[go.Pie(labels=["Profit", "Expenses"], values=[max(profit, 0), total_expenses])]
-    )
-    pie_fig.update_layout(title="Profit vs Expenses")
-    pie_chart = pyo.plot(pie_fig, output_type="div", include_plotlyjs=False)
-
-    # ✅ Line Chart: revenue & expenses over time
-    line_fig = go.Figure()
-    line_fig.add_trace(go.Scatter(x=x_axis, y=df["revenue"], mode="lines+markers", name="Revenue"))
-    line_fig.add_trace(go.Scatter(x=x_axis, y=df["expenses"], mode="lines+markers", name="Expenses"))
-    line_fig.update_layout(
-        title="Financial Trends",
-        xaxis_title="Period",
-        yaxis_title="Amount",
-    )
-    line_chart = pyo.plot(line_fig, output_type="div", include_plotlyjs=False)
-
-    # ✅ Category breakdown (if available)
-    if "category" in df.columns:
-        category_totals = df.groupby("category")["expenses"].sum()
-        cat_fig = go.Figure(
-            data=[go.Pie(labels=category_totals.index, values=category_totals.values)]
-        )
-        cat_fig.update_layout(title="Expense Breakdown by Category")
-        category_pie_chart = pyo.plot(cat_fig, output_type="div", include_plotlyjs=False)
-    else:
-        category_pie_chart = "<div class='alert alert-warning'>No 'Category' data available.</div>"
-
-    # ✅ Insights
-    insights = []
-
-    if profit_margin < 10:
-        insights.append("⚠️ Low profit margin — consider revising pricing or cutting costs.")
-    elif profit_margin < 25:
-        insights.append("🟡 Moderate margin — optimise operations and marketing ROI.")
-    else:
-        insights.append("🟢 Strong profit margin — keep scaling what works.")
-
-    if "month" in df.columns:
-        rev_trend = df["revenue"].diff().fillna(0)
-        if (rev_trend > 0).all():
-            insights.append("📈 Revenue has increased in every period in this dataset.")
-        elif (rev_trend < 0).all():
-            insights.append("📉 Revenue has decreased in every period — investigate causes.")
-        else:
-            insights.append("↕️ Revenue is fluctuating — monitor key months and drivers.")
-
-    if total_expenses > 0 and total_revenue > 0:
-        cost_ratio = total_expenses / total_revenue * 100
-        insights.append(f"💸 Total expenses are {cost_ratio:.1f}% of revenue.")
-
-    final_advice = "<br>".join(insights)
-    escaped_advice = quote(final_advice)
-
-    # ✅ Safer / lighter table HTML (limit rows if very large)
-    df_for_table = df.copy()
-    max_rows = 300
-    if len(df_for_table) > max_rows:
-        df_for_table = df_for_table.head(max_rows)
-
-    table_html = df_for_table.to_html(
-        classes="table table-hover table-dark table-bordered",
-        index=False,
-        border=0,
-        justify="center",
-    ).replace(
-        'style="',
-        'style="color:white !important; background-color:#121212 !important; '
-    )
-
-    return render_template(
-        "results.html",
-        revenue=total_revenue,
-        expenses=total_expenses,
-        profit=profit,
-        margin=profit_margin,
-        avg_revenue=avg_revenue,
-        avg_expenses=avg_expenses,
-        bar_chart=bar_chart,
-        pie_chart=pie_chart,
-        line_chart=line_chart,
-        category_pie_chart=category_pie_chart,  # 🔴 matches your template variable
-        advice=final_advice,
-        trend_insights=insights,
-        escaped_advice=escaped_advice,
-        filename=filename,
-        table_html=table_html,
-        search_query=search_query,
-    )
-@app.route("/download_report", methods=["POST"])
-def download_report():
-    data = request.form
-
-    html = render_template(
-        "report.html",
-        username=session.get("user", "User"),
-        metrics={
-            "revenue": data.get("revenue", "N/A"),
-            "expenses": data.get("expenses", "N/A"),
-            "profit": data.get("profit", "N/A"),
-            "margin": data.get("margin", "N/A"),
-        },
-        advice=data.get("advice", "No advice provided."),
-    )
-
-    pdf_buffer = io.BytesIO()
-    pisa.CreatePDF(io.BytesIO(html.encode("utf-8")), dest=pdf_buffer)
-    pdf_buffer.seek(0)
-
-    filename = f"Financial_Report_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.pdf"
-    return send_file(pdf_buffer, download_name=filename, as_attachment=True)
-
-
-@app.route("/preview/<filename>")
-def preview_file(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found", 404
-
-    try:
-        df = pd.read_csv(filepath)
-        table_html = df.to_html(
-            classes="table table-bordered table-striped", index=False
-        )
-    except Exception as e:
-        return f"Error reading file: {e}", 500
-
-    return render_template("preview.html", table_html=table_html, filename=filename)
-
-
-@app.route("/download_excel/<filename>")
-def download_excel(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found", 404
-
-    df = pd.read_csv(filepath)
-
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Financial Data")
-    output.seek(0)
-
-    return send_file(
-        output,
-        download_name="financial_data.xlsx",
-        as_attachment=True,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-
-
-@app.route("/download_csv/<filename>")
-def download_csv(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found", 404
-
-    return send_file(filepath, as_attachment=True)
-
-
-@app.route("/download_cleaned/<filename>")
-def download_cleaned(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found", 404
-
-    try:
-        df = pd.read_csv(filepath)
-
-        # Clean the data
-        df_cleaned = df.dropna()
-        for col in ["Revenue", "Expenses"]:
-            if col in df_cleaned.columns:
-                df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
-
-        df_cleaned = df_cleaned.dropna()
-
-        # Save to buffer
-        cleaned_path = os.path.join(user_folder, f"cleaned_{filename}")
-        df_cleaned.to_csv(cleaned_path, index=False)
-
-        return send_file(cleaned_path, as_attachment=True)
-
-    except Exception as e:
-        return str(e), 500
-
-
-@app.route("/send_summary", methods=["POST"])
-def send_summary():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    recipient_email = request.form.get("email")
-
-    # get values from form
-    revenue = request.form.get("revenue", "0")
-    expenses = request.form.get("expenses", "0")
-    profit = request.form.get("profit", "0")
-    margin = request.form.get("margin", "0")
-    advice = request.form.get("advice", "No advice available.")
-
-    # Render HTML for PDF
-    html = render_template(
-        "summary_report.html",
-        revenue=revenue,
-        expenses=expenses,
-        profit=profit,
-        margin=margin,
-        advice=advice
-    )
-
-    # Convert to PDF
-    pdf_buffer = io.BytesIO()
-    pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
-    pdf_buffer.seek(0)
-
-    # Build Email
-    msg = Message(
-        subject="📊 OptiGain Summary Report",
-        recipients=[recipient_email],
-        sender=("OptiGain Reports", os.getenv("MAIL_USERNAME")),
-        body="Your financial summary report is attached.",
-    )
-
-    # HTML body (Improves deliverability)
-    msg.html = f"""
-    <p>Hello,</p>
-    <p>Your financial summary report from <strong>OptiGain</strong> is ready.</p>
-
-    <h4>📌 Quick Overview</h4>
-    <ul>
-        <li><strong>Revenue:</strong> {revenue}</li>
-        <li><strong>Expenses:</strong> {expenses}</li>
-        <li><strong>Profit:</strong> {profit}</li>
-        <li><strong>Margin:</strong> {margin}%</li>
-    </ul>
-
-    <p><em>Your full detailed summary is attached as a PDF.</em></p>
-    <p>Best regards,<br>OptiGain Team</p>
-    """
-
-    # Attach PDF
-    msg.attach("OptiGain_Summary.pdf", "application/pdf", pdf_buffer.read())
-
-    # Send email
-    try:
-        mail.send(msg)
-        flash("✅ Summary report sent successfully!", "success")
-    except Exception as e:
-        print("Email Error:", e)
-        flash("❌ Failed to send summary.", "danger")
-
-    return redirect(url_for("dashboard"))
-@app.route("/download_advice", methods=["POST"])
-def download_advice():
-    advice_text = request.form.get("advice", "")
-    advice_file = io.BytesIO()
-    advice_file.write(advice_text.encode("utf-8"))
-    advice_file.seek(0)
-    return send_file(advice_file, download_name="ai_advice.txt", as_attachment=True)
-
-
-@app.route("/download_raw_pdf/<filename>", methods=["GET"])
-def download_raw_pdf(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    filepath = os.path.join(user_folder, filename)
-
-    if not os.path.exists(filepath):
-        return "File not found", 404
-
-    df = pd.read_csv(filepath)
-
-    # Generate PDF
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=10)
-    pdf.cell(200, 10, txt="Raw Financial Data", ln=True, align="C")
-    pdf.ln(10)
-
-    # Add table headers
-    col_width = pdf.w / (len(df.columns) + 1)
-    for col in df.columns:
-        pdf.cell(col_width, 10, txt=str(col), border=1)
-    pdf.ln()
-
-    # Add table rows
-    for i in range(len(df)):
-        for col in df.columns:
-            value = str(df.iloc[i][col])
-            pdf.cell(col_width, 10, txt=value, border=1)
-        pdf.ln()
-
-    # Output to BytesIO
-    pdf_bytes = pdf.output(dest="S").encode("latin-1")
-    pdf_stream = io.BytesIO(pdf_bytes)
-
-    # Send file to browser as download
-    return send_file(
-        pdf_stream,
-        download_name="raw_financial_data.pdf",
-        as_attachment=True,
-        mimetype="application/pdf",
-    )
-
-
-@app.route("/download_summary_txt", methods=["POST"])
-def download_summary_txt():
-    data = request.form
-
-    summary_text = (
-        f"Financial Summary\n\n"
-        f"Total Revenue: ${data['revenue']}\n"
-        f"Total Expenses: ${data['expenses']}\n"
-        f"Profit: ${data['profit']}\n"
-        f"Profit Margin: {data['margin']}%\n\n"
-        f"AI Advice:\n{data['advice']}"
-    )
-
-    txt_bytes = summary_text.encode("utf-8")
-    txt_stream = io.BytesIO(txt_bytes)
-    txt_stream.seek(0)
-
-    return send_file(
-        txt_stream,
-        as_attachment=True,
-        download_name="financial_summary.txt",
-        mimetype="text/plain",
-    )
-
-
-@app.route("/compare/<filenames>")
-def compare_files(filenames):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    files = filenames.split(",")
-    summaries = []
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-
-    for file in files:
-        path = os.path.join(user_folder, file)
-        try:
-            df = pd.read_csv(path)
-            total_revenue = df["Revenue"].sum()
-            total_expenses = df["Expenses"].sum()
-            profit = total_revenue - total_expenses
-            margin = (
-                round((profit / total_revenue) * 100, 2) if total_revenue > 0 else 0
-            )
-
-            summaries.append(
-                {
-                    "filename": file,
-                    "revenue": total_revenue,
-                    "expenses": total_expenses,
-                    "profit": profit,
-                    "margin": margin,
-                }
-            )
-        except:
-            summaries.append({"filename": file, "error": "Could not process file"})
-
-    return render_template("compare.html", summaries=summaries)
-
-
-@app.route("/download_comparison_csv")
-def download_comparison_csv():
-    if "comparison_data" not in session:
-        return "No comparison data to download", 400
-
-    df = pd.read_json(session["comparison_data"])
-    csv_bytes = df.to_csv(index=False).encode("utf-8")
-
-    return send_file(
-        io.BytesIO(csv_bytes),
-        mimetype="text/csv",
-        as_attachment=True,
-        download_name="comparison.csv",
-    )
-
-
-@app.route("/download_comparison_pdf")
-def download_comparison_pdf():
-    if "comparison_data" not in session:
-        return "No comparison data to download", 400
-
-    df = pd.read_json(session["comparison_data"])
-
-    from fpdf import FPDF
-
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=10)
-    pdf.cell(200, 10, txt="Comparison Report", ln=True, align="C")
-    pdf.ln(10)
-
-    # Table header
-    for col in df.columns:
-        pdf.cell(60, 10, txt=col, border=1)
-    pdf.ln()
-
-    # Table rows
-    for _, row in df.iterrows():
-        for item in row:
-            pdf.cell(60, 10, txt=str(item), border=1)
-        pdf.ln()
-
-    pdf_output = io.BytesIO()
-    pdf_bytes = pdf.output(dest="S").encode("latin1")
-    pdf_output.write(pdf_bytes)
-    pdf_output.seek(0)
-
-    return send_file(pdf_output, download_name="comparison.pdf", as_attachment=True)
-
-
-@app.route("/download_bar_chart")
-def download_bar_chart():
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    # Dummy data (you can replace this with real data)
-    months = ["Jan", "Feb", "Mar", "Apr"]
-    revenues = [10000, 15000, 20000, 18000]
-    expenses = [7000, 9000, 11000, 10500]
-
-    sns.set(style="whitegrid")
-    plt.figure(figsize=(10, 6))
-    bar_width = 0.35
-    index = range(len(months))
-
-    plt.bar(index, revenues, bar_width, label="Revenue", color="green")
-    plt.bar(
-        [i + bar_width for i in index],
-        expenses,
-        bar_width,
-        label="Expenses",
-        color="red",
-    )
-    plt.xlabel("Month")
-    plt.ylabel("Amount")
-    plt.title("Revenue vs Expenses")
-    plt.xticks([i + bar_width / 2 for i in index], months)
-    plt.legend()
-
-    from io import BytesIO
-    import os
-    from flask import send_file
-
-    buffer = BytesIO()
-    plt.tight_layout()
-    plt.savefig(buffer, format="png")
-    buffer.seek(0)
-    plt.close()
-
-    return send_file(
-        buffer, mimetype="image/png", as_attachment=True, download_name="bar_chart.png"
-    )
-
-
-@app.route("/download_line_chart")
-def download_line_chart():
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    from io import BytesIO
-    from flask import send_file
-
-    # Dummy data (replace with your actual trend data)
-    months = ["Jan", "Feb", "Mar", "Apr"]
-    revenues = [10000, 15000, 20000, 18000]
-
-    sns.set(style="darkgrid")
-    plt.figure(figsize=(10, 6))
-    plt.plot(months, revenues, marker="o", linestyle="-", color="blue", label="Revenue")
-    plt.title("Revenue Trend Over Time")
-    plt.xlabel("Month")
-    plt.ylabel("Revenue")
-    plt.legend()
-
-    buffer = BytesIO()
-    plt.tight_layout()
-    plt.savefig(buffer, format="png")
-    buffer.seek(0)
-    plt.close()
-
-    return send_file(
-        buffer, mimetype="image/png", as_attachment=True, download_name="line_chart.png"
-    )
-
-
-@app.route("/download_pie_chart")
-def download_pie_chart():
-    import matplotlib.pyplot as plt
-    from io import BytesIO
-    from flask import send_file
-
-    # Dummy data (replace with your actual category data)
-    labels = ["Marketing", "Sales", "Operations", "R&D"]
-    expenses = [4000, 3000, 2500, 1500]
-
-    plt.figure(figsize=(6, 6))
-    plt.pie(expenses, labels=labels, autopct="%1.1f%%", startangle=140)
-    plt.title("Expense Distribution by Category")
-
-    buffer = BytesIO()
-    plt.tight_layout()
-    plt.savefig(buffer, format="png")
-    buffer.seek(0)
-    plt.close()
-
-    return send_file(
-        buffer, mimetype="image/png", as_attachment=True, download_name="pie_chart.png"
-    )
-
-
-@app.route("/download_full_report", methods=["GET"])
-def download_full_report():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session.get("username", "User")
-
-    # 📊 Step 1: Locate the latest uploaded CSV
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
-    if not os.path.exists(user_folder):
-        return "No uploaded files found.", 404
-
-    files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
-    if not files:
-        return "No CSV files found.", 404
-
-    # Use the most recent file
-    latest_file = max([os.path.join(user_folder, f) for f in files], key=os.path.getctime)
-    df = pd.read_csv(latest_file)
-
-    # 📈 Step 2: Basic calculations
-    revenue = df["Revenue"].sum() if "Revenue" in df.columns else 0
-    expenses = df["Expenses"].sum() if "Expenses" in df.columns else 0
-    profit = revenue - expenses
-    margin = round((profit / revenue * 100), 2) if revenue else 0
-    avg_revenue = df["Revenue"].mean() if "Revenue" in df.columns else 0
-    avg_expenses = df["Expenses"].mean() if "Expenses" in df.columns else 0
-
-    metrics = {
-        "revenue": f"{revenue:,.2f}",
-        "expenses": f"{expenses:,.2f}",
-        "profit": f"{profit:,.2f}",
-        "margin": margin,
-        "avg_revenue": f"{avg_revenue:,.2f}",
-        "avg_expenses": f"{avg_expenses:,.2f}"
-    }
-
-    # 🧠 Step 3: Example AI advice (or load your saved one)
-    advice = (
-        f"Your current profit margin is {margin}%. "
-        f"Consider reducing operational costs to improve profitability further."
-    )
-
-    # 🖼️ Step 4: Generate charts safely (Render-compatible)
-    chart_html = ""
-    if "Month" in df.columns and "Revenue" in df.columns and "Expenses" in df.columns:
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=df["Month"], y=df["Revenue"], name="Revenue", marker_color="green"))
-        fig.add_trace(go.Bar(x=df["Month"], y=df["Expenses"], name="Expenses", marker_color="red"))
-        fig.update_layout(
-            title="Monthly Revenue vs Expenses",
-            barmode="group",
-            xaxis_title="Month",
-            yaxis_title="Amount (KSh)",
-            plot_bgcolor="#f9f9f9",
-            paper_bgcolor="#ffffff"
-        )
-
-        try:
-            # Try saving as image (only works locally)
-            chart_path = f"static/reports/revenue_expenses_{username}.png"
-            os.makedirs(os.path.dirname(chart_path), exist_ok=True)
-            pio.write_image(fig, chart_path)
-            chart_html = f'<img src="/{chart_path}" style="width:100%; border-radius:10px; margin-top:10px;">'
-        except Exception as e:
-            print(f"[Render-safe mode] Kaleido not available, using HTML chart instead: {e}")
-            chart_html = pyo.plot(fig, include_plotlyjs="cdn", output_type="div")
-
-    # 🧾 Step 5: Render the HTML report
-    html = render_template(
-        "report.html",
-        username=username,
-        metrics=metrics,
-        advice=advice,
-        chart_html=chart_html,  # ✅ use this instead of charts list
-        current_date=datetime.now().strftime("%B %d, %Y"),
-        current_year=datetime.now().year
-    )
-
-    # 🪄 Step 6: Convert to PDF using pdfkit or fallback to xhtml2pdf
-    if pdfkit_available:
-        pdf = pdfkit.from_string(html, False, options={
-            "page-size": "A4",
-            "encoding": "UTF-8",
-            "margin-top": "10mm",
-            "margin-bottom": "10mm",
-            "margin-left": "10mm",
-            "margin-right": "10mm"
-        })
-    else:
-        # Render-safe fallback (Render doesn’t support wkhtmltopdf)
-        pdf_buffer = io.BytesIO()
-        pisa.CreatePDF(io.BytesIO(html.encode("utf-8")), dest=pdf_buffer)
-        pdf = pdf_buffer.getvalue()
-
-    # 📤 Step 7: Return as downloadable PDF
-    filename = f"OptiGain_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf"
-    response = make_response(pdf)
-    response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
-    return response
-@app.route("/send_report", methods=["POST"])
-def send_report():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    # receiver email
-    recipient_email = request.form.get("email")
-    if not recipient_email:
-        flash("❌ No email provided.", "danger")
-        return redirect(url_for("dashboard"))
-
-    # financial data from form
-    revenue = request.form.get("revenue", "0")
-    expenses = request.form.get("expenses", "0")
-    profit = request.form.get("profit", "0")
-    margin = request.form.get("margin", "0")
-    advice = request.form.get("advice", "No advice available.")
-
-    # Build ABSOLUTE logo path
-    logo_path = os.path.join(app.root_path, "static", "logo.png").replace("\\", "/")
-
-    # Render HTML template → PDF
-    html = render_template(
-        "email_report.html",
-        logo_path=logo_path,
-        revenue=revenue,
-        expenses=expenses,
-        profit=profit,
-        margin=margin,
-        advice=advice
-    )
-
-    # Generate PDF
-    pdf_buffer = io.BytesIO()
-    result = pisa.CreatePDF(io.StringIO(html), dest=pdf_buffer)
-    pdf_buffer.seek(0)
-
-    if result.err:
-        print("PDF ERROR:", result.err)
-        flash("❌ Failed to generate PDF report.", "danger")
-        return redirect(url_for("dashboard"))
-
-    # Build email
-    msg = Message(
-        subject="📊 OptiGain Financial Report",
-        recipients=[recipient_email],
-        sender=("OptiGain Reports", os.getenv("MAIL_USERNAME")),
-        body="Your full OptiGain report is attached."
-    )
-
-    # Add HTML body (professional + improves inbox deliverability)
-    msg.html = f"""
-    <p>Hello,</p>
-
-    <p>Your detailed <strong>OptiGain Financial Report</strong> is attached as a PDF.</p>
-
-    <h4>📌 Quick Snapshot</h4>
-    <ul>
-        <li><strong>Total Revenue:</strong> {revenue}</li>
-        <li><strong>Total Expenses:</strong> {expenses}</li>
-        <li><strong>Total Profit:</strong> {profit}</li>
-        <li><strong>Profit Margin:</strong> {margin}%</li>
-    </ul>
-
-    <h4>🧠 AI Insight</h4>
-    <p>{advice}</p>
-
-    <p>Best regards,<br><strong>OptiGain Team</strong></p>
-    """
-
-    # Attach PDF
-    msg.attach("OptiGain_Full_Report.pdf", "application/pdf", pdf_buffer.read())
-
-    try:
-        mail.send(msg)
-        flash(f"📧 Report sent to {recipient_email}", "success")
-    except Exception as e:
-        print("MAIL ERROR:", e)
-        flash("❌ Failed to send report.", "danger")
-
-    return redirect(url_for("dashboard"))
-
-@app.route("/delete/<filename>", methods=["POST"])
-def delete_file(filename):
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
-    file_path = os.path.join(user_folder, filename)
-
-    # Remove from disk
-    if os.path.exists(file_path):
-        os.remove(file_path)
-
-    # Remove from tracking list
-    if username in uploaded_csvs:
-        if filename in uploaded_csvs[username]:
-            uploaded_csvs[username].remove(filename)
-
-    flash(f"{filename} deleted successfully.")
-    return redirect(url_for("profile"))
-
-
-@app.route("/rename_file", methods=["POST"])
-def rename_file():
-    if "username" not in session:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for("login"))
-
-    old_filename = request.form["old_filename"]
-    new_filename = request.form["new_filename"]
-
-    username = session.get("username")
-    user_folder = os.path.join("uploads", username)
-
-    old_path = os.path.join(user_folder, old_filename)
-    new_path = os.path.join(user_folder, new_filename)
-
-    # Rename the file if it exists
-    if os.path.exists(old_path):
-        os.rename(old_path, new_path)
-
-        # Optional: update the uploaded_csvs dictionary if used
-        if username in uploaded_csvs:
-            uploaded_csvs[username] = [
-                new_filename if f == old_filename else f
-                for f in uploaded_csvs[username]
-            ]
-
-        flash(f"Renamed {old_filename} to {new_filename}", "success")
-    else:
-        flash("File not found.", "danger")
-
-    return redirect(url_for("profile"))
-
-
-@app.route("/advisor", methods=["GET", "POST"])
-def advisor():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    answer = None
-
-    if request.method == "POST":
-        question = request.form.get("question")
-        username = session["username"]
-        files = uploaded_csvs.get(username, [])
-        if not files:
-            answer = "No uploaded CSV files found."
-        else:
-            # We'll use the latest uploaded file for simplicity
-            file_path = os.path.join(app.config["UPLOAD_FOLDER"], username, files[-1])
-            df = pd.read_csv(file_path)
-
-            # Simple rule-based responses
-            if "highest revenue" in question.lower():
-                row = df.loc[df["Revenue"].idxmax()]
-                answer = (
-                    f"The highest revenue was in {row['Month']} with ${row['Revenue']}"
-                )
-            elif "average expense" in question.lower():
-                avg_exp = df["Expenses"].mean()
-                answer = f"The average expense is ${avg_exp:.2f}"
-            elif "lowest revenue" in question.lower():
-                row = df.loc[df["Revenue"].idxmin()]
-                answer = (
-                    f"The lowest revenue was in {row['Month']} with ${row['Revenue']}"
-                )
-            else:
-                answer = "Sorry, I didn't understand the question."
-
-    return render_template("advisor.html", answer=answer)
 
 @app.route("/ask", methods=["GET", "POST"])
 @login_required
@@ -4518,9 +3654,9 @@ def ask():
 
     try:
 
-# -----------------------------
+
 # Pull business financial data
-# -----------------------------
+
         snapshot = get_dashboard_snapshot(username)
         intelligence = get_dashboard_intelligence_snapshot(username)
         forecast = get_locked_revenue_for_forecast(username)
@@ -4546,9 +3682,9 @@ Forecast Horizon: {forecast.get("forecast_period")} days
             for d in forecast.get("data", [])
         ) or "No locked revenue history available."
 
-# -----------------------------
+
 # AI call
-# -----------------------------
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -4644,57 +3780,6 @@ Rules:
             answer=msg
         )
 
-@app.route("/admin")
-def admin():
-    # ✅ Must be logged in
-    if "username" not in session:
-        flash("You must be logged in to access the admin panel.", "error")
-        return redirect(url_for("login"))
-
-    current_user = session["username"]
-
-    # ✅ Restrict admin panel to specific usernames
-    allowed_admins = ["griffin", "diana", "rose"]
-    if current_user not in allowed_admins:
-        flash("Unauthorized: You don’t have admin access.", "error")
-        return redirect(url_for("dashboard"))
-
-    # ✅ Load users from the PostgreSQL database
-    from database import load_users
-
-    users = load_users()
-
-    total_users = len(users)
-
-    # ✅ Render admin page
-    return render_template(
-        "admin.html", user=current_user, users=users, total_users=total_users
-    )
-
-
-@app.route("/use-demo-data")
-def use_demo_data():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-    os.makedirs(user_folder, exist_ok=True)
-
-    demo_file = os.path.join(user_folder, "demo_data.csv")
-
-    # Copy sample file for this user
-    sample_path = os.path.join("sample_data.csv")
-    if os.path.exists(sample_path):
-        import shutil
-
-        shutil.copy(sample_path, demo_file)
-        session["uploaded_file"] = "demo_data.csv"
-        flash("Demo data loaded successfully!", "success")
-    else:
-        flash("Sample data file missing. Please contact admin.", "error")
-
-    return redirect(url_for("dashboard"))
-
 
 @app.route("/profit_calculator", methods=["GET", "POST"])
 def profit_calculator():
@@ -4710,304 +3795,10 @@ def profit_calculator():
     return render_template("profit_calculator.html", profit=profit)
 
 
-@app.route("/trend_forecaster", methods=["GET"])
-def trend_forecaster():
-    if "username" not in session:
-        return redirect(url_for("login"))
 
-    forecast_plot = None
 
-    try:
-        conn = get_db_connection(cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
 
-        # 1️⃣ Get revenue from MPesa (grouped monthly)
-        cursor.execute("""
-        SELECT
-            DATE_TRUNC('month', revenue_date) AS month,
-            SUM(total_amount) AS revenue
-        FROM revenue_days
-        WHERE username = %s
-        AND locked = TRUE
-        GROUP BY DATE_TRUNC('month', revenue_date)
-        ORDER BY month
-        """, (session["username"],))
-        
-        revenue_rows = cursor.fetchall()
 
-        cursor.close()
-        conn.close()
-
-        if not revenue_rows:
-            flash("Not enough revenue data to generate forecast.", "warning")
-            return render_template("trend_forecaster.html", forecast_plot=None)
-
-        revenue_df = pd.DataFrame(revenue_rows)
-        revenue_df["month"] = pd.to_datetime(revenue_df["month"])
-        revenue_df["revenue"] = pd.to_numeric(revenue_df["revenue"], errors="coerce")
-
-        # 2️⃣ Load manual expenses (CSV for now)
-        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], session["username"])
-        manual_path = os.path.join(user_folder, "manual_entries.csv")
-
-        if os.path.exists(manual_path):
-            expenses_df = pd.read_csv(manual_path)
-            expenses_df["Month"] = pd.to_datetime(expenses_df["Month"])
-            expenses_df["Expenses"] = pd.to_numeric(expenses_df["Expenses"], errors="coerce")
-
-            expenses_df = (
-                expenses_df
-                .groupby(pd.Grouper(key="Month", freq="M"))["Expenses"]
-                .sum()
-                .reset_index()
-                .rename(columns={"Month": "month"})
-            )
-        else:
-            expenses_df = pd.DataFrame(columns=["month", "Expenses"])
-
-        # 3️⃣ Merge revenue and expenses
-        merged = pd.merge(
-            revenue_df,
-            expenses_df,
-            on="month",
-            how="left"
-        )
-
-        merged["Expenses"] = merged["Expenses"].fillna(0)
-        merged["net_revenue"] = merged["revenue"] - merged["Expenses"]
-
-        # 4️⃣ Prepare Prophet data
-        prophet_df = merged.rename(
-            columns={"month": "ds", "net_revenue": "y"}
-        )[["ds", "y"]]
-
-        if len(prophet_df) < 2:
-            flash("Not enough historical data for forecasting.", "warning")
-            return render_template("trend_forecaster.html", forecast_plot=None)
-
-        # 5️⃣ Train Prophet
-        model = Prophet()
-        model.fit(prophet_df)
-
-        future = model.make_future_dataframe(periods=6, freq="M")
-        forecast = model.predict(future)
-
-        # 6️⃣ Save plot
-        fig = model.plot(forecast)
-        img_path = os.path.join("static", "forecast.png")
-        fig.savefig(img_path)
-        forecast_plot = img_path
-
-    except Exception as e:
-        print("Trend forecast error:", e)
-        flash("Error generating forecast.", "danger")
-
-    return render_template("trend_forecaster.html", forecast_plot=forecast_plot)
-# 🗑 Delete a user
-@app.route("/delete_user/<username>", methods=["POST"])
-def delete_user(username):
-    if "username" not in session:
-        flash("Login required.", "error")
-        return redirect(url_for("login"))
-
-    current_user = session["username"]
-    if current_user not in ["griffin", "diana", "rose"]:
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("dashboard"))
-
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE username = %s", (username,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash(f"User '{username}' deleted successfully.", "success")
-    return redirect(url_for("admin"))
-
-
-# ⭐ Promote a user (make them admin)
-@app.route("/promote_user/<username>", methods=["POST"])
-def promote_user(username):
-    if "username" not in session:
-        flash("Login required.", "error")
-        return redirect(url_for("login"))
-
-    current_user = session["username"]
-    if current_user not in ["griffin", "diana", "rose"]:
-        flash("Unauthorized access.", "error")
-        return redirect(url_for("dashboard"))
-
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("UPDATE users SET role = 'admin' WHERE username = %s", (username,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash(f"User '{username}' promoted to admin.", "success")
-    return redirect(url_for("admin"))
-
-
-
-
-@app.route("/admin/toggle_ai", methods=["POST"])
-def toggle_ai():
-    # Only admin can access
-    if "username" not in session or session["username"] != "griffin":
-        return "Unauthorized", 403
-
-    # Flip the current value
-    global AI_ENABLED
-    AI_ENABLED = not AI_ENABLED
-
-    status = "enabled" if AI_ENABLED else "disabled"
-    return f"AI insights are now {status}."
-
-
-@app.route("/admin/send_reports", methods=["POST"])
-def send_reports():
-    if "username" not in session or session["username"] != "griffin":
-        flash("Access denied.", "danger")
-        return redirect(url_for("login"))
-
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT username, email FROM users")
-    users = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    sent_count = 0
-    for user in users:
-        username = user["username"]
-        email = user["email"]
-
-        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
-        if not os.path.exists(user_folder):
-            continue
-
-        files = [f for f in os.listdir(user_folder) if f.endswith(".csv")]
-        if not files:
-            continue
-
-        latest_file = sorted(files)[-1]
-        file_path = os.path.join(user_folder, latest_file)
-
-        try:
-            df = pd.read_csv(file_path)
-            preview = df.head().to_string()
-
-            prompt = f"""
-            Generate a professional business summary for user {username} based on the following financial data:
-            {preview}
-
-            Include:
-            - 3 key insights
-            - 1 improvement recommendation
-            - A short motivational line
-            """
-
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-            )
-
-            ai_text = response.choices[0].message.content.strip()
-
-            # Generate PDF
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            pdf.cell(
-                200, 10, txt=f"Weekly Business Report - {username}", ln=True, align="C"
-            )
-            pdf.ln(10)
-            pdf.multi_cell(0, 10, txt=ai_text)
-            pdf_bytes = pdf.output(dest="S").encode("latin1")
-
-            # Send via email
-            msg = Message(subject="📊 Your Weekly OptiGain Report", recipients=[email])
-            msg.body = (
-                "Attached is your latest AI-generated business performance report."
-            )
-            msg.attach(f"{username}_report.pdf", "application/pdf", pdf_bytes)
-
-            mail.send(msg)
-            sent_count += 1
-
-        except Exception as e:
-            print(f"Error sending report to {username}: {e}")
-
-    flash(f"✅ Reports sent successfully to {sent_count} users.", "success")
-    return redirect(url_for("admin"))
-
-
-
-
-
-@app.route("/expense_entry", methods=["GET", "POST"])
-def expense_entry():
-    if "username" not in session:
-        return redirect(url_for("login"))
-
-    username = session["username"]
-
-    if request.method == "POST":
-        try:
-
-            # 🔥 SUPPORT JSON + FORM
-            if request.is_json:
-                data = request.get_json()
-
-                amount = float(data.get("amount"))
-                category = data.get("category")
-                description = data.get("description")
-                expense_date = data.get("date")
-
-            else:
-                amount = float(request.form["amount"])
-                category = request.form.get("category")
-                description = request.form.get("description")
-                expense_date = request.form["date"]
-
-            # 🔥 SAVE
-            save_expense(
-                username=username,
-                amount=amount,
-                category=category,
-                description=description,
-                expense_date=expense_date
-            )
-
-            log_audit(username, "ADD_EXPENSE", f"{amount}", request.remote_addr)
-
-            update_dashboard_snapshot(username)
-
-
-            if request.is_json:
-                return jsonify({"success": True})
-
-            flash("✅ Expense added successfully!", "success")
-            return redirect(url_for("expense_entry"))
-
-        except Exception as e:
-            print("EXPENSE ERROR:", e)
-
-            if request.is_json:
-                return jsonify({"success": False, "error": str(e)}), 500
-
-            flash("❌ Failed to save expense.", "error")
-
-    categories = load_expense_categories(username)
-
-    return render_template(
-        "expense_entry.html",
-        categories=categories
-    )
 
 @app.route("/delete_expense")
 def delete_expense():
@@ -5025,7 +3816,7 @@ def delete_expense_action(expense_id):
 
     try:
 
-        # 🔥 SUPPORT JSON + NORMAL
+        
         if request.is_json:
             data = request.get_json()
             expense_id = data.get("expense_id")
@@ -5066,8 +3857,7 @@ def revenue_entry():
 
     username = session["username"]
 
-    # ✅ Determine selected date
-    # 🔥 SUPPORT JSON + FORM + QUERY
+    
     data = request.get_json() if request.is_json else None
 
     if data:
@@ -5081,7 +3871,7 @@ def revenue_entry():
     if request.method == "POST":
         try:
 
-            # 🔥 SUPPORT JSON + FORM
+            
             if data:
                 category = data.get("category")
                 amount = float(data.get("amount"))
@@ -5105,7 +3895,7 @@ def revenue_entry():
 
             
 
-            # 🔥 JSON RESPONSE
+            
             if request.is_json:
                 return jsonify({"success": True})
 
@@ -5137,7 +3927,7 @@ def inventory_setup():
 
     username = session["username"]
 
-    # 🔹 GET business_id FIRST
+
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -5210,7 +4000,7 @@ def inventory_setup():
             print("Inventory error:", e)
             flash("❌ Failed to save inventory item.", "error")
 
-    # 🔹 LOAD INVENTORY FOR DISPLAY
+    # 
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 

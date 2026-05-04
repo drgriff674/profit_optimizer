@@ -57,7 +57,7 @@
     {% endif %}
 
     <p class="text-sm opacity-70 mb-3">
-      AI projection with statistical confidence bands.
+      AI forecast based on your real business activity and trends
     </p>
 
     <p class="text-sm opacity-70 mb-3">
@@ -65,16 +65,45 @@
     </p>
 
     <p class="text-sm font-semibold mb-3">
-      Model confidence: {{ confidence_level }}
-    </p>
+  Model confidence: {{ confidence_level }}
+</p>
 
-    <div id="forecastChart" class="w-full h-[70vh]"></div>
+{% if insight %}
+<div class="mb-4 p-3 rounded-lg
+  {% if "grow" in insight %}
+    bg-green-50 dark:bg-green-900/20
+  {% elif "decline" in insight %}
+    bg-red-50 dark:bg-red-900/20
+  {% else %}
+    bg-blue-50 dark:bg-slate-800
+  {% endif %}
+">
+  <p class="text-sm font-medium
+    {% if "grow" in insight %}
+      text-green-700 dark:text-green-300
+    {% elif "decline" in insight %}
+      text-red-700 dark:text-red-300
+    {% else %}
+      text-blue-700 dark:text-blue-300
+    {% endif %}
+  ">
+    {{ insight }}
+  </p>
 
+<p class="text-xs mt-2 opacity-80">
+  💡 {{ action }}
+</p>
+
+</div>
+{% endif %}
+
+<div id="forecastChart" class="w-full h-[70vh]"></div>
   </div>
 
 </main>
 
 <!-- CHART SCRIPT -->
+{% if not_ready %}
 <script>
 const dates = {{ dates | tojson | safe }};
 const predictions = {{ predictions | tojson | safe }};
@@ -139,6 +168,7 @@ if (!dates.length) {
   );
 }
 </script>
+{% end if %}
 
 <!-- 🌙 DARK MODE SCRIPT -->
 <script>
