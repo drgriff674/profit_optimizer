@@ -482,8 +482,8 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 app.config.update(
     SECRET_KEY=os.getenv("FLASK_SECRET_KEY", "dev_secret_key"),
-    SESSION_COOKIE_SECURE = True if os.getenv("ENV") == "production" else False,
-    REMEMBER_COOKIE_SECURE=True,
+    SESSION_COOKIE_SECURE = False,
+    REMEMBER_COOKIE_SECURE=False,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax'
 )
