@@ -2519,54 +2519,44 @@ def cash_revenue_entry():
 @login_required
 def edit_entry(entry_id):
 
-    username=session["username"]
+    username = session["username"]
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        data=request.get_json()
-
-        category=data["category"]
-        amount=float(data["amount"])
+        data = request.get_json()
+        category = data["category"]
+        amount = float(data["amount"])
 
         def operation(cur):
             cur.execute("""
                 UPDATE cash_revenue
-                SET category=%s,
-                amount=%s
-                WHERE id=%s
-                AND username=%s
-            """,(category,amount,entry_id,username))
+                SET category=%s, amount=%s
+                WHERE id=%s AND username=%s
+            """, (category, amount, entry_id, username))
 
         run_db_operation(operation, commit=True)
 
         update_dashboard_snapshot(username)
         update_dashboard_intelligence(username)
 
-        return jsonify({"success":True})
+        return jsonify({"success": True})
 
-        def operation(cur):
-            cur.execute("""
-                SELECT id,category,amount
-                FROM cash_revenue
-                WHERE id=%s
-                AND username=%s
-            """,(entry_id,username))
+    # ✅ GET PART (outside POST)
+    def operation(cur):
+        cur.execute("""
+            SELECT id, category, amount
+            FROM cash_revenue
+            WHERE id=%s AND username=%s
+        """, (entry_id, username))
+        return cur.fetchone()
 
-            return cur.fetchone()
+    entry = run_db_operation(operation)
 
-        entry=run_db_operation(operation)
+    if not entry:
+        flash("Entry not found", "error")
+        return redirect(url_for("revenue_entry"))
 
-        if not entry:
-            flash("Entry not found","error")
-            return redirect(url_for("revenue_entry"))
-
-        return render_template(
-            "edit_entry.html",
-            entry=entry
-
-
-        )
-
+    return render_template("edit_entry.html", entry=entry)
 
 @app.route("/delete_revenue_entry/<int:entry_id>", methods=["POST"])
 @login_required
@@ -3387,13 +3377,14 @@ def payment_confirm():
         
         if account_ref:
             try:
+                username_from_sale = None
                 def link_sale(cur):
 
-                    
+                    # 1. Update sale
                     cur.execute("""
                         UPDATE sales
                         SET status = 'completed'
-                        WHERE TRIM(sale_id) = %s AND status = 'pending'
+                        WHERE TRIM(sale_id) = %s AND status IN ('pending','unpaid')
                         RETURNING business_id
                     """, (account_ref,))
 
@@ -3405,27 +3396,7 @@ def payment_confirm():
 
                     business_id = updated["business_id"]
 
-                    import pytz
-                    from datetime import datetime
-
-                    nairobi = pytz.timezone("Africa/Nairobi")
-                    today = datetime.now(nairobi).date()
-
-                    # create revenue day if not exists
-                    cur.execute("""
-                        INSERT INTO revenue_days (username, revenue_date)
-                        VALUES (%s, %s)
-                        ON CONFLICT (username, revenue_date) DO NOTHING
-                    """, (username_from_sale, today))
-
-                    # add amount
-                    cur.execute("""
-                        UPDATE revenue_days
-                        SET total_amount = total_amount + %s
-                        WHERE username = %s AND revenue_date = %s
-                    """, (amount, username_from_sale, today))
-
-                    
+                    # 2. Get username FIRST
                     cur.execute("""
                         SELECT username FROM businesses
                         WHERE id = %s
@@ -3439,10 +3410,28 @@ def payment_confirm():
 
                     username_from_sale = biz["username"]
 
+                    # 3. Revenue update
+                    import pytz
+                    from datetime import datetime
+
+                    nairobi = pytz.timezone("Africa/Nairobi")
+                    today = datetime.now(nairobi).date()
+
+                    cur.execute("""
+                        INSERT INTO revenue_days (username, revenue_date)
+                        VALUES (%s, %s)
+                        ON CONFLICT (username, revenue_date) DO NOTHING
+                    """, (username_from_sale, today))
+
+                    cur.execute("""
+                        UPDATE revenue_days
+                        SET total_amount = total_amount + %s
+                        WHERE username = %s AND revenue_date = %s
+                    """, (amount, username_from_sale, today))
+
                     print("✅ Sale linked + user:", username_from_sale)
 
                     return username_from_sale
-
                 username_from_sale = run_db_operation(link_sale, commit=True)
 
                 
@@ -3463,7 +3452,7 @@ def payment_confirm():
             request.remote_addr
             )
         
-        if not username_from_sale and username_local:
+        if not username_from_sale is None and username_local:
             process_payment(username_local, amount, local_date)
             
             update_dashboard_snapshot(username_local)

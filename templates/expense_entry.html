@@ -223,7 +223,7 @@ const btn = document.getElementById("saveExpenseBtn");
 btn.innerText = "Saving...";
 btn.disabled = true;
 
-fetch("/expense_entry", {
+fetch("/expense/entry", {
     method: "POST",
     headers: {
         "Content-Type": "application/json",
