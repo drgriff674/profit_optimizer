@@ -2529,7 +2529,7 @@ def edit_entry(entry_id):
 
         def operation(cur):
             cur.execute("""
-                UPDATE cash_revenue
+                UPDATE revenue_entries
                 SET category=%s, amount=%s
                 WHERE id=%s AND username=%s
             """, (category, amount, entry_id, username))
@@ -2541,11 +2541,11 @@ def edit_entry(entry_id):
 
         return jsonify({"success": True})
 
-    # ✅ GET PART (outside POST)
+    # GET
     def operation(cur):
         cur.execute("""
             SELECT id, category, amount
-            FROM cash_revenue
+            FROM revenue_entries
             WHERE id=%s AND username=%s
         """, (entry_id, username))
         return cur.fetchone()
