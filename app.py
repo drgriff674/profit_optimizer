@@ -2556,7 +2556,7 @@ def edit_entry(entry_id):
         flash("Entry not found", "error")
         return redirect(url_for("revenue_entry"))
 
-    return render_template("edit_entry.html", entry=entry)
+    return render_template("edit_revenue_entry.html", entry=entry)
 
 @app.route("/delete_revenue_entry/<int:entry_id>", methods=["POST"])
 @login_required
