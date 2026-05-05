@@ -141,10 +141,16 @@ value="{{ csrf_token() }}">
 <button
 type="submit"
 class="w-full rounded-xl
-bg-red-600 hover:bg-red-700
-text-white font-semibold py-3 shadow-md">
-🗑 Delete Entry
+border border-red-500 text-red-500
+hover:bg-red-500 hover:text-white
+font-semibold py-3 shadow-sm
+transition-all duration-200">
+
+Delete Entry
+
 </button>
+
+
 
 </form>
 
@@ -171,32 +177,32 @@ document.getElementById("editRevenueForm")
 
 e.preventDefault();
 
-const category=
+const category =
 document.querySelector("[name='category']").value;
 
-const amount=
+const amount =
 document.querySelector("[name='amount']").value;
 
-const csrf=
+const csrf =
 document.querySelector('[name="csrf_token"]').value;
 
-const entryId={{ entry.id }};
+const entryId = {{ entry.id }};
 
 if(!navigator.onLine){
 alert("📴 Must be online to edit revenue");
 return;
 }
 
-const btn=document.getElementById("saveBtn");
+const btn = document.getElementById("saveBtn");
 
-btn.innerText="Saving...";
-btn.disabled=true;
+btn.innerText = "Saving...";
+btn.disabled = true;
 
 document
 .getElementById("pageLoader")
 .classList.remove("hidden");
 
-fetch(/edit_entry/${entryId},{
+fetch(`/edit_entry/${entryId}`, {   // ✅ FIXED LINE
 method:"POST",
 headers:{
 "Content-Type":"application/json",
