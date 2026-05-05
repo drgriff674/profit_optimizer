@@ -1417,6 +1417,10 @@ video {
   --tw-gradient-to: #f43f5e var(--tw-gradient-to-position);
 }
 
+.to-red-500 {
+  --tw-gradient-to: #ef4444 var(--tw-gradient-to-position);
+}
+
 .object-cover {
   -o-object-fit: cover;
      object-fit: cover;
@@ -2097,8 +2101,18 @@ video {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
+.hover\:from-red-700:hover {
+  --tw-gradient-from: #b91c1c var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(185 28 28 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .hover\:to-blue-600:hover {
   --tw-gradient-to: #2563eb var(--tw-gradient-to-position);
+}
+
+.hover\:to-red-600:hover {
+  --tw-gradient-to: #dc2626 var(--tw-gradient-to-position);
 }
 
 .hover\:pl-5:hover {
