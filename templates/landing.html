@@ -124,22 +124,96 @@ href="{{ url_for('static', filename='css/output.css') }}">
       opacity: 1;
       transform: translateY(0);
     }
+
+    /* SPLASH SCREEN */
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  transition: opacity 1s ease;
+}
+
+.splash-logo {
+  width: 120px;
+  animation: pulseLogo 2s infinite;
+  filter: drop-shadow(0 0 25px rgba(37,99,235,0.45));
+}
+
+.splash-text {
+  margin-top: 20px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 1px;
+}
+
+.splash-copy {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.5px;
+}
+
+@keyframes pulseLogo {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+    
   </style>
+
 </head>
 
 <body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+
+  <img
+    src="{{ url_for('static', filename='icon.png') }}"
+    class="splash-logo"
+  >
+
+  <div class="splash-text">
+    OptiGain
+  </div>
+
+  <p class="splash-copy">
+    © 2026 OptiGain Technologies. All Rights Reserved.
+  </p>
+
+</div>
 
 <!-- NAV -->
 <header class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 justify-between items-center backdrop-blur-md bg-white/5 border border-white/10 rounded-xl mt-4">
 
   <div class="flex items-center gap-3">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="w-10">
+    <img src="{{ url_for('static', filename='icon.png') }}" class="w-10">
     <h1 class="text-2xl font-bold">OptiGain<span class="text-blue-500">.</span></h1>
   </div>
 
   <div class="hidden sm:flex gap-4">
     <a href="#home">Home</a>
     <a href="#how">How it works</a>
+    <a href="#businesses">Businesses</a>
+    <a href="#security">Security</a>
     <a href="#why">About</a>
 
 
@@ -271,6 +345,117 @@ href="{{ url_for('static', filename='css/output.css') }}">
 
 </section>
 
+<!-- BUSINESSES -->
+<section id="businesses" class="py-24 text-center">
+
+  <div class="max-w-5xl mx-auto px-6 reveal">
+
+    <h2 class="text-4xl font-bold mb-8">
+      Built for modern businesses
+    </h2>
+
+    <p class="text-lg text-gray-400 mb-12">
+      OptiGain adapts to different industries — helping businesses track revenue,
+      inventory, expenses and performance from one intelligent platform.
+    </p>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-left">
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">🏥 Pharmacies</h3>
+        <p class="text-gray-400 text-sm">
+          Track stock levels, fast-moving products and daily sales automatically.
+        </p>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">🏨 Hotels</h3>
+        <p class="text-gray-400 text-sm">
+          Monitor revenue, expenses and payment flows in real time.
+        </p>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">🛒 Retail Shops</h3>
+        <p class="text-gray-400 text-sm">
+          Simplify inventory management and daily transaction tracking.
+        </p>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">💈 Barber Shops</h3>
+        <p class="text-gray-400 text-sm">
+          Track payments, services and business performance clearly.
+        </p>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">🍸 Bars & Restaurants</h3>
+        <p class="text-gray-400 text-sm">
+          Manage stock usage, sales and operational expenses from one system.
+        </p>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+        <h3 class="font-bold text-lg mb-2">📦 Growing Businesses</h3>
+        <p class="text-gray-400 text-sm">
+          Scale operations with forecasting, analytics and financial visibility.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- SECURITY -->
+<section id="security" class="py-24">
+
+  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center">
+
+    <div class="img-overlay reveal">
+      <img src="{{ url_for('static', filename='images/security.jpg') }}"
+           class="rounded-xl shadow-2xl">
+    </div>
+
+    <div class="reveal">
+
+      <h2 class="text-4xl font-bold mb-8">
+        Security & Data Protection
+      </h2>
+
+      <ul class="space-y-6 text-gray-300 text-lg list-disc pl-6">
+
+        <li>User account verification for secure access</li>
+
+        <li>Protected business data isolation between accounts</li>
+
+        <li>Encrypted password authentication</li>
+
+        <li>Secure payment integration workflows</li>
+
+        <li>Real-time database backups and monitoring</li>
+
+        <li>Activity tracking for operational transparency</li>
+
+        <li>Designed to reduce fraud and unauthorized access</li>
+
+        <li>Cloud-hosted infrastructure with scalable reliability</li>
+
+      </ul>
+
+      <p class="text-gray-400 mt-6">
+        OptiGain is designed with business security, reliability and operational trust in mind.
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
 <!-- WHY -->
 <section id="why" class="py-24 text-center">
 
@@ -278,24 +463,28 @@ href="{{ url_for('static', filename='css/output.css') }}">
 
     <h2 class="text-4xl font-bold mb-8">Why OptiGain exists</h2>
 
-    <p class="text-lg text-gray-400 mb-6">
-      Most businesses are not failing — they are operating blindly.
-    </p>
+<p class="text-lg text-gray-400 mb-6">
+  Most businesses are not failing — they are operating without visibility.
+</p>
 
-    <p class="text-lg text-gray-400 mb-6">
-      Money comes in. Money goes out.
-      But nothing connects into one clear system.
-    </p>
+<p class="text-lg text-gray-400 mb-6">
+  Revenue comes in daily, expenses increase quietly,
+  inventory changes constantly — but most systems never connect everything together.
+</p>
 
-    <p class="text-lg text-gray-300 mb-6">
-      OptiGain gives you real-time clarity —
-      tracking every sale, payment, and expense instantly.
-    </p>
+<p class="text-lg text-gray-400 mb-6">
+  Business owners are forced to rely on spreadsheets,
+  manual calculations and disconnected records that slow decision making.
+</p>
 
-    <p class="text-xl font-semibold">
-      No spreadsheets. No guesswork. Just control.
-    </p>
+<p class="text-lg text-gray-300 mb-6">
+  OptiGain was built to create one intelligent financial operating system —
+  combining payments, inventory, forecasting, expenses and analytics into one platform.
+</p>
 
+<p class="text-xl font-semibold">
+  Real-time clarity. Better decisions. Full control.
+</p>
   </div>
 
 </section>
@@ -452,6 +641,24 @@ window.addEventListener("beforeinstallprompt", (e) => {
       console.log("❌ Lucide failed to load");
     }
   });
+</script>
+
+<script>
+window.addEventListener("load", () => {
+
+  setTimeout(() => {
+
+    const splash = document.getElementById("splash-screen");
+
+    splash.style.opacity = "0";
+
+    setTimeout(() => {
+      splash.style.display = "none";
+    }, 1000);
+
+  }, 2200);
+
+});
 </script>
 
 </body>
