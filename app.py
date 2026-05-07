@@ -1188,11 +1188,17 @@ def fix_emails():
 
 @app.route("/terms")
 def terms():
-    return render_template("terms.html")
+    return render_template(
+        "terms.html",
+        current_year=datetime.now().year
+    )
 
 @app.route("/privacy")
 def privacy():
-    return render_template("privacy.html")
+    return render_template(
+        "privacy.html",
+        current_year=datetime.now().year
+    )
 
 cache.memoize(timeout=60)
 def get_dashboard_bundle_cached(username):

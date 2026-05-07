@@ -55,15 +55,16 @@
     <!-- MODE SELECT -->
     <div class="flex flex-col sm:flex-row gap-2 mb-4">
 
-      <button type="button" onclick="setMode('normal')" id="btnNormal"
-        class="flex-1 p-3 rounded-lg border text-left">
+     <button type="button" onclick="setMode('normal')" id="btnNormal"
+class="flex-1 p-3 rounded-xl border text-left transition-all duration-200 hover:scale-[1.02]">
         👤 <b>Normal User</b><br>
         <span class="text-xs opacity-70">Till / manual payments</span>
       </button>
 
-      <button type="button" onclick="setMode('paybill')" id="btnPaybill"
-        class="flex-1 p-3 rounded-lg border text-left">
-        🏢 <b>Paybill Business</b><br>
+<button type="button" onclick="setMode('paybill')" id="btnPaybill"
+class="flex-1 p-3 rounded-xl border text-left transition-all duration-200 hover:scale-[1.02]">
+
+              🏢 <b>Paybill Business</b><br>
         <span class="text-xs opacity-70">Automatic tracking</span>
       </button>
 
@@ -147,21 +148,65 @@
 
 <!-- JS -->
 <script>
+
 function setMode(mode) {
+
   const paybillFields = document.getElementById("paybillFields");
   const hidden = document.getElementById("setup_type");
 
   const business = document.querySelector("input[name='business_name']");
   const paybill = document.querySelector("input[name='paybill']");
 
+  const btnNormal = document.getElementById("btnNormal");
+  const btnPaybill = document.getElementById("btnPaybill");
+
   hidden.value = mode;
 
+  // RESET BOTH BUTTONS
+  btnNormal.classList.remove(
+    "bg-blue-600",
+    "text-white",
+    "border-blue-500",
+    "shadow-lg",
+    "scale-[1.02]"
+  );
+
+  btnPaybill.classList.remove(
+    "bg-blue-600",
+    "text-white",
+    "border-blue-500",
+    "shadow-lg",
+    "scale-[1.02]"
+  );
+
+  // ACTIVE STATE
   if (mode === "normal") {
+
+    btnNormal.classList.add(
+      "bg-blue-600",
+      "text-white",
+      "border-blue-500",
+      "shadow-lg",
+      "scale-[1.02]"
+    );
+
     paybillFields.classList.add("hidden");
+
     business.required = false;
     paybill.required = false;
+
   } else {
+
+    btnPaybill.classList.add(
+      "bg-blue-600",
+      "text-white",
+      "border-blue-500",
+      "shadow-lg",
+      "scale-[1.02]"
+    );
+
     paybillFields.classList.remove("hidden");
+
     business.required = true;
     paybill.required = true;
   }

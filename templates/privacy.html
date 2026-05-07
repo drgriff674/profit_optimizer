@@ -1,114 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>OptiGain Privacy Policy</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+  font-family:'Space Grotesk',sans-serif;
+  background:#020617;
+  color:white;
+}
+
+.glass-card{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter:blur(14px);
+}
+
+</style>
+
 </head>
 
-<body class="max-w-3xl mx-auto p-6">
+<body class="min-h-screen px-4 py-10">
 
-<a href="{{ url_for('register') }}"
-   class="inline-block mb-4 px-4 py-2 rounded shadow text-sm"
-   style="background: #2563eb; color: white;">
-   ← Back to Registration
-</a>
+<div class="max-w-4xl mx-auto">
 
-<h1 class="text-2xl font-bold mb-4">OptiGain Privacy Policy</h1>
+  <!-- BRAND -->
+  <div class="text-center mb-10">
 
-<p class="text-sm opacity-70 mb-6">
-Last updated: {{ current_year }}
-</p>
+    <img src="{{ url_for('static', filename='icon.png') }}"
+         class="w-20 mx-auto mb-4">
 
-<!-- INTRO -->
-<p class="mb-4">
-OptiGain is a financial intelligence platform designed to help businesses track revenue,
-expenses, and performance. We take your privacy seriously and are committed to protecting
-your data.
-</p>
+    <h1 class="text-4xl font-extrabold">
+      OptiGain<span class="text-blue-500">.</span>
+    </h1>
 
-<!-- DATA WE COLLECT -->
-<h2 class="font-semibold mt-6">1. Information We Collect</h2>
-<ul class="list-disc ml-5 text-sm space-y-2">
-  <li>Account information (username, email)</li>
-  <li>Business details (business name, paybill number if provided)</li>
-  <li>Financial data (sales, revenue, expenses)</li>
-  <li>System usage data (to improve performance and features)</li>
-</ul>
+    <p class="text-gray-400 mt-2">
+      Smart Financial Intelligence for Modern Businesses
+    </p>
 
-<!-- HOW WE USE -->
-<h2 class="font-semibold mt-6">2. How We Use Your Information</h2>
-<p class="text-sm">
-Your data is used strictly to:
-</p>
-<ul class="list-disc ml-5 text-sm space-y-2">
-  <li>Generate financial analytics and insights</li>
-  <li>Provide dashboards, reports, and forecasts</li>
-  <li>Improve system performance and reliability</li>
-</ul>
+  </div>
 
-<!-- PAYMENT MODES -->
-<h2 class="font-semibold mt-6">3. Payment Data (Paybill vs Till)</h2>
-<p class="text-sm">
-OptiGain supports two types of payment tracking:
-</p>
+  <!-- CARD -->
+  <div class="glass-card rounded-3xl shadow-2xl p-6 sm:p-10">
 
-<ul class="list-disc ml-5 text-sm space-y-2">
-  <li>
-    <strong>Paybill Users:</strong> Payments may be automatically detected through integration
-    with mobile money systems (e.g., MPesa).
-  </li>
-  <li>
-    <strong>Normal (Till/Cash) Users:</strong> Payments are manually confirmed by the business owner.
-  </li>
-</ul>
+    <!-- BACK -->
+    <a href="{{ url_for('register') }}"
+       class="inline-block mb-8 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 transition text-white font-semibold shadow-lg">
+       ← Back to Registration
+    </a>
 
-<p class="text-sm mt-2">
-We do not store sensitive mobile money credentials such as PINs.
-</p>
+    <!-- TITLE -->
+    <h1 class="text-4xl font-extrabold mb-3">
+      Privacy Policy
+    </h1>
 
-<!-- DATA SECURITY -->
-<h2 class="font-semibold mt-6">4. Data Security</h2>
-<p class="text-sm">
-We implement reasonable technical and organizational measures to protect your data.
-However, no system is 100% secure, and users are encouraged to protect their account credentials.
-</p>
+    <p class="text-sm text-gray-400 mb-10">
+      Last updated: {{ current_year }}
+    </p>
 
-<!-- THIRD PARTIES -->
-<h2 class="font-semibold mt-6">5. Third-Party Services</h2>
-<p class="text-sm">
-OptiGain may interact with third-party services such as:
-</p>
-<ul class="list-disc ml-5 text-sm space-y-2">
-  <li>Mobile money providers (e.g., MPesa)</li>
-  <li>Email delivery systems</li>
-  <li>Cloud hosting providers</li>
-</ul>
+    <!-- INTRO -->
+    <p class="text-gray-300 leading-8 mb-8">
+      OptiGain is a financial intelligence platform designed to help businesses
+      track revenue, expenses, inventory, forecasting and operational performance.
+      We value user privacy and are committed to protecting business and financial data responsibly.
+    </p>
 
-<p class="text-sm">
-These providers operate under their own privacy policies.
-</p>
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      1. Information We Collect
+    </h2>
 
-<!-- DATA RETENTION -->
-<h2 class="font-semibold mt-6">6. Data Retention</h2>
-<p class="text-sm">
-We retain your data for as long as your account is active. You may request deletion at any time.
-</p>
+    <ul class="list-disc ml-6 text-gray-300 space-y-3 leading-7 mb-10">
+      <li>Account information such as username and email address</li>
+      <li>Business information including business name and paybill details</li>
+      <li>Financial records such as sales, revenue and expenses</li>
+      <li>Operational analytics used to improve system performance</li>
+    </ul>
 
-<!-- USER RIGHTS -->
-<h2 class="font-semibold mt-6">7. Your Rights</h2>
-<ul class="list-disc ml-5 text-sm space-y-2">
-  <li>Access your stored data</li>
-  <li>Request account deletion</li>
-  <li>Request correction of inaccurate data</li>
-</ul>
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      2. How We Use Your Information
+    </h2>
 
-<!-- UPDATES -->
-<h2 class="font-semibold mt-6">8. Updates to This Policy</h2>
-<p class="text-sm">
-We may update this Privacy Policy from time to time. Continued use of OptiGain
-means you accept the updated policy.
-</p>
+    <p class="text-gray-300 leading-8 mb-4">
+      Your information is used strictly for platform functionality and service improvement.
+    </p>
+
+    <ul class="list-disc ml-6 text-gray-300 space-y-3 leading-7 mb-10">
+      <li>Generate financial analytics and business insights</li>
+      <li>Provide dashboards, reports and forecasting tools</li>
+      <li>Improve reliability, performance and security</li>
+      <li>Support payment tracking workflows and operational visibility</li>
+    </ul>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      3. Payment Tracking
+    </h2>
+
+    <p class="text-gray-300 leading-8 mb-4">
+      OptiGain supports both automated and manual payment workflows.
+    </p>
+
+    <ul class="list-disc ml-6 text-gray-300 space-y-3 leading-7 mb-10">
+
+      <li>
+        <strong>Paybill Businesses:</strong>
+        Transactions may be automatically detected through integration
+        with mobile money systems such as MPesa.
+      </li>
+
+      <li>
+        <strong>Till/Cash Businesses:</strong>
+        Payments may be manually confirmed and managed by business staff.
+      </li>
+
+    </ul>
+
+    <p class="text-gray-300 leading-8 mb-10">
+      OptiGain does not store sensitive mobile money credentials such as PINs.
+    </p>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      4. Data Security
+    </h2>
+
+    <p class="text-gray-300 leading-8 mb-10">
+      We implement technical and organizational safeguards designed to protect user information,
+      including account authentication, business data isolation and secure infrastructure practices.
+      However, users are encouraged to maintain strong passwords and protect account access responsibly.
+    </p>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      5. Third-Party Services
+    </h2>
+
+    <p class="text-gray-300 leading-8 mb-4">
+      OptiGain may interact with trusted third-party providers including:
+    </p>
+
+    <ul class="list-disc ml-6 text-gray-300 space-y-3 leading-7 mb-10">
+      <li>Mobile money providers (e.g. MPesa)</li>
+      <li>Email delivery systems</li>
+      <li>Cloud hosting infrastructure providers</li>
+    </ul>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      6. Data Retention
+    </h2>
+
+    <p class="text-gray-300 leading-8 mb-10">
+      Data may be retained while accounts remain active in order to provide platform functionality,
+      analytics and reporting services. Users may request account deletion where applicable.
+    </p>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      7. User Rights
+    </h2>
+
+    <ul class="list-disc ml-6 text-gray-300 space-y-3 leading-7 mb-10">
+      <li>Request access to stored information</li>
+      <li>Request correction of inaccurate information</li>
+      <li>Request account or data deletion where applicable</li>
+    </ul>
+
+    <!-- SECTION -->
+    <h2 class="text-2xl font-bold text-blue-400 mb-4">
+      8. Policy Updates
+    </h2>
+
+    <p class="text-gray-300 leading-8">
+      This Privacy Policy may be updated periodically to reflect platform improvements,
+      security enhancements or operational changes. Continued use of OptiGain constitutes
+      acceptance of the updated policy.
+    </p>
+
+    <!-- FOOTER -->
+    <div class="mt-14 pt-6 border-t border-white/10 text-center">
+
+      <p class="text-gray-400 text-sm">
+        © {{ current_year }} OptiGain Technologies
+      </p>
+
+      <p class="text-xs text-gray-500 mt-2">
+        Financial Intelligence • Revenue Tracking • Inventory • Forecasting
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
 
 </body>
-
 </html>
