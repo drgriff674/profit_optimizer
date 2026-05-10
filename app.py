@@ -453,7 +453,10 @@ def check_subscription():
         "verify",
         "terms",
         "privacy",
-        "favicon"
+        "favicon",
+        "forgot_password",
+        "resend_otp",
+        "reset_password"
     }
 
     if not request.endpoint:
