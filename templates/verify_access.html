@@ -157,22 +157,24 @@
             inventory controls and stock adjustments.
         </p>
 
-        <form method="POST">
+		<form method="POST">
 
-            <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-            >
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <button type="submit">
-                Verify Access
-            </button>
+<input
+type="password"
+name="password"
+required
+placeholder="Enter account password"
+>
 
-        </form>
+<button type="submit">
+Verify Access
+</button>
 
-        <div class="footer">
+</form>
+
+                <div class="footer">
             OptiGain Security System
         </div>
 
