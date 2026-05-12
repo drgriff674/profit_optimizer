@@ -885,6 +885,10 @@ video {
   max-height: 300px;
 }
 
+.max-h-72 {
+  max-height: 18rem;
+}
+
 .min-h-\[200px\] {
   min-height: 200px;
 }
@@ -1676,6 +1680,10 @@ video {
 
 .pt-6 {
   padding-top: 1.5rem;
+}
+
+.pr-2 {
+  padding-right: 0.5rem;
 }
 
 .text-left {

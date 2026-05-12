@@ -1979,6 +1979,7 @@ def create_sale():
 def sales_page():
 
     username = session["username"]
+    active_branch_id = session.get("active_branch_id")
 
     def operation(cur):
         cur.execute("""

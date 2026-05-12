@@ -198,11 +198,12 @@ id="saveExpenseBtn"
     </span>
   </div>
 
-  {% if recent_expenses %}
+{% if recent_expenses %}
 
-    <div class="space-y-3">
+    <div class="max-h-72 overflow-y-auto pr-2 custom-scroll">
+      <div class="space-y-3">
 
-      {% for expense in recent_expenses %}
+       {% for expense in recent_expenses %}
 
       <div class="rounded-xl border
                   border-slate-200 dark:border-slate-700
@@ -245,6 +246,7 @@ id="saveExpenseBtn"
       {% endfor %}
 
     </div>
+     </div>
 
   {% else %}
 
@@ -396,6 +398,21 @@ updateNetworkStatus();
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
 
+
+<style>
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148,163,184,0.5);
+    border-radius: 999px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+</style>
 
 </body>
 </html>
