@@ -210,10 +210,52 @@ hover:pl-5 transition-all duration-200">
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
             <button id="sidebarToggle" class="md:hidden text-2xl">☰</button>
-            <h1 class="text-xl font-semibold tracking-tight">
-  Welcome, <span class="text-blue-600">{{ session['username'] }}</span>
+            
+
+<div class="flex flex-col md:flex-row md:items-center gap-3">
+
+<h1 class="text-xl font-semibold tracking-tight">
+  Welcome,
+  <span class="text-blue-600">
+    {{ session['username'] }}
+  </span>
 </h1>
 
+{% if branches %}
+
+<div class="flex items-center gap-2">
+
+<span class="text-sm opacity-70">
+🏢 Branch:
+</span>
+
+<select
+onchange="window.location.href='/switch-branch/' + this.value"
+class="px-3 py-2 rounded-xl border
+bg-white dark:bg-slate-800
+border-slate-300 dark:border-slate-700
+text-sm shadow-sm">
+
+{% for branch in branches %}
+
+<option
+value="{{ branch.id }}"
+{% if active_branch and branch.id == active_branch.id %}
+selected
+{% endif %}
+>
+{{ branch.branch_name }}
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+{% endif %}
+
+</div>
 <!-- FLASH MESSAGES -->
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}

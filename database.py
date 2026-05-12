@@ -327,6 +327,25 @@ def init_db():
         );
         """)
 
+        # BRANCHES TABLE
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS branches (
+            id SERIAL PRIMARY KEY,
+
+            business_id INTEGER NOT NULL,
+
+            branch_name TEXT NOT NULL,
+
+            location TEXT,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (business_id)
+            REFERENCES businesses(id)
+            ON DELETE CASCADE
+        )
+        """)
+
         # products
         cur.execute("""
         CREATE TABLE IF NOT EXISTS products (
@@ -365,6 +384,85 @@ def init_db():
         )
         """)
 
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_branches_business
+        ON branches(business_id);
+        """)
+
+        # PRODUCTS -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE products
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_products_branch'
+            ) THEN
+
+                ALTER TABLE products
+                ADD CONSTRAINT fk_products_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
+
+        # SALES -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE sales
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_sales_branch'
+            ) THEN
+
+                ALTER TABLE sales
+                ADD CONSTRAINT fk_sales_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
+
+        # INVENTORY ITEMS -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE inventory_items
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_inventory_branch'
+            ) THEN
+
+                ALTER TABLE inventory_items
+                ADD CONSTRAINT fk_inventory_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
         # --- SALES SYSTEM INDEXES ---
 
         cur.execute("""
@@ -577,7 +675,7 @@ def process_payment(username, amount, local_date):
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
 
-def create_sale(business_id, items):
+def create_sale(business_id, items, branch_id=None):
 
     import uuid
 
@@ -588,28 +686,74 @@ def create_sale(business_id, items):
 
         # calculate total
         for item in items:
-            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+
+            cur.execute(
+                "SELECT price FROM products WHERE id=%s",
+                (item["product_id"],)
+            )
+
             product = cur.fetchone()
+
             if not product:
                 continue
 
             total += float(product["price"]) * int(item["quantity"])
 
+        # fallback branch
+        if not branch_id:
+
+            cur.execute("""
+                SELECT id
+                FROM branches
+                WHERE business_id = %s
+                ORDER BY id ASC
+                LIMIT 1
+            """, (business_id,))
+
+            row = cur.fetchone()
+
+            branch_id_local = row["id"] if row else None
+
+        else:
+            branch_id_local = branch_id
+
         # create sale
         cur.execute("""
-            INSERT INTO sales (sale_id, business_id, total_amount, status)
-            VALUES (%s, %s, %s, 'pending')
-        """, (sale_id, business_id, total))
+            INSERT INTO sales (
+                sale_id,
+                business_id,
+                branch_id,
+                total_amount,
+                status
+            )
+            VALUES (%s, %s, %s, %s, 'pending')
+        """, (
+            sale_id,
+            business_id,
+            branch_id_local,
+            total
+        ))
 
         # insert items
         for item in items:
-            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+
+            cur.execute(
+                "SELECT price FROM products WHERE id=%s",
+                (item["product_id"],)
+            )
+
             product = cur.fetchone()
+
             if not product:
                 continue
 
             cur.execute("""
-                INSERT INTO sale_items (sale_id, product_id, quantity, price)
+                INSERT INTO sale_items (
+                    sale_id,
+                    product_id,
+                    quantity,
+                    price
+                )
                 VALUES (%s, %s, %s, %s)
             """, (
                 sale_id,
@@ -618,10 +762,12 @@ def create_sale(business_id, items):
                 product["price"]
             ))
 
-        return {"sale_id": sale_id, "total": total}
+        return {
+            "sale_id": sale_id,
+            "total": total
+        }
 
     return run_db_operation(operation, commit=True)
-
 
 from datetime import datetime, timedelta
 
@@ -1095,15 +1241,52 @@ def detect_revenue_anomalies(username, revenue_date):
 
     
 # inventory helpers
-def create_inventory_item(business_id, name, category, unit):
+def create_inventory_item(
+    business_id,
+    name,
+    category,
+    unit,
+    branch_id=None
+):
 
     def operation(cur):
+
+        # fallback to main branch
+        if not branch_id:
+
+            cur.execute("""
+                SELECT id
+                FROM branches
+                WHERE business_id = %s
+                ORDER BY id ASC
+                LIMIT 1
+            """, (business_id,))
+
+            row = cur.fetchone()
+
+            branch_id_local = row["id"] if row else None
+
+        else:
+            branch_id_local = branch_id
+
         cur.execute(
             """
-            INSERT INTO inventory_items (business_id, name, category, unit)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO inventory_items (
+                business_id,
+                branch_id,
+                name,
+                category,
+                unit
+            )
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (business_id, name, category, unit)
+            (
+                business_id,
+                branch_id_local,
+                name,
+                category,
+                unit
+            )
         )
 
     run_db_operation(operation, commit=True)
@@ -1971,7 +2154,12 @@ def create_user_with_business(username, email, password, role, business_name, pa
         # insert user
         cur.execute(
             """
-            INSERT INTO users (username, email, password, role)
+            INSERT INTO users (
+                username,
+                email,
+                password,
+                role
+            )
             VALUES (%s, %s, %s, %s)
             """,
             (username, email, password, role)
@@ -1980,11 +2168,37 @@ def create_user_with_business(username, email, password, role, business_name, pa
         # insert business
         cur.execute(
             """
-            INSERT INTO businesses (username, business_name, paybill, account_number)
+            INSERT INTO businesses (
+                username,
+                business_name,
+                paybill,
+                account_number
+            )
             VALUES (%s, %s, %s, %s)
+            RETURNING id
             """,
             (username, business_name, paybill, account_number)
         )
+
+        business = cur.fetchone()
+
+        business_id = business["id"]
+
+        # create default branch
+        cur.execute("""
+            INSERT INTO branches (
+                business_id,
+                branch_name,
+                location
+            )
+            VALUES (%s, %s, %s)
+        """, (
+            business_id,
+            "Main Branch",
+            "Head Office"
+        ))
+        
+        
 
 
         from datetime import datetime, timedelta
@@ -2024,6 +2238,94 @@ def get_business_info(username):
         """, (username,))
 
         return cur.fetchone()
+
+    return run_db_operation(operation)
+
+def create_branch(business_id, branch_name, location=None):
+
+    def operation(cur):
+
+        cur.execute("""
+            INSERT INTO branches (
+                business_id,
+                branch_name,
+                location
+            )
+            VALUES (%s, %s, %s)
+        """, (
+            business_id,
+            branch_name,
+            location
+        ))
+
+    return run_db_operation(operation, commit=True)
+
+def get_branches(business_id):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT *
+            FROM branches
+            WHERE business_id = %s
+            ORDER BY created_at ASC
+        """, (business_id,))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
+
+def get_main_branch_id(business_id):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT id
+            FROM branches
+            WHERE business_id = %s
+            ORDER BY id ASC
+            LIMIT 1
+        """, (business_id,))
+
+        row = cur.fetchone()
+
+        return row["id"] if row else None
+
+    return run_db_operation(operation)
+
+def get_branch(branch_id):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT *
+            FROM branches
+            WHERE id = %s
+            LIMIT 1
+        """, (branch_id,))
+
+        return cur.fetchone()
+
+    return run_db_operation(operation)
+
+
+def get_user_branches(username):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT
+                b.id,
+                b.branch_name,
+                b.location
+            FROM branches b
+            JOIN businesses bs
+              ON b.business_id = bs.id
+            WHERE bs.username = %s
+            ORDER BY b.created_at ASC
+        """, (username,))
+
+        return cur.fetchall()
 
     return run_db_operation(operation)
 

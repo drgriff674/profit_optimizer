@@ -11,6 +11,7 @@ from flask import (
     send_file,
     send_from_directory,
     jsonify,
+    session,
 )
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
@@ -94,6 +95,12 @@ from database import(
     get_subscription,
     get_business_id,
     get_dashboard_bundle,
+    get_user_branches,
+    get_branch,
+    get_main_branch_id,
+    get_branches,
+    create_branch,
+    
 )
 import pytz
 from flask_caching import Cache
@@ -406,6 +413,24 @@ def ensure_business_exists(username):
             print("⚠️ Business auto-created for", username)
 
     run_db_operation(operation, commit=True)
+
+def ensure_active_branch():
+
+    if "username" not in session:
+        return
+
+    if session.get("branch_id"):
+        return
+
+    business_id = get_business_id(session["username"])
+
+    if not business_id:
+        return
+
+    branch_id = get_main_branch_id(business_id)
+
+    if branch_id:
+        session["branch_id"] = branch_id
 
 
 
@@ -750,10 +775,11 @@ def register():
 
         
         if setup_type == "normal":
-            if not new_email:
-                flash("Email is required.", "error")
+
+            if not new_email or not business_name:
+                flash("❌ Email and business name are required.", "error")
                 return redirect(url_for("register"))
-            business_name = f"{new_user}'s Business"
+
             paybill = "000000"
             account_number = None
 
@@ -1326,6 +1352,24 @@ def dashboard():
         if not get_business_info_cached(username):
             ensure_business_exists(username)
 
+        # LOAD BUSINESS
+        business_id = get_business_id(username)
+
+        # LOAD ALL BRANCHES
+        branches = get_branches(business_id)
+
+        # AUTO SELECT FIRST BRANCH
+        if branches and "active_branch_id" not in session:
+            session["active_branch_id"] = branches[0]["id"]
+
+        active_branch_id = session.get("active_branch_id")
+
+        # CURRENT ACTIVE BRANCH
+        active_branch = next(
+            (b for b in branches if b["id"] == active_branch_id),
+            branches[0] if branches else None
+        )
+
         latest_payment = None
         warning_message = None
 
@@ -1468,13 +1512,35 @@ def dashboard():
             subscription_status=subscription_status,
             warning_message=warning_message,
             days_left=days_left,
-            current_date=datetime.utcnow().date()
+            current_date=datetime.utcnow().date(),
+            branches=branches,
+            active_branch=active_branch
         )
 
     except Exception as e:  
         print("🔥 DASHBOARD CRASH:", str(e))
         traceback.print_exc()
         return "Dashboard crashed", 500
+
+@app.route("/switch-branch/<int:branch_id>")
+@login_required
+def switch_branch(branch_id):
+
+    username = session["username"]
+
+    business_id = get_business_id(username)
+
+    branches = get_branches(business_id)
+
+    valid_branch = any(
+        b["id"] == branch_id
+        for b in branches
+    )
+
+    if valid_branch:
+        session["active_branch_id"] = branch_id
+
+    return redirect(url_for("dashboard"))
     
 @app.route("/api/dashboard-snapshot")
 @login_required

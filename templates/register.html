@@ -82,11 +82,17 @@ class="flex-1 p-3 rounded-xl border text-left transition-all duration-200 hover:
       <input type="email" name="email" placeholder="Email" required
         class="w-full px-4 py-2 rounded-lg border bg-transparent">
 
+      <!-- BUSINESS NAME -->
+<input type="text"
+name="business_name"
+placeholder="Business Name"
+required
+class="w-full px-4 py-2 rounded-lg border bg-transparent">
+
       <!-- PAYBILL FIELDS -->
       <div id="paybillFields" class="space-y-4 hidden">
 
-        <input type="text" name="business_name" placeholder="Business Name"
-          class="w-full px-4 py-2 rounded-lg border bg-transparent">
+        
 
         <input type="text" name="paybill" placeholder="Paybill Number"
           class="w-full px-4 py-2 rounded-lg border bg-transparent">
@@ -192,7 +198,7 @@ function setMode(mode) {
 
     paybillFields.classList.add("hidden");
 
-    business.required = false;
+    
     paybill.required = false;
 
   } else {
@@ -207,7 +213,7 @@ function setMode(mode) {
 
     paybillFields.classList.remove("hidden");
 
-    business.required = true;
+    
     paybill.required = true;
   }
 }
