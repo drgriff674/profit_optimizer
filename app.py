@@ -36,10 +36,8 @@ from fpdf import FPDF
 import io
 import matplotlib.pyplot as plt
 import seaborn as sns
-import smtplib
 import requests
 from requests.auth import HTTPBasicAuth
-from flask_mail import Mail, Message
 from dotenv import load_dotenv
 load_dotenv()
 from prophet import Prophet
@@ -102,27 +100,52 @@ from flask_caching import Cache
 from datetime import date
 import re
 import random
-from email.mime.text import MIMEText
 import time
 import uuid
 
 def send_otp_email(receiver_email, otp):
-    try:
-        print("📤 Attempting to send OTP to:", receiver_email)
 
-        msg = Message(
-            subject="OptiGain Email Verification",
-            recipients=[receiver_email],
+    try:
+
+        print("📤 Sending OTP to:", receiver_email)
+
+        html = f"""
+        <div style="font-family: Arial; padding: 20px;">
+
+            <h2>OptiGain Verification Code</h2>
+
+            <p>Your verification code is:</p>
+
+            <div style="
+                font-size: 42px;
+                font-weight: bold;
+                letter-spacing: 6px;
+                color: #2563eb;
+                margin: 20px 0;
+            ">
+                {otp}
+            </div>
+
+            <p>This code expires in 5 minutes.</p>
+
+            <br>
+
+            <p>— OptiGain Security System 🔐</p>
+
+        </div>
+        """
+
+        send_email(
+            receiver_email,
+            "Your OptiGain Verification Code",
+            html
         )
 
-        msg.body = f"Your OptiGain verification code is: {otp}"
-
-        mail.send(msg)
-
-        print("✅ EMAIL SENT SUCCESSFULLY")
+        print("✅ OTP EMAIL SENT")
 
     except Exception as e:
-        print("❌ EMAIL FAILED:", str(e))
+
+        print("❌ OTP EMAIL FAILED:", str(e))
 
 
 
@@ -457,8 +480,8 @@ def check_subscription():
         "favicon",
         "forgot_password",
         "resend_otp",
-        "reset_password",
-        "test_email"
+        "reset_password"
+        
     }
 
     if not request.endpoint:
@@ -540,17 +563,7 @@ def allowed_file(filename):
 
 
 
-mail_port = os.getenv("MAIL_PORT")
 
-app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER") or "smtp.gmail.com"
-app.config["MAIL_PORT"] = int(mail_port)if mail_port else 587
-app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
-app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL") == "True"
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
-
-mail = Mail(app)
 
 def initialize_database():
     init_db()

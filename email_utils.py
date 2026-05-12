@@ -7,7 +7,7 @@ def send_email(to_email, subject, html_content):
 
     params = {
         "from": "OptiGain <noreply@optigainapp.com>",
-        "to": [to_email],
+        "to": to_email,
         "subject": subject,
         "html": html_content,
     }
