@@ -1710,12 +1710,21 @@ def update_product(id):
 
     data = request.get_json()
 
+    active_branch_id = session.get("active_branch_id")
+
     def operation(cur):
+
         cur.execute("""
             UPDATE products
             SET name=%s, price=%s
             WHERE id=%s
-        """, (data["name"], data["price"], id))
+              AND branch_id=%s
+        """, (
+            data["name"],
+            data["price"],
+            id,
+            active_branch_id
+        ))
 
     run_db_operation(operation, commit=True)
 
@@ -1726,8 +1735,18 @@ def update_product(id):
 @login_required
 def delete_product(id):
 
+    active_branch_id = session.get("active_branch_id")
+
     def operation(cur):
-        cur.execute("DELETE FROM products WHERE id=%s", (id,))
+
+        cur.execute("""
+            DELETE FROM products
+            WHERE id=%s
+              AND branch_id=%s
+        """, (
+            id,
+            active_branch_id
+        ))
 
     run_db_operation(operation, commit=True)
 
@@ -2013,7 +2032,8 @@ def sales_page():
     return render_template(
         "sales.html",
         products=data["products"],
-        sales=data["sales"]
+        sales=data["sales"],
+        active_branch_id=active_branch_id
     )
 
 
@@ -2741,7 +2761,31 @@ def cash_revenue_entry():
 
             flash("❌ Failed to save cash revenue", "error")
 
-    return render_template("cash_revenue_entry.html")
+    def load_recent_cash(cur):
+
+        cur.execute("""
+            SELECT
+                c.amount,
+                c.description,
+                c.revenue_date,
+                c.created_at,
+                b.branch_name
+            FROM cash_revenue c
+            LEFT JOIN branches b
+                ON c.branch_id = b.id
+            WHERE c.username = %s
+            ORDER BY c.created_at DESC
+            LIMIT 8
+        """, (username,))
+
+        return cur.fetchall()
+
+    recent_cash = run_db_operation(load_recent_cash)
+
+    return render_template(
+        "cash_revenue_entry.html",
+        recent_cash=recent_cash
+    )
 
 @app.route("/edit_entry/<int:entry_id>", methods=["GET","POST"])
 @login_required
@@ -4108,7 +4152,35 @@ def expense_entry():
             flash("❌ Failed to save expense", "error")
             return redirect(url_for("dashboard"))
 
-    return render_template("expense_entry.html")
+    # load recent branch expenses
+    def load_recent_expenses(cur):
+
+        cur.execute("""
+            SELECT
+                amount,
+                category,
+                description,
+                expense_date,
+                created_at
+            FROM expenses
+            WHERE username = %s
+              AND branch_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (
+            username,
+            branch_id
+        ))
+
+        return cur.fetchall()
+
+    recent_expenses = run_db_operation(load_recent_expenses)
+
+    return render_template(
+        "expense_entry.html",
+        recent_expenses=recent_expenses,
+        active_branch_id=branch_id
+    )
 
 
 @app.route("/delete_expense")

@@ -39,10 +39,26 @@
        ← Dashboard
     </a>
 
-    <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
-      Sales
-    </h1>
+<div>
+
+  <h1 class="text-lg font-semibold text-slate-900 dark:text-white">
+    Sales
+  </h1>
+
+  <div class="mt-1 inline-flex items-center gap-2
+              px-3 py-1 rounded-full
+              bg-blue-100 dark:bg-blue-900/30
+              text-blue-700 dark:text-blue-300
+              text-xs font-semibold">
+
+    🏢 Active Branch:
+    Branch #{{ active_branch_id }}
+
   </div>
+
+</div>
+
+      </div>
 
 {% if request.args.get("success") %}
 <div class="flash-message mb-4 p-3 rounded-lg bg-green-100 text-green-700 text-sm">
@@ -67,7 +83,17 @@
 
 <!-- PRODUCTS -->
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col px-3 max-h-[300px] md:max-h-none overflow-y-auto">
-  <h3 class="font-semibold mb-3">Products</h3>
+  <div class="flex items-center justify-between mb-3">
+
+  <h3 class="font-semibold">
+    📦 Branch Products
+  </h3>
+
+  <span class="text-xs opacity-60">
+    Branch Inventory
+  </span>
+
+</div>
 
   <div class="mb-4 space-y-2">
    <input id="pname" placeholder="Product name"
@@ -118,7 +144,17 @@
 
 <!-- SALES -->
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 max-h-[300px] md:max-h-none overflow-y-auto">
-  <h3 class="font-semibold mb-3">Recent Sales</h3>
+  <div class="flex items-center justify-between mb-3">
+
+  <h3 class="font-semibold">
+    🧾 Branch Sales
+  </h3>
+
+  <span class="text-xs opacity-60">
+    Latest Transactions
+  </span>
+
+</div>
 
   <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
 </div>
@@ -247,6 +283,19 @@ function loadProducts() {
     .then(data=>{
         const el = document.getElementById("productsList");
         el.innerHTML = "";
+
+if (data.products.length === 0) {
+
+    el.innerHTML = `
+    <div class="text-sm opacity-60 text-center py-6">
+
+        No products for this branch yet.
+
+    </div>
+    `;
+
+    return;
+}
 
         data.products.forEach(p=>{
             el.innerHTML += `
@@ -437,6 +486,19 @@ function loadSales() {
     .then(data => {
         const el = document.getElementById("salesList");
 el.innerHTML = "";
+
+if (data.sales.length === 0) {
+
+    el.innerHTML = `
+    <div class="text-sm opacity-60 text-center py-6">
+
+        No sales recorded for this branch yet.
+
+    </div>
+    `;
+
+    return;
+}
 
         data.sales.forEach(s => {
 
