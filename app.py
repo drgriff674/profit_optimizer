@@ -457,7 +457,8 @@ def check_subscription():
         "favicon",
         "forgot_password",
         "resend_otp",
-        "reset_password"
+        "reset_password",
+        "test_email"
     }
 
     if not request.endpoint:
