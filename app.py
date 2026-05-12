@@ -110,9 +110,24 @@ def send_otp_email(receiver_email, otp):
         print("📤 Sending OTP to:", receiver_email)
 
         html = f"""
-        <div style="font-family: Arial; padding: 20px;">
+        <div style="
+            font-family: Arial;
+            padding: 30px;
+            background-color: #0f172a;
+            color: white;
+            text-align: center;
+            border-radius: 12px;
+        ">
 
-            <h2>OptiGain Verification Code</h2>
+            <img
+                src="https://optigainapp.com/static/icon.png"
+                width="90"
+                style="margin-bottom: 20px;"
+            >
+
+            <h2 style="margin-bottom: 10px;">
+                OptiGain Verification Code
+            </h2>
 
             <p>Your verification code is:</p>
 
@@ -120,8 +135,8 @@ def send_otp_email(receiver_email, otp):
                 font-size: 42px;
                 font-weight: bold;
                 letter-spacing: 6px;
-                color: #2563eb;
-                margin: 20px 0;
+                color: #4F7CFF;
+                margin: 25px 0;
             ">
                 {otp}
             </div>
@@ -130,7 +145,9 @@ def send_otp_email(receiver_email, otp):
 
             <br>
 
-            <p>— OptiGain Security System 🔐</p>
+            <p style="opacity:0.8;">
+                — OptiGain Security System 🔐
+            </p>
 
         </div>
         """
