@@ -994,6 +994,34 @@ def verify():
 
     return render_template("verify.html")
 
+@app.route("/verify-access", methods=["GET", "POST"])
+@login_required
+def verify_access():
+
+    if request.method == "POST":
+
+        password = request.form["password"]
+
+        user = get_user(session["username"])
+
+        if check_password_hash(user["password"], password):
+
+            session["inventory_verified"] = True
+            session["inventory_verified_time"] = time.time()
+
+            next_page = session.pop(
+                "next_secure_page",
+                "dashboard"
+            )
+
+            flash("✅ Access verified", "success")
+
+            return redirect(url_for(next_page))
+
+        flash("❌ Incorrect password", "error")
+
+    return render_template("verify_access.html")
+
 
 
 
@@ -4062,6 +4090,19 @@ def inventory_setup():
 
     username = session["username"]
 
+    verified_time = session.get("inventory_verified_time", 0)
+
+    if time.time() - verified_time > 300:
+        session["inventory_verified"] = False
+
+    if not session.get("inventory_verified"):
+
+        session["next_secure_page"] = "inventory_setup"
+
+        flash("🔐 Verify password to access inventory.", "info")
+
+        return redirect(url_for("verify_access"))
+
 
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -4175,6 +4216,21 @@ def inventory_setup():
 def inventory_adjust():
 
     username = session["username"]
+
+    verified_time = session.get("inventory_verified_time", 0)
+
+    if time.time() - verified_time > 300:
+        session["inventory_verified"] = False
+
+    if not session.get("inventory_verified"):
+
+        session["next_secure_page"] = "inventory_adjust"
+
+        flash("🔐 Verify password to access inventory controls.", "info")
+
+        return redirect(url_for("verify_access"))
+
+     
 
     conn = None
     cur = None

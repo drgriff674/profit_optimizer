@@ -1,53 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-<title>Customer Support</title>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Customer Support – OptiGain</title>
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+<script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 
-<body class="min-h-screen flex items-center justify-center">
+<body class="min-h-screen flex items-center justify-center relative overflow-hidden"
+style="
+background:
+radial-gradient(circle at top left, rgba(37,99,235,0.18), transparent 35%),
+radial-gradient(circle at bottom right, rgba(59,130,246,0.14), transparent 35%),
+linear-gradient(135deg,#020617,#0f172a,#111827);
+color:white;
+">
 
+<!-- Loader -->
 <div id="pageLoader"
-     class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
-  <div class="text-lg font-semibold animate-pulse">
-    Loading...
-  </div>
+class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center hidden">
+
+<div class="text-lg font-semibold animate-pulse text-white">
+Loading...
 </div>
 
+</div>
 
-<div class="w-full max-w-md p-6 shadow rounded-xl text-center">
+<!-- Glow Background -->
+<div class="absolute inset-0 opacity-30 pointer-events-none">
 
-<h2 class="text-xl font-bold mb-4">
+<div class="absolute top-[-120px] left-[-120px]
+w-96 h-96 bg-blue-500 rounded-full blur-3xl">
+</div>
+
+<div class="absolute bottom-[-120px] right-[-120px]
+w-96 h-96 bg-indigo-500 rounded-full blur-3xl">
+</div>
+
+</div>
+
+<!-- Card -->
+<div class="relative z-10 w-full max-w-md p-8 rounded-3xl border backdrop-blur-xl shadow-2xl text-center"
+style="
+background: rgba(15,23,42,0.82);
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 20px 60px rgba(0,0,0,0.45);
+">
+
+<!-- Icon -->
+<div class="flex justify-center mb-5">
+
+<div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+style="
+background:linear-gradient(135deg,#2563eb,#3b82f6);
+box-shadow:0 10px 30px rgba(37,99,235,0.45);
+">
+
+<i data-lucide="headphones" class="w-8 h-8 text-white"></i>
+
+</div>
+
+</div>
+
+<!-- Heading -->
+<h2 class="text-3xl font-bold mb-3 tracking-tight">
 Customer Support
 </h2>
 
+<p class="text-slate-300 text-sm leading-relaxed mb-7">
+Need help using OptiGain or facing a technical issue?
+Our support team is ready to assist you.
+</p>
+
+<!-- Contact Card -->
+<div class="space-y-4 mb-7">
+
+<div class="rounded-2xl p-4 border"
+style="
+background:rgba(255,255,255,0.04);
+border-color:rgba(255,255,255,0.08);
+">
+
+<div class="flex items-center justify-center gap-2 mb-1">
+
+<i data-lucide="mail" class="w-4 h-4 text-blue-400"></i>
+
+<span class="text-sm text-slate-300">
+Email Support
+</span>
+
+</div>
+
+<div class="font-semibold text-white break-all">
+optigaintechnologies@gmail.com
+</div>
+
+</div>
+
+<div class="rounded-2xl p-4 border"
+style="
+background:rgba(255,255,255,0.04);
+border-color:rgba(255,255,255,0.08);
+">
+
+<div class="flex items-center justify-center gap-2 mb-1">
+
+<i data-lucide="phone-call" class="w-4 h-4 text-green-400"></i>
+
+<span class="text-sm text-slate-300">
+Phone / WhatsApp
+</span>
+
+</div>
+
+<div class="font-semibold text-white">
+0702432710
+</div>
+
+</div>
+
+</div>
+
+<!-- Back Button -->
 <a href="{{ url_for('dashboard') }}"
-   class="inline-block mb-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300">
-   ← Back to Dashboard
+class="inline-flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-white font-semibold transition-all duration-200 hover:scale-[1.02] hover:opacity-95"
+style="
+background:linear-gradient(135deg,#2563eb,#3b82f6);
+box-shadow:0 10px 25px rgba(37,99,235,0.35);
+">
+
+<i data-lucide="arrow-left"></i>
+
+Back to Dashboard
+
 </a>
 
-<p class="mb-4">
-If you need help using OptiGain, contact us anytime.
-</p>
-
-<div class="mb-3">
-📧 Email:  
-<strong>optigaintechnologies@gmail.com</strong>
-</div>
-
-<div class="mb-4">
-📞 Phone / WhatsApp:  
-<strong>0702432710</strong>
-</div>
-
-<p class="text-sm opacity-70">
-Our team usually responds within 24 hours.
+<!-- Footer -->
+<p class="text-xs text-slate-400 mt-6">
+Average response time: within 24 hours
 </p>
 
 </div>
+
+<script>
+lucide.createIcons();
+</script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
-
 
 </body>
 </html>

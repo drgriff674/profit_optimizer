@@ -11,18 +11,56 @@
 
 </head>
 
-<body class="min-h-screen flex items-center justify-center"
-      style="background: var(--og-surface); color: var(--og-text-main);">
+<body class="min-h-screen flex items-center justify-center relative overflow-hidden"
+style="
+background:
+radial-gradient(circle at top left, rgba(37,99,235,0.18), transparent 35%),
+radial-gradient(circle at bottom right, rgba(59,130,246,0.15), transparent 35%),
+linear-gradient(135deg,#020617,#0f172a,#111827);
+color:white;
+">
 
-<div class="w-full max-w-md p-8 rounded-2xl shadow-xl border backdrop-blur-sm"
-     style="background: var(--og-surface); border:1px solid var(--og-border-subtle);">
+<!-- Glow Background -->
+<div class="absolute inset-0 opacity-30 pointer-events-none">
 
-<h2 class="text-2xl font-bold text-center mb-2">
-Verification Required
+<div class="absolute top-[-120px] left-[-120px]
+w-96 h-96 bg-blue-500 rounded-full blur-3xl">
+</div>
+
+<div class="absolute bottom-[-120px] right-[-120px]
+w-96 h-96 bg-indigo-500 rounded-full blur-3xl">
+</div>
+
+</div>
+
+<!-- Main Card -->
+<div class="relative z-10 w-full max-w-md p-8 rounded-3xl border backdrop-blur-xl shadow-2xl"
+style="
+background: rgba(15,23,42,0.82);
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 20px 60px rgba(0,0,0,0.45);
+">
+
+<div class="flex justify-center mb-5">
+
+<div class="w-16 h-16 rounded-2xl flex items-center justify-center"
+style="
+background:linear-gradient(135deg,#2563eb,#3b82f6);
+box-shadow:0 10px 30px rgba(37,99,235,0.45);
+">
+
+<i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+
+</div>
+
+</div>
+
+<h2 class="text-3xl font-bold text-center mb-3 tracking-tight">
+Secure Verification
 </h2>
 
-<p class="text-sm text-center opacity-70 mb-6">
-Enter the 6-digit code sent to your email
+<p class="text-sm text-center text-slate-300 mb-7 leading-relaxed">
+Enter the 6-digit verification code sent to your email address.
 </p>
 
 <!-- TIMER -->
@@ -50,8 +88,11 @@ Enter the 6-digit code sent to your email
 
 <button
 type="submit"
-class="w-full py-3 rounded-lg text-white font-semibold hover:opacity-90"
-style="background: var(--og-primary);">
+class="w-full py-3 rounded-xl text-white font-semibold transition-all duration-200 hover:scale-[1.02] hover:opacity-95"
+style="
+background:linear-gradient(135deg,#2563eb,#3b82f6);
+box-shadow:0 10px 25px rgba(37,99,235,0.35);
+">
 Verify Code
 </button>
 
@@ -71,24 +112,43 @@ Resend code
 
 <!-- OTP STYLE -->
 <style>
+
 .otp-box {
-  width: 48px;
-  height: 58px;
+
+  width: 52px;
+  height: 62px;
+
   text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid var(--og-border-subtle);
-  background: var(--og-surface);
+
+  font-size: 24px;
+  font-weight: 700;
+
+  border-radius: 16px;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.04);
+
+  color: white;
+
+  backdrop-filter: blur(8px);
+
   transition: all 0.2s ease;
 }
 
 .otp-box:focus {
+
   outline: none;
-  border-color: var(--og-primary);
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
-  transform: scale(1.05);
+
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px rgba(59,130,246,0.25),
+    0 10px 25px rgba(59,130,246,0.25);
+
+  transform: translateY(-2px);
 }
+
 </style>
 
 <!-- OTP LOGIC -->
