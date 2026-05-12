@@ -463,6 +463,83 @@ def init_db():
             END IF;
         END $$;
         """)
+
+        # CASH REVENUE -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE cash_revenue
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_cash_branch'
+            ) THEN
+
+                ALTER TABLE cash_revenue
+                ADD CONSTRAINT fk_cash_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
+
+        # EXPENSES -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE expenses
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_expenses_branch'
+            ) THEN
+
+                ALTER TABLE expenses
+                ADD CONSTRAINT fk_expenses_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
+
+        # INVENTORY MOVEMENTS -> BRANCH SUPPORT
+        cur.execute("""
+        ALTER TABLE inventory_movements
+        ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_inventory_movements_branch'
+            ) THEN
+
+                ALTER TABLE inventory_movements
+                ADD CONSTRAINT fk_inventory_movements_branch
+                FOREIGN KEY (branch_id)
+                REFERENCES branches(id)
+                ON DELETE CASCADE;
+
+            END IF;
+        END $$;
+        """)
+
+        
         # --- SALES SYSTEM INDEXES ---
 
         cur.execute("""
@@ -822,20 +899,20 @@ def get_business_id(username):
 
 
 #revenue cash functions
-def add_cash_revenue(username, amount, revenue_date, description=None):
+def add_cash_revenue(username, amount, revenue_date, description=None, branch_id=None):
 
     def operation(cur):
         cur.execute("""
-            INSERT INTO cash_revenue (username, amount, revenue_date, description)
-            VALUES (%s, %s, %s, %s)
-        """, (username, amount, revenue_date, description))
+            INSERT INTO cash_revenue (username, branch_id, amount, revenue_date, description)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (username, branch_id, amount, revenue_date, description))
 
     run_db_operation(operation, commit=True)
 
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
 
-def get_cash_revenue_for_day(username, revenue_date):
+def get_cash_revenue_for_day(username, revenue_date, branch_id=None):
 
     def operation(cur):
         cur.execute("""
@@ -843,13 +920,14 @@ def get_cash_revenue_for_day(username, revenue_date):
             FROM cash_revenue
             WHERE username = %s
               AND revenue_date = %s
+              AND branch_id = %s
             ORDER BY created_at ASC
-        """, (username, revenue_date))
+        """, (username, revenue_date, branch_id))
         return cur.fetchall()
 
     return run_db_operation(operation)
 
-def get_cash_revenue_total_for_day(username, revenue_date):
+def get_cash_revenue_total_for_day(username, revenue_date, branch_id=None):
 
     def operation(cur):
         cur.execute("""
@@ -857,7 +935,8 @@ def get_cash_revenue_total_for_day(username, revenue_date):
             FROM cash_revenue
             WHERE username = %s
               AND revenue_date = %s
-        """, (username, revenue_date))
+              AND branch_id = %s
+        """, (username, revenue_date, branch_id))
         row = cur.fetchone()
         return float(row["total"] or 0)
 
@@ -907,20 +986,45 @@ def debug_print_users():
     
 
 #  expense helpers
-def save_expense(username, amount, category, description, expense_date):
+def save_expense(
+    username,
+    amount,
+    category,
+    description,
+    expense_date,
+    branch_id=None
+):
 
     def operation(cur):
         cur.execute("""
-            INSERT INTO expenses (username, amount, category, description, expense_date)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (username, amount, category, description, expense_date))
+            INSERT INTO expenses (
+                username,
+                branch_id,
+                amount,
+                category,
+                description,
+                expense_date
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            username,
+            branch_id,
+            amount,
+            category,
+            description,
+            expense_date
+        ))
 
     run_db_operation(operation, commit=True)
 
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
 
-def get_expenses_for_day(username, date):
+def get_expenses_for_day(
+    username,
+    date,
+    branch_id=None
+):
 
     def operation(cur):
         cur.execute("""
@@ -928,9 +1032,15 @@ def get_expenses_for_day(username, date):
             FROM expenses
             WHERE username = %s
               AND expense_date = %s
-        """, (username, date))
+              AND branch_id = %s
+        """, (
+            username,
+            date,
+            branch_id
+        ))
 
         rows = cur.fetchall()
+
         total = sum(float(r["amount"]) for r in rows)
 
         return {
@@ -940,7 +1050,10 @@ def get_expenses_for_day(username, date):
 
     return run_db_operation(operation)
 
-def load_expenses(username):
+def load_expenses(
+    username,
+    branch_id=None
+):
 
     def operation(cur):
         cur.execute("""
@@ -952,8 +1065,13 @@ def load_expenses(username):
                 created_at
             FROM expenses
             WHERE username = %s
+              AND branch_id = %s
             ORDER BY expense_date DESC
-        """, (username,))
+        """, (
+            username,
+            branch_id
+        ))
+
         return cur.fetchall()
 
     return run_db_operation(operation)
@@ -970,19 +1088,27 @@ def save_revenue_entry(username, category, amount, revenue_date):
     run_db_operation(operation, commit=True)
 
 
-def load_expense_categories(username):
+def load_expense_categories(
+    username,
+    branch_id=None
+):
 
     def operation(cur):
         cur.execute("""
             SELECT DISTINCT category
             FROM expenses
             WHERE username = %s
+              AND branch_id = %s
               AND category IS NOT NULL
               AND category <> ''
             ORDER BY category ASC
-        """, (username,))
+        """, (
+            username,
+            branch_id
+        ))
 
         rows = cur.fetchall()
+
         return [row["category"] for row in rows]
 
     return run_db_operation(operation)

@@ -100,6 +100,7 @@ from database import(
     get_main_branch_id,
     get_branches,
     create_branch,
+    create_inventory_item,
     
 )
 import pytz
@@ -1685,16 +1686,21 @@ def api_products():
 
     username = session["username"]
 
+    active_branch_id = session.get("active_branch_id")
+
     def operation(cur):
         cur.execute("""
             SELECT p.id, p.name, p.price
             FROM products p
             JOIN businesses b ON p.business_id = b.id
             WHERE b.username = %s
-        """, (username,))
+            AND p.branch_id = %s
+        """, (
+            username,
+            active_branch_id
+        ))
 
         return {"products": cur.fetchall()}
-
     return jsonify(run_db_operation(operation))
 
 @app.route("/products/update/<int:id>", methods=["PUT"])
@@ -1733,6 +1739,8 @@ def api_sales():
 
     username = session["username"]
 
+    active_branch_id = session.get("active_branch_id")
+
     def operation(cur):
         cur.execute("""
             SELECT b.id
@@ -1749,9 +1757,13 @@ def api_sales():
             SELECT sale_id, total_amount, status, created_at
             FROM sales
             WHERE business_id = %s
+            AND branch_id = %s
             ORDER BY created_at DESC
             LIMIT 10
-        """, (biz["id"],))
+        """, (
+            biz["id"],
+            active_branch_id
+        ))
 
         return cur.fetchall()
 
@@ -1805,11 +1817,22 @@ def create_product():
             business_id = biz["id"]
             print("✅ USING BUSINESS ID:", business_id)
 
-            # 
+            branch_id = session.get("active_branch_id")
+
             cur.execute("""
-                INSERT INTO products (business_id, name, price)
-                VALUES (%s, %s, %s)
-            """, (business_id, name, price))
+                INSERT INTO products (
+                    business_id,
+                    branch_id,
+                    name,
+                    price
+                )
+                VALUES (%s, %s, %s, %s)
+            """, (
+                business_id,
+                branch_id,
+                name,
+                price
+            ))
 
         run_db_operation(operation, commit=True)
 
@@ -1842,6 +1865,7 @@ def create_sale():
         """, (username,))
         biz = cur.fetchone()
         business_id = biz["id"]
+        branch_id = session.get("active_branch_id")
 
         import random
 
@@ -1885,12 +1909,26 @@ def create_sale():
         nairobi = pytz.timezone("Africa/Nairobi")
         local_time = datetime.now(nairobi)
 
-        # insert sale
+        # insert branch sale
         cur.execute("""
-            INSERT INTO sales (sale_id, business_id, total_amount, status, created_at)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO sales (
+                sale_id,
+                business_id,
+                branch_id,
+                total_amount,
+                status,
+                created_at
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (sale_id) DO NOTHING
-        """, (sale_id, business_id, total, status, local_time))
+        """, (
+            sale_id,
+            business_id,
+            branch_id,
+            total,
+            status,
+            local_time
+        ))
 
         
         cur.execute("SELECT 1 FROM sale_items WHERE sale_id=%s LIMIT 1", (sale_id,))
@@ -1937,22 +1975,32 @@ def sales_page():
 
         business_id = biz["business_id"]
 
-        # get products
+        active_branch_id = session.get("active_branch_id")
+
+        # get branch products
         cur.execute("""
             SELECT id, name, price
             FROM products
             WHERE business_id = %s
-        """, (business_id,))
+            AND branch_id = %s
+        """, (
+            business_id,
+            active_branch_id
+        ))
         products = cur.fetchall()
 
-        # get recent sales
+        # get branch sales
         cur.execute("""
             SELECT sale_id, total_amount, status, created_at
             FROM sales
             WHERE business_id = %s
+            AND branch_id = %s
             ORDER BY created_at DESC
             LIMIT 10
-        """, (business_id,))
+        """, (
+            business_id,
+            active_branch_id
+        ))
         sales = cur.fetchall()
 
         return {
@@ -2625,6 +2673,7 @@ def lock_revenue_day_route():
 def cash_revenue_entry():
 
     username = session["username"]
+    branch_id = session.get("active_branch_id")
 
     if request.method == "POST":
         try:
@@ -2641,9 +2690,9 @@ def cash_revenue_entry():
 
             def operation(cur):
                 cur.execute("""
-                    INSERT INTO cash_revenue (username, amount, description, revenue_date)
-                    VALUES (%s, %s, %s, %s)
-                """, (username, amount, description, date))
+                    INSERT INTO cash_revenue (username, branch_id, amount, description, revenue_date)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (username, branch_id, amount, description, date))
 
 
                 # create revenue day if not exists
@@ -4014,6 +4063,7 @@ def profit_calculator():
 def expense_entry():
 
     username = session["username"]
+    branch_id = session.get("active_branch_id")
 
     if request.method == "POST":
         try:
@@ -4032,9 +4082,9 @@ def expense_entry():
 
             def operation(cur):
                 cur.execute("""
-                    INSERT INTO expenses (username, amount, category, description, expense_date)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (username, amount, category, description, date))
+                    INSERT INTO expenses (username, branch_id, amount, category, description, expense_date)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (username, branch_id, amount, category, description, date))
 
             run_db_operation(operation, commit=True)
 
@@ -4066,7 +4116,7 @@ def delete_expense():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    expenses = load_expenses(session["username"])
+    expenses = load_expenses(session["username"], session.get("active_branch_id"))
     return render_template("delete_expense.html", entries=expenses)
 
 @app.route("/expense/delete/<int:expense_id>", methods=["POST"])
@@ -4187,6 +4237,7 @@ def revenue_entry():
 def inventory_setup():
 
     username = session["username"]
+    branch_id = session.get("active_branch_id")
 
     verified_time = session.get("inventory_verified_time", 0)
 
@@ -4239,10 +4290,10 @@ def inventory_setup():
             cur = conn.cursor()
 
             cur.execute("""
-                INSERT INTO inventory_items (business_id, name, category, unit)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO inventory_items (business_id, branch_id, name, category, unit)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
-            """, (business_id, name, category, unit))
+            """, (business_id, branch_id, name, category, unit))
 
             item_id = cur.fetchone()[0]
 
@@ -4293,6 +4344,8 @@ def inventory_setup():
         AND m.business_id = i.business_id
         AND m.created_at > s.created_at
     WHERE i.business_id = %s
+        AND i.branch_id = %s
+    
     GROUP BY
         i.name,
         i.category,
@@ -4301,7 +4354,7 @@ def inventory_setup():
         si.quantity,
         s.created_at
     ORDER BY s.snapshot_date DESC
-    """, (business_id,))
+    """, (business_id, branch_id))
 
     items = cur.fetchall()
     cur.close()
@@ -4314,6 +4367,7 @@ def inventory_setup():
 def inventory_adjust():
 
     username = session["username"]
+    branch_id = session.get("active_branch_id")
 
     verified_time = session.get("inventory_verified_time", 0)
 
@@ -4364,11 +4418,38 @@ def inventory_adjust():
                 quantity = abs(quantity)
 
             cur.execute("""
+                SELECT id
+                FROM inventory_items
+                WHERE id = %s
+                  AND branch_id = %s
+                  AND business_id = %s
+            """, (
+                item_id,
+                branch_id,
+                business_id
+            ))
+
+            valid_item = cur.fetchone()
+
+            if not valid_item:
+                flash("Invalid inventory item.", "error")
+                return redirect(url_for("inventory_adjust"))
+
+            cur.execute("""
                 INSERT INTO inventory_movements
-                (business_id, item_id, quantity_change, movement_type, source, created_by)
-                VALUES (%s,%s,%s,%s,%s,%s)
+                (
+                    business_id,
+                    branch_id,
+                    item_id,
+                    quantity_change,
+                    movement_type,
+                    source,
+                    created_by
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
             """, (
                 business_id,
+                branch_id,
                 item_id,
                 quantity,
                 movement_type,
@@ -4387,8 +4468,9 @@ def inventory_adjust():
             SELECT id, name
             FROM inventory_items
             WHERE business_id=%s
+            AND branch_id=%s
             ORDER BY name
-        """, (business_id,))
+        """, (business_id, branch_id))
 
         items = cur.fetchall()
 
