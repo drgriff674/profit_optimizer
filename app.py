@@ -1559,6 +1559,38 @@ def favicon():
         mimetype='image/vnd.microsoft.icon'
     )
 
+@app.route("/branches", methods=["GET", "POST"])
+@login_required
+def branches_page():
+
+    username = session["username"]
+
+    business_id = get_business_id(username)
+
+    if request.method == "POST":
+
+        branch_name = request.form.get("branch_name", "").strip()
+        location = request.form.get("location", "").strip()
+
+        if branch_name:
+
+            create_branch(
+                business_id,
+                branch_name,
+                location
+            )
+
+            flash("✅ Branch created successfully.", "success")
+
+            return redirect(url_for("branches_page"))
+
+    branches = get_branches(business_id)
+
+    return render_template(
+        "branches.html",
+        branches=branches
+    )
+
 
 
 @app.route("/subscribe")
