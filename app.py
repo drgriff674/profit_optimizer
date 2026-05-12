@@ -46,6 +46,7 @@ from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from email_utils import send_email
 from database import(
     load_users,
     save_user,
@@ -1202,6 +1203,18 @@ def privacy():
         "privacy.html",
         current_year=datetime.now().year
     )
+
+
+@app.route("/test-email")
+def test_email():
+
+    send_email(
+        "griffinnnnn77@gmail.com",
+        "OptiGain Test Email",
+        "<h1>OptiGain email system works 🔥</h1>"
+    )
+
+    return "Email sent successfully!"
 
 cache.memoize(timeout=60)
 def get_dashboard_bundle_cached(username):
