@@ -290,14 +290,19 @@ href="{{ url_for('static', filename='css/output.css') }}">
       Financial Intelligence & Inventory — One Platform
     </p>
 
+<div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-300 text-sm font-medium mb-6 reveal">
+  Multi-Branch Support • Unified Analytics • Real-Time Tracking
+</div>
+
     <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 reveal">
   OptiGain – Business Software for Revenue, Inventory & Profit Tracking
 </h1>
 
     <p class="text-gray-400 text-sm sm:text-lg mb-8 max-w-2xl mx-auto reveal">
-      Track revenue, expenses, stock and profit automatically.
-      No spreadsheets. No guesswork.
-    </p>
+  Manage branches, inventory, sales, expenses and profit tracking
+  from one intelligent dashboard.
+  Built to simplify business operations — not complicate them.
+</p>
 
 <p class="text-lg mb-8 reveal">
   <span class="font-semibold text-gray-300">Start with a 7-day free trial</span>
@@ -327,33 +332,105 @@ href="{{ url_for('static', filename='css/output.css') }}">
 <!-- HOW -->
 <section id="how" class="py-24">
 
-  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center">
+  <div class="max-w-5xl mx-auto px-6">
 
-    <div class="img-overlay reveal">
+    <div class="img-overlay reveal mb-12">
       <img src="{{ url_for('static', filename='images/payment.jpg') }}"
-           class="rounded-xl shadow-2xl">
+     class="rounded-2xl shadow-2xl w-full max-h-[650px] object-cover border border-white/10">
     </div>
 
     <div class="reveal">
-      <h2 class="text-4xl font-bold mb-8">How it works</h2>
 
-      <ul class="space-y-6 text-gray-300 text-lg list-disc pl-6">
-        <li>Create a sale → system generates a unique payment reference</li>
-        <li>Customer pays via Paybill or cash</li>
-        <li>Payments auto-match to the correct sale</li>
-        <li>Inventory updates instantly after sale</li>
-        <li>Split revenue → staff input categories to match totals</li>
-        <li>Expenses tracking → see real profit (not guesses)</li>
-        <li>Cash + MPesa unified into one system</li>
-        <li>AI detects unusual drops and spikes</li>
-        <li>Forecasting predicts future revenue</li>
-        <li>Dashboard graphs show trends clearly</li>
-      </ul>
+  <h2 class="text-4xl font-bold mb-8">
+    How OptiGain works
+  </h2>
 
-      <p class="text-gray-400 mt-6">
-        OptiGain replaces spreadsheets and manual tracking — giving you a real financial system.
-      </p>
-    </div>
+  <p class="text-gray-400 text-lg mb-8">
+    OptiGain is designed to feel simple even for businesses with multiple branches,
+    many employees and daily transactions.
+    Everything is connected automatically inside one platform.
+  </p>
+
+  <ul class="space-y-8 text-gray-300 text-lg list-disc pl-6 leading-relaxed">
+
+    <li>
+      When registering your business, the business name you enter becomes your
+      first or main branch automatically.
+    </li>
+
+    <li>
+      You can later create additional branches for different locations,
+      shops or departments inside the same business account.
+    </li>
+
+    <li>
+      Each branch can manage its own sales, products, inventory,
+      expenses and staff activity separately.
+    </li>
+
+    <li>
+      Even though branches operate independently,
+      OptiGain automatically combines everything into one unified dashboard.
+    </li>
+
+    <li>
+      This means total revenue, total expenses, inventory performance,
+      analytics and forecasts are visible across the entire business in real time.
+    </li>
+
+    <li>
+      Staff can create sales quickly inside the system using products already saved in inventory.
+    </li>
+
+    <li>
+      After creating a sale, the system generates a payment reference for the customer.
+    </li>
+
+    <li>
+      Once the customer completes payment and shows confirmation,
+      staff simply click the “Mark as Paid” button to complete the transaction.
+    </li>
+
+    <li>
+      Completed sales are automatically saved inside dashboards,
+      reports and analytics without needing manual calculations.
+    </li>
+
+    <li>
+      Inventory updates automatically after every completed sale,
+      helping businesses track stock movement in real time.
+    </li>
+
+    <li>
+      Expenses from different branches can also be recorded independently
+      while still contributing to unified company-wide profit tracking.
+    </li>
+
+    <li>
+      OptiGain automatically helps businesses understand:
+      revenue trends, best-selling products, branch performance,
+      profit behavior and unusual financial changes.
+    </li>
+
+    <li>
+      AI-powered analytics help detect unusual drops,
+      spikes and business patterns before they become serious problems.
+    </li>
+
+    <li>
+      Forecasting tools help estimate future revenue performance
+      using real operational data from the business.
+    </li>
+
+  </ul>
+
+  <p class="text-gray-400 mt-8 text-lg">
+    OptiGain is built to remove spreadsheets, disconnected records
+    and manual guesswork — replacing them with one intelligent,
+    organized and easy-to-use business system.
+  </p>
+
+</div>
 
   </div>
 
@@ -368,12 +445,8 @@ href="{{ url_for('static', filename='css/output.css') }}">
       Built for modern businesses
     </h2>
 
-    <p class="text-lg text-gray-400 mb-12">
-      OptiGain adapts to different industries — helping businesses track revenue,
-      inventory, expenses and performance from one intelligent platform.
-    </p>
-
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-left">
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-left mt-16">
 
       <div class="bg-white/5 border border-white/10 rounded-xl p-6">
         <h3 class="font-bold text-lg mb-2">🏥 Pharmacies</h3>
@@ -478,27 +551,46 @@ href="{{ url_for('static', filename='css/output.css') }}">
     <h2 class="text-4xl font-bold mb-8">Why OptiGain exists</h2>
 
 <p class="text-lg text-gray-400 mb-6">
-  Most businesses are not failing — they are operating without visibility.
+  Most businesses do not struggle because they lack customers.
+  They struggle because important business information is scattered everywhere.
 </p>
 
 <p class="text-lg text-gray-400 mb-6">
-  Revenue comes in daily, expenses increase quietly,
-  inventory changes constantly — but most systems never connect everything together.
+  Sales are recorded separately, expenses are tracked manually,
+  inventory changes constantly and branch performance becomes difficult to monitor clearly.
 </p>
 
 <p class="text-lg text-gray-400 mb-6">
-  Business owners are forced to rely on spreadsheets,
-  manual calculations and disconnected records that slow decision making.
+  Many business owners are forced to rely on spreadsheets,
+  notebooks, calculators and disconnected systems that consume time
+  and reduce visibility into real business performance.
+</p>
+
+<p class="text-lg text-gray-400 mb-6">
+  OptiGain was built to simplify business management by bringing everything together into one connected platform.
+</p>
+
+<p class="text-lg text-gray-400 mb-6">
+  Instead of managing branches separately,
+  OptiGain allows businesses to operate independently at branch level
+  while still viewing unified analytics, revenue totals,
+  expenses, inventory insights and forecasts from one dashboard.
+</p>
+
+<p class="text-lg text-gray-400 mb-6">
+  Staff can manage daily operations easily,
+  while business owners gain real-time visibility into what is happening across the business.
 </p>
 
 <p class="text-lg text-gray-300 mb-6">
-  OptiGain was built to create one intelligent financial operating system —
-  combining payments, inventory, forecasting, expenses and analytics into one platform.
+  The goal of OptiGain is not to make businesses more technical.
+  The goal is to make businesses easier to understand, control and grow.
 </p>
 
 <p class="text-xl font-semibold">
-  Real-time clarity. Better decisions. Full control.
+  One platform. Full visibility. Better decisions.
 </p>
+
   </div>
 
 </section>
