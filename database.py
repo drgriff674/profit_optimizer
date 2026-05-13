@@ -538,6 +538,41 @@ def init_db():
             END IF;
         END $$;
         """)
+        
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_branches_business
+        ON branches(business_id);
+
+        CREATE INDEX IF NOT EXISTS idx_products_branch
+        ON products(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_sales_branch
+        ON sales(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_sales_business_branch_created
+        ON sales(business_id, branch_id, created_at DESC);
+
+        CREATE INDEX IF NOT EXISTS idx_products_business_branch
+        ON products(business_id, branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_inventory_items_branch
+        ON inventory_items(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_cash_revenue_branch
+        ON cash_revenue(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_expenses_branch
+        ON expenses(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_inventory_movements_branch
+        ON inventory_movements(branch_id);
+
+        CREATE INDEX IF NOT EXISTS idx_sales_created_at
+        ON sales(created_at DESC);
+
+        CREATE INDEX IF NOT EXISTS idx_sales_status
+        ON sales(status);
+        """)
 
         
         # --- SALES SYSTEM INDEXES ---
