@@ -1,4 +1,4 @@
-const CACHE_NAME = "optigain-cache-v1";
+const CACHE_NAME = "optigain-cache-v2";
 
 const urlsToCache = [
   "/",
