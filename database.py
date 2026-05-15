@@ -1055,24 +1055,43 @@ def save_expense(
     update_dashboard_snapshot(username)
     update_dashboard_intelligence(username)
 
-def get_expenses_for_day(
-    username,
-    date,
-    branch_id=None
-):
+def get_expenses_for_day(username, date, branch_id=None):
 
     def operation(cur):
-        cur.execute("""
-            SELECT amount, category, description
-            FROM expenses
-            WHERE username = %s
-              AND expense_date = %s
-              AND branch_id = %s
-        """, (
-            username,
-            date,
-            branch_id
-        ))
+
+        # ALL BRANCHES
+        if branch_id is None:
+
+            cur.execute("""
+                SELECT
+                    amount,
+                    category,
+                    description
+                FROM expenses
+                WHERE username = %s
+                  AND expense_date = %s
+            """, (
+                username,
+                date
+            ))
+
+        # SPECIFIC BRANCH
+        else:
+
+            cur.execute("""
+                SELECT
+                    amount,
+                    category,
+                    description
+                FROM expenses
+                WHERE username = %s
+                  AND expense_date = %s
+                  AND branch_id = %s
+            """, (
+                username,
+                date,
+                branch_id
+            ))
 
         rows = cur.fetchall()
 
