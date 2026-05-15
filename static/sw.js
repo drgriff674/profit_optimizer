@@ -1,4 +1,4 @@
-const CACHE_NAME = "optigain-cache-v11";
+const CACHE_NAME = "optigain-cache-v12";
 
 self.addEventListener("install", (event) => {
 
@@ -13,14 +13,24 @@ self.addEventListener("install", (event) => {
         console.log("CACHE OPENED");
 
         return cache.addAll([
+
           "/",
+          "/dashboard",
+          "/expense/entry",
+
           "/static/manifest.json",
           "/static/css/output.css",
+
+          "/static/js/navigation.js",
+          "/static/js/offline-db.js",
+
           "/static/icon.png",
           "/static/favicon.ico",
+
           "/static/images/hero.jpg",
           "/static/images/payment.jpg",
           "/static/images/security.jpg"
+
         ]);
 
       })
@@ -45,22 +55,39 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
 
-    caches.match(event.request)
+    fetch(event.request)
 
       .then((response) => {
 
-        // RETURN CACHE IF FOUND
-        if (response) {
-          return response;
-        }
+        // CLONE RESPONSE
+        const responseClone = response.clone();
 
-        // OTHERWISE FETCH FROM NETWORK
-        return fetch(event.request)
+        // UPDATE CACHE
+        caches.open(CACHE_NAME)
 
-          .catch(() => {
+          .then((cache) => {
 
-            // FALLBACK TO HOMEPAGE OFFLINE
-            return caches.match("/");
+            cache.put(event.request, responseClone);
+
+          });
+
+        return response;
+
+      })
+
+      .catch(() => {
+
+        return caches.match(event.request)
+
+          .then((cachedResponse) => {
+
+            // RETURN CACHED VERSION
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+
+            // FALLBACK
+            return caches.match("/dashboard");
 
           });
 
