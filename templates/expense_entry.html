@@ -346,14 +346,79 @@ fetch("/expense/entry", {
 
     if (!navigator.onLine) {
 
-        await saveOfflineExpense(data);
+    await saveOfflineExpense(data);
 
-        btn.innerText = "Saved Offline 📲";
+    btn.innerText = "Saved Offline 📲";
 
-    } else {
+    // SHOW IMMEDIATELY IN UI
+    const expenseContainer = document.querySelector(".space-y-3");
 
-        btn.innerText = "Error ❌";
+    if (expenseContainer) {
+
+        expenseContainer.insertAdjacentHTML("afterbegin", `
+
+            <div class="rounded-xl border
+                        border-yellow-300
+                        bg-yellow-50
+                        p-3">
+
+                <div class="flex justify-between items-start">
+
+                    <div>
+
+                        <div class="font-medium text-slate-900">
+
+                            ${data.category}
+
+                        </div>
+
+                        <div class="text-xs opacity-70 mt-1">
+
+                            ${data.description || "No description"}
+
+                        </div>
+
+                        <div class="text-[11px] text-yellow-700 mt-1">
+
+                            Pending Sync ⏳
+
+                        </div>
+
+                    </div>
+
+                    <div class="text-right">
+
+                        <div class="font-bold text-red-600">
+
+                            - KSh ${data.amount}
+
+                        </div>
+
+                        <div class="text-xs opacity-60 mt-1">
+
+                            ${data.date}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `);
     }
+
+    this.reset();
+
+    setTimeout(() => {
+        window.location.href = "/dashboard";
+    }, 1000);
+
+} else {
+
+    btn.innerText = "Error ❌";
+}
 
     setTimeout(() => {
         btn.innerText = "Save Expense";
