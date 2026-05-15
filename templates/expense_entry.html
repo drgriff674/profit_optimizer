@@ -338,7 +338,7 @@ fetch("/expense/entry", {
     }, 400);
 })
 
-.catch(err => {
+.catch(async err => {
 
     console.log("ERROR:", err);
 
@@ -346,15 +346,7 @@ fetch("/expense/entry", {
 
     if (!navigator.onLine) {
 
-        let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
-
-        queue.push({
-            type: "expense",
-            data: data,
-            synced: false
-        });
-
-        localStorage.setItem("offline_queue", JSON.stringify(queue));
+        await saveOfflineExpense(data);
 
         btn.innerText = "Saved Offline 📲";
 

@@ -145,3 +145,68 @@ async function markExpenseSynced(id) {
 
 // INITIALIZE
 openDatabase();
+
+// ================= AUTO SYNC =================
+
+async function syncOfflineExpenses() {
+
+    if (!navigator.onLine) {
+        return;
+    }
+
+    const expenses = await getUnsyncedExpenses();
+
+    console.log("Unsynced expenses:", expenses);
+
+    for (const expense of expenses) {
+
+        try {
+
+            const csrf =
+                document.querySelector('[name="csrf_token"]').value;
+
+            const response = await fetch("/expense/entry", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrf
+                },
+                body: JSON.stringify({
+                    amount: expense.amount,
+                    category: expense.category,
+                    description: expense.description,
+                    date: expense.date
+                })
+            });
+
+            if (response.ok) {
+
+                await markExpenseSynced(expense.id);
+
+                console.log("✅ Expense synced:", expense.id);
+
+            } else {
+
+                console.log("❌ Sync failed");
+            }
+
+        } catch (err) {
+
+            console.log("❌ Network sync error:", err);
+        }
+    }
+}
+
+// AUTO SYNC WHEN INTERNET RETURNS
+window.addEventListener("online", () => {
+
+    console.log("🌐 Internet restored");
+
+    syncOfflineExpenses();
+});
+
+// ALSO TRY ON PAGE LOAD
+window.addEventListener("load", () => {
+
+    syncOfflineExpenses();
+});
