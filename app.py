@@ -537,6 +537,8 @@ def check_subscription():
         return
 
     
+
+    
     username = session.get("username")
 
     # 1. No session → go login
@@ -556,6 +558,7 @@ def check_subscription():
     subscription = get_subscription(username)
 
     print("🔍 subscription:", subscription)
+    #TEMP OFFLINE BYPASS
 
     if not subscription or subscription.get("status") not in ["active", "trial"]:
         print("🚫 BLOCKING USER")
