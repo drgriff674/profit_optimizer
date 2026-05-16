@@ -532,6 +532,20 @@ def check_subscription():
     if not request.endpoint:
         return
 
+    # ================= PWA / OFFLINE SAFE BYPASS =================
+
+    # allow service worker itself
+    if request.path == "/static/sw.js":
+        return
+
+    # allow AJAX/background requests
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return
+
+    # allow service worker/background fetches
+    if request.headers.get("Accept") == "*/*":
+        return
+
     if request.endpoint in allowed_routes:
         return
 

@@ -1,5 +1,6 @@
-const CACHE_NAME = "optigain-cache-v14";
+const CACHE_NAME = "optigain-cache-v15";
 
+// INSTALL
 self.addEventListener("install", (event) => {
 
   console.log("SERVICE WORKER INSTALLED");
@@ -12,31 +13,24 @@ self.addEventListener("install", (event) => {
 
         return cache.addAll([
 
-  // CORE PAGES
-  "/",
-  "/dashboard",
-  "/expense/entry",
-  "/sales",
-  "/cash/revenue",
-  "/inventory/setup",
-  "/inventory/adjust",
+          // PUBLIC / STATIC FILES ONLY
+          "/",
 
-  // STATIC FILES
-  "/static/manifest.json",
-  "/static/css/output.css",
+          "/static/manifest.json",
+          "/static/css/output.css",
 
-  "/static/js/navigation.js",
-  "/static/js/offline-db.js",
+          "/static/js/navigation.js",
+          "/static/js/offline-db.js",
 
-  "/static/icon.png",
-  "/static/favicon.ico",
+          "/static/icon.png",
+          "/static/favicon.ico",
 
-  // IMAGES
-  "/static/images/hero.jpg",
-  "/static/images/payment.jpg",
-  "/static/images/security.jpg"
+          "/static/images/hero.jpg",
+          "/static/images/payment.jpg",
+          "/static/images/security.jpg"
 
-]);
+        ]);
+
       })
 
   );
@@ -65,7 +59,12 @@ self.addEventListener("fetch", (event) => {
 
           .then((cache) => {
 
-            cache.put(event.request, responseClone);
+            // ONLY CACHE SUCCESSFUL RESPONSES
+            if (response.status === 200) {
+
+              cache.put(event.request, responseClone);
+
+            }
 
           });
 
