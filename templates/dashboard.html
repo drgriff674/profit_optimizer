@@ -861,47 +861,6 @@ if (btn) {
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
-<script>
-
-async function preloadOfflinePages() {
-
-    const pages = [
-
-        "/dashboard",
-        "/expense/entry",
-        "/cash/revenue",
-        "/inventory/setup",
-        "/inventory/adjust",
-        "/sales"
-
-    ];
-
-    for (const page of pages) {
-
-        try {
-
-            await fetch(page);
-
-            console.log("Cached:", page);
-
-        } catch (err) {
-
-            console.log("Failed caching:", page);
-
-        }
-    }
-}
-
-window.addEventListener("load", () => {
-
-    if (navigator.onLine) {
-
-        preloadOfflinePages();
-
-    }
-});
-
-</script>
 
 <script src="{{ url_for('static', filename='js/sw-register.js') }}"></script>
 

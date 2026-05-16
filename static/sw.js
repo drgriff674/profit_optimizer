@@ -1,4 +1,4 @@
-const CACHE_NAME = "optigain-cache-v13";
+const CACHE_NAME = "optigain-cache-v14";
 
 self.addEventListener("install", (event) => {
 
@@ -12,21 +12,31 @@ self.addEventListener("install", (event) => {
 
         return cache.addAll([
 
-          "/static/manifest.json",
-          "/static/css/output.css",
+  // CORE PAGES
+  "/",
+  "/dashboard",
+  "/expense/entry",
+  "/sales",
+  "/cash/revenue",
+  "/inventory/setup",
+  "/inventory/adjust",
 
-          "/static/js/navigation.js",
-          "/static/js/offline-db.js",
+  // STATIC FILES
+  "/static/manifest.json",
+  "/static/css/output.css",
 
-          "/static/icon.png",
-          "/static/favicon.ico",
+  "/static/js/navigation.js",
+  "/static/js/offline-db.js",
 
-          "/static/images/hero.jpg",
-          "/static/images/payment.jpg",
-          "/static/images/security.jpg"
+  "/static/icon.png",
+  "/static/favicon.ico",
 
-        ]);
+  // IMAGES
+  "/static/images/hero.jpg",
+  "/static/images/payment.jpg",
+  "/static/images/security.jpg"
 
+]);
       })
 
   );
