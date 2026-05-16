@@ -1,8 +1,8 @@
-const CACHE_NAME = "optigain-cache-v12";
+const CACHE_NAME = "optigain-cache-v13";
 
 self.addEventListener("install", (event) => {
 
-  console.log("INSTALL STARTED");
+  console.log("SERVICE WORKER INSTALLED");
 
   event.waitUntil(
 
@@ -10,13 +10,7 @@ self.addEventListener("install", (event) => {
 
       .then((cache) => {
 
-        console.log("CACHE OPENED");
-
         return cache.addAll([
-
-          "/",
-          "/dashboard",
-          "/expense/entry",
 
           "/static/manifest.json",
           "/static/css/output.css",
@@ -35,23 +29,17 @@ self.addEventListener("install", (event) => {
 
       })
 
-      .then(() => {
-
-        console.log("FILES CACHED SUCCESSFULLY");
-
-      })
-
-      .catch((error) => {
-
-        console.error("CACHE FAILED:", error);
-
-      })
-
   );
 
 });
 
+// FETCH
 self.addEventListener("fetch", (event) => {
+
+  // ONLY CACHE GET REQUESTS
+  if (event.request.method !== "GET") {
+    return;
+  }
 
   event.respondWith(
 
@@ -62,7 +50,7 @@ self.addEventListener("fetch", (event) => {
         // CLONE RESPONSE
         const responseClone = response.clone();
 
-        // UPDATE CACHE
+        // SAVE VISITED PAGES AUTOMATICALLY
         caches.open(CACHE_NAME)
 
           .then((cache) => {
@@ -81,13 +69,71 @@ self.addEventListener("fetch", (event) => {
 
           .then((cachedResponse) => {
 
-            // RETURN CACHED VERSION
+            // RETURN CACHED PAGE IF EXISTS
             if (cachedResponse) {
               return cachedResponse;
             }
 
-            // FALLBACK
-            return caches.match("/dashboard");
+            // FALLBACK OFFLINE PAGE
+            return new Response(
+
+              `
+              <html>
+              <head>
+                <title>Offline</title>
+
+                <style>
+                  body{
+                    font-family:sans-serif;
+                    background:#0f172a;
+                    color:white;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    height:100vh;
+                    text-align:center;
+                    padding:20px;
+                  }
+
+                  .box{
+                    max-width:400px;
+                  }
+
+                  h1{
+                    font-size:28px;
+                    margin-bottom:10px;
+                  }
+
+                  p{
+                    opacity:0.8;
+                  }
+                </style>
+
+              </head>
+
+              <body>
+
+                <div class="box">
+
+                  <h1>📡 Offline</h1>
+
+                  <p>
+                    This page is not cached yet.<br>
+                    Reconnect once and visit it online first.
+                  </p>
+
+                </div>
+
+              </body>
+              </html>
+              `,
+              {
+                headers: {
+                  "Content-Type": "text/html"
+                }
+              }
+
+            );
 
           });
 
@@ -97,6 +143,7 @@ self.addEventListener("fetch", (event) => {
 
 });
 
+// ACTIVATE
 self.addEventListener("activate", (event) => {
 
   console.log("SERVICE WORKER ACTIVATED");
@@ -110,8 +157,6 @@ self.addEventListener("activate", (event) => {
         cacheNames.map((cache) => {
 
           if (cache !== CACHE_NAME) {
-
-            console.log("OLD CACHE REMOVED:", cache);
 
             return caches.delete(cache);
 
