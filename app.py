@@ -105,7 +105,7 @@ from database import(
 )
 import pytz
 from flask_caching import Cache
-from datetime import date
+from datetime import datetime, date, timedelta
 import re
 import random
 import time
@@ -494,6 +494,8 @@ except ImportError:
 
 
 app = Flask(__name__)
+
+app.permanent_session_lifetime = timedelta(minutes=30)
 
 @app.before_request
 def make_session_permanent():
