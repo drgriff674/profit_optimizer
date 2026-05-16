@@ -768,27 +768,7 @@ window.addEventListener("load", () => {
 });
 </script>
 
-<script>
-if ("serviceWorker" in navigator) {
-
-  window.addEventListener("load", () => {
-
-    navigator.serviceWorker.register("/static/sw.js")
-      .then((registration) => {
-
-        console.log("✅ Service Worker registered");
-
-      })
-      .catch((error) => {
-
-        console.log("❌ Service Worker failed:", error);
-
-      });
-
-  });
-
-}
-</script>
+<script src="{{ url_for('static', filename='js/sw-register.js') }}"></script>
 
 </body>
 </html>
