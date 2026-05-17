@@ -101,6 +101,7 @@ from database import(
     get_branches,
     create_branch,
     create_inventory_item,
+    confirm_sale_payment,
     
 )
 import pytz
@@ -525,7 +526,11 @@ def check_subscription():
         "favicon",
         "forgot_password",
         "resend_otp",
-        "reset_password"
+        "reset_password",
+        "test",
+        "mobile_login",
+        "register_companion_device",
+        "companion_payment"
         
     }
 
@@ -1892,66 +1897,91 @@ def create_product():
 def create_sale():
 
     username = session["username"]
+
     if request.is_json:
         data = request.get_json()
     else:
         data = request.form.to_dict()
 
-    items = data.get("items",[])
+    items = data.get("items", [])
 
     def operation(cur):
 
         # get business
         cur.execute("""
-            SELECT id FROM businesses WHERE username=%s LIMIT 1
+            SELECT id
+            FROM businesses
+            WHERE username=%s
+            LIMIT 1
         """, (username,))
+
         biz = cur.fetchone()
+
         business_id = biz["id"]
+
         branch_id = session.get("active_branch_id")
 
         import random
 
-        # 
+        # generate unique sale id
         while True:
+
             sale_id = str(random.randint(100000, 999999))
-            cur.execute("SELECT 1 FROM sales WHERE sale_id=%s", (sale_id,))
+
+            cur.execute("""
+                SELECT 1
+                FROM sales
+                WHERE sale_id=%s
+            """, (sale_id,))
+
             if not cur.fetchone():
                 break
+
         total = 0
 
-	
-
-	
-
+        # calculate total
         for item in items:
-            cur.execute("SELECT price FROM products WHERE id=%s", (item["product_id"],))
+
+            cur.execute("""
+                SELECT price
+                FROM products
+                WHERE id=%s
+            """, (item["product_id"],))
+
             p = cur.fetchone()
+
             if p:
                 total += float(p["price"]) * int(item["quantity"])
 
-        # 
+        # payment setup
         cur.execute("""
             SELECT paybill, account_number
             FROM businesses
             WHERE id = %s
         """, (business_id,))
+
         biz_data = cur.fetchone()
 
-        # 
-
         paybill = biz_data.get("paybill") if biz_data else None
+
         if paybill and paybill.strip() not in ["000000"]:
-            status = "pending"  #paybill user
+
+            status = "pending"
+            payment_mode = "paybill"
+
         else:
-            status = "unpaid"  #till user
+
+            status = "unpaid"
+            payment_mode = "till"
 
         import pytz
         from datetime import datetime
 
         nairobi = pytz.timezone("Africa/Nairobi")
+
         local_time = datetime.now(nairobi)
 
-        # insert branch sale
+        # create sale
         cur.execute("""
             INSERT INTO sales (
                 sale_id,
@@ -1959,9 +1989,10 @@ def create_sale():
                 branch_id,
                 total_amount,
                 status,
+                payment_mode,
                 created_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (sale_id) DO NOTHING
         """, (
             sale_id,
@@ -1969,17 +2000,31 @@ def create_sale():
             branch_id,
             total,
             status,
+            payment_mode,
             local_time
         ))
 
-        
-        cur.execute("SELECT 1 FROM sale_items WHERE sale_id=%s LIMIT 1", (sale_id,))
+        # insert sale items
+        cur.execute("""
+            SELECT 1
+            FROM sale_items
+            WHERE sale_id=%s
+            LIMIT 1
+        """, (sale_id,))
+
         existing_items = cur.fetchone()
 
         if not existing_items:
+
             for item in items:
+
                 cur.execute("""
-                    INSERT INTO sale_items (sale_id, product_id, quantity, price)
+                    INSERT INTO sale_items (
+                        sale_id,
+                        product_id,
+                        quantity,
+                        price
+                    )
                     VALUES (%s, %s, %s, %s)
                 """, (
                     sale_id,
@@ -2068,65 +2113,20 @@ def mark_paid(sale_id):
 
     username = session["username"]
 
-    def operation(cur):
+    result = confirm_sale_payment(
+        sale_id=sale_id,
+        payment_source="manual"
+    )
 
-        # get business
-        cur.execute("""
-            SELECT id FROM businesses WHERE username = %s LIMIT 1
-        """, (username,))
-        biz = cur.fetchone()
-        if not biz:
-            return {"success": False, "error": "Business not found"}
+    if result.get("success"):
 
-        business_id = biz["id"]
+        update_dashboard_snapshot(username)
+        update_dashboard_intelligence(username)
 
-        # get sale amount BEFORE update
-        cur.execute("""
-            SELECT total_amount FROM sales
-            WHERE sale_id = %s AND business_id = %s
-        """, (sale_id, business_id))
-
-        sale = cur.fetchone()
-        if not sale:
-            return {"success": False, "error": "Sale not found"}
-
-        amount = float(sale["total_amount"])
-
-        # update status
-        cur.execute("""
-            UPDATE sales
-            SET status = 'completed'
-            WHERE sale_id = %s AND business_id = %s
-        """, (sale_id, business_id))
-
-        if cur.rowcount == 0:
-            return {"success": False, "error": "Update failed"}
-
-        
-        import pytz
-        from datetime import datetime
-
-        nairobi = pytz.timezone("Africa/Nairobi")
-        today = datetime.now(nairobi).date()
-
-        cur.execute("""
-            INSERT INTO revenue_days (username, revenue_date)
-            VALUES (%s, %s)
-            ON CONFLICT (username, revenue_date) DO NOTHING
-        """, (username, today))
-
-        cur.execute("""
-            UPDATE revenue_days
-            SET total_amount = total_amount + %s
-            WHERE username = %s AND revenue_date = %s
-        """, (amount, username, today))
-
-        return {"success": True}
-
-    result = run_db_operation(operation, commit=True)
-
-    
-    update_dashboard_snapshot(username)
+        cache.delete_memoized(
+            get_dashboard_data,
+            username
+        )
 
     return jsonify(result)
     
@@ -3671,76 +3671,42 @@ def payment_confirm():
         username_local, local_date = run_db_operation(operation, commit=True)
 
         
+        username_from_sale = None
+
         if account_ref:
+
             try:
-                username_from_sale = None
-                def link_sale(cur):
 
-                    # 1. Update sale
-                    cur.execute("""
-                        UPDATE sales
-                        SET status = 'completed'
-                        WHERE TRIM(sale_id) = %s AND status IN ('pending','unpaid')
-                        RETURNING business_id
-                    """, (account_ref,))
+                result = confirm_sale_payment(
+                    sale_id=account_ref,
+                    amount=amount,
+                    transaction_id=transaction_id,
+                    payment_source="mpesa_callback"
+                )
 
-                    updated = cur.fetchone()
+                if result.get("success"):
 
-                    if not updated:
-                        print("⚠️ No matching sale:", account_ref)
-                        return None
+                    username_from_sale = result.get("username")
 
-                    business_id = updated["business_id"]
-
-                    # 2. Get username FIRST
-                    cur.execute("""
-                        SELECT username FROM businesses
-                        WHERE id = %s
-                    """, (business_id,))
-
-                    biz = cur.fetchone()
-
-                    if not biz:
-                        print("⚠️ Business not found for sale")
-                        return None
-
-                    username_from_sale = biz["username"]
-
-                    # 3. Revenue update
-                    import pytz
-                    from datetime import datetime
-
-                    nairobi = pytz.timezone("Africa/Nairobi")
-                    today = datetime.now(nairobi).date()
-
-                    cur.execute("""
-                        INSERT INTO revenue_days (username, revenue_date)
-                        VALUES (%s, %s)
-                        ON CONFLICT (username, revenue_date) DO NOTHING
-                    """, (username_from_sale, today))
-
-                    cur.execute("""
-                        UPDATE revenue_days
-                        SET total_amount = total_amount + %s
-                        WHERE username = %s AND revenue_date = %s
-                    """, (amount, username_from_sale, today))
-
-                    print("✅ Sale linked + user:", username_from_sale)
-
-                    return username_from_sale
-                username_from_sale = run_db_operation(link_sale, commit=True)
-
-                
-                if username_from_sale:
-                    
-                    
                     update_dashboard_snapshot(username_from_sale)
+
                     update_dashboard_intelligence(username_from_sale)
-                    cache.delete_memoized(get_dashboard_data, username_from_sale)
+
+                    cache.delete_memoized(
+                        get_dashboard_data,
+                        username_from_sale
+                    )
+
+                    print("✅ Sale auto-confirmed")
+
+                else:
+
+                    print("⚠️ Payment confirmation failed:", result)
 
             except Exception as e:
-                print("⚠️ Sale linking failed:", e)
 
+                print("⚠️ Sale linking failed:", e)
+                
         log_audit(
             username_local or "system",
             "MPESA_RECEIVED",
@@ -3763,6 +3729,273 @@ def payment_confirm():
     except Exception as e:
         print("❌ ERROR in confirm callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
+
+
+
+@app.route("/api/companion/register-device", methods=["POST"])
+@csrf.exempt
+def register_companion_device():
+
+    data = request.get_json()
+
+    username = data.get("username")
+    device_id = data.get("device_id")
+    device_name = data.get("device_name")
+
+    if not username or not device_id:
+        return jsonify({
+            "success": False,
+            "error": "Missing fields"
+        }), 400
+
+    def operation(cur):
+
+        # verify user exists
+        cur.execute("""
+            SELECT username
+            FROM users
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        user = cur.fetchone()
+
+        if not user:
+            return {
+                "success": False,
+                "error": "User not found"
+            }
+
+        # save/update device
+        cur.execute("""
+            INSERT INTO companion_devices (
+                username,
+                device_id,
+                device_name,
+                last_seen
+            )
+            VALUES (%s, %s, %s, NOW())
+
+            ON CONFLICT (device_id)
+            DO UPDATE SET
+                username = EXCLUDED.username,
+                device_name = EXCLUDED.device_name,
+                last_seen = NOW(),
+                is_active = TRUE
+        """, (
+            username,
+            device_id,
+            device_name
+        ))
+
+        return {"success": True}
+
+    result = run_db_operation(operation, commit=True)
+
+    return jsonify(result)
+
+@app.route("/api/companion/payment", methods=["POST"])
+@csrf.exempt
+def companion_payment():
+
+    data = request.get_json()
+
+    device_id = data.get("device_id")
+    transaction_id = data.get("transaction_id")
+    amount = data.get("amount")
+    sender = data.get("sender")
+    message = data.get("message")
+
+    if not device_id or not transaction_id or not amount:
+        return jsonify({
+            "success": False,
+            "error": "Missing fields"
+        }), 400
+
+    def operation(cur):
+
+        # verify trusted device
+        cur.execute("""
+            SELECT username
+            FROM companion_devices
+            WHERE device_id = %s
+            AND is_active = TRUE
+            LIMIT 1
+        """, (device_id,))
+
+        device = cur.fetchone()
+
+        if not device:
+            return {
+                "success": False,
+                "error": "Untrusted device"
+            }
+
+        username = device["username"]
+
+        # prevent duplicate transaction
+        cur.execute("""
+            SELECT id
+            FROM mpesa_transactions
+            WHERE transaction_id = %s
+            LIMIT 1
+        """, (transaction_id,))
+
+        existing = cur.fetchone()
+
+        if existing:
+            return {
+                "success": True,
+                "duplicate": True
+            }
+
+        # get business
+        cur.execute("""
+            SELECT id
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        biz = cur.fetchone()
+
+        if not biz:
+            return {
+                "success": False,
+                "error": "Business not found"
+            }
+
+        business_id = biz["id"]
+
+        # find matching pending sale
+        cur.execute("""
+            SELECT sale_id, total_amount
+            FROM sales
+            WHERE business_id = %s
+            AND status IN ('pending', 'unpaid')
+            AND total_amount = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (
+            business_id,
+            amount
+        ))
+
+        sale = cur.fetchone()
+
+        if not sale:
+            return {
+                "success": False,
+                "error": "No matching sale"
+            }
+
+        sale_id = sale["sale_id"]
+
+        # save mpesa transaction
+        cur.execute("""
+            INSERT INTO mpesa_transactions (
+                transaction_id,
+                amount,
+                sender,
+                transaction_type,
+                description,
+                status,
+                sale_id
+            )
+            VALUES (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                'confirmed',
+                %s
+            )
+        """, (
+            transaction_id,
+            amount,
+            sender,
+            'COMPANION_MPESA',
+            message,
+            sale_id
+        ))
+
+        return {
+            "success": True,
+            "sale_id": sale_id,
+            "username": username
+        }
+
+    result = run_db_operation(operation, commit=True)
+
+    # confirm sale centrally
+    if result.get("success") and result.get("sale_id"):
+
+        confirm_sale_payment(
+            sale_id=result["sale_id"],
+            amount=amount,
+            transaction_id=transaction_id,
+            payment_source="companion_app"
+        )
+
+        update_dashboard_snapshot(result["username"])
+        update_dashboard_intelligence(result["username"])
+
+    return jsonify(result)
+
+@app.route("/api/mobile-login", methods=["POST"])
+@csrf.exempt
+def mobile_login():
+
+    data = request.get_json()
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+
+    if not username or not password:
+        return jsonify({
+            "success": False,
+            "error": "Missing credentials"
+        }), 400
+
+    try:
+
+        user = get_user(username)
+
+        if not user:
+            return jsonify({
+                "success": False,
+                "error": "Invalid username or password"
+            }), 401
+
+        if not check_password_hash(user["password"], password):
+            return jsonify({
+                "success": False,
+                "error": "Invalid username or password"
+            }), 401
+
+        subscription = get_subscription(username)
+
+        return jsonify({
+            "success": True,
+            "username": username,
+            "subscription": subscription.get("status") if subscription else "none",
+            "role": user.get("role", "user")
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route("/api/test")
+def test():
+    return {
+        "success": True,
+        "message": "OptiGain backend connected"
+    }
     
 
 @app.route("/api/account_balance")

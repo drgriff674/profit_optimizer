@@ -61,6 +61,147 @@ def run_db_operation(operation, commit=False):
             cur.close()
         connection_pool.putconn(conn)
 
+
+def confirm_sale_payment(
+    sale_id,
+    amount=None,
+    transaction_id=None,
+    payment_source="manual"
+):
+
+    def operation(cur):
+
+        # get exact sale first
+        cur.execute("""
+            SELECT
+                s.sale_id,
+                s.total_amount,
+                s.status,
+                s.business_id,
+                b.username,
+                s.payment_mode,
+                s.created_at
+            FROM sales s
+            JOIN businesses b
+                ON s.business_id = b.id
+            WHERE s.sale_id = %s
+            LIMIT 1
+        """, (sale_id,))
+
+        sale = cur.fetchone()
+
+        # smart fallback matching
+        if not sale and amount is not None:
+
+            cur.execute("""
+                SELECT
+                    s.sale_id,
+                    s.total_amount,
+                    s.status,
+                    s.business_id,
+                    b.username,
+                    s.payment_mode,
+                    s.created_at
+                FROM sales s
+                JOIN businesses b
+                    ON s.business_id = b.id
+                WHERE
+                    s.status IN ('pending','unpaid')
+                    AND s.total_amount = %s
+                    AND s.created_at >= NOW() - INTERVAL '15 minutes'
+                ORDER BY s.created_at DESC
+                LIMIT 1
+            """, (amount,))
+
+            sale = cur.fetchone()
+
+            if sale:
+                print("🧠 Smart match found:", sale["sale_id"])
+
+        if not sale:
+
+            return {
+                "success": False,
+                "error": "Sale not found"
+            }
+
+        # already completed
+        if sale["status"] == "completed":
+            return {
+                "success": True,
+                "already_completed": True
+            }
+
+        sale_amount = float(sale["total_amount"])
+        username = sale["username"]
+
+        # optional amount verification
+        if amount is not None:
+
+            incoming = float(amount)
+
+            if incoming < sale_amount:
+                return {
+                    "success": False,
+                    "error": "Amount mismatch"
+                }
+
+        # mark completed
+        cur.execute("""
+            UPDATE sales
+            SET
+                status = 'completed',
+                payment_source = %s,
+                payment_reference = %s,
+                paid_at = NOW()
+            WHERE sale_id = %s
+        """, (
+            payment_source,
+            transaction_id,
+            sale_id
+        ))
+
+        # revenue update
+        import pytz
+        from datetime import datetime
+
+        nairobi = pytz.timezone("Africa/Nairobi")
+        today = datetime.now(nairobi).date()
+
+        cur.execute("""
+            INSERT INTO revenue_days (
+                username,
+                revenue_date
+            )
+            VALUES (%s, %s)
+            ON CONFLICT (username, revenue_date)
+            DO NOTHING
+        """, (
+            username,
+            today
+        ))
+
+        cur.execute("""
+            UPDATE revenue_days
+            SET total_amount = total_amount + %s
+            WHERE username = %s
+            AND revenue_date = %s
+        """, (
+            sale_amount,
+            username,
+            today
+        ))
+
+        return {
+            "success": True,
+            "username": username,
+            "sale_amount": sale_amount
+        }
+
+    result = run_db_operation(operation, commit=True)
+
+    return result
+
 #  Initialize database and tables if not exists
 def init_db():
     def operation(cur):
@@ -358,16 +499,28 @@ def init_db():
         )
         """)
 
+        
         # sales
         cur.execute("""
         CREATE TABLE IF NOT EXISTS sales (
             id SERIAL PRIMARY KEY,
             sale_id TEXT UNIQUE NOT NULL,
             business_id INTEGER NOT NULL,
+
             total_amount NUMERIC(10,2) NOT NULL,
+
             status TEXT DEFAULT 'pending',
+            payment_mode TEXT DEFAULT 'till',
+
+            payment_source TEXT,
+            payment_reference TEXT,
+            paid_at TIMESTAMP,
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE
+
+            FOREIGN KEY (business_id)
+            REFERENCES businesses(id)
+            ON DELETE CASCADE
         )
         """)
 
@@ -418,6 +571,26 @@ def init_db():
         cur.execute("""
         ALTER TABLE sales
         ADD COLUMN IF NOT EXISTS branch_id INTEGER;
+        """)
+
+        cur.execute("""
+        ALTER TABLE sales
+        ADD COLUMN IF NOT EXISTS payment_mode TEXT DEFAULT 'till';
+        """)
+
+        cur.execute("""
+        ALTER TABLE sales
+        ADD COLUMN IF NOT EXISTS payment_source TEXT;
+        """)
+
+        cur.execute("""
+        ALTER TABLE sales
+        ADD COLUMN IF NOT EXISTS payment_reference TEXT;
+        """)
+
+        cur.execute("""
+        ALTER TABLE sales
+        ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP;
         """)
 
         cur.execute("""
@@ -672,6 +845,7 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_mpesa_local_date
         ON mpesa_transactions(local_date);
         """)
+        
 
         # subscription table
         cur.execute("""
@@ -692,6 +866,39 @@ def init_db():
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        """)
+
+        # companion devices
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS companion_devices (
+            id SERIAL PRIMARY KEY,
+
+            username TEXT NOT NULL,
+
+            device_id TEXT NOT NULL UNIQUE,
+
+            device_name TEXT,
+
+            last_seen TIMESTAMP,
+
+            is_active BOOLEAN DEFAULT TRUE,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (username)
+            REFERENCES users(username)
+            ON DELETE CASCADE
+        );
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_companion_username
+        ON companion_devices(username);
+        """)
+
+        cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_companion_device
+        ON companion_devices(device_id);
         """)
 
         # mpesa security
