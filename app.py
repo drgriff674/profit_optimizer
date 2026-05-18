@@ -4047,10 +4047,11 @@ def companion_sms():
     if code_match:
         transaction_code = code_match.group(1)
 
-    # amount
+    # transaction amount only
     amount_match = re.search(
-        r'Ksh([\d,]+\.\d{2})',
-        message
+        r'Confirmed\.\s*Ksh\s?([\d,]+\.\d{2})',
+        message,
+        re.IGNORECASE
     )
 
     if amount_match:
