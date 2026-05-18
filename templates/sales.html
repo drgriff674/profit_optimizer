@@ -734,20 +734,27 @@ function showToast(msg) {
 }
 
 function injectSaleUI(data) {
+
     const el = document.getElementById("salesList");
 
     const html = `
-    <li class="flex flex-col border-b pb-2 animate-pulse">
+    <li id="sale-${data.sale_id}"
+        class="flex flex-col border-b pb-2 animate-pulse">
 
         <div class="flex justify-between items-center">
+
             <div>
                 <div>${data.sale_id}</div>
-                <div class="text-xs text-gray-400">Processing...</div>
+
+                <div class="text-xs text-gray-400">
+                    Processing...
+                </div>
             </div>
 
             <span class="text-xs text-yellow-500">
                 ${data.status}
             </span>
+
         </div>
 
     </li>
