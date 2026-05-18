@@ -116,6 +116,7 @@ def confirm_sale_payment(
             sale = cur.fetchone()
 
             if sale:
+                sale_id = sale["sale_id"]
                 print("🧠 Smart match found:", sale["sale_id"])
 
         if not sale:
