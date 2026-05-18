@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Install Companion - OptiGain</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+</head>
+
+<body class="min-h-screen flex items-center justify-center
+             bg-slate-100 dark:bg-slate-950 p-4">
+
+<div class="max-w-lg w-full rounded-3xl p-6
+            bg-white dark:bg-slate-900
+            border border-slate-200 dark:border-slate-800
+            shadow-xl">
+
+    <div class="text-center">
+
+        <img src="{{ url_for('static', filename='icon.png') }}"
+             class="w-20 mx-auto mb-4">
+
+        <h1 class="text-2xl font-bold mb-2">
+            📱 OptiGain Companion
+        </h1>
+
+        <p class="text-sm opacity-70 mb-6 leading-relaxed">
+
+            Automatically confirm Till & Paybill payments instantly
+            using M-PESA SMS detection.
+
+        </p>
+
+    </div>
+
+    <div class="space-y-3 text-sm mb-6">
+
+        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+            ✅ Instant payment confirmation
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+            ✅ Automatic sales completion
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+            ✅ Works with Till & Paybill
+        </div>
+
+    </div>
+
+    <a href="/static/apk/optigain-companion.apk"
+       download
+       class="block w-full text-center py-4 rounded-2xl
+              bg-blue-600 hover:bg-blue-700
+              text-white font-semibold text-lg
+              transition">
+
+        ⬇ Install Companion
+
+    </a>
+
+    <p class="text-xs text-center opacity-60 mt-4">
+
+        Android only • Requires SMS permission
+
+    </p>
+
+</div>
+
+</body>
+</html>

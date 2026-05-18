@@ -11,6 +11,54 @@
 
 <body class="min-h-screen flex transition-colors">
 
+{% if not has_companion %}
+
+<div id="companionPopup"
+     class="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full rounded-2xl p-6
+              bg-white dark:bg-slate-900
+              border border-slate-200 dark:border-slate-700
+              shadow-2xl">
+
+    <h2 class="text-xl font-bold mb-3">
+      📱 Enable Automatic Payments
+    </h2>
+
+    <p class="text-sm opacity-80 mb-4 leading-relaxed">
+
+      Install OptiGain Companion to automatically
+      confirm M-PESA Till & Paybill payments instantly.
+
+    </p>
+
+    <div class="space-y-3">
+
+      <a href="/download-companion"
+         class="block w-full text-center py-3 rounded-xl
+                bg-blue-600 hover:bg-blue-700
+                text-white font-semibold transition">
+
+        Install Companion
+
+      </a>
+
+      <button onclick="dismissCompanionPopup()"
+              class="w-full py-3 rounded-xl
+                     bg-slate-200 dark:bg-slate-700">
+
+        Maybe Later
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+{% endif %}
+
 <div id="pageLoader"
      class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
   <div class="text-lg font-semibold animate-pulse">
@@ -863,6 +911,50 @@ if (btn) {
 
 
 <script src="{{ url_for('static', filename='js/sw-register.js') }}"></script>
+
+<script>
+
+function dismissCompanionPopup() {
+
+    const popup = document.getElementById("companionPopup");
+
+    if (!popup) return;
+
+    popup.style.opacity = "0";
+
+    setTimeout(() => {
+        popup.remove();
+    }, 300);
+
+    localStorage.setItem(
+        "hide_companion_popup",
+        Date.now()
+    );
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const popup = document.getElementById("companionPopup");
+
+    if (!popup) return;
+
+    const hiddenAt =
+        localStorage.getItem("hide_companion_popup");
+
+    if (!hiddenAt) return;
+
+    const hoursPassed =
+        (Date.now() - parseInt(hiddenAt))
+        / (1000 * 60 * 60);
+
+    // hide for 24 hours
+    if (hoursPassed < 24) {
+        popup.remove();
+    }
+
+});
+
+</script>
 
 </body>
 </html>

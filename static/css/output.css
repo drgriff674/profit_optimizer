@@ -689,6 +689,10 @@ video {
   z-index: 50;
 }
 
+.z-\[100\] {
+  z-index: 100;
+}
+
 .mx-2 {
   margin-left: 0.5rem;
   margin-right: 0.5rem;
@@ -1003,6 +1007,10 @@ video {
 
 .max-w-xl {
   max-width: 36rem;
+}
+
+.max-w-lg {
+  max-width: 32rem;
 }
 
 .flex-1 {

@@ -1423,6 +1423,22 @@ def dashboard():
             branches[0] if branches else None
         )
 
+        # companion app detection
+        def companion_operation(cur):
+
+            cur.execute("""
+                SELECT id
+                FROM companion_devices
+                WHERE username = %s
+                AND is_active = TRUE
+                LIMIT 1
+            """, (username,))
+
+            return cur.fetchone()
+
+        has_companion = run_db_operation(companion_operation)
+        has_companion = bool(has_companion)
+
         latest_payment = None
         warning_message = None
 
@@ -1567,6 +1583,7 @@ def dashboard():
             days_left=days_left,
             current_date=datetime.utcnow().date(),
             branches=branches,
+            has_companion=has_companion,
             active_branch=active_branch
         )
 
@@ -1603,6 +1620,16 @@ def api_dash():
     snap=get_dashboard_bundle_cached(username)["snapshot"]
 
     return jsonify(snap)
+
+@app.route("/download-companion")
+@login_required
+def download_companion():
+
+    return send_from_directory(
+        "static/apk",
+        "app-debug.apk",
+        as_attachment=True
+    )
 
 @app.route('/favicon.ico')
 def favicon():
