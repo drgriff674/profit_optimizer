@@ -71,6 +71,8 @@ def confirm_sale_payment(
 
     def operation(cur):
 
+        nonlocal sale_id
+
         # get exact sale first
         cur.execute("""
             SELECT
