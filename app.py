@@ -3991,6 +3991,7 @@ def mobile_login():
             "error": str(e)
         }), 500
 
+
 @app.route("/api/companion/sms", methods=["POST"])
 @csrf.exempt
 def companion_sms():
@@ -4000,13 +4001,34 @@ def companion_sms():
     sender = data.get("sender", "")
     message = data.get("message", "")
 
-    print("\n===== SMS RECEIVED =====")
+    print("\n===== MPESA SMS =====")
     print("SENDER:", sender)
     print("MESSAGE:", message)
+
+    transaction_code = None
+    amount = None
+
+    # Extract transaction code
+    code_match = re.search(r'^([A-Z0-9]{10})', message)
+
+    if code_match:
+        transaction_code = code_match.group(1)
+
+    # Extract amount
+    amount_match = re.search(r'Ksh([\d,]+\.\d{2})', message)
+
+    if amount_match:
+        amount = amount_match.group(1)
+
+    print("TRANSACTION CODE:", transaction_code)
+    print("AMOUNT:", amount)
+
     print("========================\n")
 
     return jsonify({
-        "success": True
+        "success": True,
+        "transaction_code": transaction_code,
+        "amount": amount
     })
 
 @app.route("/api/test")
