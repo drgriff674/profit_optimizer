@@ -4139,11 +4139,11 @@ def companion_sms():
 
             # find matching pending sale
             cur.execute("""
-                SELECT sale_id
+                SELECT sale_id, total_amount
                 FROM sales
                 WHERE business_id = %s
                 AND status IN ('pending','unpaid')
-                AND total_amount = %s
+                AND ABS(total_amount - %s) < 0.01
                 AND created_at >= NOW() - INTERVAL '15 minutes'
                 ORDER BY created_at DESC
                 LIMIT 1
@@ -4153,6 +4153,9 @@ def companion_sms():
             ))
 
             sale = cur.fetchone()
+
+            print("SALE MATCH:", sale)
+            print("SMS AMOUNT:", amount)
 
             if sale:
                 matched_sale_id = sale["sale_id"]
