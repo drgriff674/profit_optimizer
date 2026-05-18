@@ -530,7 +530,8 @@ def check_subscription():
         "test",
         "mobile_login",
         "register_companion_device",
-        "companion_payment"
+        "companion_payment",
+        "companion_sms"
         
     }
 
@@ -3989,6 +3990,24 @@ def mobile_login():
             "success": False,
             "error": str(e)
         }), 500
+
+@app.route("/api/companion/sms", methods=["POST"])
+@csrf.exempt
+def companion_sms():
+
+    data = request.get_json()
+
+    sender = data.get("sender", "")
+    message = data.get("message", "")
+
+    print("\n===== SMS RECEIVED =====")
+    print("SENDER:", sender)
+    print("MESSAGE:", message)
+    print("========================\n")
+
+    return jsonify({
+        "success": True
+    })
 
 @app.route("/api/test")
 def test():
