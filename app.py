@@ -4024,11 +4024,22 @@ def companion_sms():
     sender = data.get("sender", "")
     message = data.get("message", "")
 
-    if "Confirmed" not in message:
+    # ONLY process REAL payment SMS
+    lower_msg = message.lower()
+
+    is_till_payment = "paid to" in lower_msg
+    is_paybill_payment = "sent to" in lower_msg
+
+    if not is_till_payment and not is_paybill_payment:
+
+        print("IGNORED NON-PAYMENT SMS")
+
         return jsonify({
             "success": False,
-            "message": "Not a payment confirmation"
+            "message": "Ignored non-payment SMS"
         })
+
+    
 
     print("\n===== MPESA SMS =====")
     print("SENDER:", sender)
