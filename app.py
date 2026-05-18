@@ -4036,37 +4036,61 @@ def companion_sms():
 
     transaction_code = None
     amount = None
+    business_name = None
 
-    # Extract transaction code
-    code_match = re.search(r'^([A-Z0-9]{10})', message)
+    # transaction code
+    code_match = re.search(
+        r'^([A-Z0-9]{10})',
+        message
+    )
 
     if code_match:
         transaction_code = code_match.group(1)
 
-    # Extract amount
-    amount_match = re.search(r'Ksh([\d,]+\.\d{2})', message)
+    # amount
+    amount_match = re.search(
+        r'Ksh([\d,]+\.\d{2})',
+        message
+    )
 
     if amount_match:
         amount = float(
             amount_match.group(1).replace(",", "")
         )
 
-    print("TRANSACTION CODE:", transaction_code)
-    print("AMOUNT:", amount)
-
-    # AUTO MATCH SALE
-    result = confirm_sale_payment(
-        sale_id=None,
-        amount=amount,
-        transaction_id=transaction_code,
-        payment_source="companion_sms"
+    # till message
+    till_match = re.search(
+        r'paid to (.*?)\. on',
+        message,
+        re.IGNORECASE
     )
 
-    print("AUTO CONFIRM RESULT:", result)
+    # paybill message
+    paybill_match = re.search(
+        r'sent to (.*?) for account',
+        message,
+        re.IGNORECASE
+    )
+
+    if till_match:
+        business_name = till_match.group(1).strip()
+
+    elif paybill_match:
+        business_name = paybill_match.group(1).strip()
+
+    print("TRANSACTION CODE:", transaction_code)
+    print("AMOUNT:", amount)
+    print("BUSINESS NAME:", business_name)
+
+    matched_sale_id = None
+    matched_username = None
 
     def operation(cur):
 
-        # prevent duplicates
+        global matched_sale_id
+        global matched_username
+
+        # duplicate protection
         cur.execute("""
             SELECT id
             FROM mpesa_transactions
@@ -4082,7 +4106,46 @@ def companion_sms():
                 "duplicate": True
             }
 
-        # save payment
+        # find business
+        cur.execute("""
+            SELECT id, username
+            FROM businesses
+            WHERE
+                LOWER(business_name) = LOWER(%s)
+                OR LOWER(till_name) = LOWER(%s)
+            LIMIT 1
+        """, (
+            business_name,
+            business_name
+        ))
+
+        biz = cur.fetchone()
+
+        if biz:
+
+            matched_username = biz["username"]
+
+            # find matching pending sale
+            cur.execute("""
+                SELECT sale_id
+                FROM sales
+                WHERE business_id = %s
+                AND status IN ('pending','unpaid')
+                AND total_amount = %s
+                AND created_at >= NOW() - INTERVAL '15 minutes'
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, (
+                biz["id"],
+                amount
+            ))
+
+            sale = cur.fetchone()
+
+            if sale:
+                matched_sale_id = sale["sale_id"]
+
+        # save transaction
         cur.execute("""
             INSERT INTO mpesa_transactions (
                 transaction_id,
@@ -4090,7 +4153,8 @@ def companion_sms():
                 sender,
                 transaction_type,
                 description,
-                status
+                status,
+                sale_id
             )
             VALUES (
                 %s,
@@ -4098,14 +4162,16 @@ def companion_sms():
                 %s,
                 %s,
                 %s,
-                'confirmed'
+                'confirmed',
+                %s
             )
         """, (
             transaction_code,
             amount,
             sender,
             'COMPANION_SMS',
-            message
+            message,
+            matched_sale_id
         ))
 
         return {
@@ -4114,14 +4180,31 @@ def companion_sms():
 
     result = run_db_operation(operation, commit=True)
 
-    print("DATABASE RESULT:", result)
+    # confirm exact sale
+    if matched_sale_id:
+
+        auto_result = confirm_sale_payment(
+            sale_id=matched_sale_id,
+            amount=amount,
+            transaction_id=transaction_code,
+            payment_source="companion_sms"
+        )
+
+        print("AUTO CONFIRM RESULT:", auto_result)
+
+        if matched_username:
+
+            update_dashboard_snapshot(matched_username)
+            update_dashboard_intelligence(matched_username)
 
     print("========================\n")
 
     return jsonify({
         "success": True,
         "transaction_code": transaction_code,
-        "amount": amount
+        "amount": amount,
+        "business_name": business_name,
+        "sale_id": matched_sale_id
     })
 
 @app.route("/api/test")
