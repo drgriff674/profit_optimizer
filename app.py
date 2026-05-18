@@ -4001,6 +4001,12 @@ def companion_sms():
     sender = data.get("sender", "")
     message = data.get("message", "")
 
+    if "Confirmed" not in message:
+        return jsonify({
+            "success": False,
+            "message": "Not a payment confirmation"
+        })
+
     print("\n===== MPESA SMS =====")
     print("SENDER:", sender)
     print("MESSAGE:", message)
@@ -4022,6 +4028,58 @@ def companion_sms():
 
     print("TRANSACTION CODE:", transaction_code)
     print("AMOUNT:", amount)
+
+    def operation(cur):
+
+        # prevent duplicates
+        cur.execute("""
+            SELECT id
+            FROM mpesa_transactions
+            WHERE transaction_id = %s
+            LIMIT 1
+        """, (transaction_code,))
+
+        existing = cur.fetchone()
+
+        if existing:
+            return {
+                "success": True,
+                "duplicate": True
+            }
+
+        # save payment
+        cur.execute("""
+            INSERT INTO mpesa_transactions (
+                transaction_id,
+                amount,
+                sender,
+                transaction_type,
+                description,
+                status
+            )
+            VALUES (
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                'confirmed'
+            )
+        """, (
+            transaction_code,
+            amount,
+            sender,
+            'COMPANION_SMS',
+            message
+        ))
+
+        return {
+            "success": True
+        }
+
+    result = run_db_operation(operation, commit=True)
+
+    print("DATABASE RESULT:", result)
 
     print("========================\n")
 
