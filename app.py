@@ -799,24 +799,45 @@ def register():
         paybill = request.form.get("paybill", "").strip()
         account_number = request.form.get("account_number", "").strip()
 
-        
+        till_number = request.form.get("till_number", "").strip()
+        till_name = request.form.get("till_name", "").strip()
+
         if setup_type == "normal":
 
-            if not new_email or not business_name:
-                flash("❌ Email and business name are required.", "error")
+            if (
+                not new_email
+                or not business_name
+                or not till_name
+            ):
+                flash(
+                    "❌ Email, business name and till business name are required.",
+                    "error"
+                )
                 return redirect(url_for("register"))
 
-            paybill = "000000"
+            paybill = None
             account_number = None
+        
 
         
         elif setup_type == "paybill":
-            if not new_email or not business_name or not paybill:
-                flash("❌ Email, business name and paybill are required.", "error")
+
+            if (
+                not new_email
+                or not business_name
+                or not paybill
+            ):
+                flash(
+                    "❌ Email, business name and paybill are required.",
+                    "error"
+                )
                 return redirect(url_for("register"))
 
             if not account_number:
                 account_number = None
+
+            till_number = None
+            till_name = business_name
 
         
         if not paybill:
@@ -838,7 +859,9 @@ def register():
                 role,
                 business_name,
                 paybill,
-                account_number or None
+                account_number or None,
+                till_number,
+                till_name
             )
 
             log_audit(new_user, "REGISTER_INIT","Account created, OTP pending", request.remote_addr)
@@ -4024,10 +4047,22 @@ def companion_sms():
     amount_match = re.search(r'Ksh([\d,]+\.\d{2})', message)
 
     if amount_match:
-        amount = amount_match.group(1)
+        amount = float(
+            amount_match.group(1).replace(",", "")
+        )
 
     print("TRANSACTION CODE:", transaction_code)
     print("AMOUNT:", amount)
+
+    # AUTO MATCH SALE
+    result = confirm_sale_payment(
+        sale_id=None,
+        amount=amount,
+        transaction_id=transaction_code,
+        payment_source="companion_sms"
+    )
+
+    print("AUTO CONFIRM RESULT:", result)
 
     def operation(cur):
 

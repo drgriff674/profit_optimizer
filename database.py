@@ -236,15 +236,37 @@ def init_db():
         cur.execute("""
         CREATE TABLE IF NOT EXISTS businesses (
             id SERIAL PRIMARY KEY,
+
             username TEXT NOT NULL,
+
             business_name TEXT NOT NULL,
-            paybill TEXT NOT NULL,
+
+            till_number TEXT,
+            till_name TEXT,
+
+            paybill TEXT,
             account_number TEXT,
+
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
             UNIQUE (paybill, account_number),
-            FOREIGN KEY (username) REFERENCES users(username) ON DELETE CASCADE
+
+            FOREIGN KEY (username)
+            REFERENCES users(username)
+            ON DELETE CASCADE
         )
-       """)
+        """)
+
+        cur.execute("""
+        ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS till_number TEXT;
+        """)
+
+        cur.execute("""
+        ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS till_name TEXT;
+        """)
+                
 
         # EXPENSES TABLE 
         cur.execute("""

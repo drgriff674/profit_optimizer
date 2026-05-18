@@ -89,6 +89,21 @@ placeholder="Business Name"
 required
 class="w-full px-4 py-2 rounded-lg border bg-transparent">
 
+<!-- TILL FIELDS -->
+<div id="tillFields" class="space-y-4">
+
+  <input type="text"
+         name="till_name"
+         placeholder="Till Business Name"
+         class="w-full px-4 py-2 rounded-lg border bg-transparent">
+
+  <input type="text"
+         name="till_number"
+         placeholder="Till Number (optional)"
+         class="w-full px-4 py-2 rounded-lg border bg-transparent">
+
+</div>
+
       <!-- PAYBILL FIELDS -->
       <div id="paybillFields" class="space-y-4 hidden">
 
@@ -158,6 +173,7 @@ class="w-full px-4 py-2 rounded-lg border bg-transparent">
 function setMode(mode) {
 
   const paybillFields = document.getElementById("paybillFields");
+  const tillFields = document.getElementById("tillFields");
   const hidden = document.getElementById("setup_type");
 
   const business = document.querySelector("input[name='business_name']");
@@ -187,6 +203,7 @@ function setMode(mode) {
 
   // ACTIVE STATE
   if (mode === "normal") {
+    tillFields.classList.remove("hidden");
 
     btnNormal.classList.add(
       "bg-blue-600",
@@ -202,6 +219,7 @@ function setMode(mode) {
     paybill.required = false;
 
   } else {
+    tillFields.classList.add("hidden");
 
     btnPaybill.classList.add(
       "bg-blue-600",
