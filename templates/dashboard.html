@@ -916,7 +916,8 @@ if (btn) {
 
 function dismissCompanionPopup() {
 
-    const popup = document.getElementById("companionPopup");
+    const popup =
+        document.getElementById("companionPopup");
 
     if (!popup) return;
 
@@ -925,36 +926,8 @@ function dismissCompanionPopup() {
     setTimeout(() => {
         popup.remove();
     }, 300);
-
-    localStorage.setItem(
-        "hide_companion_popup",
-        Date.now()
-    );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-
-    const popup = document.getElementById("companionPopup");
-
-    if (!popup) return;
-
-    const hiddenAt =
-        localStorage.getItem("hide_companion_popup");
-
-    if (!hiddenAt) return;
-
-    const hoursPassed =
-        (Date.now() - parseInt(hiddenAt))
-        / (1000 * 60 * 60);
-
-    // hide for 24 hours
-    if (hoursPassed < 24) {
-        popup.remove();
-    }
-
-});
-
 </script>
-
 </body>
 </html>
