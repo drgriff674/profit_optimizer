@@ -3817,6 +3817,12 @@ def register_companion_device():
                 "error": "User not found"
             }
 
+        cur.execute("""
+            UPDATE companion_devices
+            SET is_active = FALSE
+            WHERE username = %s
+        """, (username,))
+
         # save/update device
         cur.execute("""
             INSERT INTO companion_devices (
@@ -4050,31 +4056,28 @@ def companion_sms():
 
     sender = data.get("sender", "")
     message = data.get("message", "")
+    device_id = data.get("device_id")
 
-    # ONLY process REAL payment SMS
     lower_msg = message.lower()
 
-    is_till_payment = "paid to" in lower_msg
-    is_paybill_payment = "sent to" in lower_msg
+    # ONLY process merchant RECEIVED money SMS
+    is_received_payment = "received from" in lower_msg
 
-    if not is_till_payment and not is_paybill_payment:
+    if not is_received_payment:
 
-        print("IGNORED NON-PAYMENT SMS")
+        print("IGNORED NON-MERCHANT SMS")
 
         return jsonify({
             "success": False,
-            "message": "Ignored non-payment SMS"
+            "message": "Ignored non-merchant SMS"
         })
 
-    
-
-    print("\n===== MPESA SMS =====")
+    print("\n===== MPESA MERCHANT SMS =====")
     print("SENDER:", sender)
     print("MESSAGE:", message)
 
     transaction_code = None
     amount = None
-    business_name = None
 
     # transaction code
     code_match = re.search(
@@ -4085,9 +4088,9 @@ def companion_sms():
     if code_match:
         transaction_code = code_match.group(1)
 
-    # transaction amount only
+    # amount extraction
     amount_match = re.search(
-        r'Confirmed\.\s*Ksh\s?([\d,]+\.\d{2})',
+        r'KSH\s?([\d,]+\.\d{2})\sreceived',
         message,
         re.IGNORECASE
     )
@@ -4097,29 +4100,8 @@ def companion_sms():
             amount_match.group(1).replace(",", "")
         )
 
-    # till message
-    till_match = re.search(
-        r'paid to (.*?)\. on',
-        message,
-        re.IGNORECASE
-    )
-
-    # paybill message
-    paybill_match = re.search(
-        r'sent to (.*?) for account',
-        message,
-        re.IGNORECASE
-    )
-
-    if till_match:
-        business_name = till_match.group(1).strip()
-
-    elif paybill_match:
-        business_name = paybill_match.group(1).strip()
-
     print("TRANSACTION CODE:", transaction_code)
     print("AMOUNT:", amount)
-    print("BUSINESS NAME:", business_name)
 
     matched_sale_id = None
     matched_username = None
@@ -4128,6 +4110,25 @@ def companion_sms():
 
         global matched_sale_id
         global matched_username
+
+        # verify trusted device
+        cur.execute("""
+            SELECT username
+            FROM companion_devices
+            WHERE device_id = %s
+            AND is_active = TRUE
+            LIMIT 1
+        """, (device_id,))
+
+        device = cur.fetchone()
+
+        if not device:
+            return {
+                "success": False,
+                "error": "Untrusted device"
+            }
+
+        matched_username = device["username"]
 
         # duplicate protection
         cur.execute("""
@@ -4145,47 +4146,44 @@ def companion_sms():
                 "duplicate": True
             }
 
-        # find business
+        # get business
         cur.execute("""
-            SELECT id, username
+            SELECT id
             FROM businesses
-            WHERE
-                LOWER(business_name) = LOWER(%s)
-                OR LOWER(till_name) = LOWER(%s)
+            WHERE username = %s
             LIMIT 1
-        """, (
-            business_name,
-            business_name
-        ))
+        """, (matched_username,))
 
         biz = cur.fetchone()
 
-        if biz:
+        if not biz:
+            return {
+                "success": False,
+                "error": "Business not found"
+            }
 
-            matched_username = biz["username"]
+        # find matching pending sale
+        cur.execute("""
+            SELECT sale_id, total_amount
+            FROM sales
+            WHERE business_id = %s
+            AND status IN ('pending','unpaid')
+            AND ABS(total_amount - %s) < 0.01
+            AND created_at >= NOW() - INTERVAL '15 minutes'
+            ORDER BY created_at ASC
+            LIMIT 1
+        """, (
+            biz["id"],
+            amount
+        ))
 
-            # find matching pending sale
-            cur.execute("""
-                SELECT sale_id, total_amount
-                FROM sales
-                WHERE business_id = %s
-                AND status IN ('pending','unpaid')
-                AND ABS(total_amount - %s) < 0.01
-                AND created_at >= NOW() - INTERVAL '15 minutes'
-                ORDER BY created_at DESC
-                LIMIT 1
-            """, (
-                biz["id"],
-                amount
-            ))
+        sale = cur.fetchone()
 
-            sale = cur.fetchone()
+        print("SALE MATCH:", sale)
+        print("SMS AMOUNT:", amount)
 
-            print("SALE MATCH:", sale)
-            print("SMS AMOUNT:", amount)
-
-            if sale:
-                matched_sale_id = sale["sale_id"]
+        if sale:
+            matched_sale_id = sale["sale_id"]
 
         # save transaction
         cur.execute("""
@@ -4245,7 +4243,6 @@ def companion_sms():
         "success": True,
         "transaction_code": transaction_code,
         "amount": amount,
-        "business_name": business_name,
         "sale_id": matched_sale_id
     })
 

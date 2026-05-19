@@ -92,35 +92,7 @@ def confirm_sale_payment(
 
         sale = cur.fetchone()
 
-        # smart fallback matching
-        if not sale and amount is not None:
-
-            cur.execute("""
-                SELECT
-                    s.sale_id,
-                    s.total_amount,
-                    s.status,
-                    s.business_id,
-                    b.username,
-                    s.payment_mode,
-                    s.created_at
-                FROM sales s
-                JOIN businesses b
-                    ON s.business_id = b.id
-                WHERE
-                    s.status IN ('pending','unpaid')
-                    AND s.total_amount = %s
-                    AND s.created_at >= NOW() - INTERVAL '15 minutes'
-                ORDER BY s.created_at DESC
-                LIMIT 1
-            """, (amount,))
-
-            sale = cur.fetchone()
-
-            if sale:
-                sale_id = sale["sale_id"]
-                print("🧠 Smart match found:", sale["sale_id"])
-
+        
         if not sale:
 
             return {
@@ -149,7 +121,7 @@ def confirm_sale_payment(
                     "error": "Amount mismatch"
                 }
 
-        # mark completed
+        # mark completed safely
         cur.execute("""
             UPDATE sales
             SET
@@ -158,11 +130,20 @@ def confirm_sale_payment(
                 payment_reference = %s,
                 paid_at = NOW()
             WHERE sale_id = %s
+            AND status != 'completed'
         """, (
             payment_source,
             transaction_id,
             sale_id
         ))
+
+        # already completed by another request
+        if cur.rowcount == 0:
+
+            return {
+                "success": True,
+                "already_completed": True
+            }
 
         # revenue update
         import pytz
