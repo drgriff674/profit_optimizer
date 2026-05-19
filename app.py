@@ -1627,7 +1627,7 @@ def download_companion():
 
     return send_from_directory(
         "static/apk",
-        "app-debug.apk",
+        "app-release.apk",
         as_attachment=True
     )
 
