@@ -4061,7 +4061,7 @@ def companion_sms():
     lower_msg = message.lower()
 
     # ONLY process merchant RECEIVED money SMS
-   is_received_payment = ("received from" in lower_msg or "confirmed" in lower_msg)
+    is_received_payment = ("received from" in lower_msg or "confirmed" in lower_msg)
         
     if not is_received_payment:
 
