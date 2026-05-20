@@ -1627,7 +1627,7 @@ def download_companion():
 
     return send_from_directory(
         "static/apk",
-        "app-release.apk",
+        "OptiGainCompanion-v2.apk",
         as_attachment=True
     )
 
