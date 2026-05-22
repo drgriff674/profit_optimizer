@@ -1637,7 +1637,7 @@ def test_fake_payment():
 
     data = {
         "sender": "M-PESA",
-        "message": "QHG7TEST99 Confirmed. Ksh500.00 received from Griffin",
+        "message": "QHG7TEST99 Confirmed. Ksh200.00 received from Mark",
         "device_id": "c32439e9c0e0735d"
     }
 
