@@ -531,7 +531,8 @@ def check_subscription():
         "mobile_login",
         "register_companion_device",
         "companion_payment",
-        "companion_sms"
+        "companion_sms",
+        "test_fake_payment"
         
     }
 
@@ -1630,6 +1631,22 @@ def download_companion():
         "OptiGainCompanion-v2.apk",
         as_attachment=True
     )
+
+@app.route("/api/test-fake-payment")
+def test_fake_payment():
+
+    data = {
+        "sender": "M-PESA",
+        "message": "QHG7TEST Confirmed. Ksh500.00 received from Griffin",
+        "device_id": "c32439e9c0e0735d"
+    }
+
+    with app.test_request_context(
+        "/api/companion/sms",
+        method="POST",
+        json=data
+    ):
+        return companion_sms()
 
 @app.route('/favicon.ico')
 def favicon():
