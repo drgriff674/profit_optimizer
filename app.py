@@ -1637,7 +1637,7 @@ def test_fake_payment():
 
     data = {
         "sender": "M-PESA",
-        "message": "QHG7TEST Confirmed. Ksh500.00 received from Griffin",
+        "message": "QHG7TEST99 Confirmed. Ksh500.00 received from Griffin",
         "device_id": "c32439e9c0e0735d"
     }
 
@@ -4078,7 +4078,7 @@ def companion_sms():
     lower_msg = message.lower()
 
     # ONLY process merchant RECEIVED money SMS
-    is_received_payment = ("received from" in lower_msg or "confirmed" in lower_msg)
+    is_received_payment = ("received from" in lower_msg and "confirmed" in lower_msg)
         
     if not is_received_payment:
 
@@ -4125,8 +4125,8 @@ def companion_sms():
 
     def operation(cur):
 
-        global matched_sale_id
-        global matched_username
+        nonlocal matched_sale_id
+        nonlocal matched_username
 
         # verify trusted device
         cur.execute("""
