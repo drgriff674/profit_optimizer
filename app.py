@@ -1637,7 +1637,7 @@ def test_fake_payment():
 
     data = {
         "sender": "M-PESA",
-        "message": "QHG7TEST99 Confirmed. Ksh200.00 received from Mark",
+        "message": "QHG7TEST55 Confirmed. Ksh200.00 received from Mark",
         "device_id": "c32439e9c0e0735d"
     }
 
@@ -4187,7 +4187,7 @@ def companion_sms():
             AND status IN ('pending','unpaid')
             AND ABS(total_amount - %s) < 0.01
             AND created_at >= NOW() - INTERVAL '15 minutes'
-            ORDER BY created_at ASC
+            ORDER BY created_at DESC
             LIMIT 1
         """, (
             biz["id"],
