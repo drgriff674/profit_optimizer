@@ -4098,7 +4098,7 @@ def companion_sms():
 
     # transaction code
     code_match = re.search(
-        r'^([A-Z0-9]{10})',
+        r'^([A-Z0-9]{8,12})',
         message
     )
 
