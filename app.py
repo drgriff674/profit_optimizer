@@ -2183,7 +2183,7 @@ def mark_paid(sale_id):
 
     result = confirm_sale_payment(
         sale_id=sale_id,
-        payment_source="manual"
+        payment_source="manual_paybill"
     )
 
     if result.get("success"):
