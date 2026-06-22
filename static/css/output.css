@@ -997,6 +997,10 @@ video {
   max-width: 80rem;
 }
 
+.max-w-lg {
+  max-width: 32rem;
+}
+
 .max-w-md {
   max-width: 28rem;
 }
@@ -1007,10 +1011,6 @@ video {
 
 .max-w-xl {
   max-width: 36rem;
-}
-
-.max-w-lg {
-  max-width: 32rem;
 }
 
 .flex-1 {
@@ -1453,6 +1453,11 @@ video {
 
 .bg-slate-200\/70 {
   background-color: rgb(226 232 240 / 0.7);
+}
+
+.bg-slate-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(203 213 225 / var(--tw-bg-opacity, 1));
 }
 
 .bg-slate-50 {

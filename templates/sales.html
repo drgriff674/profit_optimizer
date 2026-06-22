@@ -117,6 +117,17 @@
 </button>
   </div>
 
+<input
+    id="productSearch"
+    type="text"
+    placeholder="🔍 Search products..."
+    class="w-full px-3 py-2 mb-3 rounded-lg border
+           border-slate-300 dark:border-slate-600
+           bg-white dark:bg-slate-700
+           text-sm text-slate-900 dark:text-white
+           focus:ring-2 focus:ring-blue-500
+           focus:outline-none">
+
   <div id="productsList" class="space-y-2 overflow-y-auto flex-1"></div>
 </div>
 
@@ -156,6 +167,17 @@
 
 </div>
 
+<input
+    id="salesSearch"
+    type="text"
+    placeholder="🔍 Search sale ID..."
+    class="w-full px-3 py-2 mb-3 rounded-lg border
+           border-slate-300 dark:border-slate-600
+           bg-white dark:bg-slate-700
+           text-sm text-slate-900 dark:text-white
+           focus:ring-2 focus:ring-blue-500
+           focus:outline-none">
+
   <ul id="salesList" class="text-sm space-y-2 overflow-y-auto flex-1"></ul>
 </div>
 
@@ -163,6 +185,8 @@
 
 <script>
 let cart = [];
+let allProducts = [];
+let allSales = [];
 
 function formatTime(timestamp) {
     if (!timestamp) return "";
@@ -262,25 +286,106 @@ function removeItem(i){ cart.splice(i,1); renderCart(); }
 
 // ================= PRODUCTS =================
 function addProduct() {
+
     const name = pname.value;
     const price = pprice.value;
-    if (!name || !price) return alert("Fill product name and price");
 
-    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+    if (!name || !price)
+        return alert("Fill product name and price");
+
+    const csrf =
+        document.querySelector(
+            'meta[name="csrf-token"]'
+        ).content;
 
     fetch("/products/create", {
         method: "POST",
-        headers: {"Content-Type":"application/json","X-CSRFToken":csrf},
-        body: JSON.stringify({name,price})
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf
+        },
+        body: JSON.stringify({
+            name,
+            price
+        })
     })
-    .then(r=>r.json())
-    .then(()=>{ pname.value=""; pprice.value=""; loadProducts(); });
+
+    .then(r => {
+
+        if (!r.ok)
+            throw new Error("Network");
+
+        return r.json();
+    })
+
+    .then(() => {
+
+        pname.value = "";
+        pprice.value = "";
+
+        loadProducts();
+
+        showToast("📦 Product saved");
+
+    })
+
+    .catch(err => {
+
+        console.log(
+            "PRODUCT OFFLINE:",
+            err
+        );
+
+        saveOffline(
+            "product",
+            {
+                name: name,
+                price: price
+            }
+        );
+
+        const el =
+            document.getElementById(
+                "productsList"
+            );
+
+        el.insertAdjacentHTML(
+            "afterbegin",
+            `
+            <div class="flex items-center gap-2 opacity-70">
+
+                <button
+                    class="flex-1 flex justify-between items-center px-3 py-2 rounded-lg bg-slate-300 text-sm">
+
+                    <span>${name}</span>
+                    <span>KSh ${price}</span>
+
+                </button>
+
+                <span class="text-xs text-yellow-600">
+                    offline
+                </span>
+
+            </div>
+            `
+        );
+
+        pname.value = "";
+        pprice.value = "";
+
+        showToast(
+            "📴 Product saved locally"
+        );
+
+    });
+
 }
 
 function loadProducts() {
     fetch("/api/products")
     .then(r=>r.json())
     .then(data=>{
+        allProducts = data.products;
         const el = document.getElementById("productsList");
         el.innerHTML = "";
 
@@ -297,7 +402,7 @@ if (data.products.length === 0) {
     return;
 }
 
-        data.products.forEach(p=>{
+        allProducts.forEach(p=>{
             el.innerHTML += `
             <div class="flex items-center gap-2">
 
@@ -335,6 +440,45 @@ text-sm transition">
 let currentDeleteId = null;
 
 // ================= EDIT (MODAL) =================
+
+document.addEventListener("input", function(e){
+
+    if (e.target.id !== "productSearch")
+        return;
+
+    const term =
+        e.target.value.toLowerCase();
+
+    const filtered =
+        allProducts.filter(p =>
+            p.name.toLowerCase().includes(term)
+        );
+
+    const el =
+        document.getElementById("productsList");
+
+    el.innerHTML = "";
+
+    filtered.forEach(p => {
+
+        el.innerHTML += `
+        <div class="flex items-center gap-2">
+
+            <button onclick="addItem(${p.id}, '${p.name}', ${p.price})"
+             class="flex-1 flex justify-between items-center px-3 py-2 rounded-lg
+             bg-slate-100 hover:bg-slate-200
+             dark:bg-slate-700 dark:hover:bg-slate-600">
+
+                <span>${p.name}</span>
+                <span>KSh ${p.price}</span>
+
+            </button>
+
+        </div>`;
+    });
+
+});
+
 function editProduct(id, name, price) {
     currentEditId = id;
 
@@ -422,6 +566,18 @@ function createSale() {
 .then(data => {
     console.log("SALE CREATED:", data);
 
+localStorage.setItem(
+    "pending_sale_" + data.sale_id,
+    JSON.stringify({
+        sale_id: data.sale_id,
+        amount: cart.reduce(
+            (t, i) => t + (i.price * i.quantity),
+            0
+        ),
+        paid: false
+    })
+);
+
     // 🔥 instant feedback
     if (data.status === "unpaid") {
         showToast("💰 Sale created — mark as paid");
@@ -442,13 +598,41 @@ function createSale() {
         console.error("NETWORK FAIL:", err);
 
         // 🔥 ONLY fallback here
-        saveOffline("sale", payload);
 
-        alert("📴 Network issue — saved offline");
+const localSaleId =
+    "LOCAL_" + Date.now();
 
-        cart = [];
-        renderCart();
-    });
+const amount =
+    cart.reduce(
+        (t, i) => t + (i.price * i.quantity),
+        0
+    );
+
+localStorage.setItem(
+    "pending_sale_" + localSaleId,
+    JSON.stringify({
+        sale_id: localSaleId,
+        amount: amount,
+        paid: false
+    })
+);
+
+saveOffline("sale", {
+    sale_id: localSaleId,
+    items: cart
+});
+
+injectSaleUI({
+    sale_id: localSaleId,
+    status: "pending"
+});
+
+alert("📴 Sale created locally");
+
+cart = [];
+renderCart();
+
+            });
 }
 
 function deleteSale(saleId) {
@@ -480,10 +664,52 @@ fetch(`/sales/delete/${saleId}`, {
 
 }
 
-function loadSales() {
+function loadSales(searchTerm = "") {
     fetch("/api/sales")
     .then(r => r.json())
     .then(data => {
+    allSales = data.sales;
+let queue =
+    JSON.parse(
+        localStorage.getItem(
+            "offline_queue"
+        ) || "[]"
+    );
+
+queue.forEach(item => {
+
+    if (
+        item.type === "sale" &&
+        item.data.sale_id
+    ) {
+
+        data.sales.unshift({
+
+            sale_id:
+                item.data.sale_id,
+
+            total_amount:
+                item.data.items.reduce(
+                    (t, i) =>
+                        t +
+                        (
+                            i.price *
+                            i.quantity
+                        ),
+                    0
+                ),
+
+            status:
+                "pending",
+
+            created_at:
+                new Date()
+                    .toISOString()
+        });
+
+    }
+
+});
         const el = document.getElementById("salesList");
 el.innerHTML = "";
 
@@ -500,7 +726,37 @@ if (data.sales.length === 0) {
     return;
 }
 
+if (searchTerm !== "") {
+
+    data.sales = data.sales.filter(s =>
+        s.sale_id
+         .toLowerCase()
+         .includes(
+             searchTerm.toLowerCase()
+         )
+    );
+}
+
         data.sales.forEach(s => {
+
+const localSale =
+    localStorage.getItem(
+        "pending_sale_" + s.sale_id
+    );
+
+if (localSale) {
+
+    const parsed =
+        JSON.parse(localSale);
+
+if (parsed.paid) {
+
+    s.status = "completed";
+
+    s.local_paid = true;
+}
+
+   }
 
             const prevStatus = previousSales[s.sale_id];
             const justPaid = prevStatus !=="completed" && s.status === "completed";
@@ -530,7 +786,7 @@ if (data.sales.length === 0) {
     <div class="flex items-center gap-2">
 
         <span class="${s.status==='completed'?'text-green-500':'text-yellow-500'} text-xs">
-            ${s.status}
+            ${s.local_paid ? "paid-offline" : s.status}
         </span>
 
         ${
@@ -608,6 +864,7 @@ ${
 }
 
 
+
 // 🔄 AUTO SYNC ENGINE
 async function syncOfflineData() {
 
@@ -619,24 +876,35 @@ async function syncOfflineData() {
 
         if (item.synced) continue;
 
-        try {
-            let endpoint = "";
+try {
 
-            if (item.type === "sale") endpoint = "/sales/create";
+    let endpoint = "";
 
-            await fetch(endpoint, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(item.data)
-            });
-
-            item.synced = true;
-
-        } catch (e) {
-            console.log("Still offline...");
-            return;
-        }
+    if (item.type === "sale") {
+        endpoint = "/sales/create";
     }
+
+    if (item.type === "product") {
+        endpoint = "/products/create";
+    }
+
+    await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(item.data)
+    });
+
+    item.synced = true;
+
+} catch (e) {
+
+    console.log("Still offline...");
+    return;
+}
+
+            }
 
     localStorage.setItem("offline_queue", JSON.stringify(queue));
 }
@@ -669,10 +937,20 @@ document.addEventListener("visibilitychange", () => {
 
 // INIT
 document.addEventListener("DOMContentLoaded",()=>{
+
     loadProducts();
     loadSales();
 
-    startPolling();	
+    const salesSearch =
+        document.getElementById("salesSearch");
+
+    salesSearch?.addEventListener("keyup", function(){
+
+        loadSales(this.value);
+
+    });
+
+    startPolling();
 });
 
 function markPaid(saleId) {
