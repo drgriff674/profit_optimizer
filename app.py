@@ -2679,13 +2679,85 @@ def revenue_overview():
             ORDER BY rd.revenue_date DESC
         """, (username,))
 
-        return cur.fetchall()
+        days = cur.fetchall()
 
-    days = run_db_operation(operation)
+        import pytz
+        from datetime import datetime
+
+        nairobi = pytz.timezone("Africa/Nairobi")
+        today = datetime.now(nairobi)
+
+        current_month = today.month
+        current_year = today.year
+
+        monthly_profit = 0
+        yearly_profit = 0
+        lifetime_profit = 0
+
+        best_day = 0
+        best_day_date = None
+
+        monthly_totals = {}
+
+        for d in days:
+
+            profit = float(d["profit"])
+
+            lifetime_profit += profit
+
+            if d["revenue_date"].year == current_year:
+                yearly_profit += profit
+
+            if (
+                d["revenue_date"].year == current_year
+                and
+                d["revenue_date"].month == current_month
+            ):
+                monthly_profit += profit
+
+            if profit > best_day:
+                best_day = profit
+                best_day_date = d["revenue_date"]
+
+            key = d["revenue_date"].strftime("%Y-%m")
+
+            monthly_totals[key] = (
+                monthly_totals.get(key, 0)
+                + profit
+            )
+
+        best_month = None
+        best_month_profit = 0
+
+        for month, amount in monthly_totals.items():
+
+            if amount > best_month_profit:
+                best_month_profit = amount
+                best_month = month
+
+        return {
+            "days": days,
+            "monthly_profit": monthly_profit,
+            "yearly_profit": yearly_profit,
+            "lifetime_profit": lifetime_profit,
+            "best_day": best_day,
+            "best_day_date": best_day_date,
+            "best_month": best_month,
+            "best_month_profit": best_month_profit
+        }
+
+    data = run_db_operation(operation)
 
     return render_template(
         "revenue_overview.html",
-        days=days
+        days=data["days"],
+        monthly_profit=data["monthly_profit"],
+        yearly_profit=data["yearly_profit"],
+        lifetime_profit=data["lifetime_profit"],
+        best_day=data["best_day"],
+        best_day_date=data["best_day_date"],
+        best_month=data["best_month"],
+        best_month_profit=data["best_month_profit"]
     )
 
 

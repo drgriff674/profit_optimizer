@@ -1997,6 +1997,16 @@ video {
   color: rgb(161 98 7 / var(--tw-text-opacity, 1));
 }
 
+.text-orange-600 {
+  --tw-text-opacity: 1;
+  color: rgb(234 88 12 / var(--tw-text-opacity, 1));
+}
+
+.text-purple-600 {
+  --tw-text-opacity: 1;
+  color: rgb(147 51 234 / var(--tw-text-opacity, 1));
+}
+
 .placeholder-slate-400::-moz-placeholder {
   --tw-placeholder-opacity: 1;
   color: rgb(148 163 184 / var(--tw-placeholder-opacity, 1));
@@ -2703,6 +2713,10 @@ video {
 
   .md\:grid-cols-6 {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .md\:flex-row {

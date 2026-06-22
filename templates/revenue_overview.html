@@ -46,6 +46,86 @@
 <!-- MAIN -->
 <main class="max-w-4xl mx-auto px-6 py-8">
 
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow">
+        <p class="text-xs text-slate-500">
+            This Month
+        </p>
+
+        <p class="text-green-600 text-xl font-bold">
+            KSh {{ "%.2f"|format(monthly_profit) }}
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow">
+        <p class="text-xs text-slate-500">
+            This Year
+        </p>
+
+        <p class="text-blue-600 text-xl font-bold">
+            KSh {{ "%.2f"|format(yearly_profit) }}
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow">
+        <p class="text-xs text-slate-500">
+            Lifetime
+        </p>
+
+        <p class="text-purple-600 text-xl font-bold">
+            KSh {{ "%.2f"|format(lifetime_profit) }}
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow">
+        <p class="text-xs text-slate-500">
+            Best Day
+        </p>
+
+        <p class="text-orange-600 font-bold">
+            KSh {{ "%.2f"|format(best_day) }}
+        </p>
+
+        <p class="text-xs text-slate-500">
+            {{ best_day_date }}
+        </p>
+    </div>
+
+</div>
+
+
+
+<!-- ADD THIS HERE -->
+
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl shadow mb-6">
+
+    <h3 class="font-semibold mb-2">
+        🏆 Best Month Ever
+    </h3>
+
+    <p class="text-lg text-green-600 font-bold">
+        {{ best_month }}
+    </p>
+
+    <p class="text-sm">
+        KSh {{ "%.2f"|format(best_month_profit) }}
+    </p>
+
+</div>
+
+
+
+<div class="mb-4">
+    <input
+        id="dateSearch"
+        type="text"
+        placeholder="🔍 Search date (2026-06 or 2026-06-22)"
+        class="w-full px-4 py-2 rounded-lg border
+               border-slate-300 dark:border-slate-700
+               bg-white dark:bg-slate-900">
+</div>
+
   {% if days %}
     <div class="overflow-x-auto">
       <table class="w-full border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
@@ -134,16 +214,17 @@
     </a>
 
     <!-- DELETE -->
-    <button
-      onclick="deleteRevenueDay('{{ d.revenue_date }}')"
-      class="w-full md:w-auto px-4 py-1.5 rounded-lg
-             bg-gradient-to-r from-red-600 to-red-500
-             hover:from-red-700 hover:to-red-600
-             text-white text-sm font-medium
-             shadow-sm transition-all duration-200">
-      Delete
-    </button>
+    {% if not d.locked %}
+<button
+  onclick="deleteRevenueDay('{{ d.revenue_date }}')"
+  class="w-full md:w-auto px-4 py-1.5 rounded-lg
+         bg-red-600 hover:bg-red-700
+         text-white text-sm">
+  Delete
+</button>
+{% endif %}
 
+      
   </div>
 
 </td>
@@ -182,7 +263,12 @@ toggle?.addEventListener("click", () => {
 <script>
 function deleteRevenueDay(date) {
 
-  if (!confirm(`Delete ${date}? This cannot be undone.`)) return;
+  const answer = prompt(
+    `Type DELETE to remove ${date}`
+);
+
+if (answer !== "DELETE")
+    return;
 
   fetch(`/revenue/day/${date}/delete`, {
     method: "POST",
@@ -219,6 +305,31 @@ function deleteRevenueDay(date) {
     alert("Server error 😅");
   });
 }
+</script>
+
+<script>
+
+document.addEventListener("input", function(e){
+
+    if (e.target.id !== "dateSearch")
+        return;
+
+    const term =
+        e.target.value.toLowerCase();
+
+    document.querySelectorAll("tbody tr")
+    .forEach(row => {
+
+        const date =
+            row.dataset.date.toLowerCase();
+
+        row.style.display =
+            date.includes(term)
+            ? ""
+            : "none";
+    });
+
+});
 </script>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
