@@ -1,108 +1,211 @@
-<body class="bg-slate-100 dark:bg-slate-900 min-h-screen transition-colors">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Management - OptiGain</title>
 
-<div class="max-w-5xl mx-auto p-6">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/output.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="min-h-screen bg-slate-100 dark:bg-slate-950
+             text-slate-900 dark:text-white">
+
+<div class="max-w-5xl mx-auto p-4 md:p-8">
 
     <!-- TOP BAR -->
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center justify-between mb-8">
 
-        <h1 class="text-3xl font-bold
-                   text-slate-900 dark:text-white">
-            👥 Employee Management
-        </h1>
+        <div>
 
-        <div class="flex gap-3">
+            <h1 class="text-3xl font-bold tracking-tight">
+                👥 Employee Management
+            </h1>
 
-            <button id="darkToggle"
-                    class="w-10 h-10 rounded-full
-                           bg-slate-200 dark:bg-slate-700">
-                🌙
-            </button>
-
-            <a href="{{ url_for('dashboard') }}"
-               class="px-4 py-2 rounded-lg
-                      bg-blue-600 text-white">
-                Dashboard
-            </a>
+            <p class="text-sm opacity-70 mt-1">
+                Create and manage employee accounts
+            </p>
 
         </div>
 
+        <a href="{{ url_for('dashboard') }}"
+           class="px-4 py-2 rounded-xl
+                  bg-blue-600 text-white
+                  hover:bg-blue-700 transition shadow-sm">
+
+            ← Back to Dashboard
+
+        </a>
+
     </div>
 
-    <!-- CREATE EMPLOYEE -->
+    <!-- FLASH MESSAGES -->
 
-    <div class="bg-white dark:bg-slate-800
-                rounded-2xl shadow p-6 mb-8">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
 
-        <h2 class="text-xl font-semibold mb-4
-                   text-slate-900 dark:text-white">
-            Add Employee
-        </h2>
+    <div class="space-y-3 mb-6">
+
+        {% for category, message in messages %}
+
+        <div class="p-4 rounded-xl shadow-sm
+            {% if category == 'success' %}
+                bg-green-100 text-green-700
+            {% elif category == 'error' %}
+                bg-red-100 text-red-700
+            {% else %}
+                bg-slate-100 text-slate-700
+            {% endif %}
+        ">
+            {{ message }}
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+    {% endwith %}
+
+    <!-- CREATE EMPLOYEE CARD -->
+
+    <div class="rounded-3xl p-6 mb-8
+                bg-white dark:bg-slate-900
+                border border-slate-200 dark:border-slate-800
+                shadow-sm">
+
+        <div class="mb-6">
+
+            <h2 class="text-xl font-semibold">
+                ➕ Create Employee
+            </h2>
+
+            <p class="text-sm opacity-70 mt-1">
+                Give staff access to specific branches.
+            </p>
+
+        </div>
 
         <form method="POST"
               action="{{ url_for('add_employee') }}"
-              class="space-y-4">
+              class="space-y-5">
 
             <input type="hidden"
                    name="csrf_token"
                    value="{{ csrf_token() }}">
 
-            <input
-                type="text"
-                name="username"
-                placeholder="Username"
-                required
-                class="w-full p-3 rounded-lg border
-                       bg-white dark:bg-slate-700
-                       text-slate-900 dark:text-white">
+            <!-- USERNAME -->
 
-            <!-- PASSWORD -->
+            <div>
 
-            <div class="relative">
+                <label class="block text-sm mb-2 font-medium">
+                    Username
+                </label>
 
                 <input
-                    id="passwordField"
-                    type="password"
-                    name="password"
-                    placeholder="Password"
+                    type="text"
+                    name="username"
                     required
-                    class="w-full p-3 pr-12 rounded-lg border
-                           bg-white dark:bg-slate-700
-                           text-slate-900 dark:text-white">
-
-                <button type="button"
-                        onclick="togglePassword()"
-                        class="absolute right-3 top-3">
-
-                    👁️
-
-                </button>
+                    placeholder="Employee username"
+                    class="w-full px-4 py-3 rounded-2xl
+                           border border-slate-300
+                           dark:border-slate-700
+                           bg-white dark:bg-slate-950
+                           focus:ring-2 focus:ring-blue-500
+                           outline-none transition">
 
             </div>
 
-            <select
-                name="branch_id"
-                required
-                class="w-full p-3 rounded-lg border
-                       bg-white dark:bg-slate-700
-                       text-slate-900 dark:text-white">
+            <!-- PASSWORD -->
 
-                {% for branch in branches %}
+            <div>
 
-                <option value="{{ branch.id }}">
-                    {{ branch.branch_name }}
-                </option>
+                <label class="block text-sm mb-2 font-medium">
+                    Password
+                </label>
 
-                {% endfor %}
+                <div class="relative">
 
-            </select>
+                    <input
+                        id="passwordField"
+                        type="password"
+                        name="password"
+                        required
+                        placeholder="Employee password"
+                        class="w-full px-4 py-3 pr-14 rounded-2xl
+                               border border-slate-300
+                               dark:border-slate-700
+                               bg-white dark:bg-slate-950
+                               focus:ring-2 focus:ring-blue-500
+                               outline-none transition">
+
+                    <button
+                        type="button"
+                        onclick="togglePassword()"
+                        class="absolute right-4 top-1/2
+                               -translate-y-1/2
+                               text-slate-500">
+
+                        👁️
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- BRANCH -->
+
+            <div>
+
+                <label class="block text-sm mb-2 font-medium">
+                    Branch
+                </label>
+
+                <select
+                    name="branch_id"
+                    required
+                    class="w-full px-4 py-3 rounded-2xl
+                           border border-slate-300
+                           dark:border-slate-700
+                           bg-white dark:bg-slate-950
+                           focus:ring-2 focus:ring-blue-500
+                           outline-none transition">
+
+                    {% for branch in branches %}
+
+                    <option value="{{ branch.id }}">
+                        {{ branch.branch_name }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <!-- BUTTON -->
 
             <button
                 type="submit"
-                class="px-5 py-3 rounded-lg
-                       bg-blue-600 text-white">
+                class="w-full md:w-auto
+                       px-6 py-3 rounded-2xl
+                       bg-gradient-to-r
+                       from-blue-600 to-blue-500
+                       hover:from-blue-700
+                       hover:to-blue-600
+                       text-white font-semibold
+                       shadow-md hover:shadow-lg
+                       transition-all duration-200">
 
-                Create Employee
+                + Create Employee
 
             </button>
 
@@ -110,73 +213,113 @@
 
     </div>
 
-    <!-- EMPLOYEES -->
+    <!-- EMPLOYEE LIST -->
 
-    <div class="bg-white dark:bg-slate-800
-                rounded-2xl shadow p-6">
+    <div>
 
-        <h2 class="text-xl font-semibold mb-4
-                   text-slate-900 dark:text-white">
-            Current Employees
-        </h2>
+        <div class="flex items-center justify-between mb-4">
+
+            <h2 class="text-xl font-semibold">
+                👨‍💼 Current Employees
+            </h2>
+
+            <span class="text-sm opacity-70">
+                {{ employees|length }} total
+            </span>
+
+        </div>
 
         {% if employees %}
 
-        <table class="w-full">
-
-            <thead>
-
-            <tr class="border-b">
-
-                <th class="text-left py-3">Username</th>
-                <th class="text-left py-3">Branch</th>
-                <th class="text-left py-3">Status</th>
-
-            </tr>
-
-            </thead>
-
-            <tbody>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             {% for employee in employees %}
 
-            <tr class="border-b">
+            <div class="rounded-3xl p-5
+                        bg-white dark:bg-slate-900
+                        border border-slate-200
+                        dark:border-slate-800
+                        shadow-sm hover:shadow-md
+                        transition-all duration-200">
 
-                <td class="py-3">
-                    {{ employee.username }}
-                </td>
+                <div class="flex items-start justify-between mb-4">
 
-                <td>
-                    {{ employee.branch_id }}
-                </td>
+                    <div>
 
-                <td>
+                        <h3 class="text-lg font-semibold">
+                            {{ employee.username }}
+                        </h3>
+
+                        <p class="text-sm opacity-70 mt-1">
+                            Branch ID:
+                            {{ employee.branch_id }}
+                        </p>
+
+                    </div>
 
                     {% if employee.is_active %}
-                        <span class="text-green-600">
-                            Active
-                        </span>
+
+                    <span class="text-xs px-3 py-1 rounded-full
+                                 bg-green-100 text-green-700
+                                 font-semibold">
+
+                        Active
+
+                    </span>
+
                     {% else %}
-                        <span class="text-red-600">
-                            Disabled
-                        </span>
+
+                    <span class="text-xs px-3 py-1 rounded-full
+                                 bg-red-100 text-red-700
+                                 font-semibold">
+
+                        Disabled
+
+                    </span>
+
                     {% endif %}
 
-                </td>
+                </div>
 
-            </tr>
+                <div class="text-xs opacity-60">
+
+                    Created:
+
+                    {% if employee.created_at %}
+                        {{ employee.created_at.strftime('%d %b %Y') }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+
+                </div>
+
+            </div>
 
             {% endfor %}
 
-            </tbody>
-
-        </table>
+        </div>
 
         {% else %}
 
-        <p class="text-slate-500 dark:text-slate-300">
-            No employees created yet.
-        </p>
+        <div class="rounded-3xl p-8 text-center
+                    bg-white dark:bg-slate-900
+                    border border-dashed
+                    border-slate-300
+                    dark:border-slate-700">
+
+            <div class="text-5xl mb-4">
+                👥
+            </div>
+
+            <h3 class="text-lg font-semibold mb-2">
+                No employees yet
+            </h3>
+
+            <p class="text-sm opacity-70">
+                Create your first employee above.
+            </p>
+
+        </div>
 
         {% endif %}
 
@@ -197,24 +340,11 @@ function togglePassword() {
         : "password";
 }
 
-const btn = document.getElementById("darkToggle");
-const root = document.documentElement;
-
 if (localStorage.getItem("theme") === "dark") {
-    root.classList.add("dark");
+    document.documentElement.classList.add("dark");
 }
-
-btn?.addEventListener("click", () => {
-
-    const dark =
-        root.classList.toggle("dark");
-
-    localStorage.setItem(
-        "theme",
-        dark ? "dark" : "light"
-    );
-});
 
 </script>
 
 </body>
+</html>

@@ -2569,7 +2569,7 @@ def create_employee(owner, username, password_hash, branch_id):
             branch_id
         ))
 
-    run_db_operation(operation)
+    run_db_operation(operation, commit=True)
 
 def get_weekly_inventory_insights(username):
 
