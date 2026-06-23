@@ -719,7 +719,7 @@ def login():
     if "username" in session:
 
         if session.get("role") == "employee":
-            return redirect(url_for("sales"))
+            return redirect(url_for("dashboard"))
 
         return redirect(url_for("dashboard"))
 
@@ -822,7 +822,7 @@ def login():
                 )
 
                 return redirect(
-                    url_for("sales")
+                    url_for("dashboard")
                 )
 
             flash(
