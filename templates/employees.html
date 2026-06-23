@@ -1,41 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Employees - OptiGain</title>
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen transition-colors">
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/output.css') }}">
+<div class="max-w-5xl mx-auto p-6">
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-</head>
-
-<body class="bg-slate-100 dark:bg-slate-900 min-h-screen p-6">
-
-<div class="max-w-5xl mx-auto">
+    <!-- TOP BAR -->
 
     <div class="flex justify-between items-center mb-6">
 
-        <h1 class="text-3xl font-bold">
+        <h1 class="text-3xl font-bold
+                   text-slate-900 dark:text-white">
             👥 Employee Management
         </h1>
 
-        <a href="{{ url_for('dashboard') }}"
-           class="px-4 py-2 rounded-lg bg-blue-600 text-white">
-            Dashboard
-        </a>
+        <div class="flex gap-3">
+
+            <button id="darkToggle"
+                    class="w-10 h-10 rounded-full
+                           bg-slate-200 dark:bg-slate-700">
+                🌙
+            </button>
+
+            <a href="{{ url_for('dashboard') }}"
+               class="px-4 py-2 rounded-lg
+                      bg-blue-600 text-white">
+                Dashboard
+            </a>
+
+        </div>
 
     </div>
 
     <!-- CREATE EMPLOYEE -->
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-6 mb-8">
+    <div class="bg-white dark:bg-slate-800
+                rounded-2xl shadow p-6 mb-8">
 
-        <h2 class="text-xl font-semibold mb-4">
+        <h2 class="text-xl font-semibold mb-4
+                   text-slate-900 dark:text-white">
             Add Employee
         </h2>
 
@@ -43,24 +43,49 @@
               action="{{ url_for('add_employee') }}"
               class="space-y-4">
 
+            <input type="hidden"
+                   name="csrf_token"
+                   value="{{ csrf_token() }}">
+
             <input
                 type="text"
                 name="username"
                 placeholder="Username"
                 required
-                class="w-full p-3 rounded-lg border">
+                class="w-full p-3 rounded-lg border
+                       bg-white dark:bg-slate-700
+                       text-slate-900 dark:text-white">
 
-            <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                required
-                class="w-full p-3 rounded-lg border">
+            <!-- PASSWORD -->
+
+            <div class="relative">
+
+                <input
+                    id="passwordField"
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    required
+                    class="w-full p-3 pr-12 rounded-lg border
+                           bg-white dark:bg-slate-700
+                           text-slate-900 dark:text-white">
+
+                <button type="button"
+                        onclick="togglePassword()"
+                        class="absolute right-3 top-3">
+
+                    👁️
+
+                </button>
+
+            </div>
 
             <select
                 name="branch_id"
                 required
-                class="w-full p-3 rounded-lg border">
+                class="w-full p-3 rounded-lg border
+                       bg-white dark:bg-slate-700
+                       text-slate-900 dark:text-white">
 
                 {% for branch in branches %}
 
@@ -74,7 +99,8 @@
 
             <button
                 type="submit"
-                class="px-5 py-3 bg-blue-600 text-white rounded-lg">
+                class="px-5 py-3 rounded-lg
+                       bg-blue-600 text-white">
 
                 Create Employee
 
@@ -84,11 +110,13 @@
 
     </div>
 
-    <!-- EMPLOYEE LIST -->
+    <!-- EMPLOYEES -->
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow p-6">
+    <div class="bg-white dark:bg-slate-800
+                rounded-2xl shadow p-6">
 
-        <h2 class="text-xl font-semibold mb-4">
+        <h2 class="text-xl font-semibold mb-4
+                   text-slate-900 dark:text-white">
             Current Employees
         </h2>
 
@@ -100,17 +128,9 @@
 
             <tr class="border-b">
 
-                <th class="text-left py-3">
-                    Username
-                </th>
-
-                <th class="text-left py-3">
-                    Branch
-                </th>
-
-                <th class="text-left py-3">
-                    Status
-                </th>
+                <th class="text-left py-3">Username</th>
+                <th class="text-left py-3">Branch</th>
+                <th class="text-left py-3">Status</th>
 
             </tr>
 
@@ -154,7 +174,7 @@
 
         {% else %}
 
-        <p class="text-slate-500">
+        <p class="text-slate-500 dark:text-slate-300">
             No employees created yet.
         </p>
 
@@ -164,5 +184,37 @@
 
 </div>
 
+<script>
+
+function togglePassword() {
+
+    const field =
+        document.getElementById("passwordField");
+
+    field.type =
+        field.type === "password"
+        ? "text"
+        : "password";
+}
+
+const btn = document.getElementById("darkToggle");
+const root = document.documentElement;
+
+if (localStorage.getItem("theme") === "dark") {
+    root.classList.add("dark");
+}
+
+btn?.addEventListener("click", () => {
+
+    const dark =
+        root.classList.toggle("dark");
+
+    localStorage.setItem(
+        "theme",
+        dark ? "dark" : "light"
+    );
+});
+
+</script>
+
 </body>
-</html>
