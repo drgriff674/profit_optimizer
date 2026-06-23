@@ -2536,6 +2536,41 @@ def get_employee(username):
 
     return run_db_operation(operation)
 
+def get_employees(owner_username):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT *
+            FROM employee_accounts
+            WHERE owner_username = %s
+            ORDER BY created_at DESC
+        """, (owner_username,))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
+
+def create_employee(owner, username, password_hash, branch_id):
+
+    def operation(cur):
+
+        cur.execute("""
+            INSERT INTO employee_accounts (
+                owner_username,
+                username,
+                password,
+                branch_id
+            )
+            VALUES (%s,%s,%s,%s)
+        """, (
+            owner,
+            username,
+            password_hash,
+            branch_id
+        ))
+
+    run_db_operation(operation)
+
 def get_weekly_inventory_insights(username):
 
     def operation(cur):

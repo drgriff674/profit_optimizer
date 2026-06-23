@@ -103,6 +103,14 @@ hover:pl-5 transition-all duration-200">
 🏢 Branches
 </a>
 
+<a href="{{ url_for('employees_page') }}"
+class="block px-4 py-2.5 rounded-lg text-sm font-medium
+text-slate-700 dark:text-slate-300
+hover:bg-blue-600 hover:text-white
+hover:pl-5 transition-all duration-200">
+👥 Employees
+</a>
+
 {% endif %}
 
 <!-- SALES -->
@@ -248,17 +256,14 @@ hover:pl-5 transition-all duration-200">
 👤 My Profile
 </a>
 
-{% if role != "employee" %}
-
-<a href="{{ url_for('branches_page') }}"
+<a href="{{ url_for('settings') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
 hover:bg-blue-600 hover:text-white
 hover:pl-5 transition-all duration-200">
-🏢 Branches
+⚙️ Settings
 </a>
 
-{% endif %}
 
 <a href="{{ url_for('logout') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium

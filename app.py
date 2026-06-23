@@ -103,6 +103,8 @@ from database import(
     create_inventory_item,
     confirm_sale_payment,
     get_employee,
+    get_employees,
+    create_employee
     
 )
 import pytz
@@ -1747,6 +1749,53 @@ def switch_branch(branch_id):
         session["active_branch_id"] = branch_id
 
     return redirect(url_for("dashboard"))
+
+@app.route("/employees")
+@login_required
+def employees_page():
+
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
+
+    username = session["username"]
+
+    employees = get_employees(username)
+
+    business_id = get_business_id(username)
+
+    branches = get_branches(business_id)
+
+    return render_template(
+        "employees.html",
+        employees=employees,
+        branches=branches
+    )
+
+@app.route("/employees/add", methods=["POST"])
+@login_required
+def add_employee():
+
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
+
+    owner = session["username"]
+
+    username = request.form["username"]
+    password = request.form["password"]
+    branch_id = request.form["branch_id"]
+
+    password_hash = generate_password_hash(password)
+
+    create_employee(
+        owner,
+        username,
+        password_hash,
+        branch_id
+    )
+
+    flash("Employee created.")
+
+    return redirect(url_for("employees_page"))
     
 @app.route("/api/dashboard-snapshot")
 @login_required
