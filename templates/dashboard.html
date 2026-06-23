@@ -93,6 +93,8 @@ bg-blue-600 text-white shadow-sm">
 📊 Dashboard
 </a>
 
+{% if role != "employee" %}
+
 <a href="{{ url_for('branches_page') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
@@ -100,6 +102,8 @@ hover:bg-blue-600 hover:text-white
 hover:pl-5 transition-all duration-200">
 🏢 Branches
 </a>
+
+{% endif %}
 
 <!-- SALES -->
 <a href="{{ url_for('sales_page') }}"
@@ -169,6 +173,8 @@ Add Expense
 </div>
 </div>
 
+{% if role != "employee" %}
+
 <!-- INVENTORY -->
 <div>
 <button onclick="toggleMenu('inventoryMenu',this)"
@@ -198,6 +204,8 @@ hover:bg-blue-600 hover:text-white transition">
 
 </div>
 </div>
+
+{% endif %}
 
 <!-- FORECAST -->
 <div>
@@ -240,13 +248,17 @@ hover:pl-5 transition-all duration-200">
 👤 My Profile
 </a>
 
-<a href="{{ url_for('settings') }}"
+{% if role != "employee" %}
+
+<a href="{{ url_for('branches_page') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
 hover:bg-blue-600 hover:text-white
 hover:pl-5 transition-all duration-200">
-⚙️ Settings
+🏢 Branches
 </a>
+
+{% endif %}
 
 <a href="{{ url_for('logout') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
@@ -277,7 +289,7 @@ hover:pl-5 transition-all duration-200">
   </span>
 </h1>
 
-{% if branches %}
+{% if branches and role != "employee" %}
 
 <div class="flex items-center gap-2">
 

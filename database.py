@@ -897,6 +897,40 @@ def init_db():
         );
         """)
 
+        #employee table
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS employee_accounts (
+            id SERIAL PRIMARY KEY,
+
+            username TEXT UNIQUE NOT NULL,
+
+            email TEXT,
+
+            password TEXT NOT NULL,
+
+            owner_username TEXT NOT NULL,
+
+            branch_id INTEGER NOT NULL,
+
+            role TEXT DEFAULT 'employee',
+
+            is_active BOOLEAN DEFAULT TRUE,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+            FOREIGN KEY (owner_username)
+            REFERENCES users(username)
+            ON DELETE CASCADE,
+
+            FOREIGN KEY (branch_id)
+            REFERENCES branches(id)
+            ON DELETE CASCADE
+        );
+        """)
+
+        
+
         cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_companion_username
         ON companion_devices(username);
@@ -2478,6 +2512,27 @@ def get_user(username):
         user = dict(row)
 
         return user
+
+    return run_db_operation(operation)
+
+def get_employee(username):
+
+    def operation(cur):
+
+        cur.execute("""
+            SELECT *
+            FROM employee_accounts
+            WHERE username = %s
+            AND is_active = TRUE
+            LIMIT 1
+        """, (username,))
+
+        row = cur.fetchone()
+
+        if not row:
+            return None
+
+        return dict(row)
 
     return run_db_operation(operation)
 

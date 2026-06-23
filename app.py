@@ -102,6 +102,7 @@ from database import(
     create_branch,
     create_inventory_item,
     confirm_sale_payment,
+    get_employee,
     
 )
 import pytz
@@ -713,11 +714,12 @@ def landing():
 @limiter.limit("5 per minute")
 def login():
 
-    
     if "username" in session:
-        return redirect(url_for("dashboard"))
 
-          
+        if session.get("role") == "employee":
+            return redirect(url_for("sales"))
+
+        return redirect(url_for("dashboard"))
 
     if request.method == "POST":
 
@@ -727,54 +729,133 @@ def login():
         try:
 
             user = get_user(username)
+            employee = get_employee(username)
 
-            if user and check_password_hash(user["password"], password):
+            # ==========================
+            # OWNER LOGIN
+            # ==========================
+            if user and check_password_hash(
+                user["password"],
+                password
+            ):
 
-                
                 if user.get("email"):
+
                     session["pending_user"] = user["username"]
 
-                    log_audit(username, "LOGIN_OTP_SENT", "OTP sent", request.remote_addr)
+                    log_audit(
+                        username,
+                        "LOGIN_OTP_SENT",
+                        "OTP sent",
+                        request.remote_addr
+                    )
 
                     start_otp_flow(
                         "login",
-                        {"username": user["username"], "email": user["email"]},
+                        {
+                            "username": user["username"],
+                            "email": user["email"]
+                        },
                         user["email"]
                     )
 
                     return redirect(url_for("verify"))
 
-                
                 session.permanent = True
+
                 session["username"] = user["username"]
 
-                log_audit(username, "LOGIN_SUCCESS", "Normal login", request.remote_addr)
+                session["role"] = "owner"
 
-                
-                next_page = session.pop("next_after_login", None)
+                session["owner_username"] = user["username"]
+
+                session["branch_id"] = None
+
+                log_audit(
+                    username,
+                    "LOGIN_SUCCESS",
+                    "Owner login",
+                    request.remote_addr
+                )
+
+                next_page = session.pop(
+                    "next_after_login",
+                    None
+                )
 
                 if next_page == "subscribe":
-                    return redirect(url_for("subscribe"))
+                    return redirect(
+                        url_for("subscribe")
+                    )
 
-                return redirect(url_for("dashboard"))
+                return redirect(
+                    url_for("dashboard")
+                )
 
-            flash("❌ Invalid username or password", "error")
+            # ==========================
+            # EMPLOYEE LOGIN
+            # ==========================
+            if employee and check_password_hash(
+                employee["password"],
+                password
+            ):
 
-            log_audit(username if username else "unknown",
-                      "LOGIN_FAILED",
-                      "Invalid credentials",
-                      request.remote_addr)
+                session.permanent = True
 
-            return redirect(url_for("login"))
+                session["username"] = employee["username"]
+
+                session["role"] = "employee"
+
+                session["owner_username"] = employee["owner_username"]
+
+                session["branch_id"] = employee["branch_id"]
+
+                session["active_branch_id"] = employee["branch_id"]
+
+                log_audit(
+                    employee["username"],
+                    "EMPLOYEE_LOGIN",
+                    "Employee login",
+                    request.remote_addr
+                )
+
+                return redirect(
+                    url_for("sales")
+                )
+
+            flash(
+                "❌ Invalid username or password",
+                "error"
+            )
+
+            log_audit(
+                username if username else "unknown",
+                "LOGIN_FAILED",
+                "Invalid credentials",
+                request.remote_addr
+            )
+
+            return redirect(
+                url_for("login")
+            )
 
         except Exception as e:
-            flash(f"⚠️ Database error: {str(e)}", "error")
-            return redirect(url_for("login"))
+
+            flash(
+                f"⚠️ Database error: {str(e)}",
+                "error"
+            )
+
+            return redirect(
+                url_for("login")
+            )
 
     return render_template(
         "login.html",
-        next_action=session.get("next_after_login")
+        next_action=session.get(
+            "next_after_login"
         )
+    )
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -1211,6 +1292,15 @@ def settings():
 
     username = session["username"]
 
+    if session.get("role") == "employee":
+
+        flash(
+            "Only the business owner can access settings.",
+            "error"
+        )
+
+        return redirect(url_for("dashboard"))
+
     user = get_user(username)
 
     if request.method == "POST":
@@ -1246,6 +1336,9 @@ def support():
 def delete_account():
 
     username = session["username"]
+
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
     password = request.form["password"]
 
     user = get_user(username)
@@ -1278,6 +1371,9 @@ def delete_account():
 def change_password():
 
     username = session["username"]
+
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
 
     current_password = request.form["current_password"]
     new_password = request.form["new_password"]
@@ -1397,26 +1493,41 @@ def dashboard():
 
         username = session["username"]
 
-        user = get_user(username)
+        role = session.get("role", "owner")
+
+        if role == "employee":
+            owner_username = session["owner_username"]
+            user = get_user(owner_username)
+        else:
+            owner_username = username
+            user = get_user(username)
 
         is_admin = user and str(user.get("role", "")).lower().strip() == "admin"
 
         print("👑 IS ADMIN:", is_admin)
 
-        if not get_business_info_cached(username):
-            ensure_business_exists(username)
+        if not get_business_info_cached(owner_username):
+            ensure_business_exists(owner_username)
 
         # LOAD BUSINESS
-        business_id = get_business_id(username)
+        business_id = get_business_id(owner_username)
 
         # LOAD ALL BRANCHES
         branches = get_branches(business_id)
 
         # AUTO SELECT FIRST BRANCH
-        if branches and "active_branch_id" not in session:
-            session["active_branch_id"] = branches[0]["id"]
+        if role == "employee":
 
-        active_branch_id = session.get("active_branch_id")
+            active_branch_id = session["branch_id"]
+
+            session["active_branch_id"] = active_branch_id
+
+        else:
+
+            if branches and "active_branch_id" not in session:
+                session["active_branch_id"] = branches[0]["id"]
+
+            active_branch_id = session.get("active_branch_id")
 
         # CURRENT ACTIVE BRANCH
         active_branch = next(
@@ -1448,17 +1559,28 @@ def dashboard():
         last_synced = None
 
         import time
+        from datetime import datetime
+        import math
+        
         start_total = time.time()
 
         username = session["username"]
 
         
         #  cached bundle
-        bundle = get_dashboard_bundle_cached(username)
+        bundle = get_dashboard_bundle_cached(owner_username)
 
         snapshot = bundle["snapshot"]
         intelligence = bundle["intelligence"]
         subscription = bundle["subscription"]
+
+        if role == "employee":
+
+            subscription = {
+                "status": "active",
+                "subscription_end": datetime.utcnow()
+            }
+
         latest_report = bundle["weekly_report"]
         inventory_insights = bundle["inventory_insights"]
         top_products = bundle["top_products"]
@@ -1469,8 +1591,7 @@ def dashboard():
                 return redirect(url_for("landing", expired=True))
         
 
-        from datetime import datetime
-        import math
+        
 
         subscription_status = "inactive"
         days_left = 0
@@ -1511,7 +1632,11 @@ def dashboard():
 
         answer = None
 
-        user_folder = os.path.join(app.config["UPLOAD_FOLDER"], username)
+        user_folder = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            owner_username
+        )
+
         os.makedirs(user_folder, exist_ok=True)
 
         files = sorted(os.listdir(user_folder))
@@ -1585,7 +1710,8 @@ def dashboard():
             current_date=datetime.utcnow().date(),
             branches=branches,
             has_companion=has_companion,
-            active_branch=active_branch
+            active_branch=active_branch,
+            role=role
         )
 
     except Exception as e:  
@@ -1596,6 +1722,15 @@ def dashboard():
 @app.route("/switch-branch/<int:branch_id>")
 @login_required
 def switch_branch(branch_id):
+
+    if session.get("role") == "employee":
+
+        flash(
+            "Employees cannot switch branches.",
+            "error"
+        )
+
+        return redirect(url_for("dashboard"))
 
     username = session["username"]
 
@@ -1659,6 +1794,15 @@ def favicon():
 @app.route("/branches", methods=["GET", "POST"])
 @login_required
 def branches_page():
+
+    if session.get("role") == "employee":
+
+        flash(
+            "Only business owners can manage branches.",
+            "error"
+        )
+
+        return redirect(url_for("dashboard"))
 
     username = session["username"]
 
@@ -4911,6 +5055,15 @@ def revenue_entry():
 def inventory_setup():
 
     username = session["username"]
+
+    if session.get("role") == "employee":
+
+        flash(
+            "🔒 Inventory is available only to business owners.",
+            "error"
+        )
+
+        return redirect(url_for("dashboard"))
     branch_id = session.get("active_branch_id")
 
     verified_time = session.get("inventory_verified_time", 0)
@@ -5041,6 +5194,15 @@ def inventory_setup():
 def inventory_adjust():
 
     username = session["username"]
+
+    if session.get("role") == "employee":
+
+        flash(
+            "🔒 Inventory adjustments require owner access.",
+            "error"
+        )
+
+        return redirect(url_for("dashboard"))
     branch_id = session.get("active_branch_id")
 
     verified_time = session.get("inventory_verified_time", 0)
