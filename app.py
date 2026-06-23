@@ -565,32 +565,42 @@ def check_subscription():
     
 
     
-    username = session.get("username")
+    login_username = session.get("username")
 
-    # 1. No session → go login
-    if not username:
+    if not login_username:
         return redirect(url_for("login"))
+
+    # Employee accounts use owner's subscription
+    if session.get("role") == "employee":
+        username = session.get("owner_username")
+    else:
+        username = login_username
 
     user = get_user(username)
 
     print("👤 USER ROLE RAW:", user.get("role") if user else None)
 
-    # 2. Admin bypass (SAFE)
+    # Admin bypass
     if user and str(user.get("role", "")).lower().strip() == "admin":
         print("🚀 ADMIN BYPASS ACTIVE")
         return
 
-    # 3. Subscription check (SAFE)
     subscription = get_subscription(username)
 
     print("🔍 subscription:", subscription)
-    #TEMP OFFLINE BYPASS
 
     if not subscription or subscription.get("status") not in ["active", "trial"]:
+
         print("🚫 BLOCKING USER")
 
-        flash("❌ Subscription expired — pay to continue", "error")
-        return redirect(url_for("landing", expired=True))
+        flash(
+            "❌ Subscription expired — pay to continue",
+            "error"
+        )
+
+        return redirect(
+            url_for("landing", expired=True)
+        )
         
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
