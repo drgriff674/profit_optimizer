@@ -2030,7 +2030,11 @@ def subscribe(plan):
     }
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=15)
+
+        print("STATUS", response.status_code)
         data = response.json()
+
+        print("PESAPAL RESPONSE:", data)
     except Exception as e:
         return f"❌ Payment request failed: {str(e)}", 500
 
