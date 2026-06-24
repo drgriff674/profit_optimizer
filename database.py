@@ -424,9 +424,15 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """)
+
         cur.execute("""
         ALTER TABLE dashboard_snapshot
         ADD COLUMN IF NOT EXISTS profit_growth NUMERIC(6,2);
+        """)
+
+        cur.execute("""
+        ALTER TABLE dashboard_snapshot
+        ALTER COLUMN profit_growth TYPE NUMERIC(12,2);
         """)
 
         cur.execute("""
@@ -434,6 +440,7 @@ def init_db():
         SET profit_growth = 0
         WHERE profit_growth IS NULL;
         """)
+        
 
         # dashboard intelligence table
         cur.execute("""
@@ -2113,14 +2120,25 @@ def update_dashboard_snapshot(username):
         rows = cur.fetchall()
 
         if len(rows) >= 2:
+
             current = float(rows[0]["total_amount"])
             previous = float(rows[1]["total_amount"])
 
             if previous > 0:
-                growth = round(((current-previous)/previous)*100,2)
-                growth = min(growth, 999999)
+
+                growth = round(
+                    ((current - previous) / previous) * 100,
+                    2
+                )
+
+                growth = max(
+                    min(growth, 999999.99),
+                    -999999.99
+                )
+
             else:
                 growth = 0
+
         else:
             growth = 0
         
@@ -2136,6 +2154,16 @@ def update_dashboard_snapshot(username):
         """,(username,))
         row = cur.fetchone()
         largest_expense = row["category"] if row else "N/A"
+
+        print(
+            "SNAPSHOT:",
+            revenue,
+            expenses,
+            profit,
+            growth
+        )
+
+
 
         # UPSERT SNAPSHOT
         cur.execute("""

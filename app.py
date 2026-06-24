@@ -3071,7 +3071,10 @@ def cash_revenue_entry():
     else:
         username = session["username"]
 
-    branch_id = session.get("active_branch_id")
+    branch_id = (
+        session.get("active_branch_id")
+        or session.get("branch_id")
+    )
 
     if request.method == "POST":
         try:
@@ -3152,6 +3155,7 @@ def cash_revenue_entry():
             LEFT JOIN branches b
                 ON c.branch_id = b.id
             WHERE c.username = %s
+              AND c.branch_id = %s
             ORDER BY c.created_at DESC
             LIMIT 8
         """, (username, branch_id))
@@ -4942,7 +4946,10 @@ def expense_entry():
     else:
         username = session["username"]
 
-    branch_id = session.get("active_branch_id")
+    branch_id = (
+        session.get("active_branch_id")
+        or session.get("branch_id")
+    )
 
     if request.method == "POST":
         try:

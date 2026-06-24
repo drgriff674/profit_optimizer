@@ -537,24 +537,15 @@ localStorage.setItem(
     // 🔄 sync with server shortly after
     setTimeout(loadSales, 500);
 })
-      .catch(err => {
-        console.error("NETWORK FAIL:", err);
-
-        // 🔥 ONLY fallback here
 
 .catch(err => {
 
-    console.error(err);
+    console.error("NETWORK FAIL:", err);
 
     showToast("❌ Failed to create sale");
 
 });
-
-cart = [];
-renderCart();
-
-            });
-}
+      }
 
 function deleteSale(saleId) {
     if (!confirm("Cancel this sale?")) return;
