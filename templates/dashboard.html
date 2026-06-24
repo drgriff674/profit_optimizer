@@ -11,53 +11,6 @@
 
 <body class="min-h-screen flex transition-colors">
 
-{% if not has_companion %}
-
-<div id="companionPopup"
-     class="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4">
-
-  <div class="max-w-md w-full rounded-2xl p-6
-              bg-white dark:bg-slate-900
-              border border-slate-200 dark:border-slate-700
-              shadow-2xl">
-
-    <h2 class="text-xl font-bold mb-3">
-      📱 Enable Automatic Payments
-    </h2>
-
-    <p class="text-sm opacity-80 mb-4 leading-relaxed">
-
-      Install OptiGain Companion to automatically
-      confirm M-PESA Till & Paybill payments instantly.
-
-    </p>
-
-    <div class="space-y-3">
-
-      <a href="/download-companion"
-         class="block w-full text-center py-3 rounded-xl
-                bg-blue-600 hover:bg-blue-700
-                text-white font-semibold transition">
-
-        Install Companion
-
-      </a>
-
-      <button onclick="dismissCompanionPopup()"
-              class="w-full py-3 rounded-xl
-                     bg-slate-200 dark:bg-slate-700">
-
-        Maybe Later
-
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-{% endif %}
 
 <div id="pageLoader"
      class="fixed inset-0 bg-white dark:bg-slate-900 z-50 flex items-center justify-center hidden">
@@ -123,9 +76,12 @@ transition-all duration-200">
 🧾 Sales
 </a>
 
+
+
 <!-- REVENUE -->
 <div>
 <button onclick="toggleMenu('revenueMenu',this)"
+
 class="w-full flex justify-between items-center px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
 hover:bg-blue-600 hover:text-white
@@ -328,6 +284,15 @@ selected
 
 {% endif %}
 
+{% if role == "employee" and active_branch %}
+
+<div class="text-sm px-3 py-2 rounded-xl
+            bg-blue-50 text-blue-700">
+    🏢 {{ active_branch.branch_name }}
+</div>
+
+{% endif %}
+
 </div>
 <!-- FLASH MESSAGES -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -438,7 +403,7 @@ bg-gray-100 text-gray-700
 {% endif %}
 
 
-{% if subscription %}
+{% if subscription and role !="employee" %}
 
 <div class="p-5 rounded-2xl mb-6
             bg-white dark:bg-slate-900
@@ -586,7 +551,9 @@ bg-gray-100 text-gray-700
 
 </div>
 
-{% endif %}        
+{% endif %}
+
+{% if role !="employee" %}        
 
    <!-- 🧠 INTELLIGENCE ROW -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -621,9 +588,13 @@ Lock at least 7 days to activate forecasting & AI insights
 </div>
 
 </div>
+{% endif %}
 
 
-{% if weekly_report %}
+
+
+
+{% if weekly_report and role !="employee" %}
 
 <div class="p-5 rounded-xl shadow"
      bg-white dark:bg-slate-900 border-left: 4px solid #6366f1;">
@@ -643,7 +614,7 @@ Lock at least 7 days to activate forecasting & AI insights
 </div>
 
 {% endif %}
-{% if inventory_insights %}
+{% if inventory_insights and role !="employee" %}
 
 <div class="p-5 rounded-xl shadow mt-4"
      bg=white dark:bg-slate-900; border-left: 4px solid #f59e0b;">
@@ -665,86 +636,99 @@ Lock at least 7 days to activate forecasting & AI insights
 <!-- 📊 CHART SHORTCUTS -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
-  {% if not forecast_status.ready %}
+{% if role != "employee" %}
 
-  <!-- LOCKED -->
-  <div class="block p-5 rounded-xl shadow opacity-60 cursor-not-allowed"
-       bg-white dark:bg-slate-900; border-left: 4px solid #ef4444;">
+    {% if not forecast_status.ready %}
 
-    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
+    <!-- LOCKED -->
+    <div class="block p-5 rounded-xl shadow opacity-60 cursor-not-allowed">
 
-    <p class="text-sm opacity-70 mb-3">
-      Forecast locked — system still learning
-    </p>
+        <h4 class="text-lg font-semibold mb-1">
+            📈 Revenue Forecast
+        </h4>
 
-    <div class="text-sm text-red-500 font-medium">
-      🔒 {{ forecast_status.days }} / 7 locked days
+        <p class="text-sm opacity-70 mb-3">
+            Forecast locked — system still learning
+        </p>
+
+        <div class="text-sm text-red-500 font-medium">
+            🔒 {{ forecast_status.days }} / 7 locked days
+        </div>
+
+        <p class="text-xs mt-2 opacity-70">
+            Lock {{ 7 - forecast_status.days }} more day(s)
+        </p>
+
+        <a href="{{ url_for('revenue_overview') }}"
+           class="inline-block mt-3 text-xs font-semibold text-blue-600 hover:underline">
+            Go lock a revenue day
+        </a>
+
     </div>
 
-    <p class="text-xs mt-2 opacity-70">
-      Lock {{ 7-forecast_status.days }} more day(s) to unlock forecasting
-    </p>
+    {% else %}
 
-   <a href="{{ url_for('revenue_overview') }}"
-      class="inline-block mt-3 text-xs font-semibold text-blue-600 hover:underline">
-      Go lock a revenue day
+    <!-- ACTIVE -->
+    <a href="{{ url_for('revenue_forecast') }}"
+       class="block p-5 rounded-xl shadow transition hover:scale-[1.01]">
 
-   </a>
-  </div>
+        <h4 class="text-lg font-semibold mb-1">
+            📈 Revenue Forecast
+        </h4>
 
-{% else %}
+        <p class="text-sm opacity-70 mb-2">
+            Forecast horizon: {{ forecast_status.horizon }} days
+        </p>
 
-  <!-- ACTIVE -->
-  <a href="{{ url_for('revenue_forecast') }}"
-     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
-      bg-white dark:bg-slate-900; border-left: 4px solid #22c55e;">
+        <div class="flex items-center gap-2 text-sm mb-3">
 
-    <h4 class="text-lg font-semibold mb-1">📈 Revenue Forecast</h4>
+            <span>Confidence:</span>
 
-    <p class="text-sm opacity-70 mb-2">
-      Forecast horizon: {{ forecast_status.horizon }} days
-    </p>
+            <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+            {% if forecast_status.confidence == 'Low' %}
+                bg-yellow-100 text-yellow-700
+            {% elif forecast_status.confidence == 'Medium' %}
+                bg-orange-100 text-orange-700
+            {% else %}
+                bg-green-100 text-green-700
+            {% endif %}">
 
-    <div class="flex items-center gap-2 text-sm mb-3">
-<span>Confidence:</span>
+                {{ forecast_status.confidence }}
 
-<span class="px-2 py-0.5 rounded-full text-xs font-semibold
-{% if forecast_status.confidence == "Low" %}
-bg-yellow-100 text-yellow-700
-{% elif forecast_status.confidence == "Medium" %}
-bg-orange-100 text-orange-700
-{% else %}
-bg-green-100 text-green-700
+            </span>
+
+        </div>
+
+        <div class="text-sm font-medium"
+             style="color: var(--og-primary);">
+            View forecast →
+        </div>
+
+    </a>
+
+    {% endif %}
+
+    <!-- LIVE PERFORMANCE -->
+
+    <a href="{{ url_for('live_performance') }}"
+       class="block p-5 rounded-xl shadow transition hover:scale-[1.01]">
+
+        <h4 class="text-lg font-semibold mb-1">
+            📉 Live Financial Performance
+        </h4>
+
+        <p class="text-sm opacity-70 mb-3">
+            Revenue vs expenses over time
+        </p>
+
+        <div class="text-sm font-medium"
+             style="color: var(--og-primary);">
+            Tap to view chart →
+        </div>
+
+    </a>
+
 {% endif %}
-">
-{{ forecast_status.confidence }}
-</span>
-</div>
-
-    <div class="text-sm font-medium"
-         style="color: var(--og-primary);">
-      View forecast →
-    </div>
-  </a>
-
-{% endif %}
-
-  <!-- Live Performance Card -->
-  <a href="{{ url_for('live_performance') }}"
-     class="block p-5 rounded-xl shadow transition hover:scale-[1.01]"
-      bg-white dark:bg-slate-900;">
-
-    <h4 class="text-lg font-semibold mb-1">📉 Live Financial Performance</h4>
-    <p class="text-sm opacity-70 mb-3">
-      Revenue vs expenses over time
-    </p>
-
-    <div class="text-sm font-medium"
-         style="color: var(--og-primary);">
-      Tap to view chart →
-    </div>
-  </a>
-
 
 </div>
 
@@ -927,24 +911,6 @@ if (btn) {
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
 
-<script src="{{ url_for('static', filename='js/sw-register.js') }}"></script>
 
-<script>
-
-function dismissCompanionPopup() {
-
-    const popup =
-        document.getElementById("companionPopup");
-
-    if (!popup) return;
-
-    popup.style.opacity = "0";
-
-    setTimeout(() => {
-        popup.remove();
-    }, 300);
-}
-
-</script>
 </body>
 </html>

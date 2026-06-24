@@ -20,9 +20,6 @@
 </div>
 
 
-<div id="network-status"
-     class="text-center text-xs py-2 font-medium">
-</div>
 
 <!-- TOP BAR -->
 <div class="flex justify-between items-center mb-4 
@@ -79,10 +76,10 @@
 </div>
 
 <!-- GRID -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 h-auto md:h-[85vh] px-2">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 px-2">
 
 <!-- PRODUCTS -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col px-3 max-h-[300px] md:max-h-none overflow-y-auto">
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col px-3 max-h-none overflow-y-auto">
   <div class="flex items-center justify-between mb-3">
 
   <h3 class="font-semibold">
@@ -154,7 +151,7 @@
 </div>
 
 <!-- SALES -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 max-h-[300px] md:max-h-none overflow-y-auto">
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 max-h-none overflow-y-auto">
   <div class="flex items-center justify-between mb-3">
 
   <h3 class="font-semibold">
@@ -203,22 +200,9 @@ function formatTime(timestamp) {
 }
 
 let currentEditId = null;
-let previousSales = JSON.parse(localStorage.getItem("previousSales") || "{}");
+let previousSales = {};
 
 
-// 🔥 OFFLINE STORAGE
-function saveOffline(type, data) {
-    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
-
-    queue.push({
-        id: Date.now(),
-        type: type,
-        data: data,
-        synced: false
-    });
-
-    localStorage.setItem("offline_queue", JSON.stringify(queue));
-}
 
 // ================= CART =================
 function renderCart() {
@@ -329,56 +313,15 @@ function addProduct() {
 
     })
 
-    .catch(err => {
+.catch(err => {
 
-        console.log(
-            "PRODUCT OFFLINE:",
-            err
-        );
+    console.error(err);
 
-        saveOffline(
-            "product",
-            {
-                name: name,
-                price: price
-            }
-        );
+    showToast("❌ Failed to save product");
 
-        const el =
-            document.getElementById(
-                "productsList"
-            );
+});
 
-        el.insertAdjacentHTML(
-            "afterbegin",
-            `
-            <div class="flex items-center gap-2 opacity-70">
-
-                <button
-                    class="flex-1 flex justify-between items-center px-3 py-2 rounded-lg bg-slate-300 text-sm">
-
-                    <span>${name}</span>
-                    <span>KSh ${price}</span>
-
-                </button>
-
-                <span class="text-xs text-yellow-600">
-                    offline
-                </span>
-
-            </div>
-            `
-        );
-
-        pname.value = "";
-        pprice.value = "";
-
-        showToast(
-            "📴 Product saved locally"
-        );
-
-    });
-
+    
 }
 
 function loadProducts() {
@@ -599,35 +542,13 @@ localStorage.setItem(
 
         // 🔥 ONLY fallback here
 
-const localSaleId =
-    "LOCAL_" + Date.now();
+.catch(err => {
 
-const amount =
-    cart.reduce(
-        (t, i) => t + (i.price * i.quantity),
-        0
-    );
+    console.error(err);
 
-localStorage.setItem(
-    "pending_sale_" + localSaleId,
-    JSON.stringify({
-        sale_id: localSaleId,
-        amount: amount,
-        paid: false
-    })
-);
+    showToast("❌ Failed to create sale");
 
-saveOffline("sale", {
-    sale_id: localSaleId,
-    items: cart
 });
-
-injectSaleUI({
-    sale_id: localSaleId,
-    status: "pending"
-});
-
-alert("📴 Sale created locally");
 
 cart = [];
 renderCart();
@@ -669,47 +590,7 @@ function loadSales(searchTerm = "") {
     .then(r => r.json())
     .then(data => {
     allSales = data.sales;
-let queue =
-    JSON.parse(
-        localStorage.getItem(
-            "offline_queue"
-        ) || "[]"
-    );
 
-queue.forEach(item => {
-
-    if (
-        item.type === "sale" &&
-        item.data.sale_id
-    ) {
-
-        data.sales.unshift({
-
-            sale_id:
-                item.data.sale_id,
-
-            total_amount:
-                item.data.items.reduce(
-                    (t, i) =>
-                        t +
-                        (
-                            i.price *
-                            i.quantity
-                        ),
-                    0
-                ),
-
-            status:
-                "pending",
-
-            created_at:
-                new Date()
-                    .toISOString()
-        });
-
-    }
-
-});
         const el = document.getElementById("salesList");
 el.innerHTML = "";
 
@@ -806,7 +687,7 @@ ${
     s.status === "pending"
     ? `<div class="mt-2 flex flex-col gap-2">
 
-        <div class="text-xs bg-blue-50 p-2 rounded text-blue-700">
+        <div class="text-xs bg-blue-50 p-2 rounded text-blue-700 break-all">
             📱 Paybill<br>
             Account: <b>${s.sale_id}</b>
         </div>
@@ -815,7 +696,7 @@ ${
             Waiting for payment confirmation
         </p>
 
-        <div class="flex gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
 
             <button onclick="markPaid('${s.sale_id}')"
                 class="px-3 py-1 text-xs rounded-lg
@@ -838,12 +719,12 @@ ${
     : s.status === "unpaid"
     ? `<div class="mt-2 flex flex-col gap-2">
 
-        <div class="text-xs bg-purple-50 p-2 rounded text-purple-700">
+        <div class="text-xs bg-purple-50 p-2 rounded text-purple-700 break-all">
             🏪 Pay via Till Number<br>
             Amount: KSh ${s.total_amount}
         </div>
 
-        <div class="flex gap-2">
+        <div class="flex flex-col sm:flex-row gap-2">
 
             <button onclick="markPaid('${s.sale_id}')"
                 class="px-3 py-1 text-xs rounded-lg bg-green-600 hover:bg-green-700 text-white">
@@ -883,52 +764,8 @@ ${
 
 
 
-// 🔄 AUTO SYNC ENGINE
-async function syncOfflineData() {
 
-    if (!navigator.onLine) return;
 
-    let queue = JSON.parse(localStorage.getItem("offline_queue") || "[]");
-
-    for (let item of queue) {
-
-        if (item.synced) continue;
-
-try {
-
-    let endpoint = "";
-
-    if (item.type === "sale") {
-        endpoint = "/sales/create";
-    }
-
-    if (item.type === "product") {
-        endpoint = "/products/create";
-    }
-
-    await fetch(endpoint, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(item.data)
-    });
-
-    item.synced = true;
-
-} catch (e) {
-
-    console.log("Still offline...");
-    return;
-}
-
-            }
-
-    localStorage.setItem("offline_queue", JSON.stringify(queue));
-}
-
-// ✅ ADD THIS RIGHT HERE
-setInterval(syncOfflineData, 5000);
 
 let salesInterval = null;
 
@@ -1157,26 +994,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
-<script>
-function updateNetworkStatus() {
-    const el = document.getElementById("network-status");
-
-    if (!el) return;
-
-    if (navigator.onLine) {
-        el.innerText = "🟢 Online — syncing...";
-        el.className = "text-center text-xs py-2 bg-green-500 text-white";
-    } else {
-        el.innerText = "🔴 Offline — auto sync when back";
-        el.className = "text-center text-xs py-2 bg-red-500 text-white";
-    }
-}
-
-window.addEventListener("online", updateNetworkStatus);
-window.addEventListener("offline", updateNetworkStatus);
-
-updateNetworkStatus();
-</script>
 
 <script>
 setTimeout(() => {

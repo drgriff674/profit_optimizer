@@ -469,6 +469,13 @@ def start_otp_flow(purpose, data, email):
 
     send_otp_email(email, otp)
 
+def get_current_owner():
+
+    if session.get("role") == "employee":
+        return session["owner_username"]
+
+    return session["username"]
+
 def run_cron_jobs():
     print("⏰ Running background jobs")
 
@@ -1983,7 +1990,7 @@ def payment_success():
 @login_required
 def api_products():
 
-    username = session["username"]
+    owner = get_current_owner()
 
     active_branch_id = session.get("active_branch_id")
 
@@ -1995,7 +2002,7 @@ def api_products():
             WHERE b.username = %s
             AND p.branch_id = %s
         """, (
-            username,
+            owner,
             active_branch_id
         ))
 
@@ -2055,7 +2062,7 @@ def delete_product(id):
 @login_required
 def api_sales():
 
-    username = session["username"]
+    owner = get_current_owner()
 
     active_branch_id = session.get("active_branch_id")
 
@@ -2065,7 +2072,7 @@ def api_sales():
             FROM businesses b
             WHERE b.username = %s
             LIMIT 1
-        """, (username,))
+        """, (owner,))
         biz = cur.fetchone()
 
         if not biz:
@@ -2097,7 +2104,7 @@ def create_product():
     print("🔥 CREATE PRODUCT HIT")
 
     try:
-        username = session["username"]
+        owner = get_current_owner()
         data = request.get_json()
 
         name = data.get("name")
@@ -2112,7 +2119,7 @@ def create_product():
             # 
             cur.execute("""
                 SELECT id FROM businesses WHERE username=%s LIMIT 1
-            """, (username,))
+            """, (owner,))
             biz = cur.fetchone()
 
             # 
@@ -2120,7 +2127,7 @@ def create_product():
                 print("⚠️ No business found — creating one")
 
                 cur.execute("""
-                    INSERT INTO businesses (username, business_name, paybill, account_number)
+                    INSERT INTO businesses (owner, business_name, paybill, account_number)
                     VALUES (%s, %s, %s, %s)
                     RETURNING id
                 """, (
@@ -2317,7 +2324,7 @@ def create_sale():
 @login_required
 def sales_page():
 
-    username = session["username"]
+    owner = get_current_owner()
     active_branch_id = session.get("active_branch_id")
 
     def operation(cur):
@@ -2326,7 +2333,7 @@ def sales_page():
             FROM businesses b
             WHERE b.username = %s
             LIMIT 1
-        """, (username,))
+        """, (owner,))
         biz = cur.fetchone()
 
         if not biz:
@@ -2382,7 +2389,7 @@ def sales_page():
 @login_required
 def mark_paid(sale_id):
 
-    username = session["username"]
+    owner = get_current_owner()
 
     result = confirm_sale_payment(
         sale_id=sale_id,
@@ -2391,12 +2398,12 @@ def mark_paid(sale_id):
 
     if result.get("success"):
 
-        update_dashboard_snapshot(username)
-        update_dashboard_intelligence(username)
+        update_dashboard_snapshot(owner)
+        update_dashboard_intelligence(owner)
 
         cache.delete_memoized(
             get_dashboard_data,
-            username
+            owner
         )
 
     return jsonify(result)
@@ -2434,7 +2441,7 @@ def delete_sale(sale_id):
     from database import run_db_operation
     from flask import session, jsonify
 
-    username = session["username"]
+    owner = get_current_owner()
 
     def operation(cur):
 
@@ -2452,7 +2459,7 @@ def delete_sale(sale_id):
             AND business_id IN (
                 SELECT id FROM businesses WHERE username = %s
             )
-        """, (sale_id, username))
+        """, (sale_id, owner))
 
         return cur.rowcount  
 
@@ -3059,7 +3066,11 @@ def lock_revenue_day_route():
 @login_required
 def cash_revenue_entry():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
+
     branch_id = session.get("active_branch_id")
 
     if request.method == "POST":
@@ -3143,7 +3154,7 @@ def cash_revenue_entry():
             WHERE c.username = %s
             ORDER BY c.created_at DESC
             LIMIT 8
-        """, (username,))
+        """, (username, branch_id))
 
         return cur.fetchall()
 
@@ -3158,7 +3169,10 @@ def cash_revenue_entry():
 @login_required
 def edit_entry(entry_id):
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     if request.method == "POST":
 
@@ -3201,7 +3215,10 @@ def edit_entry(entry_id):
 @login_required
 def delete_revenue_entry(entry_id):
 
-    username=session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     def operation(cur):
         cur.execute("""
@@ -3223,8 +3240,11 @@ def delete_revenue_entry(entry_id):
 @login_required
 def revenue_forecast():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
 
+    username = session["username"]
+    
     insight = None
     action = None
 
@@ -3349,8 +3369,11 @@ def revenue_forecast():
 @login_required
 def live_performance():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        return redirect(url_for("dashboard"))
 
+    username = session["username"]
+    
     def operation(cur):
 
         
@@ -3444,7 +3467,10 @@ def live_performance():
 @login_required
 def profile():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     business = get_business_info(username)
     intelligence = get_dashboard_intelligence(username)
@@ -4911,7 +4937,11 @@ def profit_calculator():
 @login_required
 def expense_entry():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
+
     branch_id = session.get("active_branch_id")
 
     if request.method == "POST":
@@ -5000,7 +5030,10 @@ def delete_expense():
 @login_required
 def delete_expense_action(expense_id):
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     try:
 
@@ -5043,7 +5076,10 @@ def revenue_entry():
     if "username" not in session:
         return redirect(url_for("login"))
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     
     data = request.get_json() if request.is_json else None
@@ -5100,7 +5136,7 @@ def revenue_entry():
             flash("❌ Failed to save revenue entry", "error")
             
     # ✅ Load entries for that date
-    entries = load_revenue_entries_for_day(session["username"], selected_date)
+    entries = load_revenue_entries_for_day(username, selected_date)
 
     return render_template(
         "revenue_entry.html",
