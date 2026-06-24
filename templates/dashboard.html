@@ -399,7 +399,15 @@ bg-gray-100 text-gray-700
   <ul class="text-sm space-y-2">
     {% for item in top_products %}
       <li class="flex justify-between">
-        <span>{{ item.name }}</span>
+        <span>
+    {{ item.name }}
+
+    {% if role != "employee" %}
+    <span class="text-xs opacity-60">
+        — {{ item.branch_name }}
+    </span>
+    {% endif %}
+</span>
         <span>
           {{ item.total_sold }} sold • 
           KSh {{ item.revenue | int }}
@@ -409,6 +417,121 @@ bg-gray-100 text-gray-700
   </ul>
 
 </div>
+{% endif %}
+
+{% if top_branch %}
+
+<div class="p-5 rounded-2xl mb-6
+            bg-white dark:bg-slate-900
+            border border-yellow-500/30
+            shadow-sm">
+
+    <h3 class="text-lg font-semibold mb-2">
+        🏆 Top Performing Branch
+    </h3>
+
+    <p class="text-xl font-bold">
+        {{ top_branch.branch_name }}
+    </p>
+
+    <p class="text-green-600 mt-2">
+        Revenue:
+        KSh {{ top_branch.revenue|int }}
+    </p>
+
+</div>
+
+{% endif %}
+
+{% if branch_expenses %}
+
+<div class="p-5 rounded-2xl mb-6
+            bg-white dark:bg-slate-900
+            border border-slate-200 dark:border-slate-800">
+
+    <h3 class="text-lg font-semibold mb-3">
+        ➖ Expenses By Branch
+    </h3>
+
+    {% for branch in branch_expenses %}
+
+    <div class="flex justify-between py-2">
+
+        <span>
+            {{ branch.branch_name }}
+        </span>
+
+        <span class="text-red-500">
+            KSh {{ branch.total|int }}
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+{% if branch_cash %}
+
+<div class="p-5 rounded-2xl mb-6
+            bg-white dark:bg-slate-900
+            border border-slate-200 dark:border-slate-800">
+
+    <h3 class="text-lg font-semibold mb-3">
+        💰 Cash Revenue By Branch
+    </h3>
+
+    {% for branch in branch_cash %}
+
+    <div class="flex justify-between py-2">
+
+        <span>
+            {{ branch.branch_name }}
+        </span>
+
+        <span class="text-green-600">
+            KSh {{ branch.total|int }}
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+{% if branch_performance %}
+
+<div class="p-5 rounded-2xl mb-6
+            bg-white dark:bg-slate-900
+            border border-slate-200 dark:border-slate-800
+            shadow-sm">
+
+    <h3 class="text-lg font-semibold mb-3">
+        🏢 Branch Performance
+    </h3>
+
+    {% for branch in branch_performance %}
+
+    <div class="flex justify-between py-2">
+
+        <span>
+            {{ branch.branch_name }}
+        </span>
+
+        <span class="text-green-600 font-medium">
+            KSh {{ branch.revenue|int }}
+        </span>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
 {% endif %}
 
 

@@ -1005,20 +1005,57 @@ def init_db():
 
 from datetime import datetime
 
-def get_dashboard_bundle(username):
+def get_dashboard_bundle(username, role="owner", branch_id=None):
 
     return {
-        "snapshot": get_dashboard_snapshot(username) or {},
-        "intelligence": get_dashboard_intelligence(username) or {},
-        "subscription": get_subscription(username),
 
-        
-        "weekly_report": get_latest_weekly_report(username),
-        "inventory_insights": get_weekly_inventory_insights(username),
-        "top_products": get_top_products_for_day(username, datetime.utcnow().date()),
+        "snapshot":
+            get_dashboard_snapshot(username) or {},
 
-        "forecast_status": get_locked_revenue_for_forecast(username) or {}
+        "intelligence":
+            get_dashboard_intelligence(username) or {},
+
+        "subscription":
+            get_subscription(username),
+
+        "weekly_report":
+            get_latest_weekly_report(username),
+
+        "inventory_insights":
+            get_weekly_inventory_insights(username),
+
+        "top_products":
+            get_top_products_for_day(
+                username,
+                datetime.utcnow().date(),
+                branch_id if role == "employee" else None
+            ),
+
+        "top_branch":
+            get_top_branch(username)
+            if role != "employee"
+            else None,
+
+        "branch_performance":
+            get_branch_performance(username)
+            if role != "employee"
+            else [],
+
+        "branch_expenses":
+            get_branch_expenses(username)
+            if role != "employee"
+            else [],
+
+        "branch_cash":
+            get_branch_cash(username)
+            if role != "employee"
+            else [],
+
+        "forecast_status":
+            get_locked_revenue_for_forecast(username)
+            or {}
     }
+    
 def process_payment(username, amount, local_date):
     def operation(cur):
 
@@ -1137,34 +1174,163 @@ def create_sale(business_id, items, branch_id=None):
 
 from datetime import datetime, timedelta
 
-def get_top_products_for_day(username, date):
+def get_top_products_for_day(username, date, branch_id=None):
 
     def operation(cur):
 
         business_id = get_business_id(username)
-        if not business_id:
-            return []
 
-        
         start = datetime.combine(date, datetime.min.time())
         end = start + timedelta(days=1)
 
+        if branch_id:
+
+            cur.execute("""
+                SELECT
+                    p.name,
+                    b.branch_name,
+                    SUM(si.quantity) total_sold,
+                    SUM(si.quantity * si.price) revenue
+                FROM sales s
+                JOIN sale_items si
+                    ON s.sale_id = si.sale_id
+                JOIN products p
+                    ON p.id = si.product_id
+                LEFT JOIN branches b
+                    ON s.branch_id = b.id
+                WHERE s.business_id = %s
+                AND s.branch_id = %s
+                AND s.created_at >= %s
+                AND s.created_at < %s
+                AND s.status='completed'
+                GROUP BY p.name,b.branch_name
+                ORDER BY total_sold DESC
+                LIMIT 5
+            """, (
+                business_id,
+                branch_id,
+                start,
+                end
+            ))
+
+        else:
+
+            cur.execute("""
+                SELECT
+                    p.name,
+                    b.branch_name,
+                    SUM(si.quantity) total_sold,
+                    SUM(si.quantity * si.price) revenue
+                FROM sales s
+                JOIN sale_items si
+                    ON s.sale_id = si.sale_id
+                JOIN products p
+                    ON p.id = si.product_id
+                LEFT JOIN branches b
+                    ON s.branch_id = b.id
+                WHERE s.business_id = %s
+                AND s.created_at >= %s
+                AND s.created_at < %s
+                AND s.status='completed'
+                GROUP BY p.name,b.branch_name
+                ORDER BY total_sold DESC
+                LIMIT 10
+            """, (
+                business_id,
+                start,
+                end
+            ))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
+
+def get_top_branch(username):
+
+    def operation(cur):
+
+        business_id = get_business_id(username)
+
         cur.execute("""
-            SELECT 
-                p.name,
-                SUM(si.quantity) as total_sold,
-                SUM(si.quantity * si.price) as revenue
+            SELECT
+                b.branch_name,
+                SUM(s.total_amount) revenue
             FROM sales s
-            JOIN sale_items si ON s.sale_id = si.sale_id
-            JOIN products p ON p.id = si.product_id
+            JOIN branches b
+                ON s.branch_id = b.id
             WHERE s.business_id = %s
-              AND s.created_at >= %s
-              AND s.created_at < %s
-              AND s.status = 'completed'
-            GROUP BY p.name
-            ORDER BY total_sold DESC
-            LIMIT 5
-        """, (business_id, start, end))
+            AND s.status='completed'
+            GROUP BY b.branch_name
+            ORDER BY revenue DESC
+            LIMIT 1
+        """, (business_id,))
+
+        return cur.fetchone()
+
+    return run_db_operation(operation)
+
+def get_branch_expenses(username):
+
+    def operation(cur):
+
+        business_id = get_business_id(username)
+
+        cur.execute("""
+            SELECT
+                b.branch_name,
+                COALESCE(SUM(e.amount),0) total
+            FROM branches b
+            LEFT JOIN expenses e
+                ON e.branch_id = b.id
+            WHERE b.business_id = %s
+            GROUP BY b.branch_name
+            ORDER BY total DESC
+        """, (business_id,))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
+
+def get_branch_cash(username):
+
+    def operation(cur):
+
+        business_id = get_business_id(username)
+
+        cur.execute("""
+            SELECT
+                b.branch_name,
+                COALESCE(SUM(c.amount),0) total
+            FROM branches b
+            LEFT JOIN cash_revenue c
+                ON c.branch_id = b.id
+            WHERE b.business_id = %s
+            GROUP BY b.branch_name
+            ORDER BY total DESC
+        """, (business_id,))
+
+        return cur.fetchall()
+
+    return run_db_operation(operation)
+
+def get_branch_performance(username):
+
+    def operation(cur):
+
+        business_id = get_business_id(username)
+
+        cur.execute("""
+            SELECT
+                b.branch_name,
+                COALESCE(SUM(s.total_amount), 0) AS revenue
+            FROM branches b
+            LEFT JOIN sales s
+                ON b.id = s.branch_id
+                AND s.status = 'completed'
+            WHERE b.business_id = %s
+            GROUP BY b.id, b.branch_name
+            ORDER BY revenue DESC
+        """, (business_id,))
 
         return cur.fetchall()
 

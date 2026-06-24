@@ -91,6 +91,10 @@ from database import(
     log_audit,
     create_sale,
     get_top_products_for_day,
+    get_branch_expenses,
+    get_top_branch,
+    get_branch_cash,
+    get_branch_performance,
     process_payment,
     get_subscription,
     get_business_id,
@@ -1529,7 +1533,7 @@ def dashboard():
             ensure_business_exists(owner_username)
 
         # LOAD BUSINESS
-        business_id = get_business_id(owner_username)
+        business_id = get_business_id_cached(owner_username)
 
         # LOAD ALL BRANCHES
         branches = get_branches(business_id)
@@ -1602,7 +1606,40 @@ def dashboard():
 
         latest_report = bundle["weekly_report"]
         inventory_insights = bundle["inventory_insights"]
-        top_products = bundle["top_products"]
+        if role == "employee":
+            top_products = get_top_products_for_day(
+                owner_username,
+                datetime.utcnow().date(),
+                session["branch_id"]
+            )
+        else:
+            top_products = get_top_products_for_day(
+                owner_username,
+                datetime.utcnow().date()
+            )
+
+        top_branch = None
+
+        if role != "employee":
+            top_branch = get_top_branch(owner_username)
+
+        branch_expenses = []
+
+        if role != "employee":
+            branch_expenses = get_branch_expenses(owner_username)
+            
+        branch_cash = []
+
+        if role != "employee":
+            branch_cash = get_branch_cash(owner_username)
+
+        branch_performance = []
+
+        if role != "employee":
+            branch_performance = get_branch_performance(
+                owner_username
+            )
+            
         forecast_status = bundle["forecast_status"]
         print("🔥 bundle: done")
         if not is_admin:
@@ -1722,6 +1759,10 @@ def dashboard():
             weekly_report=latest_report,
             inventory_insights=inventory_insights,
             top_products=top_products,
+            top_branch=top_branch,
+            branch_expenses=branch_expenses,
+            branch_performance=branch_performance,
+            branch_cash=branch_cash,
             subscription=subscription,
             subscription_status=subscription_status,
             warning_message=warning_message,
