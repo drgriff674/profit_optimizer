@@ -278,49 +278,105 @@ Update Password
 </div>
 
 </div>
-<!-- BILLING (UNCHANGED EXACTLY) -->
+<!-- BILLING -->
 <div id="billing" class="tab hidden">
 
-<div class="rounded-xl shadow-sm p-6 border"
-     style="background: var(--og-surface); border-color: rgba(0,0,0,0.1);">
+<div class="rounded-3xl shadow-xl p-8 border"
+style="
+background: var(--og-surface);
+border-color: rgba(148,163,184,.18);
+">
 
-<h2 class="text-lg font-semibold mb-4">💳 Subscription Plan</h2>
+<h2 class="text-2xl font-bold mb-2">
+💳 Subscription Plans
+</h2>
 
-<div class="p-5 rounded-xl mb-4 border"
-     style="background: rgba(37,99,235,0.05); border-color: rgba(37,99,235,0.2);">
+<p class="text-sm opacity-70 mb-8">
+Choose the plan that best matches your business operations.
+</p>
 
-  <h3 class="text-xl font-bold mb-1">
-    OptiGain Pro
-  </h3>
+<div class="grid md:grid-cols-2 gap-6">
 
-  <p class="text-sm opacity-70 mb-3">
-    Full access to revenue tracking, forecasting, inventory & AI insights
-  </p>
+    <!-- ESSENTIAL -->
 
-  <div class="text-3xl font-bold text-blue-600 mb-2">
-    KSh 1,500 <span class="text-sm font-medium text-gray-500">/ month</span>
-  </div>
+    <div class="rounded-3xl p-6 border shadow-sm"
+         style="
+         border-color: rgba(59,130,246,.25);
+         background: rgba(37,99,235,.05);
+         ">
 
-  <ul class="text-sm space-y-1 mb-4 opacity-80">
-    <li>✔ Unlimited sales tracking</li>
-    <li>✔ Automatic M-Pesa payment matching</li>
-    <li>✔ Inventory management</li>
-    <li>✔ AI financial insights</li>
-    <li>✔ Revenue forecasting</li>
-  </ul>
+        <div class="text-sm font-semibold text-blue-500 mb-2">
+            ⚡ PROFESSIONAL
+        </div>
 
-  <a href="{{ url_for('subscribe') }}"
-     class="inline-block px-5 py-2.5 rounded-lg text-white font-semibold
-            bg-gradient-to-r from-blue-600 to-blue-500
-            hover:from-blue-700 hover:to-blue-600
-            shadow-md hover:shadow-lg transition">
-    💳 Upgrade Now
-  </a>
+        <div class="text-4xl font-bold mb-2">
+            KSh 2,000
+        </div>
+
+        <div class="text-sm opacity-70 mb-5">
+            per month
+        </div>
+
+        <ul class="space-y-2 text-sm opacity-80 mb-6">
+            <li>✔ Single branch license</li>
+            <li>✔ Employee accounts</li>
+            <li>✔ Sales tracking</li>
+            <li>✔ Inventory management</li>
+            <li>✔ Expense tracking</li>
+            <li>✔ Revenue forecasting</li>
+        </ul>
+
+        <a href="{{ url_for('subscribe', plan='starter') }}"
+           class="inline-block px-5 py-3 rounded-xl
+                  bg-blue-600 text-white font-semibold
+                  hover:bg-blue-700 transition">
+            Choose Professional
+        </a>
+
+    </div>
+
+    <!-- ENTERPRISE -->
+
+    <div class="rounded-3xl p-6 border shadow-lg"
+         style="
+         border-color: rgba(16,185,129,.30);
+         background: rgba(16,185,129,.05);
+         ">
+
+        <div class="text-sm font-semibold text-green-500 mb-2">
+            🏛 ENTERPRISE
+        </div>
+
+        <div class="text-4xl font-bold mb-2">
+            KSh 3,500
+        </div>
+
+        <div class="text-sm opacity-70 mb-5">
+            per month
+        </div>
+
+        <ul class="space-y-2 text-sm opacity-80 mb-6">
+            <li>✔ Unlimited branches</li>
+            <li>✔ Unlimited employees</li>
+            <li>✔ Branch analytics</li>
+            <li>✔ Company-wide reporting</li>
+            <li>✔ AI insights</li>
+            <li>✔ Revenue forecasting</li>
+        </ul>
+
+        <a href="{{ url_for('subscribe', plan='business') }}"
+           class="inline-block px-5 py-3 rounded-xl
+                  bg-green-600 text-white font-semibold
+                  hover:bg-green-700 transition">
+            Upgrade to Enterprise
+        </a>
+
+    </div>
 
 </div>
 
-<p class="text-xs opacity-60">
-Payments are securely processed. No data loss when upgrading.
+<p class="text-xs opacity-60 mt-8">
+Subscriptions can be upgraded at any time. Your business data remains secure and accessible.
 </p>
 
 </div>

@@ -608,17 +608,16 @@ bg-gray-100 text-gray-700
   {% if subscription.get("plan") == "business" %}
 
 <p class="text-xs opacity-70 mt-2">
-    🚀 Business Plan — KSh 3,500/month
+    🏛 Enterprise Plan — KSh 3,500/month
 </p>
 
 {% else %}
 
 <p class="text-xs opacity-70 mt-2">
-    ⭐ Starter Plan — KSh 2,000/month
+    ⚡ Professional Plan — KSh 2,000/month
 </p>
 
 {% endif %}
-
 {% if subscription.get("amount_paid") %}
 <p class="text-xs opacity-70">
     Last payment:
@@ -638,19 +637,6 @@ bg-gray-100 text-gray-700
 </p>
 {% endif %}
 
-<p class="text-xs text-yellow-600 mt-1">
-    1 branch allowed.
-</p>
-
-{% endif %}
-
-{% if subscription.get("plan") == "business" %}
-
-<p class="text-xs text-green-600 mt-1">
-    Unlimited branches and employees.
-</p>
-
-{% endif %}
     KSh {{ subscription.amount_paid|int }}
 </p>
 
@@ -678,7 +664,7 @@ bg-gray-100 text-gray-700
           bg-green-600 hover:bg-green-700
           shadow-md">
 
-    🚀 Upgrade to Business
+    🏛 Upgrade to Enterprise
 
 </a>
 
