@@ -620,11 +620,23 @@ bg-gray-100 text-gray-700
 {% endif %}
 
 {% if subscription.get("amount_paid") %}
-
 <p class="text-xs opacity-70">
     Last payment:
+    KSh {{ subscription.amount_paid|int }}
+</p>
+{% endif %}
 
 {% if subscription.get("plan") == "starter" %}
+<p class="text-xs text-yellow-600 mt-1">
+    1 branch allowed.
+</p>
+{% endif %}
+
+{% if subscription.get("plan") == "business" %}
+<p class="text-xs text-green-600 mt-1">
+    Unlimited branches and employees.
+</p>
+{% endif %}
 
 <p class="text-xs text-yellow-600 mt-1">
     1 branch allowed.
@@ -646,8 +658,9 @@ bg-gray-100 text-gray-700
 
   <!-- PAY BUTTON -->
  {% if subscription_status != "active" %}
-<a href="{{ url_for('subscribe') }}"
-   class="inline-flex items-center gap-2 mt-4 px-5 py-2.5 
+<a href="{{ url_for('subscribe', plan='starter') }}"
+   class="inline-flex items-center gap-2 mt-4 px-5 py-2.5">
+
           rounded-lg font-semibold text-white
           bg-gradient-to-r from-blue-600 to-blue-500
           hover:from-blue-700 hover:to-blue-600

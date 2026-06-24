@@ -1980,7 +1980,7 @@ def subscribe(plan):
 
     # 
     if not username:
-        session["next_after_login"] = "subscribe"
+        session["next_after_login"] = "subscribe/starter"
         return redirect(url_for("login"))
 
     if plan == "business":

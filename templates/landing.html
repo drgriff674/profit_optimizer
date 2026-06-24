@@ -259,13 +259,13 @@ href="{{ url_for('static', filename='css/output.css') }}">
   ⚠️ Your subscription has expired
 
 <p style="margin-top:10px;color:#cbd5e1;">
-Starter: KSh 2,000/month<br>
-Business: KSh 3,500/month
+Professional: KSh 2,000/month<br>
+Enterprise: KSh 3,500/month
 </p>
 
   <div style="margin-top:15px;">
 
-<a href="{{ url_for('subscribe') }}"
+<a href="{{ url_for('subscribe', plan='starter') }}"
    style="
      background: linear-gradient(135deg,#2563eb,#1d4ed8);
      color:white;
@@ -297,7 +297,7 @@ Business: KSh 3,500/month
     </p>
 
 <div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-300 text-sm font-medium mb-6 reveal">
-  Multi-Branch Support • Unified Analytics • Real-Time Analytics
+  Multi-Branch • Inventory • Forecasting • AI Insights
 </div>
 
     <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 reveal">
@@ -310,7 +310,7 @@ Business: KSh 3,500/month
   Built to simplify business operations — not complicate them.
 </p>
 
-<p class="text-lg mb-8 reveal">
+<div class="text-lg mb-8 reveal">
 
   <span class="font-semibold text-gray-300">
     Start with a 7-day free trial
@@ -319,16 +319,16 @@ Business: KSh 3,500/month
   <div class="mt-4 space-y-2">
 
     <div class="text-blue-400 font-extrabold text-2xl">
-      ⭐ Starter — KES 2,000/month
-    </div>
+  🏢 Professional — KES 2,000/month
+</div>
 
-    <div class="text-green-400 font-extrabold text-2xl">
-      🚀 Business — KES 3,500/month
-    </div>
-
+<div class="text-green-400 font-extrabold text-2xl">
+  🏬 Enterprise — KES 3,500/month
+</div>
   </div>
 
-</p>
+
+
     <div class="flex flex-col sm:flex-row justify-center gap-3 reveal">
 
 
@@ -365,7 +365,7 @@ Everything your business needs
 </h3>
 <p class="text-gray-400">
 Create and monitor multiple business locations from one dashboard.
-Available on a business plan.
+Available on the Enterprise plan.
 </p>
 </div>
 
@@ -454,10 +454,10 @@ Receive insights, trends and forecasts based on your business data.
     </li>
 
 <li>
-Businesses with multiple branches use the Business Plan,
+Businesses with multiple branches use the Enterprise Plan,
 which unlocks branch analytics, employee management
 and unified reporting.
-<li>
+</li>
 
     <li>
       Each branch can manage its own sales, products, inventory,
@@ -716,7 +716,7 @@ Pricing
 <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
 
 <h3 class="text-2xl font-bold mb-3">
-⭐ Starter
+🏢 Professional
 </h3>
 
 <p class="text-4xl font-extrabold text-blue-400 mb-4">
@@ -724,17 +724,17 @@ KSh 2,000
 </p>
 
 <p class="mb-4 text-gray-400">
-Perfect for single-location businesses.
+Built for independent businesses and single locations.
 </p>
 
 <ul class="space-y-2 text-gray-300">
 
 <li>✅ 1 branch</li>
-<li>✅ Employees</li>
+<li>✅ Employee accounts</li>
 <li>✅ Sales tracking</li>
 <li>✅ Inventory management</li>
 <li>✅ Expense tracking</li>
-<li>✅ Forecasting</li>
+<li>✅ Forecast and reports</li>
 
 </ul>
 
@@ -743,7 +743,7 @@ Perfect for single-location businesses.
 <div class="bg-blue-500/10 border border-blue-500 rounded-2xl p-8">
 
 <h3 class="text-2xl font-bold mb-3">
-🚀 Business
+🏬 Enterprise
 </h3>
 
 <p class="text-4xl font-extrabold text-green-400 mb-4">
@@ -751,7 +751,7 @@ KSh 3,500
 </p>
 
 <p class="mb-4 text-gray-400">
-Built for growing businesses.
+Designed for multi-branch and expanding businesses.
 </p>
 
 <ul class="space-y-2 text-gray-300">
@@ -761,7 +761,7 @@ Built for growing businesses.
 <li>✅ Branch analytics</li>
 <li>✅ Top branch insights</li>
 <li>✅ Company-wide reporting</li>
-<li>✅ Forecasting & AI</li>
+<li>✅ AI forecasting</li>
 
 </ul>
 
@@ -777,7 +777,7 @@ Built for growing businesses.
 <section class="py-24 text-center">
 
   <h2 class="text-4xl font-extrabold mb-6 reveal">
-    Start controlling your business today
+    Take control of your business operations
   </h2>
 
   <a href="{{ url_for('register') }}" class="btn-main reveal">
