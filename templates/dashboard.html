@@ -92,12 +92,14 @@ transition-all duration-200">
 
 <div id="revenueMenu" class="ml-4 mt-1 hidden space-y-1">
 
+{% if role != "employee" %}
 <a href="{{ url_for('revenue_overview') }}"
 class="block px-3 py-2 text-sm rounded-lg
 text-slate-600 dark:text-slate-400
 hover:bg-blue-600 hover:text-white transition">
 Overview
 </a>
+{% endif %}
 
 <a href="{{ url_for('cash_revenue_entry') }}"
 class="block px-3 py-2 text-sm rounded-lg
@@ -106,14 +108,17 @@ hover:bg-blue-600 hover:text-white transition">
 ➕ Add Cash Revenue
 </a>
 
+{% if role != "employee" %}
 <a href="{{ url_for('revenue_entry') }}"
 class="block px-3 py-2 text-sm rounded-lg
 text-slate-600 dark:text-slate-400
 hover:bg-blue-600 hover:text-white transition">
 Split revenue
 </a>
+{% endif %}
 
 </div>
+
 </div>
 
 <!-- EXPENSES -->
@@ -196,6 +201,7 @@ Profit Calculator
 </div>
 
 <!-- OTHER LINKS -->
+{% if role != "employee" %}
 <a href="{{ url_for('ask') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
@@ -203,7 +209,9 @@ hover:bg-blue-600 hover:text-white
 hover:pl-5 transition-all duration-200">
 🤖 Business Assistant
 </a>
+{% endif %}
 
+{% if role != "employee" %}
 <a href="{{ url_for('profile') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
 text-slate-700 dark:text-slate-300
@@ -211,6 +219,7 @@ hover:bg-blue-600 hover:text-white
 hover:pl-5 transition-all duration-200">
 👤 My Profile
 </a>
+{% endif %}
 
 <a href="{{ url_for('settings') }}"
 class="block px-4 py-2.5 rounded-lg text-sm font-medium
