@@ -2174,7 +2174,10 @@ def create_product():
 @login_required
 def create_sale():
 
-    username = session["username"]
+    if session.get("role") == "employee":
+        username = session["owner_username"]
+    else:
+        username = session["username"]
 
     if request.is_json:
         data = request.get_json()
@@ -2182,7 +2185,7 @@ def create_sale():
         data = request.form.to_dict()
 
     items = data.get("items", [])
-
+    
     def operation(cur):
 
         # get business
@@ -2194,6 +2197,11 @@ def create_sale():
         """, (username,))
 
         biz = cur.fetchone()
+
+        if not biz:
+            raise Exception(
+                f"No business found for {username}"
+            )
 
         business_id = biz["id"]
 

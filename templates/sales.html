@@ -129,24 +129,35 @@
 </div>
 
 <!-- CART -->
-<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm flex flex-col p-3 min-h-[200px]">
+<div class="bg-white dark:bg-slate-800
+            border border-slate-200 dark:border-slate-700
+            rounded-2xl shadow-sm
+            flex flex-col
+            h-[650px]">
 
-  <h3 class="font-semibold mb-3">Cart</h3>
+    <h3 class="font-semibold p-3 border-b">
+        Cart
+    </h3>
 
-  <ul id="cart" class="space-y-2 text-sm flex-1 overflow-y-auto"></ul>
-
-  <!-- FIXED BOTTOM AREA -->
-  <div class="border-t pt-3 mt-3">
-    <div class="font-semibold mb-2">
-      Total: KSh <span id="total">0</span>
+    <!-- SCROLLABLE CART -->
+    <div class="flex-1 overflow-y-auto p-3">
+        <ul id="cart" class="space-y-2 text-sm"></ul>
     </div>
 
-    <button onclick="createSale(); this.blur();"
-  class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-sm shadow-sm transition active:scale-[0.98]">
-  💳 Create Sale
-</button>
+    <!-- STICKY FOOTER -->
+    <div class="border-t p-3 bg-white dark:bg-slate-800">
+        <div class="font-semibold mb-2">
+            Total: KSh <span id="total">0</span>
+        </div>
 
-  </div>
+        <button onclick="createSale(); this.blur();"
+            class="w-full bg-blue-600 hover:bg-blue-700
+                   text-white py-3 rounded-xl
+                   font-semibold text-sm shadow-sm
+                   transition active:scale-[0.98]">
+            💳 Create Sale
+        </button>
+    </div>
 
 </div>
 
