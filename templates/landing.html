@@ -52,7 +52,7 @@ href="{{ url_for('static', filename='css/output.css') }}">
   "description":"OptiGain helps businesses manage branches,employees, track revenue, expenses, inventory and forecast profits using real-time data.",
   "offers":{
     "@type":"Offer",
-    "price":"1500",
+    "price":"2000",
     "priceCurrency":"KES"
   },
   "publisher":{
@@ -258,6 +258,11 @@ href="{{ url_for('static', filename='css/output.css') }}">
 ">
   ⚠️ Your subscription has expired
 
+<p style="margin-top:10px;color:#cbd5e1;">
+Starter: KSh 2,000/month<br>
+Business: KSh 3,500/month
+</p>
+
   <div style="margin-top:15px;">
 
 <a href="{{ url_for('subscribe') }}"
@@ -306,11 +311,24 @@ href="{{ url_for('static', filename='css/output.css') }}">
 </p>
 
 <p class="text-lg mb-8 reveal">
-  <span class="font-semibold text-gray-300">Start with a 7-day free trial</span>
-  <span class="mx-2 text-gray-500">—</span>
-  <span class="text-blue-400 font-extrabold text-2xl">KES 1,500/month after</span>
-</p>
 
+  <span class="font-semibold text-gray-300">
+    Start with a 7-day free trial
+  </span>
+
+  <div class="mt-4 space-y-2">
+
+    <div class="text-blue-400 font-extrabold text-2xl">
+      ⭐ Starter — KES 2,000/month
+    </div>
+
+    <div class="text-green-400 font-extrabold text-2xl">
+      🚀 Business — KES 3,500/month
+    </div>
+
+  </div>
+
+</p>
     <div class="flex flex-col sm:flex-row justify-center gap-3 reveal">
 
 
@@ -343,10 +361,11 @@ Everything your business needs
 
 <div class="bg-white/5 border border-white/10 rounded-xl p-6">
 <h3 class="font-semibold text-xl mb-3">
-🏢 Branch Management
+🏢 Multi-Branch Management
 </h3>
 <p class="text-gray-400">
-Create multiple branches and monitor each location independently.
+Create and monitor multiple business locations from one dashboard.
+Available on a business plan.
 </p>
 </div>
 
@@ -433,6 +452,12 @@ Receive insights, trends and forecasts based on your business data.
       You can later create additional branches for different locations,
       shops or departments inside the same business account.
     </li>
+
+<li>
+Businesses with multiple branches use the Business Plan,
+which unlocks branch analytics, employee management
+and unified reporting.
+<li>
 
     <li>
       Each branch can manage its own sales, products, inventory,
@@ -674,6 +699,77 @@ Receive insights, trends and forecasts based on your business data.
 </p>
 
   </div>
+
+</section>
+
+<!-- PRICING -->
+<section class="py-24">
+
+<div class="max-w-5xl mx-auto px-6">
+
+<h2 class="text-4xl font-bold text-center mb-12">
+Pricing
+</h2>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+<div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+
+<h3 class="text-2xl font-bold mb-3">
+⭐ Starter
+</h3>
+
+<p class="text-4xl font-extrabold text-blue-400 mb-4">
+KSh 2,000
+</p>
+
+<p class="mb-4 text-gray-400">
+Perfect for single-location businesses.
+</p>
+
+<ul class="space-y-2 text-gray-300">
+
+<li>✅ 1 branch</li>
+<li>✅ Employees</li>
+<li>✅ Sales tracking</li>
+<li>✅ Inventory management</li>
+<li>✅ Expense tracking</li>
+<li>✅ Forecasting</li>
+
+</ul>
+
+</div>
+
+<div class="bg-blue-500/10 border border-blue-500 rounded-2xl p-8">
+
+<h3 class="text-2xl font-bold mb-3">
+🚀 Business
+</h3>
+
+<p class="text-4xl font-extrabold text-green-400 mb-4">
+KSh 3,500
+</p>
+
+<p class="mb-4 text-gray-400">
+Built for growing businesses.
+</p>
+
+<ul class="space-y-2 text-gray-300">
+
+<li>✅ Unlimited branches</li>
+<li>✅ Unlimited employees</li>
+<li>✅ Branch analytics</li>
+<li>✅ Top branch insights</li>
+<li>✅ Company-wide reporting</li>
+<li>✅ Forecasting & AI</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</div>
 
 </section>
 

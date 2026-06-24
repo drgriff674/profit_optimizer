@@ -605,9 +605,44 @@ bg-gray-100 text-gray-700
   {% endif %}
 
   <!-- PRICE -->
-  <p class="text-xs opacity-70 mt-2">
-    Plan: KSh 1,500 / month
-  </p>
+  {% if subscription.get("plan") == "business" %}
+
+<p class="text-xs opacity-70 mt-2">
+    🚀 Business Plan — KSh 3,500/month
+</p>
+
+{% else %}
+
+<p class="text-xs opacity-70 mt-2">
+    ⭐ Starter Plan — KSh 2,000/month
+</p>
+
+{% endif %}
+
+{% if subscription.get("amount_paid") %}
+
+<p class="text-xs opacity-70">
+    Last payment:
+
+{% if subscription.get("plan") == "starter" %}
+
+<p class="text-xs text-yellow-600 mt-1">
+    1 branch allowed.
+</p>
+
+{% endif %}
+
+{% if subscription.get("plan") == "business" %}
+
+<p class="text-xs text-green-600 mt-1">
+    Unlimited branches and employees.
+</p>
+
+{% endif %}
+    KSh {{ subscription.amount_paid|int }}
+</p>
+
+{% endif %}
 
   <!-- PAY BUTTON -->
  {% if subscription_status != "active" %}
@@ -620,6 +655,20 @@ bg-gray-100 text-gray-700
           transition-all duration-200">
    💳 Pay Now
 </a>
+{% endif %}
+
+{% if subscription.get("plan") == "starter" %}
+
+<a href="{{ url_for('subscribe', plan='business') }}"
+   class="inline-flex items-center gap-2 mt-3 px-5 py-2.5
+          rounded-lg font-semibold text-white
+          bg-green-600 hover:bg-green-700
+          shadow-md">
+
+    🚀 Upgrade to Business
+
+</a>
+
 {% endif %}
 
 </div>

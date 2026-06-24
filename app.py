@@ -1838,6 +1838,19 @@ def add_employee():
 
     owner = session["username"]
 
+    subscription = get_subscription(owner)
+
+    if subscription and subscription.get("plan") != "business":
+
+        flash(
+            "Employee accounts require the Business plan.",
+            "error"
+        )
+
+        return redirect(
+            url_for("employees_page")
+        )
+
     username = request.form["username"]
     password = request.form["password"]
     branch_id = request.form["branch_id"]
@@ -1922,6 +1935,23 @@ def branches_page():
 
         if branch_name:
 
+            subscription = get_subscription(username)
+
+            if subscription and subscription.get("plan") == "starter":
+
+                existing = get_branches(business_id)
+
+                if len(existing) >= 1:
+
+                    flash(
+                        "Starter plan allows only one branch. Upgrade to Business.",
+                        "error"
+                    )
+
+                    return redirect(
+                        url_for("branches_page")
+                    )
+
             create_branch(
                 business_id,
                 branch_name,
@@ -1941,8 +1971,8 @@ def branches_page():
 
 
 
-@app.route("/subscribe")
-def subscribe():
+@app.route("/subscribe/<plan>")
+def subscribe(plan):
 
     import requests, uuid
 
@@ -1953,8 +1983,13 @@ def subscribe():
         session["next_after_login"] = "subscribe"
         return redirect(url_for("login"))
 
-    order_id = f"{username}-{uuid.uuid4()}"
-    amount = 1500
+    if plan == "business":
+        amount = 3500
+    else:
+        plan = "starter"
+        amount = 2000
+
+    order_id = f"{username}-{plan}-{uuid.uuid4()}"
 
     # 
     token_data = get_pesapal_token()
@@ -1978,7 +2013,7 @@ def subscribe():
         "id": order_id,
         "currency": "KES",
         "amount": amount,
-        "description": "OptiGain Monthly Subscription",
+        "description": f"OptiGain {plan.capitalize()} Subscription",
         "callback_url": url_for("payment_success", _external=True),
 
         "notification_id": "e4389d95-e1f5-4d0b-9426-da87af220a65",
@@ -3768,21 +3803,35 @@ def pesapal_ipn():
             from datetime import datetime, timedelta
 
             # 🔥 NOW merchant_reference = username
-            username = merchant_reference
+            parts = merchant_reference.split("-")
+
+            username = parts[0]
+            plan = parts[1]
 
             now = datetime.utcnow()
             end_date = now + timedelta(days=30)
 
             #  ACTIVATE SUBSCRIPTION
+            price = 3500 if plan == "business" else 2000
+
             cur.execute("""
                 UPDATE subscriptions
                 SET
                     status = 'active',
+                    plan = %s,
+                    amount_paid = %s,
                     subscription_start = %s,
                     subscription_end = %s,
                     last_payment_reference = %s
                 WHERE username = %s
-            """, (now, end_date, order_tracking_id, username))
+            """, (
+                plan,
+                price,
+                now,
+                end_date,
+                order_tracking_id,
+                username
+            ))
 
             print("💳 SUBSCRIPTION ACTIVATED FOR:", username)
             

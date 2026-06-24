@@ -866,7 +866,7 @@ def init_db():
             id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
 
-            plan TEXT DEFAULT 'monthly',
+            plan TEXT DEFAULT 'starter',
             status TEXT DEFAULT 'trial',
 
             trial_start TIMESTAMP,
@@ -879,6 +879,11 @@ def init_db():
 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        """)
+
+        cur.execute("""
+        ALTER TABLE subscriptions
+        ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(10,2);
         """)
 
         # companion devices
@@ -3025,7 +3030,7 @@ def get_subscription(username):
 
     def operation(cur):
         cur.execute("""
-            SELECT status, trial_end, subscription_end
+            SELECT status, plan, trial_end, subscription_end, amount_paid
             FROM subscriptions
             WHERE username = %s
             LIMIT 1
