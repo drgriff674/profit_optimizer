@@ -1984,10 +1984,10 @@ def subscribe(plan):
         return redirect(url_for("login"))
 
     if plan == "business":
-        amount = 3000
+        amount = 2500
     else:
         plan = "starter"
-        amount = 2000
+        amount = 1500
 
     order_id = f"{username}-{plan}-{uuid.uuid4()}"
 
