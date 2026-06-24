@@ -637,16 +637,11 @@ bg-gray-100 text-gray-700
 </p>
 {% endif %}
 
-    KSh {{ subscription.amount_paid|int }}
-</p>
-
-{% endif %}
-
   <!-- PAY BUTTON -->
  {% if subscription_status != "active" %}
-<a href="{{ url_for('subscribe', plan='starter') }}"
-   class="inline-flex items-center gap-2 mt-4 px-5 py-2.5">
 
+<a href="{{ url_for('subscribe', plan='starter') }}"
+   class="inline-flex items-center gap-2 mt-4 px-5 py-2.5
           rounded-lg font-semibold text-white
           bg-gradient-to-r from-blue-600 to-blue-500
           hover:from-blue-700 hover:to-blue-600
@@ -776,8 +771,8 @@ Lock at least 7 days to activate forecasting & AI insights
 
 {% if weekly_report and role !="employee" %}
 
-<div class="p-5 rounded-xl shadow"
-     bg-white dark:bg-slate-900 border-left: 4px solid #6366f1;">
+<div class="p-5 rounded-xl shadow bg-white dark:bg-slate-900"
+     style="border-left: 4px solid #6366f1;">
 
   <h3 class="text-lg font-semibold mb-2">
     🧠 Weekly AI Insight
@@ -796,8 +791,8 @@ Lock at least 7 days to activate forecasting & AI insights
 {% endif %}
 {% if inventory_insights and role !="employee" %}
 
-<div class="p-5 rounded-xl shadow mt-4"
-     bg=white dark:bg-slate-900; border-left: 4px solid #f59e0b;">
+<div class="p-5 rounded-xl shadow mt-4 bg-white dark:bg-slate-900"
+     style="border-left: 4px solid #f59e0b;">
 
   <h3 class="text-lg font-semibold mb-2">
     📦 Inventory Insights
@@ -1087,6 +1082,8 @@ if (btn) {
   });
 }
 </script>
+
+</div>
 
 <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
 
