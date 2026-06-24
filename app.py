@@ -1984,7 +1984,7 @@ def subscribe(plan):
         return redirect(url_for("login"))
 
     if plan == "business":
-        amount = 2500
+        amount = 2000
     else:
         plan = "starter"
         amount = 1500
