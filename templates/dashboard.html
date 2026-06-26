@@ -386,7 +386,7 @@ bg-gray-100 text-gray-700
         {% endfor %}
  	</div>
 
-{% if role !="employee" %}
+
 
 {% if top_products %}
 <div class="p-5 rounded-2xl mb-6
@@ -403,6 +403,7 @@ bg-gray-100 text-gray-700
       <li class="flex justify-between">
         <span>
     {{ item.name }}
+
 
     {% if role != "employee" %}
     <span class="text-xs opacity-60">
