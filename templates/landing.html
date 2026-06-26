@@ -243,43 +243,81 @@ href="{{ url_for('static', filename='css/output.css') }}">
 </header>
 
 {% if expired %}
-<div style="
-  max-width:800px;
-  margin:20px auto;
-  background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));
-  color:#fca5a5;
-  padding:24px;
-  border-radius:14px;
-  text-align:center;
-  font-weight:600;
-  border:1px solid rgba(239,68,68,0.3);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(239,68,68,0.15);
-">
-  ⚠️ Your subscription has expired
 
-<p style="margin-top:10px;color:#cbd5e1;">
-Professional: KSh 1,500/month<br>
-Enterprise: KSh 2,000/month
+<div class="max-w-5xl mx-auto mt-8">
+
+<h2 class="text-3xl font-bold text-center mb-2">
+Choose Your Plan
+</h2>
+
+<p class="text-center text-gray-300 mb-8">
+Your 7-day trial has ended. Select the subscription that best fits your business.
 </p>
 
-  <div style="margin-top:15px;">
+<div class="grid md:grid-cols-2 gap-8">
+
+<!-- PROFESSIONAL -->
+
+<div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+
+<h3 class="text-2xl font-bold mb-3">
+⚡ Professional
+</h3>
+
+<p class="text-4xl font-extrabold text-blue-400 mb-4">
+KSh 1,500/month
+</p>
+
+<ul class="space-y-2 text-gray-300 mb-6">
+
+<li>✅ 1 Branch</li>
+<li>✅ Employee Accounts</li>
+<li>✅ Sales Tracking</li>
+<li>✅ Inventory</li>
+<li>✅ Forecasting</li>
+
+</ul>
 
 <a href="{{ url_for('subscribe', plan='starter') }}"
-   style="
-     background: linear-gradient(135deg,#2563eb,#1d4ed8);
-     color:white;
-     padding:12px 20px;
-     border-radius:10px;
-     text-decoration:none;
-     font-weight:700;
-     box-shadow: 0 8px 20px rgba(37,99,235,0.4);
-   ">
-   💳 Pay Now to Continue
+class="btn-main block text-center">
+Choose Professional
 </a>
-     </div>
 
 </div>
+
+<!-- ENTERPRISE -->
+
+<div class="bg-blue-500/10 border border-blue-500 rounded-2xl p-8">
+
+<h3 class="text-2xl font-bold mb-3">
+🏬 Enterprise
+</h3>
+
+<p class="text-4xl font-extrabold text-green-400 mb-4">
+KSh 2,000/month
+</p>
+
+<ul class="space-y-2 text-gray-300 mb-6">
+
+<li>✅ Unlimited Branches</li>
+<li>✅ Unlimited Employees</li>
+<li>✅ Branch Analytics</li>
+<li>✅ Company Dashboard</li>
+<li>✅ AI Insights</li>
+
+</ul>
+
+<a href="{{ url_for('subscribe', plan='business') }}"
+class="btn-main block text-center">
+Choose Enterprise
+</a>
+
+</div>
+
+</div>
+
+</div>
+
 {% endif %}
 
 <!-- HERO -->

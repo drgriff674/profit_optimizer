@@ -1606,41 +1606,14 @@ def dashboard():
 
         latest_report = bundle["weekly_report"]
         inventory_insights = bundle["inventory_insights"]
-        if role == "employee":
-            top_products = get_top_products_for_day(
-                owner_username,
-                datetime.utcnow().date(),
-                session["branch_id"]
-            )
-        else:
-            top_products = get_top_products_for_day(
-                owner_username,
-                datetime.utcnow().date()
-            )
 
-        top_branch = None
-
-        if role != "employee":
-            top_branch = get_top_branch(owner_username)
-
-        branch_expenses = []
-
-        if role != "employee":
-            branch_expenses = get_branch_expenses(owner_username)
-            
-        branch_cash = []
-
-        if role != "employee":
-            branch_cash = get_branch_cash(owner_username)
-
-        branch_performance = []
-
-        if role != "employee":
-            branch_performance = get_branch_performance(
-                owner_username
-            )
-            
+        top_products = bundle["top_products"]
+        top_branch = bundle["top_branch"]
+        branch_expenses = bundle["branch_expenses"]
+        branch_cash = bundle["branch_cash"]
+        branch_performance = bundle["branch_performance"]
         forecast_status = bundle["forecast_status"]
+        
         print("🔥 bundle: done")
         if not is_admin:
             if not subscription or subscription.get("status") not in ["active", "trial"]:
@@ -1779,6 +1752,15 @@ def dashboard():
         traceback.print_exc()
         return "Dashboard crashed", 500
 
+@app.route("/api/dashboard-snapshot")
+@login_required
+def api_dash():
+
+    username=session["username"]
+    snap=get_dashboard_bundle_cached(username)["snapshot"]
+
+    return jsonify(snap)
+
 @app.route("/switch-branch/<int:branch_id>")
 @login_required
 def switch_branch(branch_id):
@@ -1868,14 +1850,7 @@ def add_employee():
 
     return redirect(url_for("employees_page"))
     
-@app.route("/api/dashboard-snapshot")
-@login_required
-def api_dash():
 
-    username=session["username"]
-    snap=get_dashboard_bundle_cached(username)["snapshot"]
-
-    return jsonify(snap)
 
 @app.route("/download-companion")
 @login_required

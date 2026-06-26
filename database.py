@@ -1015,7 +1015,7 @@ def get_dashboard_bundle(username, role="owner", branch_id=None):
     return {
 
         "snapshot":
-            get_dashboard_snapshot(username) or {},
+            get_dashboard_snapshot(username, role, branch_id) or {},
 
         "intelligence":
             get_dashboard_intelligence(username) or {},
@@ -2407,27 +2407,89 @@ def update_dashboard_intelligence(username):
 
     run_db_operation(operation, commit=True)
 
-def get_dashboard_snapshot(username):
+def get_dashboard_snapshot(username, role="owner", branch_id=None):
 
     def operation(cur):
 
+        # OWNER → use cached snapshot
+        if role != "employee":
+
+            cur.execute("""
+                SELECT
+                    total_revenue,
+                    total_expenses,
+                    total_profit,
+                    largest_expense,
+                    profit_growth
+                FROM dashboard_snapshot
+                WHERE username=%s
+            """, (username,))
+
+            row = cur.fetchone()
+
+            return row or {
+                "total_revenue": 0,
+                "total_expenses": 0,
+                "total_profit": 0,
+                "largest_expense": "N/A",
+                "profit_growth": 0
+            }
+
+        # EMPLOYEE → calculate branch totals
+
         cur.execute("""
-            SELECT 
-                total_revenue,
-                total_expenses,
-                total_profit,
-                largest_expense,
-                profit_growth
-            FROM dashboard_snapshot
-            WHERE username = %s
-        """, (username,))
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM cash_revenue
+            WHERE username=%s
+            AND branch_id=%s
+        """, (username, branch_id))
+
+        cash = float(cur.fetchone()["total"])
+
+        cur.execute("""
+            SELECT COALESCE(SUM(total_amount),0) AS total
+            FROM sales
+            WHERE status='completed'
+            AND business_id=(
+                SELECT id
+                FROM businesses
+                WHERE username=%s
+                LIMIT 1
+            )
+            AND branch_id=%s
+        """, (username, branch_id))
+
+        sales = float(cur.fetchone()["total"])
+
+        revenue = cash + sales
+
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM expenses
+            WHERE username=%s
+            AND branch_id=%s
+        """, (username, branch_id))
+
+        expenses = float(cur.fetchone()["total"])
+
+        cur.execute("""
+            SELECT COALESCE(category,'N/A') AS category
+            FROM expenses
+            WHERE username=%s
+            AND branch_id=%s
+            GROUP BY category
+            ORDER BY SUM(amount) DESC
+            LIMIT 1
+        """, (username, branch_id))
 
         row = cur.fetchone()
 
-        return row or {
-            "total_revenue": 0,
-            "total_expenses": 0,
-            "total_profit": 0
+        return {
+            "total_revenue": revenue,
+            "total_expenses": expenses,
+            "total_profit": revenue - expenses,
+            "largest_expense": row["category"] if row else "N/A",
+            "profit_growth": 0
         }
 
     return run_db_operation(operation)
