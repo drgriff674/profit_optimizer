@@ -2494,6 +2494,98 @@ def get_dashboard_snapshot(username, role="owner", branch_id=None):
 
     return run_db_operation(operation)
 
+def get_branch_dashboard_snapshot(username, branch_id):
+
+    def operation(cur):
+
+        # CASH REVENUE
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM cash_revenue
+            WHERE username=%s
+              AND branch_id=%s
+        """, (username, branch_id))
+
+        cash = float(cur.fetchone()["total"])
+
+        # SALES
+        cur.execute("""
+            SELECT COALESCE(SUM(total_amount),0) AS total
+            FROM sales
+            WHERE branch_id=%s
+              AND status='completed'
+        """, (branch_id,))
+
+        sales = float(cur.fetchone()["total"])
+
+        revenue = cash + sales
+
+        # EXPENSES
+        cur.execute("""
+            SELECT COALESCE(SUM(amount),0) AS total
+            FROM expenses
+            WHERE username=%s
+              AND branch_id=%s
+        """, (username, branch_id))
+
+        expenses = float(cur.fetchone()["total"])
+
+        profit = revenue - expenses
+
+        # LARGEST EXPENSE
+        cur.execute("""
+            SELECT COALESCE(category,'Uncategorized') AS category
+            FROM expenses
+            WHERE username=%s
+              AND branch_id=%s
+            GROUP BY category
+            ORDER BY SUM(amount) DESC
+            LIMIT 1
+        """, (username, branch_id))
+
+        row = cur.fetchone()
+
+        largest = row["category"] if row else "N/A"
+
+        # PROFIT GROWTH
+        cur.execute("""
+            SELECT DATE(created_at) AS revenue_date,
+               COALESCE(SUM(total_amount),0) AS total
+            FROM sales
+            WHERE branch_id=%s
+            AND status='completed'
+            GROUP BY DATE(created_at)
+            ORDER BY DATE(created_at) DESC
+            LIMIT 2
+        """, (branch_id,))
+
+        rows = cur.fetchall()
+
+        growth = 0
+
+        if len(rows) >= 2:
+
+            current = float(rows[0]["total"])
+            previous = float(rows[1]["total"])
+
+            if previous > 0:
+                growth = round(
+                    ((current - previous) / previous) * 100,
+                    2
+                )
+
+        return {
+
+            "total_revenue": revenue,
+            "total_expenses": expenses,
+            "total_profit": profit,
+            "largest_expense": largest,
+            "profit_growth": growth
+
+        }
+
+    return run_db_operation(operation)
+
 def get_dashboard_intelligence(username):
 
     def operation(cur):

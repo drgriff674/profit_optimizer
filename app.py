@@ -74,6 +74,7 @@ from database import(
     get_live_financial_performance,
     get_locked_revenue_for_forecast,
     get_dashboard_snapshot,
+    get_branch_dashboard_snapshot,
     update_dashboard_snapshot,
     get_dashboard_intelligence,
     update_dashboard_intelligence,
@@ -1590,11 +1591,26 @@ def dashboard():
         username = session["username"]
 
         
-        #  cached bundle
+        
+        # cached bundle
         bundle = get_dashboard_bundle_cached(owner_username)
 
-        snapshot = bundle["snapshot"]
-        intelligence = bundle["intelligence"]
+        if role == "employee":
+            snapshot = get_branch_dashboard_snapshot(
+                owner_username,
+                active_branch_id
+            )
+
+            intelligence = {
+                "locked_days": 0,
+                "anomaly_days": 0,
+                "mpesa_days": 0
+            }
+
+        else:
+            snapshot = bundle["snapshot"]
+            intelligence = bundle["intelligence"]
+
         subscription = bundle["subscription"]
 
         if role == "employee":
