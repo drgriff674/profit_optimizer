@@ -1475,9 +1475,9 @@ def test_email():
 
 
 
-cache.memoize(timeout=60)
-def get_dashboard_bundle_cached(username):
-    return get_dashboard_bundle(username)
+@cache.memoize(timeout=60)
+def get_dashboard_bundle_cached(username, role="owner", branch_id=None):
+    return get_dashboard_bundle(username, role, branch_id)
 
 @cache.memoize(timeout=3600)
 def get_business_id_cached(username):
@@ -1593,7 +1593,7 @@ def dashboard():
         
         
         # cached bundle
-        bundle = get_dashboard_bundle_cached(owner_username)
+        bundle = get_dashboard_bundle_cached(owner_username, role, active_branch_id)
 
         if role == "employee":
             snapshot = get_branch_dashboard_snapshot(
@@ -1625,7 +1625,7 @@ def dashboard():
             latest_report = None
             inventory_insights = []
 
-            top_products = []
+            top_products = bundle["top_products"]
             top_branch = None
             branch_expenses = []
             branch_cash = []
@@ -1792,8 +1792,20 @@ def dashboard():
 @login_required
 def api_dash():
 
-    username=session["username"]
-    snap=get_dashboard_bundle_cached(username)["snapshot"]
+    role = session.get("role", "owner")
+
+    if role == "employee":
+        username = session["owner_username"]
+        branch_id = session["branch_id"]
+    else:
+        username = session["username"]
+        branch_id = session.get("active_branch_id")
+
+    snap = get_dashboard_bundle_cached(
+        username,
+        role,
+        branch_id
+    )["snapshot"]
 
     return jsonify(snap)
 
