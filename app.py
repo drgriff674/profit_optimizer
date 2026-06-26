@@ -1620,16 +1620,36 @@ def dashboard():
                 "subscription_end": datetime.utcnow()
             }
 
-        latest_report = bundle["weekly_report"]
-        inventory_insights = bundle["inventory_insights"]
+        if role == "employee":
 
-        top_products = bundle["top_products"]
-        top_branch = bundle["top_branch"]
-        branch_expenses = bundle["branch_expenses"]
-        branch_cash = bundle["branch_cash"]
-        branch_performance = bundle["branch_performance"]
-        forecast_status = bundle["forecast_status"]
-        
+            latest_report = None
+            inventory_insights = []
+
+            top_products = []
+            top_branch = None
+            branch_expenses = []
+            branch_cash = []
+            branch_performance = []
+
+            forecast_status = {
+                "ready": False,
+                "days": 0,
+                "confidence": "Low",
+                "horizon": 0
+            }
+
+        else:
+
+            latest_report = bundle["weekly_report"]
+            inventory_insights = bundle["inventory_insights"]
+
+            top_products = bundle["top_products"]
+            top_branch = bundle["top_branch"]
+            branch_expenses = bundle["branch_expenses"]
+            branch_cash = bundle["branch_cash"]
+            branch_performance = bundle["branch_performance"]
+            forecast_status = bundle["forecast_status"]
+                
         print("🔥 bundle: done")
         if not is_admin:
             if not subscription or subscription.get("status") not in ["active", "trial"]:
