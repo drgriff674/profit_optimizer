@@ -250,6 +250,21 @@ def init_db():
         ALTER TABLE businesses
         ADD COLUMN IF NOT EXISTS till_name TEXT;
         """)
+        
+        cur.execute("""
+        ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS consumer_key TEXT;
+        """)
+        
+        cur.execute("""        
+        ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS consumer_secret TEXT;
+        """)
+        
+        cur.execute("""
+        ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS passkey TEXT;
+        """)
                 
 
         # EXPENSES TABLE 
@@ -3067,11 +3082,64 @@ def get_business_info(username):
 
     def operation(cur):
         cur.execute("""
-            SELECT business_name, paybill, account_number
+            SELECT
+                business_name,
+                paybill,
+                account_number,
+                consumer_key,
+                consumer_secret,
+                passkey
             FROM businesses
             WHERE username = %s
             LIMIT 1
         """, (username,))
+
+        return cur.fetchone()
+
+    return run_db_operation(operation)
+
+def save_mpesa_credentials(
+    username,
+    paybill,
+    consumer_key,
+    consumer_secret,
+    passkey
+):
+
+    def operation(cur):
+
+        cur.execute("""
+            UPDATE businesses
+            SET
+                paybill = %s,
+                consumer_key = %s,
+                consumer_secret = %s,
+                passkey = %s
+            WHERE username = %s
+        """, (
+            paybill,
+            consumer_key,
+            consumer_secret,
+            passkey,
+            username
+        ))
+
+    run_db_operation(operation, commit=True)
+
+def get_sale(sale_id):
+
+    def operation(cur):
+        cur.execute("""
+            SELECT
+                s.sale_id,
+                s.total_amount,
+                b.username
+            FROM sales s
+            JOIN businesses b
+                ON b.id = s.business_id
+            WHERE s.sale_id = %s
+            LIMIT 1
+        """, (sale_id,))
 
         return cur.fetchone()
 

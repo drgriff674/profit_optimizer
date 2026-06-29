@@ -55,12 +55,85 @@ View your business configuration and OptiGain system status.
 
 <section class="bg-white dark:bg-slate-900 rounded-xl shadow mb-6 p-6">
 
-<h3 class="text-lg font-semibold mb-3">
+<h3 class="text-lg font-semibold mb-4">
 🏢 Business Information
 </h3>
 
-<p><strong>MPesa Paybill:</strong> {{ business.paybill }}</p>
-<p><strong>Account Number:</strong> {{ business.account_number }}</p>
+<p class="mb-2">
+<strong>Business Name:</strong>
+{{ business.business_name }}
+</p>
+
+<p class="mb-2">
+<strong>Paybill:</strong>
+{{ business.paybill or "Not Configured" }}
+</p>
+
+<p class="mb-4">
+<strong>Account Number:</strong>
+{{ business.account_number or "Not Set" }}
+</p>
+
+<hr class="my-6">
+
+<h3 class="text-lg font-semibold mb-4">
+📱 M-Pesa STK Integration
+</h3>
+
+<form method="POST" action="{{ url_for('save_business_mpesa') }}">
+
+<input
+type="hidden"
+name="csrf_token"
+value="{{ csrf_token() }}">
+
+<label class="block mb-2 font-medium">
+Paybill
+</label>
+
+<input
+type="text"
+name="paybill"
+value="{{ business.paybill or '' }}"
+class="w-full border rounded-lg p-3 mb-4 text-black">
+
+<label class="block mb-2 font-medium">
+Consumer Key
+</label>
+
+<input
+type="text"
+name="consumer_key"
+value="{{ business.consumer_key or '' }}"
+class="w-full border rounded-lg p-3 mb-4 text-black">
+
+<label class="block mb-2 font-medium">
+Consumer Secret
+</label>
+
+<input
+type="text"
+name="consumer_secret"
+value="{{ business.consumer_secret or '' }}"
+class="w-full border rounded-lg p-3 mb-4 text-black">
+
+<label class="block mb-2 font-medium">
+Lipa na M-Pesa Passkey
+</label>
+
+<input
+type="text"
+name="passkey"
+value="{{ business.passkey or '' }}"
+class="w-full border rounded-lg p-3 mb-6 text-black">
+
+<button
+type="submit"
+class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg">
+💾 Save M-Pesa Integration
+</button>
+
+</form>
 
 </section>
 

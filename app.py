@@ -87,6 +87,8 @@ from database import(
     create_user_with_business,
     get_weekly_inventory_insights,
     get_business_info,
+    get_sale,
+    save_mpesa_credentials,
     detect_weekly_alerts,
     get_user_by_email,
     log_audit,
@@ -119,6 +121,7 @@ import re
 import random
 import time
 import uuid
+import base64
 
 def send_otp_email(receiver_email, otp):
 
@@ -423,6 +426,57 @@ def ensure_business_exists(username):
             print("⚠️ Business auto-created for", username)
 
     run_db_operation(operation, commit=True)
+
+def generate_mpesa_token(username):
+
+    business = get_business_info(username)
+
+    if not business:
+        raise Exception("Business not found")
+
+    consumer_key = business["consumer_key"]
+    consumer_secret = business["consumer_secret"]
+
+    if not consumer_key or not consumer_secret:
+        raise Exception("Merchant M-Pesa credentials missing")
+
+    response = requests.get(
+        "https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials",
+        auth=HTTPBasicAuth(
+            consumer_key,
+            consumer_secret
+        ),
+        timeout=15
+    )
+
+    response.raise_for_status()
+
+    return response.json()["access_token"]
+
+def generate_stk_password(username):
+
+    business = get_business_info(username)
+
+    if not business:
+        raise Exception("Business not found")
+
+    shortcode = business["paybill"]
+    passkey = business["passkey"]
+
+    if not shortcode or not passkey:
+        raise Exception("Merchant Paybill or Passkey missing")
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    password = base64.b64encode(
+        f"{shortcode}{passkey}{timestamp}".encode()
+    ).decode()
+
+    return {
+        "shortcode": shortcode,
+        "password": password,
+        "timestamp": timestamp
+    }
 
 def ensure_active_branch():
 
@@ -1348,6 +1402,47 @@ def settings():
         return redirect(url_for("verify"))
 
     return render_template("settings.html", user=user)
+
+@app.route("/profile/mpesa", methods=["POST"])
+@login_required
+def save_business_mpesa():
+
+    if session.get("role") == "employee":
+        return jsonify({
+            "success": False,
+            "error": "Employees cannot change M-Pesa settings."
+        }), 403
+
+    username = session["username"]
+
+    consumer_key = request.form.get("consumer_key", "").strip()
+    consumer_secret = request.form.get("consumer_secret", "").strip()
+    passkey = request.form.get("passkey", "").strip()
+    paybill = request.form.get("paybill", "").strip()
+
+    def operation(cur):
+
+        cur.execute("""
+            UPDATE businesses
+            SET
+                paybill = %s,
+                consumer_key = %s,
+                consumer_secret = %s,
+                passkey = %s
+            WHERE username = %s
+        """, (
+            paybill,
+            consumer_key,
+            consumer_secret,
+            passkey,
+            username
+        ))
+
+    run_db_operation(operation, commit=True)
+
+    flash("✅ M-Pesa credentials saved successfully.", "success")
+
+    return redirect(url_for("profile"))
 
 @app.route("/support")
 @login_required
@@ -4228,6 +4323,151 @@ def payment_confirm():
         print("❌ ERROR in confirm callback:", e)
         return jsonify({"ResultCode": 1, "ResultDesc": "Internal Error"})
 
+@app.route("/mpesa/stk-push", methods=["POST"])
+@csrf.exempt
+@login_required
+def stk_push():
+
+    data = request.get_json()
+
+    sale_id = data.get("sale_id")
+    phone = data.get("phone")
+
+    phone = phone.strip().replace(" ", "")
+
+    if phone.startswith("07") or phone.startswith("01"):
+        phone = "254" + phone[1:]
+
+    elif phone.startswith("+254"):
+        phone = phone[1:]
+
+    elif not phone.startswith("254"):
+        return jsonify({
+            "success": False,
+            "error": "Invalid phone number format."
+        }), 400
+
+    if not sale_id or not phone:
+        return jsonify({
+            "success": False,
+            "error": "Missing sale or phone"
+        }), 400
+
+    sale = get_sale(sale_id)
+
+    if not sale:
+        return jsonify({
+            "success": False,
+            "error": "Sale not found"
+        }), 404
+
+    business = get_business_info(sale["username"])
+
+    if not business:
+        return jsonify({
+            "success": False,
+            "error": "Business not found"
+        }), 404
+
+    consumer_key = business["consumer_key"]
+    consumer_secret = business["consumer_secret"]
+    passkey = business["passkey"]
+    shortcode = business["paybill"]
+
+    if not all([
+        consumer_key,
+        consumer_secret,
+        passkey,
+        shortcode
+    ]):
+        return jsonify({
+            "success": False,
+            "error": "Missing M-Pesa credentials"
+        }), 400
+
+
+    # Generate OAuth Token
+    token_url = (
+        "https://api.safaricom.co.ke/oauth/v1/generate"
+        "?grant_type=client_credentials"
+    )
+
+    token_response = requests.get(
+        token_url,
+        auth=HTTPBasicAuth(
+            consumer_key,
+            consumer_secret
+        ),
+        timeout=20
+    )
+
+    if token_response.status_code != 200:
+        return jsonify({
+            "success": False,
+            "error": token_response.text
+        }), 400
+
+    access_token = token_response.json()["access_token"]
+
+    # Generate Timestamp
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    # Generate Password
+    password = base64.b64encode(
+        (
+            shortcode +
+            passkey +
+            timestamp
+        ).encode("utf-8")
+    ).decode("utf-8")
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": int(sale["total_amount"]),
+        "PartyA": phone,
+        "PartyB": shortcode,
+        "PhoneNumber": phone,
+        "CallBackURL": "https://optigainapp.com/payment/confirm",
+        "AccountReference": sale_id,
+        "TransactionDesc": "OptiGain Sale"
+    }
+
+    print("========== STK PUSH ==========")
+    print("Business:", sale["username"])
+    print("Sale ID:", sale_id)
+    print("Phone:", phone)
+    print("Amount:", sale["total_amount"])
+    print("Shortcode:", shortcode)
+    print("==============================")
+
+    response = requests.post(
+        "https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+        headers=headers,
+        json=payload,
+        timeout=30
+    )
+
+    try:
+        result = response.json()
+
+    except Exception:
+
+        return jsonify({
+            "success": False,
+            "error": response.text
+        }), response.status_code
+
+    print("STK PUSH RESPONSE:", result)
+
+    return jsonify(result), response.status_code
 
 
 @app.route("/api/companion/register-device", methods=["POST"])
