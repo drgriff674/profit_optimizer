@@ -40,6 +40,7 @@ import seaborn as sns
 import requests
 from requests.auth import HTTPBasicAuth
 from dotenv import load_dotenv
+from cryptography.fernet import Fernet
 load_dotenv()
 
 ENCRYPTION_KEY = os.getenv("MPESA_ENCRYPTION_KEY")
@@ -146,7 +147,7 @@ import random
 import time
 import uuid
 import base64
-from cryptography.fernet import Fernet
+
 
 def send_otp_email(receiver_email, otp):
 
