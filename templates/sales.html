@@ -569,10 +569,13 @@ localStorage.setItem(
     injectSaleUI(data);
 
     cart = [];
-    renderCart();
+renderCart();
 
-    // 🔄 sync with server shortly after
-    setTimeout(loadSales, 500);
+// Refresh quickly
+setTimeout(loadSales, 500);
+
+// Refresh again shortly after
+setTimeout(loadSales, 1500);
 })
 
 .catch(err => {
@@ -611,18 +614,25 @@ function sendSTKPush(saleId, phone) {
 
         if (data.ResponseCode === "0") {
 
-            showToast("📲 STK Push sent");
+    showToast("📲 STK Push sent");
 
-        } else {
+    // Refresh almost immediately
+    setTimeout(loadSales, 500);
 
-            showToast(
-                data.errorMessage ||
-                data.ResponseDescription ||
-                "STK failed"
-            );
+    // Continue checking while customer enters PIN
+    setTimeout(loadSales, 2000);
+    setTimeout(loadSales, 4000);
+    setTimeout(loadSales, 6000);
 
-        }
+} else {
 
+    showToast(
+        data.errorMessage ||
+        data.ResponseDescription ||
+        "STK failed"
+    );
+
+}
     })
 
     .catch(err => {
@@ -665,9 +675,13 @@ fetch(`/sales/delete/${saleId}`, {
 }
 
 function loadSales(searchTerm = "") {
-    fetch("/api/sales")
+
+    fetch("/api/sales?_=" + Date.now())
+
     .then(r => r.json())
+
     .then(data => {
+
     allSales = data.sales;
 
         const el = document.getElementById("salesList");
@@ -850,7 +864,7 @@ let salesInterval = null;
 
 function startPolling() {
     if (!salesInterval) {
-        salesInterval = setInterval(loadSales, 8000);
+        salesInterval = setInterval(loadSales, 2000);
     }
 }
 
