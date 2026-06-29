@@ -41,6 +41,30 @@ import requests
 from requests.auth import HTTPBasicAuth
 from dotenv import load_dotenv
 load_dotenv()
+
+ENCRYPTION_KEY = os.getenv("MPESA_ENCRYPTION_KEY")
+
+if not ENCRYPTION_KEY:
+    raise Exception("MPESA_ENCRYPTION_KEY is missing.")
+
+cipher = Fernet(ENCRYPTION_KEY.encode())
+def encrypt_value(value):
+    if not value:
+        return None
+
+    return cipher.encrypt(
+        value.encode("utf-8")
+    ).decode("utf-8")
+
+
+def decrypt_value(value):
+    if not value:
+        return None
+
+    return cipher.decrypt(
+        value.encode("utf-8")
+    ).decode("utf-8")
+
 from prophet import Prophet
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
@@ -122,6 +146,7 @@ import random
 import time
 import uuid
 import base64
+from cryptography.fernet import Fernet
 
 def send_otp_email(receiver_email, otp):
 
@@ -1415,12 +1440,49 @@ def save_business_mpesa():
 
     username = session["username"]
 
+    paybill = request.form.get("paybill", "").strip()
+
     consumer_key = request.form.get("consumer_key", "").strip()
     consumer_secret = request.form.get("consumer_secret", "").strip()
     passkey = request.form.get("passkey", "").strip()
-    paybill = request.form.get("paybill", "").strip()
 
     def operation(cur):
+
+        # Get existing credentials
+        cur.execute("""
+            SELECT
+                consumer_key,
+                consumer_secret,
+                passkey
+            FROM businesses
+            WHERE username = %s
+            LIMIT 1
+        """, (username,))
+
+        existing = cur.fetchone()
+
+        if existing:
+
+            if consumer_key:
+                consumer_key_db = encrypt_value(consumer_key)
+            else:
+                consumer_key_db = existing["consumer_key"]
+
+            if consumer_secret:
+                consumer_secret_db = encrypt_value(consumer_secret)
+            else:
+                consumer_secret_db = existing["consumer_secret"]
+
+            if passkey:
+                passkey_db = encrypt_value(passkey)
+            else:
+                passkey_db = existing["passkey"]
+
+        else:
+
+            consumer_key_db = encrypt_value(consumer_key)
+            consumer_secret_db = encrypt_value(consumer_secret)
+            passkey_db = encrypt_value(passkey)
 
         cur.execute("""
             UPDATE businesses
@@ -1432,15 +1494,18 @@ def save_business_mpesa():
             WHERE username = %s
         """, (
             paybill,
-            consumer_key,
-            consumer_secret,
-            passkey,
+            consumer_key_db,
+            consumer_secret_db,
+            passkey_db,
             username
         ))
 
     run_db_operation(operation, commit=True)
 
-    flash("✅ M-Pesa credentials saved successfully.", "success")
+    flash(
+        "✅ M-Pesa credentials updated successfully.",
+        "success"
+    )
 
     return redirect(url_for("profile"))
 
@@ -4369,9 +4434,17 @@ def stk_push():
             "error": "Business not found"
         }), 404
 
-    consumer_key = business["consumer_key"]
-    consumer_secret = business["consumer_secret"]
-    passkey = business["passkey"]
+    consumer_key = decrypt_value(
+        business["consumer_key"]
+    )
+
+    consumer_secret = decrypt_value(
+        business["consumer_secret"]
+    )
+
+    passkey = decrypt_value(
+        business["passkey"]
+    )
     shortcode = business["paybill"]
 
     if not all([

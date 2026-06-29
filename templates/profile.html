@@ -80,6 +80,10 @@ View your business configuration and OptiGain system status.
 📱 M-Pesa STK Integration
 </h3>
 
+<p class="text-sm text-gray-500 mb-6">
+Configure your Daraja Production credentials. These credentials are encrypted before being stored and are never displayed after saving.
+</p>
+
 <form method="POST" action="{{ url_for('save_business_mpesa') }}">
 
 <input
@@ -87,50 +91,107 @@ type="hidden"
 name="csrf_token"
 value="{{ csrf_token() }}">
 
+<!-- PAYBILL -->
+
 <label class="block mb-2 font-medium">
-Paybill
+Paybill Number
 </label>
 
 <input
 type="text"
 name="paybill"
 value="{{ business.paybill or '' }}"
-class="w-full border rounded-lg p-3 mb-4 text-black">
+placeholder="e.g. 405797"
+class="w-full border rounded-lg p-3 mb-6 text-black">
+
+<!-- CONSUMER KEY -->
 
 <label class="block mb-2 font-medium">
 Consumer Key
 </label>
 
+<div class="relative mb-5">
+
 <input
-type="text"
+id="consumer_key"
+type="password"
 name="consumer_key"
-value="{{ business.consumer_key or '' }}"
-class="w-full border rounded-lg p-3 mb-4 text-black">
+placeholder="Leave blank to keep current Consumer Key"
+class="w-full border rounded-lg p-3 pr-20 text-black">
+
+<button
+type="button"
+onclick="togglePassword('consumer_key', this)"
+class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 font-semibold">
+Show
+</button>
+
+</div>
+
+<!-- CONSUMER SECRET -->
 
 <label class="block mb-2 font-medium">
 Consumer Secret
 </label>
 
+<div class="relative mb-5">
+
 <input
-type="text"
+id="consumer_secret"
+type="password"
 name="consumer_secret"
-value="{{ business.consumer_secret or '' }}"
-class="w-full border rounded-lg p-3 mb-4 text-black">
+placeholder="Leave blank to keep current Consumer Secret"
+class="w-full border rounded-lg p-3 pr-20 text-black">
+
+<button
+type="button"
+onclick="togglePassword('consumer_secret', this)"
+class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 font-semibold">
+Show
+</button>
+
+</div>
+
+<!-- PASSKEY -->
 
 <label class="block mb-2 font-medium">
 Lipa na M-Pesa Passkey
 </label>
 
+<div class="relative mb-6">
+
 <input
-type="text"
+id="passkey"
+type="password"
 name="passkey"
-value="{{ business.passkey or '' }}"
-class="w-full border rounded-lg p-3 mb-6 text-black">
+placeholder="Leave blank to keep current Passkey"
+class="w-full border rounded-lg p-3 pr-20 text-black">
+
+<button
+type="button"
+onclick="togglePassword('passkey', this)"
+class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 font-semibold">
+Show
+</button>
+
+</div>
+
+<div class="rounded-lg bg-blue-50 border border-blue-200 p-4 mb-6">
+
+<p class="text-sm text-blue-700">
+
+🔒 Your Consumer Key, Consumer Secret and Passkey are encrypted before being stored. Leaving a field blank keeps the existing value.
+
+</p>
+
+</div>
 
 <button
 type="submit"
-class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg">
-💾 Save M-Pesa Integration
+class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold">
+
+💾 Save M-Pesa Settings
+
 </button>
 
 </form>
@@ -210,6 +271,28 @@ const dark = document.documentElement.classList.toggle("dark");
 localStorage.setItem("theme", dark ? "dark" : "light");
 
 });
+
+</script>
+
+<script>
+
+function togglePassword(id, btn){
+
+    const field = document.getElementById(id);
+
+    if(field.type === "password"){
+
+        field.type = "text";
+        btn.textContent = "Hide";
+
+    }else{
+
+        field.type = "password";
+        btn.textContent = "Show";
+
+    }
+
+}
 
 </script>
 
