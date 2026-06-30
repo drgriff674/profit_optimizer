@@ -242,26 +242,40 @@ href="{{ url_for('static', filename='css/output.css') }}">
     }
 
     .btn-main {
-      background: linear-gradient(135deg,#2563eb,#1d4ed8);
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-weight: 700;
-      box-shadow: 0 10px 30px rgba(37,99,235,0.4);
-      transition: all 0.3s ease;
-    }
+  background: linear-gradient(135deg,#2563eb,#1d4ed8);
 
+  padding:18px 38px;
+
+  font-size:1.05rem;
+
+  border-radius:12px;
+
+  font-weight:700;
+
+  box-shadow:0 10px 30px rgba(37,99,235,.4);
+
+  transition:.3s;
+}
     .btn-main:hover {
       transform: translateY(-2px);
       box-shadow: 0 15px 40px rgba(37,99,235,0.6);
     }
 
     .btn-outline {
-      border: 1px solid rgba(255,255,255,0.2);
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-weight: 600;
-    }
 
+  border:1px solid rgba(255,255,255,.2);
+
+  padding:18px 38px;
+
+  font-size:1.05rem;
+
+  border-radius:12px;
+
+  font-weight:600;
+
+  transition:.3s;
+
+}
     .img-overlay {
       position: relative;
     }
@@ -284,6 +298,191 @@ href="{{ url_for('static', filename='css/output.css') }}">
       opacity: 1;
       transform: translateY(0);
     }
+
+/* ================= HERO PREMIUM ================= */
+
+.hero-title{
+
+max-width:1320px;
+
+margin:0 auto;
+
+line-height:.92;
+
+letter-spacing:-3px;
+
+font-weight:900;
+
+text-shadow:
+0 12px 40px rgba(0,0,0,.45);
+
+}
+
+.hero-gradient{
+
+background:linear-gradient(
+90deg,
+#60a5fa,
+#93c5fd,
+#ffffff
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+background-clip:text;
+
+}
+
+.hero-subtitle{
+
+max-width:760px;
+
+margin:auto;
+
+line-height:1.8;
+
+font-size:1.15rem;
+
+}
+
+.hero-dashboard{
+
+animation:float 6s ease-in-out infinite;
+
+border-radius:28px;
+
+border:1px solid rgba(255,255,255,.08);
+
+box-shadow:
+0 35px 90px rgba(0,0,0,.45),
+0 15px 45px rgba(37,99,235,.18);
+
+}
+
+@keyframes float{
+
+0%{
+transform:translateY(0);
+}
+
+50%{
+transform:translateY(-10px);
+}
+
+100%{
+transform:translateY(0);
+}
+
+}
+
+.plan-card{
+
+position:relative;
+
+padding:28px;
+
+border-radius:22px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(16px);
+
+text-align:left;
+
+transition:.35s;
+
+flex:1;
+
+}
+
+.plan-card:hover{
+
+transform:translateY(-8px);
+
+border-color:#3b82f6;
+
+box-shadow:0 25px 60px rgba(37,99,235,.25);
+
+}
+
+.featured{
+
+border:1px solid rgba(59,130,246,.45);
+
+background:linear-gradient(
+180deg,
+rgba(59,130,246,.12),
+rgba(255,255,255,.05)
+);
+
+}
+
+.plan-badge{
+
+position:absolute;
+
+top:-12px;
+
+right:22px;
+
+background:#2563eb;
+
+padding:6px 14px;
+
+border-radius:999px;
+
+font-size:.72rem;
+
+font-weight:700;
+
+letter-spacing:.08em;
+
+text-transform:uppercase;
+
+}
+
+.plan-name{
+
+font-size:1.35rem;
+
+font-weight:700;
+
+margin-bottom:12px;
+
+}
+
+.plan-price{
+
+font-size:2.5rem;
+
+font-weight:800;
+
+margin-bottom:14px;
+
+line-height:1;
+
+}
+
+.plan-price span{
+
+font-size:1rem;
+
+font-weight:500;
+
+opacity:.7;
+
+}
+
+.plan-card p{
+
+color:#cbd5e1;
+
+line-height:1.8;
+
+}
 
     /* SPLASH SCREEN */
 #splash-screen {
@@ -529,37 +728,46 @@ transform:translateY(0);
 </div>
 
 <!-- NAV -->
-<header class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 justify-between items-center backdrop-blur-md bg-white/5 border border-white/10 rounded-xl mt-4">
+<header class="sticky top-4 z-50 max-w-7xl mx-auto px-8 py-4 flex items-center justify-between bg-slate-900/70 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl mt-4">
 
   <div class="flex items-center gap-3">
     <img src="{{ url_for('static', filename='icon.png') }}" class="w-10">
     <h1 class="text-2xl font-bold">OptiGain<span class="text-blue-500">.</span></h1>
   </div>
 
-  <div class="hidden sm:flex gap-4">
-    <a href="{{ url_for('landing') }}">Home</a>
+  <div class="hidden lg:flex items-center gap-8 text-gray-300 font-medium">
+    <a href="{{ url_for('landing') }}"
+class="hover:text-blue-400 transition duration-300">
+Home
+</a>
 
-<a href="{{ url_for('features') }}">
+<a href="{{ url_for('features') }}"
+class="hover:text-blue-400 transition duration-300">
 Features
 </a>
 
-<a href="{{ url_for('how_it_works') }}">
+<a href="{{ url_for('how_it_works') }}"
+class="hover:text-blue-400 transition duration-300">
 How It Works
 </a>
 
-<a href="{{ url_for('pricing') }}">
+<a href="{{ url_for('pricing') }}"
+class="hover:text-blue-400 transition duration-300">
 Pricing
 </a>
 
-<a href="{{ url_for('about') }}">
+<a href="{{ url_for('about') }}"
+class="hover:text-blue-400 transition duration-300">
 About
 </a>
 
-<a href="{{ url_for('contact') }}">
+<a href="{{ url_for('contact') }}"
+class="hover:text-blue-400 transition duration-300">
 Contact
 </a>
 
-<a href="{{ url_for('help_center') }}">
+<a href="{{ url_for('help_center') }}"
+class="hover:text-blue-400 transition duration-300">
 Help Center
 </a>
 
@@ -653,50 +861,118 @@ Choose Enterprise
 {% endif %}
 
 <!-- HERO -->
-<section id="home" class="hero-bg py-20 text-center">
+<section id="home" class="hero-bg pt-20 pb-14 text-center">
 
-  <div class="max-w-5xl mx-auto px-6 relative z-10">
+  <div class="max-w-7xl mx-auto px-6 relative z-10">
 
-    <div class="img-overlay mb-10 reveal">
-      <img src="{{ url_for('static', filename='images/hero.jpg') }}"
-           class="rounded-xl shadow-2xl mx-auto max-h-[260px] sm:max-h-[420px] object-cover w-full">
-    </div>
+    
 
     <p class="text-blue-400 font-semibold tracking-wider mb-4 uppercase text-sm reveal">
-      Financial Intelligence & Inventory — One Platform
+      Built for Growing Businesses
     </p>
 
 <div class="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-300 text-sm font-medium mb-6 reveal">
   Multi-Branch • Inventory • Forecasting • AI Insights
 </div>
 
-    <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6 reveal">
-  OptiGain – Business Software for Revenue, Inventory & Profit Tracking
+    <h1 class="hero-title reveal text-6xl sm:text-7xl lg:text-8xl font-black mb-7">
+
+<span class="hero-gradient block">
+
+Business Software for
+
+</span>
+
+<span class="block">
+
+Revenue, Inventory &
+
+</span>
+
+<span class="block">
+
+Profit Tracking
+
+</span>
 </h1>
 
-    <p class="text-gray-400 text-sm sm:text-lg mb-8 max-w-2xl mx-auto reveal">
-  Manage branches, employees, inventory, sales, expenses and profit tracking
-  from one intelligent dashboard.
-  Built to simplify business operations — not complicate them.
+   <p class="hero-subtitle text-gray-300 mb-8 reveal">
+
+Manage inventory, sales, employees, customer payments,
+AI forecasting and business intelligence from one
+powerful platform built for growing businesses.
+
 </p>
 
-<div class="text-lg mb-8 reveal">
+<div class="reveal mb-8">
 
-  <span class="font-semibold text-gray-300">
-    Start with a 7-day free trial
-  </span>
+<p class="text-gray-400 uppercase tracking-[0.3em] text-sm mb-6">
 
-  <div class="mt-4 space-y-2">
+Start with a 7-Day Free Trial
 
-    <div class="text-blue-400 font-extrabold text-2xl">
-   ⚡ Professional Plan — KSh 1,500/month
+</p>
+
+<div class="flex flex-col md:flex-row justify-center gap-5 max-w-3xl mx-auto">
+
+<div class="plan-card">
+
+<div class="plan-name">
+
+Professional
+
 </div>
 
-<div class="text-green-400 font-extrabold text-2xl">
-  🏬 Enterprise — KES 2,000/month
-</div>
-  </div>
+<div class="plan-price">
 
+KSh 1,500
+
+<span>/month</span>
+
+</div>
+
+<p>
+
+Perfect for a single business location with complete inventory,
+sales and employee management.
+
+</p>
+
+</div>
+
+<div class="plan-card featured">
+
+<div class="plan-badge">
+
+Most Popular
+
+</div>
+
+<div class="plan-name">
+
+Enterprise
+
+</div>
+
+<div class="plan-price">
+
+KSh 2,000
+
+<span>/month</span>
+
+</div>
+
+<p>
+
+Unlimited branches, company-wide reporting,
+advanced analytics and AI insights.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
 
 
     <div class="flex flex-col sm:flex-row justify-center gap-3 reveal">
@@ -715,10 +991,17 @@ How it Works
   📲 Install App
 </button>
 
-    </div>
+   </div>
 
-  </div>
+</div>
 
+<div class="img-overlay mt-10 reveal">
+
+<img
+src="{{ url_for('static', filename='images/hero.jpg') }}"
+class="hero-dashboard rounded-3xl mx-auto w-[92%] lg:w-[78%] max-h-[380px] object-cover border border-white/10 shadow-2xl">
+
+</div>
 </section>
 
 <!-- FEATURES -->
