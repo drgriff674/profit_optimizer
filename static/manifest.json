@@ -1,14 +1,23 @@
 {
-  "name": "OptiGain",
+  "name": "OptiGain Business Management Software",
   "short_name": "OptiGain",
+  "description": "Business management software for inventory, sales, employees, branches and business analytics.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#020617",
   "theme_color": "#2563eb",
+
   "icons": [
     {
       "src": "/static/icon.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icon.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]

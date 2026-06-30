@@ -9,6 +9,8 @@ if ("serviceWorker" in navigator) {
 
             console.log("✅ Service Worker Registered");
 
+            registration.update();
+
         } catch (error) {
 
             console.log("❌ SW registration failed:", error);
