@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Documentation | OptiGain</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+background:#020617;
+color:white;
+font-family:'Space Grotesk',sans-serif;
+}
+
+.glass{
+background:rgba(255,255,255,.05);
+border:1px solid rgba(255,255,255,.08);
+backdrop-filter:blur(14px);
+transition:.3s;
+}
+
+.glass:hover{
+transform:translateY(-4px);
+border-color:#2563eb;
+box-shadow:0 18px 35px rgba(37,99,235,.15);
+}
+
+.step{
+display:flex;
+gap:20px;
+align-items:flex-start;
+}
+
+.step-number{
+width:52px;
+height:52px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+background:#2563eb;
+font-size:1.3rem;
+font-weight:700;
+flex-shrink:0;
+}
+
+.btn-main{
+display:inline-block;
+padding:15px 34px;
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+border-radius:12px;
+font-weight:700;
+transition:.3s;
+}
+
+.btn-main:hover{
+transform:translateY(-2px);
+box-shadow:0 12px 25px rgba(37,99,235,.35);
+}
+
+.btn-outline{
+display:inline-block;
+padding:15px 34px;
+border:1px solid rgba(255,255,255,.15);
+border-radius:12px;
+transition:.3s;
+}
+
+.btn-outline:hover{
+border-color:#2563eb;
+background:rgba(37,99,235,.08);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="max-w-6xl mx-auto px-6 py-16">
+
+<div class="text-center mb-16">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-20 mx-auto mb-6">
+
+<h1 class="text-5xl font-extrabold mb-5">
+
+Documentation
+
+</h1>
+
+<p class="text-gray-400 text-lg max-w-3xl mx-auto">
+
+Learn how to set up your business, manage employees, process sales and get the most from OptiGain.
+
+</p>
+
+<div class="grid md:grid-cols-4 gap-4 mt-12">
+
+<div class="glass rounded-2xl p-5 text-center">
+<div class="text-3xl mb-2">🚀</div>
+<h3 class="font-bold">Getting Started</h3>
+</div>
+
+<div class="glass rounded-2xl p-5 text-center">
+<div class="text-3xl mb-2">📦</div>
+<h3 class="font-bold">Inventory</h3>
+</div>
+
+<div class="glass rounded-2xl p-5 text-center">
+<div class="text-3xl mb-2">💳</div>
+<h3 class="font-bold">Sales</h3>
+</div>
+
+<div class="glass rounded-2xl p-5 text-center">
+<div class="text-3xl mb-2">📊</div>
+<h3 class="font-bold">Reports</h3>
+</div>
+
+</div>
+
+</div>
+
+<div class="glass rounded-3xl p-10">
+
+<h2 class="text-4xl font-bold mb-4">
+
+Getting Started
+
+</h2>
+
+<p class="text-gray-400 leading-8 mb-12">
+
+Setting up OptiGain only takes a few minutes. The platform is designed so businesses can begin tracking sales, inventory and financial performance immediately after registration.
+
+</p>
+
+<div class="space-y-12">
+
+<div>
+
+<h3 class="text-2xl font-bold text-blue-400 mb-4">
+
+Create Your Business
+
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Register your business using your business name, email address and secure password.
+
+During registration, the business name you provide automatically becomes your first branch. Your account is created as the business owner, giving you complete administrative access to employees, branches, reports and subscriptions.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-blue-400 mb-4">
+
+Add Employees
+
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Owners can create employee accounts and assign each employee to a specific branch. Employees only access the information necessary for their assigned responsibilities while business owners retain full visibility across the organization.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-blue-400 mb-4">
+
+Build Your Inventory
+
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Create products by entering names, buying prices, selling prices and opening stock quantities. Every completed sale automatically updates stock levels and inventory reports, reducing manual record keeping.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-blue-400 mb-4">
+
+Create Sales
+
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Employees can quickly create customer sales using products already stored in inventory. Once payment is confirmed, OptiGain automatically updates revenue, inventory, reports and business analytics in real time.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-bold text-blue-400 mb-4">
+
+Business Intelligence
+
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+The dashboard combines revenue, expenses, inventory performance, employee activity and branch analytics into one centralized view. Forecasting tools and AI-powered insights help businesses identify trends and make better operational decisions.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<section class="mt-14">
+
+<h2 class="text-4xl font-bold mb-10">
+
+Sales & Payment Workflow
+
+</h2>
+
+<div class="glass rounded-3xl p-10">
+
+<div class="grid md:grid-cols-7 gap-4 text-center">
+
+<div>
+<div class="text-5xl">🛒</div>
+<p class="mt-3 font-semibold">Create Sale</p>
+</div>
+
+<div class="text-blue-500 text-3xl self-center">→</div>
+
+<div>
+<div class="text-5xl">💳</div>
+<p class="mt-3 font-semibold">Customer Pays</p>
+</div>
+
+<div class="text-blue-500 text-3xl self-center">→</div>
+
+<div>
+<div class="text-5xl">✅</div>
+<p class="mt-3 font-semibold">Confirm Payment</p>
+</div>
+
+<div class="text-blue-500 text-3xl self-center">→</div>
+
+<div>
+<div class="text-5xl">📈</div>
+<p class="mt-3 font-semibold">Reports Update</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<div class="grid md:grid-cols-2 gap-8 mt-14">
+
+<div class="glass rounded-3xl p-8">
+
+<h2 class="text-3xl font-bold mb-6">
+
+⚡ Professional
+
+</h2>
+
+<ul class="space-y-4 text-gray-300">
+
+<li>✔ One Branch</li>
+
+<li>✔ Employee Accounts</li>
+
+<li>✔ Inventory Management</li>
+
+<li>✔ Sales Tracking</li>
+
+<li>✔ Revenue Reports</li>
+
+<li>✔ Forecasting</li>
+
+</ul>
+
+</div>
+
+<div class="glass rounded-3xl p-8">
+
+<h2 class="text-3xl font-bold mb-6">
+
+🏬 Enterprise
+
+</h2>
+
+<ul class="space-y-4 text-gray-300">
+
+<li>✔ Unlimited Branches</li>
+
+<li>✔ Unlimited Employees</li>
+
+<li>✔ Company Dashboard</li>
+
+<li>✔ Branch Analytics</li>
+
+<li>✔ AI Business Insights</li>
+
+<li>✔ Priority Support</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<div class="glass rounded-3xl p-10 mt-14">
+
+<h2 class="text-3xl font-bold mb-5">
+
+Need More Help?
+
+</h2>
+
+<p class="text-gray-400 leading-8 mb-8">
+
+Visit the Help Center for setup guides, troubleshooting articles and answers to common questions.
+
+</p>
+
+<a
+href="{{ url_for('help_center') }}"
+class="btn-main">
+
+Open Help Center
+
+</a>
+
+</div>
+
+<div class="text-center mt-16">
+
+<a
+href="{{ url_for('help_center') }}"
+class="btn-outline">
+
+← Back to Help Center
+
+</a>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

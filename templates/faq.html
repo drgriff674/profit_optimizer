@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Frequently Asked Questions | OptiGain</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+background:#020617;
+color:white;
+font-family:'Space Grotesk',sans-serif;
+}
+
+.glass{
+background:rgba(255,255,255,.05);
+border:1px solid rgba(255,255,255,.08);
+backdrop-filter:blur(14px);
+}
+
+.faq{
+background:rgba(255,255,255,.05);
+border:1px solid rgba(255,255,255,.08);
+border-radius:20px;
+transition:.3s;
+overflow:hidden;
+}
+
+.faq:hover{
+border-color:#2563eb;
+transform:translateY(-4px);
+box-shadow:0 15px 35px rgba(37,99,235,.15);
+}
+
+.faq summary{
+list-style:none;
+cursor:pointer;
+padding:28px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+font-size:1.35rem;
+font-weight:700;
+}
+
+.faq summary::-webkit-details-marker{
+display:none;
+}
+
+.faq summary::after{
+content:"+";
+font-size:2rem;
+font-weight:300;
+color:#60a5fa;
+transition:.3s;
+}
+
+.faq[open] summary::after{
+content:"−";
+}
+
+.faq p{
+padding:0 28px 28px;
+color:#cbd5e1;
+line-height:1.9;
+font-size:1.05rem;
+}
+
+.btn-main{
+display:inline-block;
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+padding:14px 30px;
+border-radius:12px;
+font-weight:700;
+transition:.3s;
+}
+
+.btn-main:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 25px rgba(37,99,235,.35);
+}
+
+.btn-outline{
+display:inline-block;
+border:1px solid rgba(255,255,255,.15);
+padding:14px 30px;
+border-radius:12px;
+transition:.3s;
+}
+
+.btn-outline:hover{
+border-color:#2563eb;
+background:rgba(37,99,235,.08);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="max-w-5xl mx-auto px-6 py-16">
+
+<div class="text-center mb-16">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-20 mx-auto mb-6">
+
+<h1 class="text-5xl font-extrabold mb-4">
+
+Frequently Asked Questions
+
+</h1>
+
+<p class="text-gray-400 text-lg max-w-2xl mx-auto">
+
+Everything you need to know about OptiGain, subscriptions, branches, payments and business management.
+
+</p>
+
+</div>
+
+<div class="space-y-5">
+
+<details class="faq" open>
+
+<summary>
+
+What is OptiGain?
+
+</summary>
+
+<p>
+
+OptiGain is a business management platform that helps businesses manage inventory, employees, sales, expenses, branches and financial performance from one intelligent dashboard.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Is there a free trial?
+
+</summary>
+
+<p>
+
+Yes. Every business receives a full 7-day free trial before selecting a subscription plan.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Can I create multiple branches?
+
+</summary>
+
+<p>
+
+Yes. Businesses on the Enterprise Plan can create unlimited branches while viewing unified company analytics.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Can employees access the system?
+
+</summary>
+
+<p>
+
+Yes. Owners create employee accounts and assign staff to specific branches with secure role-based permissions.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Does inventory update automatically?
+
+</summary>
+
+<p>
+
+Yes. Every completed sale automatically updates inventory quantities, reports and business analytics.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Does OptiGain support M-Pesa?
+
+</summary>
+
+<p>
+
+Yes. OptiGain supports PayBill integrations and continues expanding support for additional payment workflows.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Can I upgrade my subscription later?
+
+</summary>
+
+<p>
+
+Absolutely. You can upgrade from the Professional Plan to the Enterprise Plan whenever your business grows.
+
+</p>
+
+</details>
+
+<details class="faq">
+
+<summary>
+
+Do I need special hardware?
+
+</summary>
+
+<p>
+
+No. OptiGain works directly from your web browser and can also be installed as a Progressive Web App (PWA) for a native app experience.
+
+</p>
+
+</details>
+
+</div>
+
+<div class="text-center mt-16">
+
+<a href="{{ url_for('documentation') }}"
+class="btn-main mr-4">
+
+Documentation
+
+</a>
+
+<a href="{{ url_for('help_center') }}"
+class="btn-outline">
+
+← Back to Help Center
+
+</a>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

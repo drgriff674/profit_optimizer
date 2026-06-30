@@ -2,8 +2,14 @@
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
-  <title>OptiGain – Smart Business Tracking</title>
+  <title>
+OptiGain | Business Management Software for Inventory, Sales & Multi-Branch Management
+</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<meta
+name="theme-color"
+content="#020617">
 
 <meta name="application-name" content="OptiGain">
 <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
@@ -28,13 +34,68 @@
       href="{{ url_for('static', filename='apple-touch-icon.png') }}">
 
 <!-- Helps Google understand your brand -->
-<meta name="description"
-content="OptiGain is a business management software for managing branches, employees, sales, inventory, expenses, profits and forecasting profits from one intelligent dashboard in real time. Built for modern businesses in Kenya and beyond.">
+<meta
+name="description"
+content="OptiGain is business management software developed by OptiGain Technologies that helps businesses manage inventory, sales, employees, branches, expenses, payments, analytics and AI-powered forecasting from one intelligent dashboard. Built in Kenya for businesses everywhere.">
 
-<meta property="og:title" content="OptiGain – Smart Business Tracking">
-<meta property="og:description" content="Track revenue, expenses, inventory and forecast profits in real time.">
-<meta property="og:image" content="https://optigainapp.com/static/logo.png">
-<meta property="og:type" content="website">
+<meta
+name="keywords"
+content="OptiGain, OptiGain Technologies, business software, inventory management, sales management, business intelligence, forecasting, POS software, employee management, branch management, Griffin Mutuma">
+
+<meta
+name="author"
+content="Griffin Mutuma">
+
+<meta
+name="robots"
+content="index,follow,max-image-preview:large">
+
+<meta
+property="og:title"
+content="OptiGain | Business Management Software">
+
+<meta
+property="og:description"
+content="Manage inventory, sales, employees, branches, payments, forecasting and business intelligence from one intelligent dashboard.">
+
+<meta
+property="og:image"
+content="https://optigainapp.com/static/logo.png">
+
+<meta
+property="og:type"
+content="website">
+
+<meta
+property="og:url"
+content="https://optigainapp.com">
+
+<meta
+property="og:site_name"
+content="OptiGain">
+
+<meta
+property="og:locale"
+content="en_KE">
+
+<meta
+name="twitter:card"
+content="summary_large_image">
+
+<meta
+name="twitter:title"
+content="OptiGain">
+
+<meta
+name="twitter:description"
+content="Business Management Software for Modern Businesses">
+
+<meta
+name="twitter:image"
+content="https://optigainapp.com/static/logo.png">
+<link
+rel="canonical"
+href="https://optigainapp.com/">
 
 <link rel="stylesheet"
 href="{{ url_for('static', filename='css/output.css') }}">
@@ -43,22 +104,106 @@ href="{{ url_for('static', filename='css/output.css') }}">
 
 <script type="application/ld+json">
 {
-  "@context":"https://schema.org",
-  "@type":"SoftwareApplication",
-  "name":"OptiGain",
-  "url":"https://optigainapp.com",
-  "applicationCategory":"BusinessApplication",
-  "operatingSystem":"Web",
-  "description":"OptiGain helps businesses manage branches,employees, track revenue, expenses, inventory and forecast profits using real-time data.",
-  "offers":{
-    "@type":"Offer",
-    "price":"1500",
-    "priceCurrency":"KES"
-  },
-  "publisher":{
-    "@type":"Organization",
-    "name":"OptiGain Technologies"
-  }
+"@context":"https://schema.org",
+
+"@graph":[
+
+{
+
+"@type":"Organization",
+
+"name":"OptiGain Technologies",
+
+"url":"https://optigainapp.com",
+
+"logo":"https://optigainapp.com/static/logo.png",
+
+"founder":{
+
+"@type":"Person",
+
+"name":"Griffin Mutuma"
+
+},
+
+"email":"optigaintechnologies@gmail.com",
+
+"telephone":"+254702432710",
+
+"address":{
+
+"@type":"PostalAddress",
+
+"addressLocality":"Nairobi",
+
+"addressCountry":"KE"
+
+}
+
+},
+
+{
+
+"@type":"SoftwareApplication",
+
+"name":"OptiGain",
+
+"url":"https://optigainapp.com",
+
+"applicationCategory":"BusinessApplication",
+
+"operatingSystem":"Web",
+
+"description":"Business management software for inventory, sales, employees, branches, expenses, forecasting and business intelligence.",
+
+"offers":[
+
+{
+
+"@type":"Offer",
+
+"name":"Professional",
+
+"price":"1500",
+
+"priceCurrency":"KES"
+
+},
+
+{
+
+"@type":"Offer",
+
+"name":"Enterprise",
+
+"price":"2000",
+
+"priceCurrency":"KES"
+
+}
+
+],
+
+"creator":{
+
+"@type":"Person",
+
+"name":"Griffin Mutuma"
+
+},
+
+"publisher":{
+
+"@type":"Organization",
+
+"name":"OptiGain Technologies"
+
+}
+
+}
+
+]
+
 }
 </script>
 
@@ -150,28 +295,85 @@ href="{{ url_for('static', filename='css/output.css') }}">
   justify-content: center;
   align-items: center;
   z-index: 99999;
-  transition: opacity 1s ease;
+  transition: opacity.9s ease, transform.9s ease;
 }
 
-.splash-logo {
-  width: 120px;
-  animation: pulseLogo 2s infinite;
-  filter: drop-shadow(0 0 25px rgba(37,99,235,0.45));
+#splash-screen::before{
+
+content:"";
+
+position:absolute;
+
+width:420px;
+
+height:420px;
+
+border-radius:50%;
+
+background:radial-gradient(circle,
+rgba(37,99,235,.35),
+transparent 70%);
+
+animation:glow 3s ease-in-out infinite;
+
 }
 
-.splash-text {
-  margin-top: 20px;
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  letter-spacing: 1px;
+.splash-logo{
+
+width:135px;
+
+position:relative;
+
+z-index:2;
+
+animation:pulseLogo 2.8s ease-in-out infinite;
+
+filter:
+
+drop-shadow(0 0 18px rgba(37,99,235,.6))
+
+drop-shadow(0 0 45px rgba(37,99,235,.35));
+
+transition:.5s;
+
 }
 
-.splash-copy {
-  margin-top: 12px;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: 0.5px;
+.splash-text{
+
+position:relative;
+
+z-index:2;
+
+margin-top:24px;
+
+font-size:2.5rem;
+
+font-weight:800;
+
+color:white;
+
+letter-spacing:2px;
+
+animation:fadeText 2s ease;
+
+}
+
+.splash-copy{
+
+position:relative;
+
+z-index:2;
+
+margin-top:18px;
+
+font-size:.82rem;
+
+color:rgba(255,255,255,.45);
+
+letter-spacing:.6px;
+
+transition:.5s;
+
 }
 
 @keyframes pulseLogo {
@@ -191,6 +393,106 @@ href="{{ url_for('static', filename='css/output.css') }}">
   }
 }
 
+.loader{
+
+display:flex;
+
+gap:10px;
+
+margin-top:28px;
+
+position:relative;
+
+z-index:2;
+
+}
+
+.loader span{
+
+width:10px;
+
+height:10px;
+
+border-radius:50%;
+
+background:#3b82f6;
+
+animation:bounce 1s infinite;
+
+}
+
+.loader span:nth-child(2){
+
+animation-delay:.2s;
+
+}
+
+.loader span:nth-child(3){
+
+animation-delay:.4s;
+
+}
+
+@keyframes bounce{
+
+0%,80%,100%{
+
+transform:scale(.5);
+
+opacity:.4;
+
+}
+
+40%{
+
+transform:scale(1.4);
+
+opacity:1;
+
+}
+
+}
+
+@keyframes glow{
+
+0%,100%{
+
+transform:scale(1);
+
+opacity:.45;
+
+}
+
+50%{
+
+transform:scale(1.25);
+
+opacity:.8;
+
+}
+
+}
+
+@keyframes fadeText{
+
+from{
+
+opacity:0;
+
+transform:translateY(18px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
     
   </style>
 
@@ -208,11 +510,21 @@ href="{{ url_for('static', filename='css/output.css') }}">
 
   <div class="splash-text">
     OptiGain
-  </div>
+</div>
 
-  <p class="splash-copy">
+<div class="loader">
+
+<span></span>
+
+<span></span>
+
+<span></span>
+
+</div>
+
+<p class="splash-copy">
     © 2026 OptiGain Technologies. All Rights Reserved.
-  </p>
+</p>
 
 </div>
 
@@ -225,11 +537,31 @@ href="{{ url_for('static', filename='css/output.css') }}">
   </div>
 
   <div class="hidden sm:flex gap-4">
-    <a href="#home">Home</a>
-    <a href="#how">How it works</a>
-    <a href="#businesses">Businesses</a>
-    <a href="#security">Security</a>
-    <a href="#why">About</a>
+    <a href="{{ url_for('landing') }}">Home</a>
+
+<a href="{{ url_for('features') }}">
+Features
+</a>
+
+<a href="{{ url_for('how_it_works') }}">
+How It Works
+</a>
+
+<a href="{{ url_for('pricing') }}">
+Pricing
+</a>
+
+<a href="{{ url_for('about') }}">
+About
+</a>
+
+<a href="{{ url_for('contact') }}">
+Contact
+</a>
+
+<a href="{{ url_for('help_center') }}">
+Help Center
+</a>
 
 
   </div>
@@ -371,7 +703,10 @@ Choose Enterprise
 
 
       <a href="{{ url_for('register') }}" class="btn-main w-full sm:w-auto text-center">Start Free</a>
-      <a href="#how" class="btn-outline w-full sm:w-auto text-center">How it works</a>
+      <a href="{{ url_for('how_it_works') }}"
+class="btn-outline w-full sm:w-auto text-center">
+How it Works
+</a>
 
 <button
   id="installBtnHero"
@@ -457,123 +792,6 @@ Receive insights, trends and forecasts based on your business data.
 </div>
 </section>
 
-<!-- HOW -->
-<section id="how" class="py-24">
-
-  <div class="max-w-5xl mx-auto px-6">
-
-    <div class="img-overlay reveal mb-12">
-      <img src="{{ url_for('static', filename='images/payment.jpg') }}"
-     class="rounded-2xl shadow-2xl w-full max-h-[650px] object-cover border border-white/10">
-    </div>
-
-    <div class="reveal">
-
-  <h2 class="text-4xl font-bold mb-8">
-    How OptiGain works
-  </h2>
-
-  <p class="text-gray-400 text-lg mb-8">
-    OptiGain is designed to feel simple even for businesses with multiple branches,
-    many employees and daily transactions.
-    Everything is connected automatically inside one platform.
-  </p>
-
-  <ul class="space-y-8 text-gray-300 text-lg list-disc pl-6 leading-relaxed">
-
-    <li>
-      When registering your business, the business name you enter becomes your
-      first or main branch automatically.
-    </li>
-
-    <li>
-      You can later create additional branches for different locations,
-      shops or departments inside the same business account.
-    </li>
-
-<li>
-Businesses with multiple branches use the Enterprise Plan,
-which unlocks branch analytics, employee management
-and unified reporting.
-</li>
-
-    <li>
-      Each branch can manage its own sales, products, inventory,
-      expenses and staff activity separately.
-    </li>
-
-<li>
-  Owners can create employee accounts and assign staff
-  to specific branches with controlled access.
-</li>
-
-    <li>
-      Even though branches operate independently,
-      OptiGain automatically combines everything into one unified dashboard.
-    </li>
-
-    <li>
-      This means total revenue, total expenses, inventory performance,
-      analytics and forecasts are visible across the entire business in real time.
-    </li>
-
-    <li>
-      Staff can create sales quickly inside the system using products already saved in inventory.
-    </li>
-
-    <li>
-      After creating a sale, the system generates a payment reference for the customer.
-    </li>
-
-    <li>
-      Once the customer completes payment and shows confirmation,
-      staff simply click the “Mark as Paid” button to complete the transaction.
-    </li>
-
-    <li>
-      Completed sales are automatically saved inside dashboards,
-      reports and analytics without needing manual calculations.
-    </li>
-
-    <li>
-      Inventory updates automatically after every completed sale,
-      helping businesses track stock movement in real time.
-    </li>
-
-    <li>
-      Expenses from different branches can also be recorded independently
-      while still contributing to unified company-wide profit tracking.
-    </li>
-
-    <li>
-      OptiGain automatically helps businesses understand:
-      revenue trends, best-selling products, branch performance,
-      profit behavior and unusual financial changes.
-    </li>
-
-    <li>
-      AI-powered analytics help detect unusual drops,
-      spikes and business patterns before they become serious problems.
-    </li>
-
-    <li>
-      Forecasting tools help estimate future revenue performance
-      using real operational data from the business.
-    </li>
-
-  </ul>
-
-  <p class="text-gray-400 mt-8 text-lg">
-    OptiGain is built to remove spreadsheets, disconnected records
-    and manual guesswork — replacing them with one intelligent,
-    organized and easy-to-use business system.
-  </p>
-
-</div>
-
-  </div>
-
-</section>
 
 <!-- BUSINESSES -->
 <section id="businesses" class="py-24 text-center">
@@ -636,180 +854,8 @@ and unified reporting.
 </section>
 
 
-<!-- SECURITY -->
-<section id="security" class="py-24">
 
-  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center">
 
-    <div class="img-overlay reveal">
-      <img src="{{ url_for('static', filename='images/security.jpg') }}"
-           class="rounded-xl shadow-2xl">
-    </div>
-
-    <div class="reveal">
-
-      <h2 class="text-4xl font-bold mb-8">
-        Security & Data Protection
-      </h2>
-
-      <ul class="space-y-6 text-gray-300 text-lg list-disc pl-6">
-
-        <li>User account verification for secure access</li>
-
-        <li>Protected business data isolation between accounts</li>
-
-        <li>Encrypted password authentication</li>
-
-<li>Role-based employee permissions</li>
-
-<li>Branch-level access restrictions</li>
-
-<li>Employee activity tracking</li>
-
-<li>Secure payment integration workflows</li>
-
-        <li>Real-time database backups and monitoring</li>
-
-        <li>Activity tracking for operational transparency</li>
-
-        <li>Designed to reduce fraud and unauthorized access</li>
-
-        <li>Cloud-hosted infrastructure with scalable reliability</li>
-
-      </ul>
-
-      <p class="text-gray-400 mt-6">
-        OptiGain is designed with business security, reliability and operational trust in mind.
-      </p>
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- WHY -->
-<section id="why" class="py-24 text-center">
-
-  <div class="max-w-3xl mx-auto px-6 reveal">
-
-    <h2 class="text-4xl font-bold mb-8">Why OptiGain exists</h2>
-
-<p class="text-lg text-gray-400 mb-6">
-  Most businesses do not struggle because they lack customers.
-  They struggle because important business information is scattered everywhere.
-</p>
-
-<p class="text-lg text-gray-400 mb-6">
-  Sales are recorded separately, expenses are tracked manually,
-  inventory changes constantly and branch performance becomes difficult to monitor clearly.
-</p>
-
-<p class="text-lg text-gray-400 mb-6">
-  Many business owners are forced to rely on spreadsheets,
-  notebooks, calculators and disconnected systems that consume time
-  and reduce visibility into real business performance.
-</p>
-
-<p class="text-lg text-gray-400 mb-6">
-  OptiGain was built to simplify business management by bringing everything together into one connected platform.
-</p>
-
-<p class="text-lg text-gray-400 mb-6">
-  Instead of managing branches separately,
-  OptiGain allows businesses to operate independently at branch level
-  while still viewing unified analytics, revenue totals,
-  expenses, inventory insights and forecasts from one dashboard.
-</p>
-
-<p class="text-lg text-gray-400 mb-6">
-  Staff manage daily operations inside their assigned branches,
-  while owners monitor sales, employees, branches and profits from one dashboard.
-</p>
-
-<p class="text-lg text-gray-300 mb-6">
-  The goal of OptiGain is not to make businesses more technical.
-  The goal is to make businesses easier to understand, control and grow.
-</p>
-
-<p class="text-xl font-semibold">
-  One platform. Full visibility. Better decisions.
-</p>
-
-  </div>
-
-</section>
-
-<!-- PRICING -->
-<section class="py-24">
-
-<div class="max-w-5xl mx-auto px-6">
-
-<h2 class="text-4xl font-bold text-center mb-12">
-Pricing
-</h2>
-
-<div class="grid md:grid-cols-2 gap-8">
-
-<div class="bg-white/5 border border-white/10 rounded-2xl p-8">
-
-<h3 class="text-2xl font-bold mb-3">
- ⚡ Professional
-</h3>
-
-<p class="text-4xl font-extrabold text-blue-400 mb-4">
-KSh 1,500
-</p>
-
-<p class="mb-4 text-gray-400">
-Built for independent businesses and single locations.
-</p>
-
-<ul class="space-y-2 text-gray-300">
-
-<li>✅ 1 branch</li>
-<li>✅ Employee accounts</li>
-<li>✅ Sales tracking</li>
-<li>✅ Inventory management</li>
-<li>✅ Expense tracking</li>
-<li>✅ Forecast and reports</li>
-
-</ul>
-
-</div>
-
-<div class="bg-blue-500/10 border border-blue-500 rounded-2xl p-8">
-
-<h3 class="text-2xl font-bold mb-3">
-🏬 Enterprise
-</h3>
-
-<p class="text-4xl font-extrabold text-green-400 mb-4">
-KSh 2,000
-</p>
-
-<p class="mb-4 text-gray-400">
-Designed for multi-branch and expanding businesses.
-</p>
-
-<ul class="space-y-2 text-gray-300">
-
-<li>✅ Unlimited branches</li>
-<li>✅ Unlimited employees</li>
-<li>✅ Branch analytics</li>
-<li>✅ Top branch insights</li>
-<li>✅ Company-wide reporting</li>
-<li>✅ AI forecasting</li>
-
-</ul>
-
-</div>
-
-</div>
-
-</div>
-
-</section>
 
 <!-- CTA -->
 <section class="py-24 text-center">
@@ -827,18 +873,22 @@ Designed for multi-branch and expanding businesses.
 <!-- FOOTER -->
 <footer class="text-center py-10 text-sm text-gray-500 border-t border-white/10 mt-10">
 
-<div class="flex justify-center gap-6 mb-4">
-<a href="#home" class="hover:text-white transition">
-Home
-</a>
+<div class="flex flex-wrap justify-center gap-6 mb-6">
 
-<a href="#how" class="hover:text-white transition">
-How it works
-</a>
+<a href="{{ url_for('landing') }}">Home</a>
 
-<a href="#why" class="hover:text-white transition">
-About
-</a>
+<a href="{{ url_for('features') }}">Features</a>
+
+<a href="{{ url_for('how_it_works') }}">How It Works</a>
+
+<a href="{{ url_for('pricing') }}">Pricing</a>
+
+<a href="{{ url_for('about') }}">About</a>
+
+<a href="{{ url_for('contact') }}">Contact</a>
+
+<a href="{{ url_for('help_center') }}">Help Center</a>
+
 </div>
 
 <p>📞 0702432710</p>
@@ -876,6 +926,36 @@ About
 <p class="text-xs mt-3 text-gray-500">
   Get updates, features & business tips
 </p>
+
+<div class="mt-5 flex flex-wrap justify-center gap-5 text-sm text-gray-400">
+
+<a href="{{ url_for('privacy') }}"
+class="hover:text-white">
+Privacy Policy
+</a>
+
+<a href="{{ url_for('terms') }}"
+class="hover:text-white">
+Terms of Service
+</a>
+
+<a href="{{ url_for('help_center') }}"
+class="hover:text-white">
+Help Center
+</a>
+
+<a href="{{ url_for('documentation') }}"
+class="hover:text-white">
+Documentation
+</a>
+
+<a href="{{ url_for('faq') }}"
+class="hover:text-white">
+FAQ
+</a>
+
+</div>
+
 
 <div class="mt-6 pt-4 border-t border-white/10 text-xs text-gray-600">
 © <span id="year"></span> OptiGain Technologies. All Rights Reserved.
@@ -966,21 +1046,31 @@ window.addEventListener("beforeinstallprompt", (e) => {
 </script>
 
 <script>
-window.addEventListener("load", () => {
 
-  setTimeout(() => {
+window.addEventListener("load",()=>{
 
-    const splash = document.getElementById("splash-screen");
+const splash=document.getElementById("splash-screen");
 
-    splash.style.opacity = "0";
+document.body.style.overflow="hidden";
 
-    setTimeout(() => {
-      splash.style.display = "none";
-    }, 1000);
+setTimeout(()=>{
 
-  }, 2200);
+splash.style.opacity="0";
+
+splash.style.transform="scale(1.03)";
+
+setTimeout(()=>{
+
+splash.style.display="none";
+
+document.body.style.overflow="";
+
+},900);
+
+},2600);
 
 });
+
 </script>
 
 <script src="{{ url_for('static', filename='js/sw-register.js') }}"></script>

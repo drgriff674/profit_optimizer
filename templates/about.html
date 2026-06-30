@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+
+About OptiGain
+
+</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+
+font-family:'Space Grotesk',sans-serif;
+
+background:#020617;
+
+color:white;
+
+}
+
+.hero{
+
+padding:90px 20px;
+
+background:
+linear-gradient(135deg,#020617,#0f172a,#020617);
+
+text-align:center;
+
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+padding:40px;
+
+border-radius:20px;
+
+margin-bottom:35px;
+
+backdrop-filter:blur(15px);
+
+transition:.35s;
+
+}
+
+.card:hover{
+
+transform:translateY(-6px);
+
+border-color:#2563eb;
+
+box-shadow:0 18px 35px rgba(37,99,235,.18);
+
+}
+
+
+.btn{
+
+display:inline-block;
+
+padding:14px 28px;
+
+background:#2563eb;
+
+border-radius:12px;
+
+color:white;
+
+font-weight:bold;
+
+text-decoration:none;
+
+transition:.3s;
+
+}
+
+.btn:hover{
+
+background:#1d4ed8;
+
+}
+
+.reveal{
+
+opacity:0;
+
+transform:translateY(40px);
+
+transition:all .8s ease;
+
+}
+
+.reveal.active{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header
+class="max-w-6xl mx-auto py-5 px-5 flex justify-between items-center">
+
+<div class="flex items-center gap-3">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-10">
+
+<h2 class="text-2xl font-bold">
+
+OptiGain
+
+<span class="text-blue-500">.</span>
+
+</h2>
+
+</div>
+
+<nav class="hidden md:flex gap-6">
+
+<a href="{{ url_for('landing') }}">
+Home
+</a>
+
+<a href="{{ url_for('features') }}">
+Features
+</a>
+
+<a href="{{ url_for('pricing') }}">
+Pricing
+</a>
+
+<a href="{{ url_for('how_it_works') }}">
+How it Works
+</a>
+
+<a href="{{ url_for('contact') }}">
+Contact
+</a>
+
+</nav>
+
+</header>
+
+<section class="hero">
+
+<div class="max-w-5xl mx-auto">
+
+<h1 class="text-5xl font-extrabold mb-6">
+
+About OptiGain
+
+</h1>
+
+<p class="text-xl text-gray-400 max-w-3xl mx-auto">
+
+Building intelligent business software that helps companies
+manage operations with confidence.
+
+</p>
+
+</div>
+
+</section>
+
+<section class="py-20">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Our Story
+
+</h2>
+
+<p class="text-gray-300 leading-8 mb-6">
+
+OptiGain was created after recognizing that many businesses
+still rely on notebooks, spreadsheets and disconnected tools
+to manage daily operations.
+
+While these methods may work initially,
+they become increasingly difficult as businesses grow,
+employees increase and branches expand.
+
+</p>
+
+<p class="text-gray-300 leading-8">
+
+OptiGain was designed to bring sales,
+inventory,
+expenses,
+employees,
+payments,
+branch management
+and business intelligence
+into one connected platform.
+
+</p>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Our Mission
+
+</h2>
+
+<p class="text-gray-300 leading-8">
+
+To simplify business management by providing intelligent,
+easy-to-use software that helps businesses make better
+financial and operational decisions every day.
+
+</p>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Our Vision
+
+</h2>
+
+<p class="text-gray-300 leading-8">
+
+To become one of Africa's leading business software
+companies by helping businesses embrace smarter,
+data-driven management.
+
+</p>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Why Businesses Choose OptiGain
+
+</h2>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+<div>
+
+<h3 class="text-2xl font-semibold mb-3">
+📊 One Dashboard
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+View sales, inventory, expenses,
+employees and profits from one place.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-semibold mb-3">
+🏢 Multi-Branch Ready
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Manage one branch or many branches
+without switching between systems.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-semibold mb-3">
+🔒 Secure
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+Business information remains isolated,
+encrypted and protected with role-based access.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-2xl font-semibold mb-3">
+📈 Built for Growth
+</h3>
+
+<p class="text-gray-300 leading-8">
+
+As your business grows,
+OptiGain grows with you through
+analytics,
+forecasting,
+AI insights
+and centralized reporting.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Our Values
+
+</h2>
+
+<ul class="space-y-6 text-gray-300 leading-8">
+
+<li>
+✅ Simplicity before complexity.
+</li>
+
+<li>
+✅ Reliable software businesses can trust.
+</li>
+
+<li>
+✅ Secure handling of business information.
+</li>
+
+<li>
+✅ Continuous innovation driven by customer feedback.
+</li>
+
+<li>
+✅ Building technology that helps businesses make better decisions.
+</li>
+
+</ul>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Founder
+
+</h2>
+
+<div class="flex flex-col md:flex-row gap-8 items-center">
+
+<div>
+
+<img
+src="{{ url_for('static', filename='images/founder.jpg') }}"
+class="rounded-2xl w-64 border border-white/10 shadow-2xl hover:scale-105 transition duration-500">
+
+</div>
+
+<div>
+
+<h3 class="text-3xl font-bold mb-4">
+
+Griffin Mutuma
+
+</h3>
+
+<p class="text-blue-400 mb-6">
+
+Founder • OptiGain Technologies
+
+</p>
+
+<p class="text-gray-300 leading-8 mb-5">
+
+OptiGain was founded with a vision of helping
+businesses replace manual processes with
+simple, intelligent software.
+
+The focus has always been on building technology
+that is practical, reliable and capable of helping
+business owners make better decisions every day.
+
+</p>
+
+<p class="text-gray-300 leading-8">
+
+The long-term goal is to make OptiGain one of Africa's
+leading business management platforms by combining
+financial intelligence, automation and modern software
+into one powerful solution.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-4xl font-bold mb-8">
+
+Our Journey
+
+</h2>
+
+<div class="space-y-8">
+
+<div class="border-l-4 border-blue-500 pl-6 reveal">
+
+<h3 class="text-2xl font-semibold">
+
+2025
+
+</h3>
+
+<p class="text-gray-300 mt-2">
+
+The idea for OptiGain was conceived after identifying
+how difficult it was for growing businesses to monitor
+sales, inventory and profits using disconnected tools.
+
+</p>
+
+</div>
+
+<div class="border-l-4 border-blue-500 pl-6 reveal">
+
+<h3 class="text-2xl font-semibold">
+
+2026
+
+</h3>
+
+<p class="text-gray-300 mt-2">
+
+Development expanded into a complete business
+management platform with branch management,
+employee accounts, inventory tracking,
+sales management and financial reporting.
+
+</p>
+
+</div>
+
+<div class="border-l-4 border-blue-500 pl-6 reveal">
+
+<h3 class="text-2xl font-semibold">
+
+Future
+
+</h3>
+
+<p class="text-gray-300 mt-2">
+
+Our vision is to continue expanding OptiGain with
+AI-powered business intelligence,
+payment automation,
+advanced forecasting
+and solutions that support businesses across Africa.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="grid md:grid-cols-4 gap-6 my-16">
+
+<div class="card reveal text-center">
+
+<h2 class="text-5xl font-extrabold text-blue-400">
+
+24/7
+
+</h2>
+
+<p class="mt-3 text-gray-300">
+
+Cloud Availability
+
+</p>
+
+</div>
+
+<div class="card reveal text-center">
+
+<h2 class="text-5xl font-extrabold text-green-400">
+
+AI
+
+</h2>
+
+<p class="mt-3 text-gray-300">
+
+Business Intelligence
+
+</p>
+
+</div>
+
+<div class="card reveal text-center">
+
+<h2 class="text-5xl font-extrabold text-yellow-400">
+
+∞
+
+</h2>
+
+<p class="mt-3 text-gray-300">
+
+Scalable Growth
+
+</p>
+
+</div>
+
+<div class="card reveal text-center">
+
+<h2 class="text-5xl font-extrabold text-purple-400">
+
+1
+
+</h2>
+
+<p class="mt-3 text-gray-300">
+
+Unified Platform
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="py-24 text-center">
+
+<div class="max-w-4xl mx-auto px-6">
+
+<h2 class="text-5xl font-extrabold mb-6">
+
+Join Businesses Growing with OptiGain
+
+</h2>
+
+<p class="text-xl text-gray-400 mb-10">
+
+Start managing your sales,
+inventory,
+employees,
+branches and profits from one intelligent platform.
+
+</p>
+
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+
+<a href="{{ url_for('register') }}"
+class="btn">
+
+Start Free Trial
+
+</a>
+
+<a href="{{ url_for('contact') }}"
+class="border border-white/20 rounded-xl px-8 py-4 hover:bg-white/10 transition">
+
+Contact Us
+
+</a>
+
+<a href="{{ url_for('features') }}"
+class="border border-white/20 rounded-xl px-8 py-4 hover:bg-white/10 transition">
+
+Explore Features
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+<footer class="border-t border-white/10 py-12">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<div class="grid md:grid-cols-4 gap-10">
+
+<div>
+
+<h3 class="text-2xl font-bold">
+
+OptiGain
+<span class="text-blue-500">.</span>
+
+</h3>
+
+<p class="text-gray-400 mt-4">
+
+Business Management Software
+for modern businesses.
+
+</p>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Product
+
+</h4>
+
+<ul class="space-y-2 text-gray-400">
+
+<li><a href="{{ url_for('features') }}">Features</a></li>
+
+<li><a href="{{ url_for('pricing') }}">Pricing</a></li>
+
+<li><a href="{{ url_for('how_it_works') }}">How it Works</a></li>
+
+</ul>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Company
+
+</h4>
+
+<ul class="space-y-2 text-gray-400">
+
+<li><a href="{{ url_for('about') }}">About</a></li>
+
+<li><a href="{{ url_for('contact') }}">Contact</a></li>
+
+<li><a href="{{ url_for('landing') }}">Home</a></li>
+
+</ul>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Head Office
+
+</h4>
+
+<p class="text-gray-400">
+
+📍 Nairobi, Kenya
+
+</p>
+
+<p class="text-gray-400 mt-2">
+
+✉️
+
+<a
+href="mailto:optigaintechnologies@gmail.com"
+class="text-blue-400 hover:underline">
+
+optigaintechnologies@gmail.com
+
+</a>
+
+</p>
+
+<p class="text-gray-400 mt-2">
+
+📞
+
+<a
+href="tel:0702432710"
+class="text-blue-400 hover:underline">
+
+0702432710
+
+</a>
+
+</p>
+
+</div>
+
+</div>
+
+<div class="border-t border-white/10 mt-10 pt-6 text-center text-gray-500">
+
+© <span id="year"></span> OptiGain Technologies.
+All Rights Reserved.
+
+</div>
+
+</div>
+
+</footer>
+
+<script>
+
+document.getElementById("year").textContent =
+new Date().getFullYear();
+
+</script>
+
+<script>
+
+const reveals=document.querySelectorAll(".reveal");
+
+function reveal(){
+
+const h=window.innerHeight;
+
+reveals.forEach(el=>{
+
+if(el.getBoundingClientRect().top<h-80){
+
+el.classList.add("active");
+
+}
+
+});
+
+}
+
+window.addEventListener("scroll",reveal);
+
+reveal();
+
+</script>
+
+</body>
+
+</html>
+
+
+

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Pricing • OptiGain</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Space Grotesk',sans-serif;
+background:#020617;
+color:white;
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(16px);
+
+border-radius:22px;
+
+padding:40px;
+
+transition:all .35s ease;
+
+box-shadow:0 12px 30px rgba(0,0,0,.18);
+
+}
+
+.card:hover{
+
+transform:translateY(-10px);
+
+border-color:#3b82f6;
+
+box-shadow:
+0 22px 45px rgba(37,99,235,.28);
+
+}
+
+.feature{
+margin-bottom:12px;
+color:#d1d5db;
+}
+
+.btn-main{
+
+display:block;
+
+text-align:center;
+
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+padding:16px;
+
+border-radius:14px;
+
+font-weight:700;
+
+margin-top:30px;
+
+transition:.3s;
+
+box-shadow:0 12px 30px rgba(37,99,235,.35);
+
+}
+
+.btn-main:hover{
+
+transform:translateY(-3px);
+
+box-shadow:
+0 18px 40px rgba(37,99,235,.45);
+
+}
+
+
+.badge{
+
+display:inline-block;
+
+padding:8px 18px;
+
+border-radius:999px;
+
+background:#2563eb22;
+
+color:#60a5fa;
+
+font-size:.9rem;
+
+margin-bottom:20px;
+
+}
+
+.reveal{
+
+opacity:0;
+
+transform:translateY(60px);
+
+transition:all .8s ease;
+
+}
+
+.reveal.active{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header class="max-w-6xl mx-auto mt-4 px-6 py-4 flex flex-wrap gap-4 justify-between items-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-lg">
+<div class="flex items-center gap-3">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-10">
+
+<h1 class="text-2xl font-bold">
+
+OptiGain
+
+</h1>
+
+</div>
+
+<div class="hidden md:flex gap-6">
+
+<a href="{{ url_for('landing') }}">
+Home
+</a>
+
+<a href="{{ url_for('features') }}">
+Features
+</a>
+
+<a href="{{ url_for('how_it_works') }}">
+How It Works
+</a>
+
+<a href="{{ url_for('pricing') }}"
+class="text-blue-400">
+Pricing
+</a>
+
+<a href="{{ url_for('about') }}">
+About
+</a>
+
+<a href="{{ url_for('contact') }}">
+Contact
+</a>
+
+</div>
+
+</header>
+
+<section class="text-center py-20 px-6 reveal">
+
+<div class="badge reveal">
+
+Simple Pricing
+
+</div>
+
+<h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 reveal">
+
+Choose Your Plan
+
+</h1>
+
+<p class="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto reveal">
+
+Every account starts with a
+7-day free trial.
+No setup fee.
+Upgrade only when you're ready.
+
+</p>
+
+</section>
+
+<section class="max-w-6xl mx-auto px-6 pb-24 reveal">
+
+<div class="grid lg:grid-cols-2 gap-10">
+
+<div class="card">
+
+<h2 class="text-3xl font-bold mb-4">
+
+⚡ Professional
+
+</h2>
+
+<p class="text-5xl font-extrabold text-blue-400 mb-2">
+
+KSh 1,500
+
+</p>
+
+<p class="text-gray-400 mb-8">
+
+per month
+
+</p>
+
+<div class="feature">✅ 1 Business Branch</div>
+
+<div class="feature">✅ Employee Accounts</div>
+
+<div class="feature">✅ Inventory Management</div>
+
+<div class="feature">✅ Sales Tracking</div>
+
+<div class="feature">✅ Expense Tracking</div>
+
+<div class="feature">✅ Financial Dashboard</div>
+
+<div class="feature">✅ Revenue Reports</div>
+
+<div class="feature">✅ AI Forecasting</div>
+
+<div class="feature">✅ Email Support</div>
+
+<a
+href="{{ url_for('register') }}"
+class="btn-main">
+
+Start Free Trial
+
+</a>
+
+</div>
+
+<div class="card border-2 border-blue-500">
+
+<div class="badge">
+
+Most Popular
+
+</div>
+
+<h2 class="text-3xl font-bold mb-4">
+
+🏬 Enterprise
+
+</h2>
+
+<p class="text-5xl font-extrabold text-green-400 mb-2">
+
+KSh 2,000
+
+</p>
+
+<p class="text-gray-400 mb-8">
+
+per month
+
+</p>
+
+<div class="feature">✅ Unlimited Branches</div>
+
+<div class="feature">✅ Unlimited Employees</div>
+
+<div class="feature">✅ Company Dashboard</div>
+
+<div class="feature">✅ Branch Analytics</div>
+
+<div class="feature">✅ Revenue Intelligence</div>
+
+<div class="feature">✅ Inventory Analytics</div>
+
+<div class="feature">✅ Top Branch Reports</div>
+
+<div class="feature">✅ AI Business Insights</div>
+
+<div class="feature">✅ Priority Support</div>
+
+<a
+href="{{ url_for('register') }}"
+class="btn-main">
+
+Start Free Trial
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="max-w-5xl mx-auto text-center pb-24 px-6 reveal">
+
+<h2 class="text-4xl font-bold mb-8">
+
+Frequently Asked Questions
+
+</h2>
+
+<div class="space-y-8 text-left">
+
+<div>
+
+<h3 class="text-xl font-semibold mb-2">
+
+How long is the free trial?
+
+</h3>
+
+<p class="text-gray-400">
+
+Every new business receives a full
+7-day free trial before choosing a plan.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-xl font-semibold mb-2">
+
+Can I upgrade later?
+
+</h3>
+
+<p class="text-gray-400">
+
+Yes.
+Businesses can upgrade to Enterprise
+whenever they need additional branches.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-xl font-semibold mb-2">
+
+Do I need special hardware?
+
+</h3>
+
+<p class="text-gray-400">
+
+No.
+OptiGain works from your browser
+and can also be installed as an app.
+
+</p>
+
+</div>
+
+<div>
+
+<h3 class="text-xl font-semibold mb-2">
+
+Are updates included?
+
+</h3>
+
+<p class="text-gray-400">
+
+Yes.
+Every subscription includes future updates,
+new features and security improvements.
+
+</p>
+
+</div>
+
+</div>
+
+<div class="mt-12 text-center">
+
+<a
+href="{{ url_for('faq') }}"
+class="btn-main inline-block px-10">
+
+View All FAQs →
+
+</a>
+
+</div>
+
+</section>
+
+<section class="text-center pb-24 reveal">
+
+<h2 class="text-5xl font-bold mb-6">
+
+Start Growing Today
+
+</h2>
+
+<p class="text-gray-400 mb-10">
+
+Join businesses using OptiGain
+to simplify operations and improve profitability.
+
+</p>
+
+<a
+href="{{ url_for('register') }}"
+class="btn-main"
+style="display:inline-block;padding:16px 40px;">
+
+Create Free Account
+
+</a>
+
+</section>
+
+<footer class="border-t border-white/10 mt-20 py-10">
+
+<div class="max-w-6xl mx-auto px-6 text-center">
+
+<div class="flex flex-wrap justify-center gap-6 mb-6 text-gray-400">
+
+<a href="{{ url_for('landing') }}" class="hover:text-white transition">Home</a>
+
+<a href="{{ url_for('features') }}" class="hover:text-white transition">Features</a>
+
+<a href="{{ url_for('documentation') }}" class="hover:text-white transition">Documentation</a>
+
+<a href="{{ url_for('faq') }}" class="hover:text-white transition">FAQ</a>
+
+<a href="{{ url_for('help_center') }}" class="hover:text-white transition">Help Center</a>
+
+</div>
+
+<p class="text-gray-500">
+
+© 2026 OptiGain Technologies. All Rights Reserved.
+
+</p>
+
+</div>
+
+</footer>
+
+<script>
+
+const reveals=document.querySelectorAll(".reveal");
+
+function revealOnScroll(){
+
+const h=window.innerHeight;
+
+reveals.forEach(el=>{
+
+const top=el.getBoundingClientRect().top;
+
+if(top<h-80){
+
+el.classList.add("active");
+
+}
+
+});
+
+}
+
+window.addEventListener("scroll",revealOnScroll);
+
+revealOnScroll();
+
+</script>
+
+
+</body>
+
+
+</html>

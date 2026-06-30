@@ -627,7 +627,15 @@ def check_subscription():
         "register_companion_device",
         "companion_payment",
         "companion_sms",
-        "test_fake_payment"
+        "test_fake_payment",
+        "features",
+        "how_it_works",
+        "pricing",
+        "about",
+        "contact",
+        "help_center",
+        "documentation",
+        "faq"
         
     }
 
@@ -813,6 +821,42 @@ def landing():
         return render_template("landing.html", expired=True)
 
     return render_template("landing.html", expired=False)
+
+@app.route("/features")
+def features():
+    return render_template("features.html")
+
+
+@app.route("/how-it-works")
+def how_it_works():
+    return render_template("how_it_works.html")
+
+
+@app.route("/pricing")
+def pricing():
+    return render_template("pricing.html")
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+
+@app.route("/contact")
+def contact():
+    return render_template("contact.html")
+
+@app.route("/help-center")
+def help_center():
+    return render_template("help_center.html")
+
+@app.route("/documentation")
+def documentation():
+    return render_template("documentation.html")
+
+@app.route("/faq")
+def faq():
+    return render_template("faq.html")
 
 @app.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Help Center | OptiGain</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+background:#020617;
+color:white;
+font-family:'Space Grotesk',sans-serif;
+}
+
+.glass{
+background:rgba(255,255,255,.05);
+border:1px solid rgba(255,255,255,.08);
+backdrop-filter:blur(15px);
+}
+
+.card{
+transition:.25s;
+}
+
+.card:hover{
+
+transform:translateY(-6px);
+
+border-color:#2563eb;
+
+}
+
+.reveal{
+opacity:0;
+transform:translateY(40px);
+transition:all .8s ease;
+}
+
+.reveal.active{
+opacity:1;
+transform:translateY(0);
+}
+
+.btn-main{
+display:inline-block;
+padding:15px 30px;
+border-radius:12px;
+font-weight:700;
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+transition:.3s;
+}
+
+.btn-main:hover{
+transform:translateY(-3px);
+box-shadow:0 14px 30px rgba(37,99,235,.35);
+}
+
+.btn-outline{
+display:inline-block;
+padding:15px 30px;
+border-radius:12px;
+border:1px solid rgba(255,255,255,.15);
+transition:.3s;
+}
+
+.btn-outline:hover{
+border-color:#2563eb;
+background:rgba(37,99,235,.08);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+<!-- HERO -->
+
+<div class="text-center mb-16">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-20 mx-auto mb-6">
+
+<h1 class="text-5xl font-extrabold mb-5">
+
+Help Center
+
+</h1>
+
+<p class="text-gray-400 text-lg max-w-3xl mx-auto">
+
+Find answers, setup guides, documentation,
+payment instructions and troubleshooting
+resources for OptiGain.
+
+</p>
+
+<div class="mt-8">
+
+<input
+
+type="text"
+
+placeholder="Search the Help Center (coming soon)"
+
+disabled
+
+class="w-full md:w-[550px]
+mx-auto
+px-5
+py-4
+rounded-xl
+glass
+text-center
+text-gray-400">
+
+</div>
+
+</div>
+
+<!-- SUPPORT CATEGORIES -->
+
+<div class="grid lg:grid-cols-2 gap-8">
+
+<a href="{{ url_for('documentation') }}"
+class="glass card rounded-2xl p-8 block">
+
+<h2 class="text-2xl font-bold mb-6">
+
+🚀 Getting Started
+
+</h2>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>• Creating your account</li>
+
+<li>• Setting up your business</li>
+
+<li>• Creating your first branch</li>
+
+<li>• Adding employees</li>
+
+<li>• Understanding your dashboard</li>
+
+</ul>
+
+</a>
+
+
+
+<a href="{{ url_for('documentation') }}"
+class="glass card rounded-2xl p-8 block">
+
+<h2 class="text-2xl font-bold mb-6">
+
+💳 Sales & Payments
+
+</h2>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>• Creating sales</li>
+
+<li>• STK Push payments</li>
+
+<li>• Paybill integration</li>
+
+<li>• Till Number payments</li>
+
+<li>• Manual payment confirmation</li>
+
+</ul>
+
+</a>
+
+
+
+<a href="{{ url_for('documentation') }}"
+class="glass card rounded-2xl p-8 block">
+
+<h2 class="text-2xl font-bold mb-6">
+
+📦 Inventory
+
+</h2>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>• Adding products</li>
+
+<li>• Managing stock</li>
+
+<li>• Inventory movement</li>
+
+<li>• Branch inventory</li>
+
+<li>• Product performance</li>
+
+</ul>
+
+</a>
+
+
+
+<a href="{{ url_for('faq') }}"
+class="glass card rounded-2xl p-8 block">
+
+<h2 class="text-2xl font-bold mb-6">
+
+💼 Account & Subscription
+
+</h2>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>• Free trial</li>
+
+<li>• Professional Plan</li>
+
+<li>• Enterprise Plan</li>
+
+<li>• Billing</li>
+
+<li>• Password recovery</li>
+
+</ul>
+
+</a>
+
+</div>
+
+<!-- POPULAR ARTICLES -->
+
+<section class="mt-20">
+
+<h2 class="text-4xl font-bold text-center mb-12">
+
+Popular Help Articles
+
+</h2>
+
+<div class="grid md:grid-cols-2 gap-6">
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+📱 Connect Your MPesa Paybill
+
+</h3>
+
+<p class="text-gray-400">
+
+Learn how to configure your Safaricom Paybill,
+Consumer Key, Consumer Secret and API credentials.
+
+</p>
+
+</div>
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+💳 Create Your First Sale
+
+</h3>
+
+<p class="text-gray-400">
+
+Create products, build a cart and process customer
+payments using OptiGain.
+
+</p>
+
+</div>
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+🏢 Managing Branches
+
+</h3>
+
+<p class="text-gray-400">
+
+Learn how owners create branches and monitor
+their performance from one dashboard.
+
+</p>
+
+</div>
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+👥 Employee Accounts
+
+</h3>
+
+<p class="text-gray-400">
+
+Assign employees to branches and manage their
+permissions securely.
+
+</p>
+
+</div>
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+📦 Inventory Management
+
+</h3>
+
+<p class="text-gray-400">
+
+Track products, stock movement and inventory
+performance automatically.
+
+</p>
+
+</div>
+
+<div class="glass card rounded-2xl p-6 reveal">
+
+<h3 class="text-xl font-bold mb-3">
+
+📈 Forecasting & Analytics
+
+</h3>
+
+<p class="text-gray-400">
+
+Understand forecasts, trends, AI insights and
+financial reports.
+
+</p>
+
+</div>
+
+</div>
+
+<div class="text-center mt-12">
+
+<a href="{{ url_for('faq') }}"
+class="inline-block bg-blue-600 hover:bg-blue-700 transition px-8 py-4 rounded-xl font-semibold">
+
+View Frequently Asked Questions →
+
+</a>
+
+</div>
+
+</section>
+
+<section class="mt-20">
+
+<h2 class="text-4xl font-bold text-center mb-12">
+
+Quick Links
+
+</h2>
+
+<div class="grid md:grid-cols-3 gap-6">
+
+<a href="{{ url_for('documentation') }}"
+class="glass card rounded-2xl p-8 text-center block">
+
+<div class="text-5xl mb-4">📘</div>
+
+<h3 class="text-2xl font-bold mb-2">
+
+Documentation
+
+</h3>
+
+<p class="text-gray-400">
+
+Complete setup guides and tutorials.
+
+</p>
+
+</a>
+
+<a href="{{ url_for('faq') }}"
+class="glass card rounded-2xl p-8 text-center block">
+
+<div class="text-5xl mb-4">❓</div>
+
+<h3 class="text-2xl font-bold mb-2">
+
+FAQs
+
+</h3>
+
+<p class="text-gray-400">
+
+Find quick answers to common questions.
+
+</p>
+
+</a>
+
+<a href="{{ url_for('contact') }}"
+class="glass card rounded-2xl p-8 text-center block">
+
+<div class="text-5xl mb-4">☎️</div>
+
+<h3 class="text-2xl font-bold mb-2">
+
+Contact Support
+
+</h3>
+
+<p class="text-gray-400">
+
+Need more help? Reach our support team.
+
+</p>
+
+</a>
+
+</div>
+
+</section>
+
+<!-- CONTACT -->
+
+<section class="mt-20">
+
+<div class="glass rounded-3xl p-10 text-center">
+
+<h2 class="text-4xl font-bold mb-6">
+
+Still Need Help?
+
+</h2>
+
+<p class="text-gray-400 max-w-2xl mx-auto mb-8">
+
+Our team is ready to help you with setup,
+payments, subscriptions and technical support.
+
+</p>
+
+<div class="grid md:grid-cols-3 gap-6">
+
+<div>
+
+<div class="text-4xl mb-3">📧</div>
+
+<h3 class="font-bold">
+
+Email
+
+</h3>
+
+<p class="text-gray-400">
+
+optigaintechnologies@gmail.com
+
+</p>
+
+</div>
+
+<div>
+
+<div class="text-4xl mb-3">📞</div>
+
+<h3 class="font-bold">
+
+Phone
+
+</h3>
+
+<p class="text-gray-400">
+
+0702432710
+
+</p>
+
+</div>
+
+<div>
+
+<div class="text-4xl mb-3">📚</div>
+
+<h3 class="font-bold">
+
+Documentation
+
+</h3>
+
+<p class="text-gray-400 mb-5">
+
+Read complete setup guides and platform documentation.
+
+</p>
+
+<a href="{{ url_for('documentation') }}"
+class="inline-block bg-blue-600 hover:bg-blue-700 transition px-5 py-3 rounded-xl font-semibold">
+
+Open Documentation
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="mt-12 flex flex-wrap justify-center gap-4">
+
+<a href="{{ url_for('contact') }}"
+class="btn-main">
+
+Contact Support
+
+</a>
+
+<a href="{{ url_for('faq') }}"
+class="btn-outline">
+
+Browse FAQs
+
+</a>
+
+</div>
+
+</section>
+
+</div>
+
+<script>
+
+const reveals=document.querySelectorAll(".reveal");
+
+function reveal(){
+
+const h=window.innerHeight;
+
+reveals.forEach(el=>{
+
+if(el.getBoundingClientRect().top<h-80){
+
+el.classList.add("active");
+
+}
+
+});
+
+}
+
+window.addEventListener("scroll",reveal);
+
+reveal();
+
+</script>
+
+</body>
+
+</html>
+

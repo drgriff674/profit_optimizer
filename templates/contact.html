@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+
+Contact OptiGain
+
+</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Space Grotesk',sans-serif;
+background:#020617;
+color:white;
+}
+
+.hero{
+padding:90px 20px;
+text-align:center;
+background:
+linear-gradient(135deg,#020617,#0f172a,#020617);
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+border-radius:20px;
+
+padding:35px;
+
+backdrop-filter:blur(16px);
+
+transition:.35s;
+
+}
+
+.card:hover{
+
+transform:translateY(-6px);
+
+border-color:#2563eb;
+
+box-shadow:0 18px 35px rgba(37,99,235,.18);
+
+}
+
+.btn{
+
+display:inline-block;
+
+background:#2563eb;
+
+padding:14px 28px;
+
+border-radius:12px;
+
+font-weight:bold;
+
+text-decoration:none;
+
+color:white;
+
+transition:.3s;
+
+border:none;
+
+cursor:pointer;
+
+}
+
+.btn:hover{
+
+background:#1d4ed8;
+
+}
+
+input,
+textarea{
+
+width:100%;
+
+padding:14px;
+
+margin-top:8px;
+
+margin-bottom:22px;
+
+background:#0f172a;
+
+border:1px solid rgba(255,255,255,.08);
+
+border-radius:10px;
+
+color:white;
+
+}
+
+.reveal{
+
+opacity:0;
+
+transform:translateY(40px);
+
+transition:all .8s ease;
+
+}
+
+.reveal.active{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+
+</style>
+
+</head>
+
+<body>
+
+<header
+class="max-w-6xl mx-auto py-5 px-5 flex justify-between items-center">
+
+<div class="flex items-center gap-3">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-10">
+
+<h2 class="text-2xl font-bold">
+
+OptiGain
+<span class="text-blue-500">.</span>
+
+</h2>
+
+</div>
+
+<nav class="hidden md:flex gap-6">
+
+<a href="{{ url_for('landing') }}">Home</a>
+
+<a href="{{ url_for('features') }}">Features</a>
+
+<a href="{{ url_for('pricing') }}">Pricing</a>
+
+<a href="{{ url_for('how_it_works') }}">How it Works</a>
+
+<a href="{{ url_for('about') }}">About</a>
+
+</nav>
+
+</header>
+
+<section class="hero">
+
+<div class="max-w-5xl mx-auto">
+
+<h1 class="text-5xl font-extrabold mb-6">
+
+Contact Us
+
+</h1>
+
+<p class="text-xl text-gray-400 max-w-3xl mx-auto">
+
+Questions about OptiGain?
+Need help setting up your business?
+Want a product demonstration?
+
+We're here to help.
+
+</p>
+
+</div>
+
+</section>
+
+<section class="py-20 reveal">
+
+<div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-10">
+
+<div class="card">
+
+<h2 class="text-3xl font-bold mb-8">
+
+Get In Touch
+
+</h2>
+
+<p class="mb-6">
+
+📞 <strong>Phone</strong><br>
+
+<a href="tel:0702432710"
+class="text-blue-400 hover:underline">
+
+0702432710
+
+</a>
+
+</p>
+
+<p class="mb-6">
+
+✉️ <strong>Email</strong><br>
+
+<a href="mailto:optigaintechnologies@gmail.com"
+class="text-blue-400 hover:underline">
+
+optigaintechnologies@gmail.com
+
+</a>
+
+</p>
+
+<p class="mb-6">
+
+📍 <strong>Office</strong><br>
+
+Nairobi, Kenya
+
+</p>
+
+<p class="mb-6">
+
+🕒 <strong>Business Hours</strong><br>
+
+Monday – Friday<br>
+
+8:00 AM – 5:00 PM
+
+</p>
+
+</div>
+
+<div class="card reveal">
+
+<h2 class="text-3xl font-bold mb-8">
+
+Send Us A Message
+
+</h2>
+
+<form>
+
+<label>
+
+Full Name
+
+</label>
+
+<input
+type="text"
+placeholder="Your name">
+
+<label>
+
+Email Address
+
+</label>
+
+<input
+type="email"
+placeholder="you@example.com">
+
+<label>
+
+Business Name
+
+</label>
+
+<input
+type="text"
+placeholder="Your business">
+
+<label>
+
+Message
+
+</label>
+
+<textarea
+rows="6"
+placeholder="Tell us how we can help..."></textarea>
+
+<button
+class="btn"
+type="submit">
+
+Send Message
+
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="py-20 reveal">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<h2 class="text-4xl font-bold text-center mb-12">
+
+Find Us
+
+</h2>
+
+<div class="rounded-2xl overflow-hidden border border-white/10">
+
+<iframe
+src="https://www.google.com/maps?q=Nairobi,Kenya&output=embed"
+width="100%"
+height="450"
+style="border:0;"
+allowfullscreen=""
+loading="lazy">
+
+</iframe>
+
+</div>
+
+<p class="text-center text-gray-400 mt-6">
+
+Our primary operations are based in Nairobi, Kenya.
+
+</p>
+
+</div>
+
+</section>
+
+<section class="py-20 reveal">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<h2 class="text-4xl font-bold text-center mb-12">
+
+Frequently Asked Questions
+
+</h2>
+
+<div class="space-y-6">
+
+<div class="card">
+
+<h3 class="text-2xl font-semibold mb-3">
+
+Do I need any software installation?
+
+</h3>
+
+<p class="text-gray-300">
+
+No.
+
+OptiGain runs directly in your web browser and can also be installed as a Progressive Web App (PWA).
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h3 class="text-2xl font-semibold mb-3">
+
+Can I manage multiple branches?
+
+</h3>
+
+<p class="text-gray-300">
+
+Yes.
+
+The Enterprise plan supports unlimited branches, centralized reporting and branch performance monitoring.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h3 class="text-2xl font-semibold mb-3">
+
+Does OptiGain support M-PESA?
+
+</h3>
+
+<p class="text-gray-300">
+
+Yes.
+
+Businesses can integrate their own Safaricom M-PESA credentials to receive customer payments directly into their own account.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h3 class="text-2xl font-semibold mb-3">
+
+How can I get support?
+
+</h3>
+
+<p class="text-gray-300">
+
+You can contact us by phone, email or through the contact form on this page.
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="py-24 text-center reveal">
+
+<div class="max-w-5xl mx-auto px-6">
+
+<h2 class="text-5xl font-extrabold mb-6">
+
+Let's Build Your Business Together
+
+</h2>
+
+<p class="text-xl text-gray-400 mb-10">
+
+Whether you're starting with one shop or expanding into multiple branches,
+OptiGain is ready to help you manage your business more efficiently.
+
+</p>
+
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+
+<a
+href="{{ url_for('register') }}"
+class="btn">
+
+Start Free Trial
+
+</a>
+
+<a
+href="{{ url_for('pricing') }}"
+class="border border-white/20 rounded-xl px-8 py-4 hover:bg-white/10 transition">
+
+View Pricing
+
+</a>
+
+<a
+href="{{ url_for('help_center') }}"
+class="border border-white/20 rounded-xl px-8 py-4 hover:bg-white/10 transition">
+
+Help Center
+
+</a>
+
+</div>
+
+</div>
+
+</section>
+
+<footer class="border-t border-white/10 py-12">
+
+<div class="max-w-6xl mx-auto px-6">
+
+<div class="grid md:grid-cols-4 gap-10">
+
+<div>
+
+<h3 class="text-2xl font-bold">
+
+OptiGain
+<span class="text-blue-500">.</span>
+
+</h3>
+
+<p class="text-gray-400 mt-4">
+
+Business Management Software built for
+modern businesses.
+
+</p>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Product
+
+</h4>
+
+<ul class="space-y-2 text-gray-400">
+
+<li>
+<a href="{{ url_for('features') }}">
+Features
+</a>
+</li>
+
+<li>
+<a href="{{ url_for('pricing') }}">
+Pricing
+</a>
+</li>
+
+<li>
+<a href="{{ url_for('how_it_works') }}">
+How It Works
+</a>
+</li>
+
+</ul>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Company
+
+</h4>
+
+<ul class="space-y-2 text-gray-400">
+
+<li>
+<a href="{{ url_for('about') }}">
+About
+</a>
+</li>
+
+<li>
+<a href="{{ url_for('contact') }}">
+Contact
+</a>
+</li>
+
+<li>
+<a href="{{ url_for('landing') }}">
+Home
+</a>
+</li>
+
+</ul>
+
+</div>
+
+<div>
+
+<h4 class="font-semibold mb-4">
+
+Connect With Us
+
+</h4>
+
+<p class="text-gray-400">
+
+📞 0702432710
+
+</p>
+
+<p class="text-gray-400 mt-2">
+
+✉️ optigaintechnologies@gmail.com
+
+</p>
+
+<p class="text-gray-400 mt-2">
+
+📍 Nairobi, Kenya
+
+</p>
+
+<div class="flex gap-4 mt-6">
+
+<a
+href="https://facebook.com/optigainapp"
+target="_blank"
+class="hover:text-blue-500 transition">
+
+Facebook
+
+</a>
+
+<a
+href="https://instagram.com/optigainapp"
+target="_blank"
+class="hover:text-pink-500 transition">
+
+Instagram
+
+</a>
+
+<a
+href="https://x.com/optigainapp"
+target="_blank"
+class="hover:text-blue-400 transition">
+
+X
+
+</a>
+
+<a
+href="https://tiktok.com/@optigainapp"
+target="_blank"
+class="hover:text-white transition">
+
+TikTok
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="border-t border-white/10 mt-10 pt-6 text-center text-gray-500">
+
+© <span id="year"></span> OptiGain Technologies.
+All Rights Reserved.
+
+</div>
+
+</div>
+
+</footer>
+
+<script>
+
+document.getElementById("year").textContent =
+new Date().getFullYear();
+
+</script>
+
+<script>
+
+const reveals=document.querySelectorAll(".reveal");
+
+function reveal(){
+
+const h=window.innerHeight;
+
+reveals.forEach(el=>{
+
+if(el.getBoundingClientRect().top<h-80){
+
+el.classList.add("active");
+
+}
+
+});
+
+}
+
+window.addEventListener("scroll",reveal);
+
+reveal();
+
+</script>
+
+</body>
+
+</html>
+
+
+

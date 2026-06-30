@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Features • OptiGain</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/output.css') }}">
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Space Grotesk',sans-serif;
+background:#020617;
+color:white;
+}
+
+.card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(15px);
+
+border-radius:22px;
+
+padding:32px;
+
+transition:all .35s ease;
+
+box-shadow:0 10px 30px rgba(0,0,0,.18);
+
+}
+
+.card:hover{
+
+transform:translateY(-10px);
+
+border-color:#3b82f6;
+
+box-shadow:
+
+0 20px 45px rgba(37,99,235,.28);
+
+}
+
+.btn-main{
+
+background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+padding:15px 32px;
+
+border-radius:14px;
+
+font-weight:700;
+
+display:inline-block;
+
+transition:.3s;
+
+box-shadow:0 12px 30px rgba(37,99,235,.35);
+
+}
+
+.btn-main:hover{
+
+transform:translateY(-3px);
+
+box-shadow:
+
+0 18px 40px rgba(37,99,235,.45);
+
+}
+
+.reveal{
+
+opacity:0;
+
+transform:translateY(60px);
+
+transition:all .8s ease;
+
+}
+
+.reveal.active{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVIGATION -->
+
+<header class="max-w-6xl mx-auto mt-4 px-6 py-4 flex flex-wrap gap-4 justify-between items-center rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-lg">
+
+<div class="flex items-center gap-3">
+
+<img
+src="{{ url_for('static', filename='icon.png') }}"
+class="w-10">
+
+<h1 class="text-2xl font-bold">
+
+OptiGain
+
+</h1>
+
+</div>
+
+<div class="hidden md:flex gap-6">
+
+<a href="{{ url_for('landing') }}">
+Home
+</a>
+
+<a href="{{ url_for('features') }}"
+class="text-blue-400">
+
+Features
+
+</a>
+
+<a href="{{ url_for('how_it_works') }}">
+How It Works
+</a>
+
+<a href="{{ url_for('pricing') }}">
+Pricing
+</a>
+
+<a href="{{ url_for('about') }}">
+About
+</a>
+
+<a href="{{ url_for('contact') }}">
+Contact
+</a>
+
+</div>
+
+<div class="flex gap-2">
+
+<a href="{{ url_for('login') }}"
+class="border border-white/20 px-4 py-2 rounded-lg">
+
+Login
+
+</a>
+
+<a href="{{ url_for('register') }}"
+class="btn-main">
+
+Start Free
+
+</a>
+
+</div>
+
+</header>
+
+<!-- HERO -->
+
+<section class="text-center py-24 px-6 reveal">
+
+<p class="uppercase tracking-widest text-blue-400 mb-4 reveal">
+
+POWERFUL BUSINESS SOFTWARE
+
+</p>
+
+<h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-8 reveal">
+
+Everything Your Business Needs
+
+</h1>
+
+<p class="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto reveal">
+
+OptiGain combines inventory,
+sales,
+payments,
+employee management,
+business analytics,
+forecasting,
+branch management
+and financial intelligence into one modern platform.
+
+</p>
+
+</section>
+
+<!-- FEATURES -->
+
+<section class="max-w-6xl mx-auto px-6 pb-20 reveal">
+
+<div class="grid md:grid-cols-3 gap-8">
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+🏢 Multi-Branch Management
+
+</h2>
+
+<p class="text-gray-300">
+
+Create multiple branches and manage each location independently while viewing overall company performance from one dashboard.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+👥 Employee Accounts
+
+</h2>
+
+<p class="text-gray-300">
+
+Assign staff to branches with controlled permissions and keep owner information protected.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+📦 Inventory Management
+
+</h2>
+
+<p class="text-gray-300">
+
+Track products,
+stock movement,
+inventory performance
+and best-selling products automatically.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+💰 Sales Tracking
+
+</h2>
+
+<p class="text-gray-300">
+
+Create sales,
+accept customer payments,
+monitor daily revenue
+and automatically update reports.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+📊 Business Intelligence
+
+</h2>
+
+<p class="text-gray-300">
+
+Monitor revenue,
+expenses,
+profit,
+cash flow
+and branch performance in real time.
+
+</p>
+
+</div>
+
+<div class="card">
+
+<h2 class="text-2xl font-bold mb-4">
+
+🤖 AI Forecasting
+
+</h2>
+
+<p class="text-gray-300">
+
+
+Generate business forecasts,
+detect unusual trends
+and receive intelligent financial insights.
+
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- SECURITY -->
+
+<section class="max-w-5xl mx-auto px-6 py-20 reveal">
+
+<h2 class="text-4xl font-bold mb-10">
+
+Built with Business Security in Mind
+
+</h2>
+
+<div class="grid md:grid-cols-2 gap-8">
+
+<div class="card">
+
+<h3 class="text-xl font-semibold mb-4">
+
+🔒 Secure Accounts
+
+</h3>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>✓ Password Encryption</li>
+
+<li>✓ Role-Based Permissions</li>
+
+<li>✓ Branch-Level Access</li>
+
+<li>✓ Employee Restrictions</li>
+
+</ul>
+
+</div>
+
+<div class="card">
+
+<h3 class="text-xl font-semibold mb-4">
+
+🛡 Data Protection
+
+</h3>
+
+<ul class="space-y-3 text-gray-300">
+
+<li>✓ Secure Cloud Database</li>
+
+<li>✓ Encrypted M-Pesa Credentials</li>
+
+<li>✓ Activity Logs</li>
+
+<li>✓ Secure Payment Workflows</li>
+
+</ul>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- CTA -->
+
+<section class="text-center py-24 px-6 reveal">
+
+<h2 class="text-5xl font-bold mb-6">
+
+Ready to simplify your business?
+
+</h2>
+
+<p class="text-gray-400 text-lg mb-10">
+
+Start your free trial and experience business management built for modern companies.
+
+</p>
+
+<a href="{{ url_for('register') }}"
+class="btn-main">
+
+Create Free Account
+
+</a>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="border-t border-white/10 mt-20 py-10">
+
+<div class="max-w-6xl mx-auto px-6 text-center">
+
+<div class="flex flex-wrap justify-center gap-6 mb-6 text-gray-400">
+
+<a href="{{ url_for('landing') }}" class="hover:text-white transition">Home</a>
+
+<a href="{{ url_for('pricing') }}" class="hover:text-white transition">Pricing</a>
+
+<a href="{{ url_for('documentation') }}" class="hover:text-white transition">Documentation</a>
+
+<a href="{{ url_for('faq') }}" class="hover:text-white transition">FAQ</a>
+
+<a href="{{ url_for('help_center') }}" class="hover:text-white transition">Help Center</a>
+
+</div>
+
+<p class="text-gray-500">
+
+© 2026 OptiGain Technologies. All Rights Reserved.
+
+</p>
+
+</div>
+
+</footer>
+
+<script>
+
+const reveals=document.querySelectorAll(".reveal");
+
+function revealOnScroll(){
+
+const h=window.innerHeight;
+
+reveals.forEach(el=>{
+
+const top=el.getBoundingClientRect().top;
+
+if(top<h-80){
+
+el.classList.add("active");
+
+}
+
+});
+
+}
+
+window.addEventListener("scroll",revealOnScroll);
+
+revealOnScroll();
+
+</script>
+
+</body>
+</html>
