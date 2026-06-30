@@ -1,41 +1,32 @@
-// ================= GLOBAL NAVIGATION =================
+// ================================
+// OptiGain Navigation Optimizer
+// ================================
 
-document.addEventListener("click", function (e) {
-  const link = e.target.closest("a");
+// Prefetch internal pages when users hover or touch links.
+// This makes navigation feel much faster.
 
-  if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+document.querySelectorAll("a[href]").forEach(link => {
 
-  const href = link.getAttribute("href");
+    const href = link.getAttribute("href");
 
-  // 🚫 ignore external links (Pesapal fix)
-  if (
-    !href ||
-    href.startsWith("#") ||
-    href.startsWith("javascript") ||
-    href.startsWith("http")
-  ) return;
+    // Ignore external links, anchors, javascript and downloads
+    if (
+        !href ||
+        href.startsWith("#") ||
+        href.startsWith("javascript:") ||
+        href.startsWith("http") ||
+        link.hasAttribute("download")
+    ) {
+        return;
+    }
 
-  e.preventDefault();
+    const prefetch = () => {
+        fetch(href, {
+            credentials: "same-origin"
+        }).catch(() => {});
+    };
 
-  const loader = document.getElementById("pageLoader");
-  if (loader) loader.classList.remove("hidden");
+    link.addEventListener("mouseenter", prefetch, { once: true });
+    link.addEventListener("touchstart", prefetch, { once: true });
 
-  document.body.style.transform = "scale(0.995)";
-
-  setTimeout(() => {
-    window.location.href = href;
-  }, 120);
-});
-
-// ================= LOADER RESET =================
-
-function hideLoader() {
-  const loader = document.getElementById("pageLoader");
-  if (loader) loader.classList.add("hidden");
-}
-
-window.addEventListener("load", hideLoader);
-
-window.addEventListener("pageshow", function (event) {
-  if (event.persisted) hideLoader();
 });
